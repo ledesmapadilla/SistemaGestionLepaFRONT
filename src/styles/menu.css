@@ -1,0 +1,41 @@
+/* Fondo claro */
+.navbar-lepa {
+  background-color: var(--lepa-white) !important;
+}
+
+
+/* TEXTO NEGRO */
+.navbar-lepa .navbar-brand,
+.navbar-lepa .nav-link {
+  color: #111111 !important;
+  font-weight: 500;
+}
+
+/* Hover */
+.navbar-lepa .nav-link:hover {
+  color: var(--lepa-orange) !important;
+}
+
+/* Dropdown */
+.navbar-lepa .dropdown-menu {
+  background-color: #ffffff;
+}
+
+.navbar-lepa .dropdown-item {
+  background-color: #ffffff;
+  color: #111111;
+}
+
+.navbar-lepa .dropdown-item:hover {
+ 
+  color: var(--lepa-orange);
+}
+
+/* Botón hamburguesa */
+.navbar-lepa .navbar-toggler {
+  border-color: #111111;
+}
+
+.navbar-lepa .navbar-toggler-icon {
+  filter: invert(0); /* icono oscuro */
+}

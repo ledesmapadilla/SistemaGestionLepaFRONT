@@ -10,8 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-bootstrap": "^2.10.10",
+    "react-dom": "^19.2.0",
+    "react-hook-form": "^7.69.0",
+    "react-router": "^7.11.0",
+    "react-router-dom": "^7.11.0",
+    "react-select": "^5.10.2",
+    "sweetalert2": "^11.26.17"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

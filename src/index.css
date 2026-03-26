@@ -1,0 +1,66 @@
+
+/* bajar footer */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex-grow: 1;
+}
+
+/* SweetAlert2 - Tema oscuro global */
+.swal2-popup {
+  background-color: var(--lepa-gray-dark, #374151) !important;
+  color: var(--lepa-white, #ffffff) !important;
+  border: 1px solid var(--lepa-white, #ffffff) !important;
+}
+
+.swal2-title {
+  color: var(--lepa-white, #ffffff) !important;
+}
+
+.swal2-html-container {
+  color: #d1d5db !important;
+}
+
+.swal2-confirm {
+  background-color: var(--lepa-orange, #F59E0B) !important;
+  color: var(--lepa-black, #111111) !important;
+}
+
+
+.swal2-cancel {
+  background-color: transparent !important;
+  color: #adb5bd !important;
+  border: 1px solid #adb5bd !important;
+}
+
+.swal2-deny {
+  background-color: transparent !important;
+  color: #dc2626 !important;
+  border: 1px solid #dc2626 !important;
+}
+
+.swal-btn-danger {
+  background-color: transparent !important;
+  color: #dc2626 !important;
+  border: 1px solid #dc2626 !important;
+}
+
+.swal2-input {
+  background-color: var(--lepa-gray-dark, #374151) !important;
+  color: var(--lepa-white, #ffffff) !important;
+  border: 1px solid #6b7280 !important;
+}
+
+.swal2-input:focus {
+  border-color: var(--lepa-orange, #F59E0B) !important;
+  box-shadow: 0 0 0 0.2rem rgba(245, 158, 11, 0.25) !important;
+}
+
+.swal2-validation-message {
+  background-color: var(--lepa-gray-dark, #374151) !important;
+  color: #dc2626 !important;
+}

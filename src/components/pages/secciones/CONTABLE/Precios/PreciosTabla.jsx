@@ -1,0 +1,342 @@
+import React, { useMemo, useState } from "react";
+import { Table, Button } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import HistorialPreciosModal from "./HistorialPreciosModal.jsx";
+
+const ORDEN_MAQUINAS = [
+  "PC200", "Retropala", "Pala cargadora", "Motoniveladora",
+  "Camión batea", "Carretón grande", "Carretón chico", "Viaje batea",
+];
+
+const formatARS = (n) =>
+  Number(n).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+
+const PreciosTabla = ({
+  precios,
+  borrarPrecio,
+  onCrearLista,
+  onVerDetalle,
+  onAbrirConsumos,
+  completoPC200,
+  sinGasoilPC200,
+  completoRetropala,
+  sinGasoilRetropala,
+  completoPala,
+  sinGasoilPala,
+  completoMotoniveladora,
+  sinGasoilMotoniveladora,
+  completoCamionBatea,
+  completoCarretonChico,
+  completoCarretonGrande,
+  completoViajeBatea,
+  onCotizarCarreton,
+  onCotizarBatea,
+  onBorrarLista,
+}) => {
+  const navigate = useNavigate();
+  const [showHistorial, setShowHistorial] = useState(false);
+
+  const listasGuardadas = useMemo(() => {
+    const grupos = {};
+    precios.forEach((p) => {
+      const key = p.nombre || p.fecha;
+      if (!grupos[key]) grupos[key] = { nombre: p.nombre, fecha: p.fecha, items: [] };
+      grupos[key].items.push(p);
+    });
+    return Object.values(grupos)
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+      .map((g) => ({
+        ...g,
+        items: [...g.items].sort(
+          (a, b) => ORDEN_MAQUINAS.indexOf(a.maquina) - ORDEN_MAQUINAS.indexOf(b.maquina)
+        ),
+      }));
+  }, [precios]);
+
+  const nombrePrincipal = listasGuardadas.length > 0
+    ? listasGuardadas[0].nombre
+    : new Date()
+        .toLocaleDateString("es-AR", { month: "long", year: "numeric" })
+        .replace(" de ", "-");
+
+  const fechaPrincipal = listasGuardadas.length > 0
+    ? new Date(listasGuardadas[0].fecha).toLocaleDateString("es-AR")
+    : null;
+
+  const listasHistoricas = listasGuardadas.slice(1);
+
+  return (
+    <>
+      <div className="position-relative d-flex align-items-center mt-2">
+        <h2 className="mb-0 w-100 text-center">
+          Precios - {nombrePrincipal}{fechaPrincipal ? <span className="fs-5 fw-normal"> ({fechaPrincipal})</span> : ""}
+        </h2>
+        <div className="position-absolute end-0 d-flex gap-2">
+          <Button variant="outline-primary" className="px-4 py-2" onClick={onCrearLista}>
+            Crear lista precios
+          </Button>
+          <Button variant="outline-secondary" className="px-4 py-2" onClick={() => setShowHistorial(true)}>
+            Historial
+          </Button>
+        </div>
+      </div>
+
+      <div className="d-flex justify-content-end gap-2 mt-3">
+        <Button variant="outline-warning" onClick={onAbrirConsumos}>
+          Consumos gasoil
+        </Button>
+        <Button variant="outline-success" onClick={() => navigate(-1)}>
+          Volver
+        </Button>
+      </div>
+
+      <div className="table-responsive mt-3 w-75 mx-auto">
+        <Table striped bordered hover className="text-center align-middle">
+          <thead className="table-dark">
+            <tr>
+              <th>% Teórico</th>
+              <th>Máquina</th>
+              <th>Completo</th>
+              <th>Sin Gasoil</th>
+              <th>% Real</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>100%</td>
+              <td>PC200</td>
+              <td>
+                {completoPC200
+                  ? Number(completoPC200).toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })
+                  : "-"}
+              </td>
+              <td>
+                {sinGasoilPC200
+                  ? Number(sinGasoilPC200).toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })
+                  : "-"}
+              </td>
+              <td>
+                {completoPC200
+                  ? `${((completoPC200 / completoPC200) * 100).toFixed(0)}%`
+                  : "-"}
+              </td>
+              <td>
+                <Button size="sm" variant="outline-success" onClick={() => onVerDetalle("PC200")}>
+                  Ver
+                </Button>
+              </td>
+            </tr>
+            <tr>
+              <td>45%</td>
+              <td>Retropala</td>
+              <td>
+                {completoRetropala
+                  ? Number(completoRetropala).toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })
+                  : "-"}
+              </td>
+              <td>
+                {sinGasoilRetropala
+                  ? Number(sinGasoilRetropala).toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })
+                  : "-"}
+              </td>
+              <td>
+                {completoPC200 && completoRetropala
+                  ? `${((completoRetropala / completoPC200) * 100).toFixed(0)}%`
+                  : "-"}
+              </td>
+              <td>
+                <Button size="sm" variant="outline-success" onClick={() => onVerDetalle("Retropala")}>
+                  Ver
+                </Button>
+              </td>
+            </tr>
+            <tr>
+              <td>70%</td>
+              <td>Pala cargadora</td>
+              <td>
+                {completoPala
+                  ? Number(completoPala).toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })
+                  : "-"}
+              </td>
+              <td>
+                {sinGasoilPala
+                  ? Number(sinGasoilPala).toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })
+                  : "-"}
+              </td>
+              <td>
+                {completoPC200 && completoPala
+                  ? `${((completoPala / completoPC200) * 100).toFixed(0)}%`
+                  : "-"}
+              </td>
+              <td>
+                <Button size="sm" variant="outline-success" onClick={() => onVerDetalle("Pala cargadora")}>
+                  Ver
+                </Button>
+              </td>
+            </tr>
+            <tr>
+              <td>75%</td>
+              <td>Motoniveladora</td>
+              <td>
+                {completoMotoniveladora
+                  ? Number(completoMotoniveladora).toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })
+                  : "-"}
+              </td>
+              <td>
+                {sinGasoilMotoniveladora
+                  ? Number(sinGasoilMotoniveladora).toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })
+                  : "-"}
+              </td>
+              <td>
+                {completoPC200 && completoMotoniveladora
+                  ? `${((completoMotoniveladora / completoPC200) * 100).toFixed(0)}%`
+                  : "-"}
+              </td>
+              <td>
+                <Button size="sm" variant="outline-success" onClick={() => onVerDetalle("Motoniveladora")}>
+                  Ver
+                </Button>
+              </td>
+            </tr>
+            <tr>
+              <td>60%</td>
+              <td>Camión batea (hora)</td>
+              <td>
+                {completoCamionBatea
+                  ? Number(completoCamionBatea).toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })
+                  : "-"}
+              </td>
+              <td>-</td>
+              <td>
+                {completoPC200 && completoCamionBatea
+                  ? `${((completoCamionBatea / completoPC200) * 100).toFixed(0)}%`
+                  : "-"}
+              </td>
+              <td>
+                <Button size="sm" variant="outline-success" onClick={() => onVerDetalle("Camión batea")}>
+                  Ver
+                </Button>
+              </td>
+            </tr>
+            <tr>
+              <td>385%</td>
+              <td>Carretón grande (hasta 50 km)</td>
+              <td>
+                {completoCarretonGrande
+                  ? Number(completoCarretonGrande).toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })
+                  : "-"}
+              </td>
+              <td>-</td>
+              <td>
+                {completoPC200 && completoCarretonGrande
+                  ? `${((completoCarretonGrande / completoPC200) * 100).toFixed(0)}%`
+                  : "-"}
+              </td>
+              <td>
+                <Button size="sm" variant="outline-success" onClick={() => onVerDetalle("Carretón grande")}>
+                  Ver
+                </Button>
+              </td>
+            </tr>
+            <tr>
+              <td>300%</td>
+              <td>Carretón chico - mínimo (hasta 50 km)</td>
+              <td>
+                {completoCarretonChico
+                  ? Number(completoCarretonChico).toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })
+                  : "-"}
+              </td>
+              <td>-</td>
+              <td>
+                {completoPC200 && completoCarretonChico
+                  ? `${((completoCarretonChico / completoPC200) * 100).toFixed(0)}%`
+                  : "-"}
+              </td>
+              <td>
+                <div className="d-flex gap-1 justify-content-center">
+                  <Button size="sm" variant="outline-success" onClick={() => onVerDetalle("Carretón chico")}>
+                    Ver
+                  </Button>
+                  <Button size="sm" variant="outline-primary" onClick={onCotizarCarreton}>
+                    Cotizar
+                  </Button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>5%</td>
+              <td>Viaje batea x Km (mínimo 50km)</td>
+              <td>
+                {completoViajeBatea
+                  ? Number(completoViajeBatea).toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })
+                  : "-"}
+              </td>
+              <td>-</td>
+              <td>
+                {completoPC200 && completoViajeBatea
+                  ? `${((completoViajeBatea / completoPC200) * 100).toFixed(0)}%`
+                  : "-"}
+              </td>
+              <td>
+                <div className="d-flex gap-1 justify-content-center">
+                  <Button size="sm" variant="outline-success" onClick={() => onVerDetalle("Viaje batea")}>
+                    Ver
+                  </Button>
+                  <Button size="sm" variant="outline-primary" onClick={onCotizarBatea}>
+                    Cotizar
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </Table>
+      </div>
+
+      <HistorialPreciosModal
+        show={showHistorial}
+        onHide={() => setShowHistorial(false)}
+        listas={listasHistoricas}
+        onBorrarLista={onBorrarLista}
+      />
+    </>
+  );
+};
+
+export default PreciosTabla;

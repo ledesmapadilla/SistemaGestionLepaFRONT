@@ -1,0 +1,44 @@
+/* Clientes.css */
+.table-responsive {
+  max-height: 450px; /* Altura donde queremos scroll */
+  overflow-y: auto;
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  background-color: var(--lepa-gray); /* Gris claro */
+  z-index: 5; /* Para que quede encima de las filas */
+  
+}
+
+
+/* sacar blanco de select de obras- razon social */
+/* react-select compatible con theme dark */
+
+.rs__control {
+  background-color: #212529;
+  border-color: #495057;
+}
+
+.rs__menu {
+  background-color: #212529;
+}
+
+.rs__option {
+  color: #fff;
+}
+
+.rs__single-value {
+  color: #fff;
+}
+
+.rs__input-container input {
+  color: #fff !important;
+}
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

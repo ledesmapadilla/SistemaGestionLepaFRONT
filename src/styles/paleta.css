@@ -1,0 +1,12 @@
+:root {
+  /* Colores corporativos LEPA */
+  --lepa-black: #111111;
+  --lepa-orange: #F59E0B;
+  --lepa-orange-dark: #d97706;
+
+  --lepa-gray-dark: #374151;
+  --lepa-gray: #6B7280;
+  --lepa-gray-light: #F9FAFB;
+
+  --lepa-white: #FFFFFF;
+}
