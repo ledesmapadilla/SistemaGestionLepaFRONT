@@ -53,9 +53,6 @@ const VerRemitos = () => {
   }, [obraId]);
 
   const handleEditarItem = (remito, item) => {
-    console.log("Item a editar:", item);
-    console.log("Remito completo:", remito);
-
     setItemEditando({
       ...item,
       fecha: item.fecha || remito.fecha,
@@ -106,7 +103,6 @@ const VerRemitos = () => {
       estado: r.estado,
     })),
   );
-  console.log("REMITOS:", remitos);
 
   const formatoMiles = (valor) => {
     if (valor === undefined || valor === null) return "-";

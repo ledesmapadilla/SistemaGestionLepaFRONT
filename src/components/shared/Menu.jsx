@@ -74,9 +74,6 @@ function Menu() {
                 <NavDropdown.Item as={Link} to="/costos-obra">
                   Análisis de costos
                 </NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/error404">
-                  ya veremos 2
-                </NavDropdown.Item>
               </NavDropdown>
             </NavDropdown>
 
@@ -84,12 +81,6 @@ function Menu() {
             <NavDropdown title="Sección Mantenimiento" id="nav-dropdown">
               <NavDropdown.Item as={Link} to="/consumo-aceites">
                 Consumo aceites
-              </NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/operativo">
-                ????
-              </NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/contable">
-                Contable
               </NavDropdown.Item>
             </NavDropdown>
 

@@ -62,7 +62,6 @@ const GastoModal = ({
         if (precioEncontrado) {
           nuevosDatos.costoUnitario = precioEncontrado.precio;
           nuevosDatos.unidad = precioEncontrado.unidad;
-        } else {
         }
       }
 

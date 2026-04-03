@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
   crearProveedor,
@@ -66,21 +66,14 @@ const Proveedores = () => {
         respuesta = await crearProveedor(data);
       }
 
-      //backend devolvió error
       if (!respuesta.ok) {
         const errorData = await respuesta.json();
 
-        if (!respuesta.ok) {
-          const errorData = await respuesta.json();
-
-          Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: errorData.mensaje || "No se pudo guardar el proveedor",
-          });
-
-          return;
-        }
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: errorData.mensaje || "No se pudo guardar el proveedor",
+        });
 
         return;
       }

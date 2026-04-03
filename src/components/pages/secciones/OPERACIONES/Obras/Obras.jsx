@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
@@ -88,8 +88,6 @@ const Obras = () => {
 
   const [variables, setVariables] = useState([]);
   const [preciosContable, setPreciosContable] = useState([]);
-
-  const precioGasoilActual = watch("precio_gasoil");
 
   // ==================== EFFECTS ====================
   useEffect(() => {
@@ -315,10 +313,6 @@ const Obras = () => {
 
   return (
     <div className="container">
-      {/* LIMPIEZA: Eliminamos <GastoModal /> de aquí. 
-         Ahora vive dentro de CrudObras.
-      */}
-
       <CrudObras
         obras={obras}
         busqueda={busqueda}
@@ -332,7 +326,6 @@ const Obras = () => {
         abrirTablaRemitos={abrirTablaRemitos}
         borrarObra={borrarObra}
         verPrecios={verPrecios}
-        // abrirModalGasto={abrirModalGasto} <-- ELIMINADO: Ya no se pasa por props
         verTablaGastos={verTablaGastos}
       />
 

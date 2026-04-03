@@ -75,8 +75,6 @@ export const eliminarItemRemito = async (remitoId, itemId) => {
 export const editarItemRemito = async (remitoId, itemId, datosItem) => {
   try {
     const urlCompleta = `${remitosBackend}/${remitoId}/items/${itemId}`;
-    console.log(" Editando item - URL:", urlCompleta);
-    console.log(" Datos enviados:", datosItem);
 
     const respuesta = await fetch(urlCompleta, {
       method: "PUT",
@@ -91,7 +89,6 @@ export const editarItemRemito = async (remitoId, itemId, datosItem) => {
     }
 
     const resultado = await respuesta.json();
-    console.log(" Item editado correctamente:", resultado);
     return resultado;
   } catch (error) {
     console.error(" Error en editarItemRemito:", error);

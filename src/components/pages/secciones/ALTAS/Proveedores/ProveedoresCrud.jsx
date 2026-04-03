@@ -1,5 +1,4 @@
 import { Table, Button, Form } from "react-bootstrap";
-import "../../../../../helpers/queriesProveedores.js";
 
 const ProveedoresCrud = ({
   proveedores,
