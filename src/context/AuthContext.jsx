@@ -7,7 +7,13 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = useState(() => {
     const guardado = localStorage.getItem("sgl_usuario");
-    return guardado ? JSON.parse(guardado) : null;
+    if (!guardado) return null;
+    const parsed = JSON.parse(guardado);
+    if (!parsed?.token) {
+      localStorage.removeItem("sgl_usuario");
+      return null;
+    }
+    return parsed;
   });
 
   const login = (datosUsuario) => {
