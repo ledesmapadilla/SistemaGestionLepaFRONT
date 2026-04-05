@@ -19,7 +19,7 @@ import MaquinaTabla from "./components/pages/secciones/ALTAS/Maquinas/MaquinaTab
 import GastoTabla from "./components/pages/secciones/OPERACIONES/Gastos/GastoTabla.jsx";
 import TodosLosRemitos from "./components/pages/secciones/OPERACIONES/Remitos/TodosLosRemitos.jsx";
 import CostosObra from "./components/pages/secciones/OPERACIONES/Informes/CostosObra.jsx";
-import AceiteTabla from "./components/pages/secciones/MANTENIMIENTO/aceites/aceiteTabla.jsx";
+import AceiteTabla from "./components/pages/secciones/MANTENIMIENTO/aceites/AceiteTabla.jsx";
 import AceiteTablaCompra from "./components/pages/secciones/MANTENIMIENTO/aceites/AceiteTablaCompra.jsx";
 import AceiteCrud from "./components/pages/secciones/ALTAS/Aceites/AceiteCrud.jsx";
 import UsuariosCrud from "./components/pages/secciones/ALTAS/Usuarios/UsuariosCrud.jsx";
