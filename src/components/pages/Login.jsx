@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { Container, Form, Button, Card } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { loginUsuario } from "../../helpers/queriesUsuarios";
@@ -7,13 +7,17 @@ import { useAuth } from "../../context/AuthContext";
 import logoLepa from "../../assets/logoLepa.jpg";
 
 const Login = () => {
+  const { usuario, login } = useAuth();
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
-  const { login } = useAuth();
-  const navigate = useNavigate();
+
+  if (usuario) {
+    return <Navigate to="/" replace />;
+  }
 
   const onSubmit = async (datos) => {
     const respuesta = await loginUsuario(datos);
