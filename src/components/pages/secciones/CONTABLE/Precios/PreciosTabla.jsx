@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Table, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import HistorialPreciosModal from "./HistorialPreciosModal.jsx";
+import XLSXStyle from "xlsx-js-style";
 
 const ORDEN_MAQUINAS = [
   "PC200", "Retropala", "Pala cargadora", "Motoniveladora",
@@ -65,6 +66,63 @@ const PreciosTabla = ({
 
   const listasHistoricas = listasGuardadas.slice(1);
 
+  const exportarExcel = () => {
+    const headers = ["% Teórico", "Máquina", "Completo", "Sin Gasoil", "% Real"];
+    const colLetters = ["A", "B", "C", "D", "E"];
+
+    const filas = [
+      ["100%", "PC200", completoPC200 || null, sinGasoilPC200 || null, completoPC200 ? "100%" : "-"],
+      ["45%", "Retropala", completoRetropala || null, sinGasoilRetropala || null, completoPC200 && completoRetropala ? `${((completoRetropala / completoPC200) * 100).toFixed(0)}%` : "-"],
+      ["70%", "Pala cargadora", completoPala || null, sinGasoilPala || null, completoPC200 && completoPala ? `${((completoPala / completoPC200) * 100).toFixed(0)}%` : "-"],
+      ["75%", "Motoniveladora", completoMotoniveladora || null, sinGasoilMotoniveladora || null, completoPC200 && completoMotoniveladora ? `${((completoMotoniveladora / completoPC200) * 100).toFixed(0)}%` : "-"],
+      ["60%", "Camión batea (hora)", completoCamionBatea || null, null, completoPC200 && completoCamionBatea ? `${((completoCamionBatea / completoPC200) * 100).toFixed(0)}%` : "-"],
+      ["385%", "Carretón grande (hasta 50 km)", completoCarretonGrande || null, null, completoPC200 && completoCarretonGrande ? `${((completoCarretonGrande / completoPC200) * 100).toFixed(0)}%` : "-"],
+      ["300%", "Carretón chico - mínimo (hasta 50 km)", completoCarretonChico || null, null, completoPC200 && completoCarretonChico ? `${((completoCarretonChico / completoPC200) * 100).toFixed(0)}%` : "-"],
+      ["5%", "Viaje batea x Km (mínimo 50km)", completoViajeBatea || null, null, completoPC200 && completoViajeBatea ? `${((completoViajeBatea / completoPC200) * 100).toFixed(0)}%` : "-"],
+    ];
+
+    const ws = {};
+
+    const centerAlign = { horizontal: "center", vertical: "center" };
+    const leftAlign = { horizontal: "left", vertical: "center" };
+    const titulo = `Precios - ${nombrePrincipal}${fechaPrincipal ? ` (${fechaPrincipal})` : ""}`;
+
+    // Fila 1: título
+    ws["A1"] = {
+      v: titulo,
+      t: "s",
+      s: { font: { bold: true, sz: 14 }, alignment: leftAlign },
+    };
+
+    // Fila 3: headers con negrita y centrado (fila 2 vacía como espacio)
+    headers.forEach((h, i) => {
+      const cell = `${colLetters[i]}3`;
+      ws[cell] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
+    });
+
+    // Filas desde la 4: formato moneda en columnas C y D, todas centradas
+    const currencyFmt = '"$"#,##0.00';
+    filas.forEach((fila, rowIdx) => {
+      fila.forEach((val, colIdx) => {
+        const cell = `${colLetters[colIdx]}${rowIdx + 4}`;
+        const isCurrency = (colIdx === 2 || colIdx === 3) && val !== null;
+        ws[cell] = {
+          v: val ?? "-",
+          t: isCurrency ? "n" : "s",
+          s: { alignment: centerAlign, ...(isCurrency ? { numFmt: currencyFmt } : {}) },
+          ...(isCurrency ? { z: currencyFmt } : {}),
+        };
+      });
+    });
+
+    ws["!ref"] = `A1:E${filas.length + 3}`;
+    ws["!cols"] = [{ wch: 10 }, { wch: 38 }, { wch: 16 }, { wch: 16 }, { wch: 10 }];
+
+    const libro = XLSXStyle.utils.book_new();
+    XLSXStyle.utils.book_append_sheet(libro, ws, "Precios");
+    XLSXStyle.writeFile(libro, `Precios_${nombrePrincipal}.xlsx`);
+  };
+
   return (
     <>
       <div className="position-relative d-flex align-items-center mt-2">
@@ -84,6 +142,9 @@ const PreciosTabla = ({
       <div className="d-flex justify-content-end gap-2 mt-3">
         <Button variant="outline-warning" onClick={onAbrirConsumos}>
           Consumos gasoil
+        </Button>
+        <Button variant="outline-light" onClick={exportarExcel}>
+          Excel
         </Button>
         <Button variant="outline-success" onClick={() => navigate(-1)}>
           Volver

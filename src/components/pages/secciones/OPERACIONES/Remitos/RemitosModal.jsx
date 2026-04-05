@@ -36,7 +36,11 @@ const obtenerFechaHoy = () => {
 
 const buscarPrecioVigente = (precios, clasificacion, trabajo, fechaRef) => {
   const candidatos = precios.filter(
-    (p) => p.clasificacion === clasificacion && (!trabajo || p.trabajo === trabajo)
+    (p) =>
+      (clasificacion === "Alquiler"
+        ? p.clasificacion?.startsWith("Alquiler")
+        : p.clasificacion === clasificacion) &&
+      (!trabajo || p.trabajo === trabajo)
   );
   if (candidatos.length === 0) return null;
   if (candidatos.length === 1) return candidatos[0];
@@ -129,8 +133,8 @@ const RemitosModal = ({
       // MODO CREAR REMITO
       setRemito("");
       setEstado("Sin facturar"); // Se inicializa fijo aquí
-      setFecha("");
-      setFilas([{ ...filaVacia }]);
+      setFecha(obtenerFechaHoy());
+      setFilas([{ ...filaVacia, fecha: obtenerFechaHoy() }]);
     }
 
     setErroresFilas([]);
@@ -553,7 +557,7 @@ const RemitosModal = ({
                     <option value="">—</option>
                     {[...new Set(
                       obra?.precio
-                        ?.filter((p) => p.clasificacion === "Alquiler")
+                        ?.filter((p) => p.clasificacion?.startsWith("Alquiler"))
                         .map((p) => p.trabajo)
                     )].map((trabajo, i) => (
                         <option key={i} value={trabajo}>

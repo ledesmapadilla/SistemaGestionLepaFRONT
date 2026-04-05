@@ -259,9 +259,7 @@ const CostosObra = () => {
         <h2 className="m-2 ">Análisis y resultado de cada obra</h2>
       </div>
       <div className="d-flex justify-content-end mb-3 w-75 mx-auto">
-        <Button variant="outline-success" onClick={() => navigate(-1)}>
-          Volver
-        </Button>
+        <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
       </div>
       <div className="d-flex flex-column flex-md-row gap-3 w-50 mx-auto mb-4">
         <Form.Control type="search" placeholder="Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />

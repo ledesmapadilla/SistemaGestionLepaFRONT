@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import XLSXStyle from "xlsx-js-style";
 import {
   listarGastosPorObra,
   borrarGastoAPI,
@@ -257,6 +258,67 @@ const GastoTabla = () => {
     setShowVerGasto(true);
   };
 
+  const exportarExcel = () => {
+    const headers = ["Item", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Observaciones"];
+    const cols = ["A", "B", "C", "D", "E", "F"];
+    const currencyFmt = '"$"#,##0.00';
+    const centerAlign = { horizontal: "center", vertical: "center" };
+    const leftAlign = { horizontal: "left", vertical: "center" };
+
+    const filas = [
+      // Gasoil automático
+      ["Gasoil", infoGasoil.cantidad, "lts", infoGasoil.precio, infoGasoil.total, "Total de remitos (precio prom.)"],
+      // Maquinistas
+      ...listaMaquinistas.map((maq) => [
+        maq.nombre,
+        maq.cantidad,
+        maq.tipo === "servicio" ? "Día" : "Hs",
+        maq.precioVarios ? "-" : maq.precio,
+        maq.total,
+        maq.tipo === "servicio" ? "Servicios acumulados" : "Horas acumuladas",
+      ]),
+      // Gastos manuales
+      ...gastos.map((g) => [
+        g.item,
+        Number(g.cantidad) || 0,
+        g.unidad,
+        Number(g.costoUnitario) || 0,
+        (Number(g.cantidad) || 0) * (Number(g.costoUnitario) || 0),
+        g.observaciones || "-",
+      ]),
+    ];
+
+    const ws = {};
+
+    ws["A1"] = { v: "LISTADO DE GASTOS", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+    ws["A2"] = { v: `Razón Social: ${razonsocial}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+    ws["A3"] = { v: `Obra: ${obraNombre}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+
+    headers.forEach((h, i) => {
+      ws[`${cols[i]}5`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
+    });
+
+    const currencyCols = new Set([3, 4]); // $ Unitario y $ Total
+    filas.forEach((fila, rowIdx) => {
+      fila.forEach((val, colIdx) => {
+        const isCurrency = currencyCols.has(colIdx) && typeof val === "number";
+        ws[`${cols[colIdx]}${rowIdx + 6}`] = {
+          v: val ?? "-",
+          t: isCurrency ? "n" : typeof val === "number" ? "n" : "s",
+          s: { alignment: centerAlign, ...(isCurrency ? { numFmt: currencyFmt } : {}) },
+          ...(isCurrency ? { z: currencyFmt } : {}),
+        };
+      });
+    });
+
+    ws["!ref"] = `A1:F${filas.length + 5}`;
+    ws["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 30 }];
+
+    const libro = XLSXStyle.utils.book_new();
+    XLSXStyle.utils.book_append_sheet(libro, ws, "Gastos");
+    XLSXStyle.writeFile(libro, `Gastos_${obraNombre}.xlsx`);
+  };
+
   const calcularTotal = () => {
     const totalGastosManuales = gastos.reduce((sum, gasto) => {
       const cantidad = Number(gasto.cantidad) || 0;
@@ -305,10 +367,10 @@ const GastoTabla = () => {
         </div>
 
         <div className="col-4 d-flex flex-column gap-2 align-items-end">
-          <Button variant="outline-success" onClick={() => navigate(-1)}>
-            Volver
-          </Button>
-
+          <div className="d-flex gap-2">
+            <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
+            <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+          </div>
           <Button variant="outline-primary" onClick={handleNuevoGasto}>
             Cargar gasto
           </Button>

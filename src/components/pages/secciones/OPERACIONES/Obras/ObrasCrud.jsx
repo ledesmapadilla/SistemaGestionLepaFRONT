@@ -16,7 +16,6 @@ const CrudObras = ({
   abrirTablaRemitos,
   borrarObra,
   verPrecios,
-  // abrirModalGasto, 
   verTablaGastos,
 }) => {
   // AGREGAMOS EL INTERRUPTOR (ESTADO) AQUÍ MISMO ---

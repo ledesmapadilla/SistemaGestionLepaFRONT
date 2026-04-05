@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Table, Container, Spinner, Button } from "react-bootstrap";
 import { listarRemitos } from "../../../../../helpers/queriesRemitos";
 import { useNavigate } from "react-router-dom";
+import XLSXStyle from "xlsx-js-style";
 import "../../../../../styles/remitosxCliente.css";
 
 const RemitosXClientes = () => {
@@ -63,6 +64,34 @@ const RemitosXClientes = () => {
 
   const formatoMiles = (n) => new Intl.NumberFormat("es-AR").format(n);
 
+  const exportarExcel = () => {
+    const headers = ["Razón Social", "Monto No Facturado", "Cant. Remitos"];
+    const cols = ["A", "B", "C"];
+    const currencyFmt = '"$"#,##0.00';
+    const centerAlign = { horizontal: "center", vertical: "center" };
+    const leftAlign = { horizontal: "left", vertical: "center" };
+
+    const ws = {};
+    ws["A1"] = { v: "REMITOS SIN FACTURAR", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+
+    headers.forEach((h, i) => {
+      ws[`${cols[i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
+    });
+
+    datosAgrupados.forEach((item, rowIdx) => {
+      ws[`A${rowIdx + 4}`] = { v: item.razonSocial, t: "s", s: { alignment: centerAlign } };
+      ws[`B${rowIdx + 4}`] = { v: item.monto, t: "n", z: currencyFmt, s: { alignment: centerAlign, numFmt: currencyFmt } };
+      ws[`C${rowIdx + 4}`] = { v: item.cantidadRemitos, t: "n", s: { alignment: centerAlign } };
+    });
+
+    ws["!ref"] = `A1:C${datosAgrupados.length + 3}`;
+    ws["!cols"] = [{ wch: 35 }, { wch: 20 }, { wch: 14 }];
+
+    const libro = XLSXStyle.utils.book_new();
+    XLSXStyle.utils.book_append_sheet(libro, ws, "Sin facturar");
+    XLSXStyle.writeFile(libro, "Remitos_SinFacturar.xlsx");
+  };
+
   if (loading)
     return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
@@ -72,14 +101,9 @@ const RemitosXClientes = () => {
         <div className="col-12 col-md-8 offset-md-2 text-center">
           <h3 className=" mb-0">Remitos sin facturar</h3>
         </div>
-        <div className="col-12 col-md-2  mt-3 mt-md-0 ">
-          <Button
-            variant="outline-success"
-            onClick={() => navigate(-1)}
-            className="w-50 w-md-auto"
-          >
-            Volver
-          </Button>
+        <div className="col-12 col-md-2 mt-3 mt-md-0 d-flex gap-2 justify-content-end">
+          <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
+          <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
         </div>
       </div>
 

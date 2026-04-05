@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Table, Button } from "react-bootstrap";
+import XLSXStyle from "xlsx-js-style";
 import { useLocation, useNavigate } from "react-router-dom";
 import RemitosModal from "./RemitosModal";
 import Swal from "sweetalert2";
@@ -94,16 +95,6 @@ const VerRemitos = () => {
 
   if (!obraId) return <p>Obra no seleccionada.</p>;
 
-  const remitosAplanados = remitos.flatMap((r) =>
-    r.items.map((item) => ({
-      ...item,
-      _id: `${r._id}-${item._id}`,
-      remito: r.remito,
-      fecha: r.fecha,
-      estado: r.estado,
-    })),
-  );
-
   const formatoMiles = (valor) => {
     if (valor === undefined || valor === null) return "-";
     return new Intl.NumberFormat("es-AR").format(valor);
@@ -153,6 +144,69 @@ const VerRemitos = () => {
 
   const totalNoFacturado = calcularTotalNoFacturado();
 
+  const exportarExcel = () => {
+    const headers = ["N° Remito", "Fecha", "Maquinista", "$ Hora", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Gasoil (lts)"];
+    const cols = ["A","B","C","D","E","F","G","H","I","J","K","L"];
+    const currencyFmt = '"$"#,##0.00';
+    const centerAlign = { horizontal: "center", vertical: "center" };
+    const leftAlign = { horizontal: "left", vertical: "center" };
+    const colWidths = [12, 12, 18, 14, 16, 16, 10, 10, 14, 14, 14, 12];
+
+    const filas = remitos.flatMap((remito) =>
+      remito.items.map((item) => [
+        remito.remito,
+        mostrarFechaDMY(item.fecha || remito.fecha),
+        item.personal || "-",
+        item.costoHoraPersonal || null,
+        item.maquina || "-",
+        item.servicio || "-",
+        item.cantidad,
+        item.unidad,
+        item.precioUnitario,
+        item.cantidad * item.precioUnitario,
+        remito.estado,
+        item.gasoil || "-",
+      ])
+    );
+
+    const ws = {};
+    const mergeAll = (row) => ({ s: { r: row - 1, c: 0 }, e: { r: row - 1, c: cols.length - 1 } });
+
+    // Fila 1: título
+    ws["A1"] = { v: "LISTADO DE REMITOS", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+    // Fila 2: razón social
+    ws["A2"] = { v: `Razón Social: ${razonsocial}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+    // Fila 3: obra
+    ws["A3"] = { v: `Obra: ${obraNombre}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+    // Fila 4: vacía, Fila 5: headers
+
+    headers.forEach((h, i) => {
+      ws[`${cols[i]}5`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
+    });
+
+    // Filas desde la 6: datos
+    // Columnas con moneda: D(3)=$ Hora, I(8)=$ Unitario, J(9)=$ Total
+    const currencyCols = new Set([3, 8, 9]);
+    filas.forEach((fila, rowIdx) => {
+      fila.forEach((val, colIdx) => {
+        const isCurrency = currencyCols.has(colIdx) && val !== null && val !== "-";
+        ws[`${cols[colIdx]}${rowIdx + 6}`] = {
+          v: val ?? "-",
+          t: isCurrency ? "n" : typeof val === "number" ? "n" : "s",
+          s: { alignment: centerAlign, ...(isCurrency ? { numFmt: currencyFmt } : {}) },
+          ...(isCurrency ? { z: currencyFmt } : {}),
+        };
+      });
+    });
+
+    ws["!ref"] = `A1:${cols[cols.length - 1]}${filas.length + 5}`;
+    ws["!cols"] = colWidths.map((wch) => ({ wch }));
+
+    const libro = XLSXStyle.utils.book_new();
+    XLSXStyle.utils.book_append_sheet(libro, ws, "Remitos");
+    XLSXStyle.writeFile(libro, `Remitos_${obraNombre}.xlsx`);
+  };
+
   return (
     <div className="container my-3">
       <div className="">
@@ -189,13 +243,11 @@ const VerRemitos = () => {
         </div>
 
         <div className="col-4 d-flex flex-column gap-2 align-items-end">
-          <Button variant="outline-success" onClick={() => navigate(-1)}>
-            Volver
-          </Button>
-          <Button
-            variant="outline-primary"
-            onClick={() => setShowModalRemito(true)}
-          >
+          <div className="d-flex gap-2">
+            <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
+            <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+          </div>
+          <Button variant="outline-primary" onClick={() => setShowModalRemito(true)}>
             Cargar Remito
           </Button>
         </div>

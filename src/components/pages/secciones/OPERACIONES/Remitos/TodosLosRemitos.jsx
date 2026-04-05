@@ -9,6 +9,7 @@ import {
   Col,
   InputGroup,
 } from "react-bootstrap";
+import XLSXStyle from "xlsx-js-style";
 import { useNavigate } from "react-router-dom";
 import RemitosModal from "../Remitos/RemitosModal";
 import Swal from "sweetalert2";
@@ -127,6 +128,60 @@ const TodosLosRemitos = () => {
     if (!fecha) return "-";
     const [y, m, d] = fecha.split("-");
     return `${d}-${m}-${y}`;
+  };
+
+  const exportarExcel = () => {
+    const headers = ["Razón Social", "Obra", "N° Remito", "Fecha", "Maquinista", "$ Hora", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Gasoil (lts)"];
+    const cols = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N"];
+    const currencyFmt = '"$"#,##0.00';
+    const centerAlign = { horizontal: "center", vertical: "center" };
+    const leftAlign = { horizontal: "left", vertical: "center" };
+
+    const filas = remitosFiltrados.flatMap((remito) =>
+      remito.items.map((item) => [
+        remito.obra?.razonsocial || "-",
+        remito.obra?.nombreobra || "-",
+        remito.remito,
+        mostrarFechaDMY(item.fecha || remito.fecha),
+        item.personal || "-",
+        item.costoHoraPersonal || null,
+        item.maquina || "-",
+        item.servicio || "-",
+        item.cantidad,
+        item.unidad,
+        item.precioUnitario,
+        item.cantidad * item.precioUnitario,
+        remito.estado,
+        item.gasoil || "-",
+      ])
+    );
+
+    const ws = {};
+    ws["A1"] = { v: "LISTADO DE REMITOS", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+
+    headers.forEach((h, i) => {
+      ws[`${cols[i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
+    });
+
+    const currencyCols = new Set([5, 10, 11]); // $ Hora, $ Unitario, $ Total
+    filas.forEach((fila, rowIdx) => {
+      fila.forEach((val, colIdx) => {
+        const isCurrency = currencyCols.has(colIdx) && val !== null && typeof val === "number";
+        ws[`${cols[colIdx]}${rowIdx + 4}`] = {
+          v: val ?? "-",
+          t: isCurrency ? "n" : typeof val === "number" ? "n" : "s",
+          s: { alignment: centerAlign, ...(isCurrency ? { numFmt: currencyFmt } : {}) },
+          ...(isCurrency ? { z: currencyFmt } : {}),
+        };
+      });
+    });
+
+    ws["!ref"] = `A1:N${filas.length + 3}`;
+    ws["!cols"] = [{ wch: 22 }, { wch: 22 }, { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 12 }];
+
+    const libro = XLSXStyle.utils.book_new();
+    XLSXStyle.utils.book_append_sheet(libro, ws, "Remitos");
+    XLSXStyle.writeFile(libro, "Listado_Remitos.xlsx");
   };
 
   // --- 2. LÓGICA DE FILTRADO ACTUALIZADA ---
@@ -272,16 +327,10 @@ const TodosLosRemitos = () => {
             </InputGroup>
           </Col>
 
-          {/* Columna 6: Botón Volver (md=2) */}
-          <Col md={2} className="d-flex justify-content-end" >
-            <Button
-              variant="outline-success"
-              
-              onClick={() => navigate(-1)}
-              className="w-50"
-            >
-              Volver
-            </Button>
+          {/* Columna 6: Botones (md=2) */}
+          <Col md={2} className="d-flex justify-content-end gap-2">
+            <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
+            <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
           </Col>
         </Row>
       </div>

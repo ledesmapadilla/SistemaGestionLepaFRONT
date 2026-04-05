@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Table, Button, Container } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos";
+import XLSXStyle from "xlsx-js-style";
 import "../../../../../styles/verRemitos.css";
 
 const RemitosXClientesFinal = () => {
@@ -62,6 +63,58 @@ const RemitosXClientesFinal = () => {
     return total + subtotalRemito;
   }, 0);
 
+  const exportarExcel = () => {
+    const headers = ["N° Remito", "Fecha", "Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Gasoil (lts)"];
+    const cols = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+    const currencyFmt = '"$"#,##0.00';
+    const centerAlign = { horizontal: "center", vertical: "center" };
+    const leftAlign = { horizontal: "left", vertical: "center" };
+
+    const filas = remitos.flatMap((remito) =>
+      remito.items.map((item) => [
+        remito.remito,
+        mostrarFechaDMY(item.fecha || remito.fecha),
+        item.personal || "-",
+        item.maquina || "-",
+        item.servicio || "-",
+        item.cantidad,
+        item.unidad,
+        item.precioUnitario,
+        item.cantidad * item.precioUnitario,
+        item.gasoil || "-",
+      ])
+    );
+
+    const ws = {};
+    ws["A1"] = { v: "REMITOS SIN FACTURAR", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+    ws["A2"] = { v: `Razón Social: ${razonsocial}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+    ws["A3"] = { v: `Obra: ${obraNombre}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+
+    headers.forEach((h, i) => {
+      ws[`${cols[i]}5`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
+    });
+
+    const currencyCols = new Set([7, 8]); // $ Unitario y $ Total
+    filas.forEach((fila, rowIdx) => {
+      fila.forEach((val, colIdx) => {
+        const isCurrency = currencyCols.has(colIdx) && typeof val === "number";
+        ws[`${cols[colIdx]}${rowIdx + 6}`] = {
+          v: val ?? "-",
+          t: isCurrency ? "n" : typeof val === "number" ? "n" : "s",
+          s: { alignment: centerAlign, ...(isCurrency ? { numFmt: currencyFmt } : {}) },
+          ...(isCurrency ? { z: currencyFmt } : {}),
+        };
+      });
+    });
+
+    ws["!ref"] = `A1:J${filas.length + 5}`;
+    ws["!cols"] = [{ wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 12 }];
+
+    const libro = XLSXStyle.utils.book_new();
+    XLSXStyle.utils.book_append_sheet(libro, ws, "Sin facturar");
+    XLSXStyle.writeFile(libro, `SinFacturar_${obraNombre}.xlsx`);
+  };
+
   if (!obraId)
     return <Container className="mt-5">Obra no seleccionada.</Container>;
 
@@ -81,10 +134,9 @@ const RemitosXClientesFinal = () => {
             <span className="titulosLetras">{obraNombre}</span>
           </h4>
         </div>
-        <div className="col-md-4 text-end">
-          <Button variant="outline-success" onClick={() => navigate(-1)}>
-            Volver
-          </Button>
+        <div className="col-md-4 text-end d-flex gap-2 justify-content-end">
+          <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
+          <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
         </div>
       </div>
 

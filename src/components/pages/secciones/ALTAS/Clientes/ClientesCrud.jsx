@@ -29,8 +29,6 @@ const Clientes = () => {
     defaultValues: valoresIniciales,
     mode: "onChange",
   });
-  const [contactoOriginal, setContactoOriginal] = useState("");
-
   const [clientes, setClientes] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [editando, setEditando] = useState(false);
@@ -143,8 +141,6 @@ const Clientes = () => {
   const abrirEditar = (cliente) => {
     setEditando(true);
     setClienteId(cliente._id);
-    setContactoOriginal(cliente.contacto);
-
     reset({
       razonsocial: cliente.razonsocial,
       contacto: cliente.contacto,
