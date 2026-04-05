@@ -1,56 +1,40 @@
-const URI_GASTOS = import.meta.env.VITE_API_GASTOS; 
+import authFetch from "./authFetch";
 
-// 1. LISTAR (Filtrando por obra)
+const URI_GASTOS = import.meta.env.VITE_API_GASTOS;
+
 export const listarGastosPorObra = async (idObra) => {
   try {
-    // Es clave enviar el ID de la obra como query param
-    const respuesta = await fetch(`${URI_GASTOS}?obra=${idObra}`);
-    return respuesta;
+    return await authFetch(`${URI_GASTOS}?obra=${idObra}`);
   } catch (error) {
     console.log(error);
   }
 };
 
-// 2. CREAR
 export const crearGastoAPI = async (gasto) => {
   try {
-    const respuesta = await fetch(URI_GASTOS, {
+    return await authFetch(URI_GASTOS, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(gasto),
     });
-    return respuesta;
   } catch (error) {
     console.log(error);
   }
 };
 
-// 3. BORRAR
 export const borrarGastoAPI = async (id) => {
   try {
-    const respuesta = await fetch(`${URI_GASTOS}/${id}`, {
-      method: "DELETE",
-    });
-    return respuesta;
+    return await authFetch(`${URI_GASTOS}/${id}`, { method: "DELETE" });
   } catch (error) {
     console.log(error);
   }
 };
-
-// En helpers/queriesGastos.js
 
 export const editarGastoAPI = async (id, datosGasto) => {
   try {
-    const respuesta = await fetch(`${URI_GASTOS}/${id}`, {
+    return await authFetch(`${URI_GASTOS}/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(datosGasto),
     });
-    return respuesta;
   } catch (error) {
     console.error("Error al editar el gasto", error);
     return false;

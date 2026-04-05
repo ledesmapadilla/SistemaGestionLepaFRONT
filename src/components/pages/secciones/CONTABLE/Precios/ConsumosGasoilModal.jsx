@@ -78,7 +78,7 @@ const ConsumosGasoilModal = ({
           </tbody>
         </Table>
         <div className="d-flex align-items-center gap-2 mt-3">
-          <Form.Label className="mb-0 fw-bold">Porcentaje indirectos</Form.Label>
+          <Form.Label className="mb-0 fw-normal">Porcentaje indirectos</Form.Label>
           <Form.Control
             type="number"
             step="any"
@@ -90,13 +90,13 @@ const ConsumosGasoilModal = ({
             value={porcentajeIndirectos}
             onChange={(e) => setPorcentajeIndirectos(e.target.value)}
           />
-          <span className="fw-bold">%</span>
+          <span className="fw-normal">%</span>
         </div>
         {consumosAparte.map((item) => {
           const realIndex = consumos.findIndex((c) => c.maquinaId === item.maquinaId);
           return (
             <div key={item.maquinaId} className="d-flex align-items-center gap-2 mt-3">
-              <Form.Label className="mb-0 fw-bold">{item.maquina}</Form.Label>
+              <Form.Label className="mb-0 fw-normal">{item.maquina}</Form.Label>
               <Form.Control
                 type="number"
                 step="any"
@@ -107,7 +107,7 @@ const ConsumosGasoilModal = ({
                 value={item.consumo}
                 onChange={(e) => actualizarConsumo(realIndex, e.target.value)}
               />
-              <span className="fw-bold">lts</span>
+              <span className="fw-normal">lts</span>
             </div>
           );
         })}

@@ -52,15 +52,12 @@ const Obras = () => {
   // ==================== ESTADOS ====================
   const [obras, setObras] = useState([]);
   const [busqueda, setBusqueda] = useState(() => sessionStorage.getItem("obrasBusqueda") || "");
-  const [filtroEstado, setFiltroEstado] = useState(() => sessionStorage.getItem("obrasFiltroEstado") ?? "En curso");
+  const [filtroEstado, setFiltroEstado] = useState("En curso");
 
   useEffect(() => {
     sessionStorage.setItem("obrasBusqueda", busqueda);
   }, [busqueda]);
 
-  useEffect(() => {
-    sessionStorage.setItem("obrasFiltroEstado", filtroEstado);
-  }, [filtroEstado]);
 
   // Estados para Crear/Editar Obra
   const [editando, setEditando] = useState(false);
@@ -147,6 +144,10 @@ const Obras = () => {
   };
 
   const onSubmit = async (data) => {
+    if (precios.length === 0) {
+      Swal.fire({ icon: "warning", title: "Precios obligatorios", text: "Debés cargar al menos un precio antes de guardar." });
+      return;
+    }
     try {
       const preciosNormalizados = precios.map((p) => ({
         trabajo: p.trabajo,

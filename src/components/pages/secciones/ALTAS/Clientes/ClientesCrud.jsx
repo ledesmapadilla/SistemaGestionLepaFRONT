@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, Form } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import {
   crearCliente,
@@ -155,6 +156,8 @@ const Clientes = () => {
     setShowModal(true);
   };
 
+  const navigate = useNavigate();
+
   const abrirCrear = () => {
     setEditando(false);
     setClienteId(null);
@@ -174,23 +177,23 @@ const Clientes = () => {
     <>
       <h2 className="mt-2">Clientes</h2>
 
-      <div className="d-flex flex-column flex-md-row gap-3 w-50">
-        <Form.Control
-          type="search"
-          placeholder="Buscar por razón social o contacto"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-        />
-      </div>
-
-      <div className="d-flex justify-content-end mb-2">
-        <Button
-          variant="outline-success"
-          onClick={abrirCrear}
-          className="btn-sin-hover"
-        >
-          Crear Cliente
-        </Button>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="w-25">
+          <Form.Control
+            type="search"
+            placeholder="Buscar por razón social o contacto"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+        </div>
+        <div className="d-flex flex-column gap-2">
+          <Button variant="outline-success" onClick={() => navigate(-1)}>
+            Volver
+          </Button>
+          <Button variant="outline-primary" onClick={abrirCrear} className="btn-sin-hover">
+            Crear Cliente
+          </Button>
+        </div>
       </div>
 
       <div className="table-responsive">
@@ -213,11 +216,11 @@ const Clientes = () => {
             ) : (
               clientesFiltrados.map((cliente) => (
                 <tr key={cliente._id}>
-                  <td>{cliente.razonsocial}</td>
-                  <td>{cliente.contacto}</td>
-                  <td>{cliente.cuit}</td>
-                  <td>{cliente.email}</td>
-                  <td>{cliente.telefono}</td>
+                  <td>{cliente.razonsocial || "-"}</td>
+                  <td>{cliente.contacto || "-"}</td>
+                  <td>{cliente.cuit || "-"}</td>
+                  <td>{cliente.email || "-"}</td>
+                  <td>{cliente.telefono || "-"}</td>
                   <td className="d-flex gap-1 justify-content-center">
                     <Button
                       size="sm"
@@ -274,26 +277,6 @@ const Clientes = () => {
               <Form.Control
                 {...register("contacto", {
                   required: "El contacto es obligatorio",
-                  validate: (value) => {
-                    const normalizado = value.toLowerCase().trim();
-
-                    // EDITAR y no cambió el contacto
-                    if (
-                      editando &&
-                      normalizado === contactoOriginal.toLowerCase().trim()
-                    ) {
-                      return true;
-                    }
-
-                    //  CREAR o EDITAR cambiando contacto
-                    const existe = clientes.some(
-                      (c) =>
-                        c.contacto?.toLowerCase().trim() === normalizado &&
-                        c._id !== clienteId
-                    );
-
-                    return !existe || "El contacto ya existe";
-                  },
                 })}
               />
 

@@ -1,4 +1,5 @@
 import { Table, Button, Form } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 
 const ProveedoresCrud = ({
   proveedores,
@@ -8,6 +9,8 @@ const ProveedoresCrud = ({
   abrirEditar,
   borrarProveedor,
 }) => {
+  const navigate = useNavigate();
+
   const proveedoresFiltrados = proveedores.filter((proveedor) => {
     const texto = busqueda.trim().toLowerCase();
     const razon = proveedor.razonsocial?.toLowerCase() || "";
@@ -20,23 +23,23 @@ const ProveedoresCrud = ({
     <>
       <h2 className="mt-2">Proveedores</h2>
 
-      <div className="d-flex flex-column flex-md-row gap-3 w-50">
-        <Form.Control
-          type="search"
-          placeholder="Buscar por razón social o contacto"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-        />
-      </div>
-
-      <div className="d-flex justify-content-end mb-2">
-        <Button
-          variant="outline-success"
-          onClick={abrirCrear}
-          className="btn-sin-hover"
-        >
-          Crear Proveedor
-        </Button>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="w-25">
+          <Form.Control
+            type="search"
+            placeholder="Buscar por razón social o contacto"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+        </div>
+        <div className="d-flex flex-column gap-2">
+          <Button variant="outline-success" onClick={() => navigate(-1)}>
+            Volver
+          </Button>
+          <Button variant="outline-primary" onClick={abrirCrear} className="btn-sin-hover">
+            Crear Proveedor
+          </Button>
+        </div>
       </div>
 
       <div className="table-responsive">
@@ -60,12 +63,12 @@ const ProveedoresCrud = ({
             ) : (
               proveedoresFiltrados.map((proveedor) => (
                 <tr key={proveedor._id}>
-                  <td>{proveedor.razonsocial}</td>
-                  <td>{proveedor.contacto}</td>
-                  <td>{proveedor.rubro}</td>
-                  <td>{proveedor.cuit}</td>
-                  <td>{proveedor.email}</td>
-                  <td>{proveedor.telefono}</td>
+                  <td>{proveedor.razonsocial || "-"}</td>
+                  <td>{proveedor.contacto || "-"}</td>
+                  <td>{proveedor.rubro || "-"}</td>
+                  <td>{proveedor.cuit || "-"}</td>
+                  <td>{proveedor.email || "-"}</td>
+                  <td>{proveedor.telefono || "-"}</td>
                   <td className="d-flex gap-1 justify-content-center">
                     <Button
                       size="sm"

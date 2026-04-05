@@ -172,9 +172,10 @@ const Variables = () => {
   };
 
   const abrirCrear = () => {
+    const hoy = new Date().toISOString().slice(0, 10);
     setEditando(false);
     setVariableId(null);
-    reset(valoresIniciales);
+    reset({ ...valoresIniciales, fecha: hoy });
     setShowModal(true);
   };
 

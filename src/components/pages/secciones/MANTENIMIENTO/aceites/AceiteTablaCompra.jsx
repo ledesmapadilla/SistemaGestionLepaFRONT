@@ -117,7 +117,7 @@ const AceiteTablaCompra = () => {
           />
         </Col>
         <Col xs={12} md={8} className="d-flex justify-content-end gap-2 mt-3 mt-md-0">
-          {busqueda && <Button variant="outline-warning" onClick={() => setBusqueda("")}>Ver todas las compras</Button>}
+          {busqueda && <Button variant="outline-warning" onClick={() => setBusqueda("")}>compra TODOS aceites</Button>}
           <Button variant="outline-success" onClick={() => navigate(-1)} className="px-4">Volver</Button>
         </Col>
       </Row>

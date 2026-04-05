@@ -1,17 +1,17 @@
+import authFetch from "./authFetch";
+
 const variablesBackend = import.meta.env.VITE_API_VARIABLES;
 
 export const listarVariables = async () => {
-  return fetch(variablesBackend);
+  return authFetch(variablesBackend);
 };
 
 export const crearVariable = async (variable) => {
   try {
-    const respuesta = await fetch(variablesBackend, {
+    return await authFetch(variablesBackend, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(variable),
     });
-    return respuesta;
   } catch (error) {
     console.error("Error al crear variable:", error);
     return null;
@@ -20,12 +20,10 @@ export const crearVariable = async (variable) => {
 
 export const editarVariable = async (id, variable) => {
   try {
-    const respuesta = await fetch(`${variablesBackend}/${id}`, {
+    return await authFetch(`${variablesBackend}/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(variable),
     });
-    return respuesta;
   } catch (error) {
     console.error("Error al editar variable:", error);
     return null;
@@ -34,10 +32,7 @@ export const editarVariable = async (id, variable) => {
 
 export const borrarVariable = async (id) => {
   try {
-    const respuesta = await fetch(`${variablesBackend}/${id}`, {
-      method: "DELETE",
-    });
-    return respuesta;
+    return await authFetch(`${variablesBackend}/${id}`, { method: "DELETE" });
   } catch (error) {
     console.error("Error al borrar variable:", error);
     return null;

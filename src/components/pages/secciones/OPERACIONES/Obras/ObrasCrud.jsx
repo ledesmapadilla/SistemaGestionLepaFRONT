@@ -1,5 +1,6 @@
-import { useState } from "react"; // 1. IMPORTAR USESTATE
+import { useState } from "react";
 import { Table, Button, Form } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import GastoModal from "../Gastos/GastoModal";
 
 const CrudObras = ({
@@ -19,6 +20,7 @@ const CrudObras = ({
   verTablaGastos,
 }) => {
   // AGREGAMOS EL INTERRUPTOR (ESTADO) AQUÍ MISMO ---
+  const navigate = useNavigate();
   const [showGastoModal, setShowGastoModal] = useState(false);
   const [obraParaGasto, setObraParaGasto] = useState(null);
 
@@ -50,31 +52,31 @@ const CrudObras = ({
     <>
       <h2 className="mt-2">Obras</h2>
 
-      <div className="d-flex flex-column flex-md-row gap-3 w-75 mb-3">
-        <Form.Control
-          type="search"
-          placeholder="Buscar por razón social o nombre..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-        />
-        <Form.Select
-          value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
-          style={{ maxWidth: "250px" }}
-        >
-          <option value="">Todos los estados</option>
-          <option value="En curso">En curso</option>
-          <option value="Terminada">Terminada</option>
-        </Form.Select>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="d-flex gap-3 w-75">
+          <Form.Control
+            type="search"
+            placeholder="Buscar por razón social o nombre..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+          <Form.Select
+            value={filtroEstado}
+            onChange={(e) => setFiltroEstado(e.target.value)}
+            style={{ maxWidth: "250px" }}
+          >
+            <option value="">Todos los estados</option>
+            <option value="En curso">En curso</option>
+            <option value="Terminada">Terminadas</option>
+          </Form.Select>
+        </div>
+        <div className="d-flex flex-column gap-2">
+          <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+          <Button variant="outline-primary" onClick={abrirCrear}>Crear Obra</Button>
+        </div>
       </div>
 
-      <div className="d-flex justify-content-end mb-2">
-        <Button variant="outline-success" onClick={abrirCrear}>
-          Crear Obra
-        </Button>
-      </div>
-
-      <div className="table-responsive">
+      <div>
         <Table striped bordered hover className="text-center align-middle">
           <thead className="table-dark">
             <tr>
@@ -96,8 +98,8 @@ const CrudObras = ({
                   <td>{obra.razonsocial}</td>
                   <td>{obra.nombreobra}</td>
                   <td>{obra.contacto}</td>
-                  <td className={obra.estado === "Terminada (-)" ? "text-danger" : ""}>{obra.estado}</td>
-                  <td className="d-flex gap-1 justify-content-center">
+                  <td style={{ whiteSpace: "nowrap" }} className={obra.estado === "Terminada (-)" ? "text-danger" : ""}>{obra.estado}</td>
+                  <td className="d-flex gap-1 justify-content-center align-items-center">
                     <Button
                       size="sm"
                       variant="outline-warning"
@@ -108,9 +110,10 @@ const CrudObras = ({
                     <Button
                       size="sm"
                       variant="outline-success"
+                      style={{ whiteSpace: "nowrap" }}
                       onClick={() => abrirDetalleObra(obra)}
                     >
-                      Ver Obra
+                      Ver
                     </Button>
                     <Button
                       size="sm"
@@ -124,14 +127,14 @@ const CrudObras = ({
                       variant="outline-primary"
                       onClick={() => abrirModalRemito(obra)}
                     >
-                      + remito
+                      +Remito
                     </Button>
                     <Button
                       size="sm"
                       variant="outline-primary"
                       onClick={() => abrirTablaRemitos(obra)}
                     >
-                      Ver remitos
+                      Remitos
                     </Button>
                     <Button
                       size="sm"
@@ -140,22 +143,19 @@ const CrudObras = ({
                     >
                       Precios
                     </Button>
-
-                    {/* 5. ACTUALIZAMOS ESTE BOTÓN PARA USAR LA FUNCIÓN LOCAL */}
                     <Button
                       size="sm"
                       variant="outline-danger"
                       onClick={() => manejarAperturaGasto(obra)}
                     >
-                      + Gasto
+                      +Gasto
                     </Button>
-
                     <Button
                       size="sm"
                       variant="outline-danger"
                       onClick={() => verTablaGastos(obra)}
                     >
-                      Ver Gastos
+                      Gastos
                     </Button>
                   </td>
                 </tr>

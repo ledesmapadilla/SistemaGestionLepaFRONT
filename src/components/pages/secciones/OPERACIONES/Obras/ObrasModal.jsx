@@ -195,7 +195,7 @@ const ModalObras = ({
 
             {/* Descripción */}
             <Form.Group className="mb-3">
-              <Form.Label>Descripción de la obra</Form.Label>
+              <Form.Label>Descripción de la obra*</Form.Label>
               <Form.Control
                 as="textarea"
                 {...register("descripcion", {

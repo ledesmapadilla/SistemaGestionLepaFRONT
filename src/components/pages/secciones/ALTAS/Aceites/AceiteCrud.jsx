@@ -50,14 +50,16 @@ const AceiteCrud = () => {
   // Función de Guardado (Se pasa al Modal)
   const handleGuardar = async (data) => {
     try {
-      const resp = await crearAceite(data);
+      const resp = editando
+        ? await editarAceite(aceiteAEditar._id, data)
+        : await crearAceite(data);
 
       if (!resp?.ok) {
         Swal.fire({ icon: "error", title: "Error", text: "No se pudo guardar la operación" });
         return;
       }
 
-      Swal.fire({ icon: "success", title: "Aceite registrado", timer: 2000, showConfirmButton: false });
+      Swal.fire({ icon: "success", title: editando ? "Aceite actualizado" : "Aceite registrado", timer: 2000, showConfirmButton: false });
       cargarDatos();
       cerrarModal();
     } catch (error) {
@@ -157,10 +159,10 @@ const AceiteCrud = () => {
                 ) : (
                   filtrados.map((item) => (
                     <tr key={item._id}>
-                      <td>{item.tipo}</td>
-                      <td>{item.marca}</td>
-                      <td>{item.denominacion}</td>
-                      <td>{item.uso}</td>
+                      <td>{item.tipo || "-"}</td>
+                      <td>{item.marca || "-"}</td>
+                      <td>{item.denominacion || "-"}</td>
+                      <td>{item.uso || "-"}</td>
                       <td>
                         <div className="d-flex gap-1 justify-content-center">
                           <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(item)}>

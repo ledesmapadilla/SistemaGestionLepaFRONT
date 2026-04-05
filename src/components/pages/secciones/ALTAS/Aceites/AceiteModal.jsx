@@ -51,11 +51,11 @@ const AceiteModal = ({ show, onHide, onSubmit, editando, aceite }) => {
           </Form.Group>
 
           <Form.Group className="mb-3">
-            <Form.Label className="fw-bold">Denominación Comercial *</Form.Label>
+            <Form.Label className="fw-bold">Denominación Comercial</Form.Label>
             <Form.Control
               type="text"
               placeholder="Ej: Rimula R4 15W40"
-              {...register("denominacion", { required: "Ingrese la denominación" })}
+              {...register("denominacion")}
             />
             <Form.Text className="text-danger">{errors.denominacion?.message}</Form.Text>
           </Form.Group>

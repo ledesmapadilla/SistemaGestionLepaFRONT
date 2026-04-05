@@ -1,17 +1,17 @@
+import authFetch from "./authFetch";
+
 const preciosBackend = import.meta.env.VITE_API_PRECIOS;
 
 export const listarPrecios = async () => {
-  return fetch(preciosBackend);
+  return authFetch(preciosBackend);
 };
 
 export const crearPrecio = async (precio) => {
   try {
-    const respuesta = await fetch(preciosBackend, {
+    return await authFetch(preciosBackend, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(precio),
     });
-    return respuesta;
   } catch (error) {
     console.error("Error al crear precio:", error);
     return null;
@@ -20,12 +20,10 @@ export const crearPrecio = async (precio) => {
 
 export const editarPrecio = async (id, precio) => {
   try {
-    const respuesta = await fetch(`${preciosBackend}/${id}`, {
+    return await authFetch(`${preciosBackend}/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(precio),
     });
-    return respuesta;
   } catch (error) {
     console.error("Error al editar precio:", error);
     return null;
@@ -34,10 +32,7 @@ export const editarPrecio = async (id, precio) => {
 
 export const borrarPrecio = async (id) => {
   try {
-    const respuesta = await fetch(`${preciosBackend}/${id}`, {
-      method: "DELETE",
-    });
-    return respuesta;
+    return await authFetch(`${preciosBackend}/${id}`, { method: "DELETE" });
   } catch (error) {
     console.error("Error al borrar precio:", error);
     return null;

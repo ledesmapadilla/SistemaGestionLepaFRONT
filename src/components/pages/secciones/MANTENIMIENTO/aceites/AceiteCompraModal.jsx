@@ -137,7 +137,7 @@ const AceiteCompraModal = ({ show, onHide, onSubmit, editando = false, compra = 
                   <Form.Control
                     type="number"
                     step="0.01"
-                    placeholder="Precio pagado"
+                    placeholder="Precio pagado total"
                     onWheel={sinScroll}
                     {...register("precio", { required: "Ingrese el precio", min: { value: 0.01, message: "El precio debe ser mayor a 0" } })}
                   />

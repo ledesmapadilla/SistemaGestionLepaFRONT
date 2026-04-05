@@ -45,24 +45,6 @@ const ProveedoresModal = ({
             <Form.Control
               {...register("contacto", {
                 required: "El contacto es obligatorio",
-                validate: (value) => {
-                  const normalizado = value.toLowerCase().trim();
-
-                  if (
-                    editando &&
-                    normalizado === contactoOriginal.toLowerCase().trim()
-                  ) {
-                    return true;
-                  }
-
-                  const existe = proveedores.some(
-                    (c) =>
-                      c.contacto?.toLowerCase().trim() === normalizado &&
-                      c._id !== proveedorId
-                  );
-
-                  return !existe || "El contacto ya existe";
-                },
               })}
             />
             <Form.Text className="text-danger">

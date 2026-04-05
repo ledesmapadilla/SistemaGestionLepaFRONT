@@ -1,17 +1,17 @@
+import authFetch from "./authFetch";
+
 const clientesBackend = import.meta.env.VITE_API_CLIENTES;
 
 export const listarClientes = async (query = "") => {
-  return fetch(`${clientesBackend}${query}`);
+  return authFetch(`${clientesBackend}${query}`);
 };
 
 export const crearCliente = async (cliente) => {
   try {
-    const respuesta = await fetch(clientesBackend, {
+    return await authFetch(clientesBackend, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(cliente),
     });
-    return respuesta;
   } catch (error) {
     console.error("Error al crear cliente:", error);
     return null;
@@ -20,12 +20,10 @@ export const crearCliente = async (cliente) => {
 
 export const editarCliente = async (id, cliente) => {
   try {
-    const respuesta = await fetch(`${clientesBackend}/${id}`, {
+    return await authFetch(`${clientesBackend}/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(cliente),
     });
-    return respuesta;
   } catch (error) {
     console.error("Error al editar cliente:", error);
     return null;
@@ -34,10 +32,7 @@ export const editarCliente = async (id, cliente) => {
 
 export const borrarCliente = async (id) => {
   try {
-    const respuesta = await fetch(`${clientesBackend}/${id}`, {
-      method: "DELETE",
-    });
-    return respuesta;
+    return await authFetch(`${clientesBackend}/${id}`, { method: "DELETE" });
   } catch (error) {
     console.error("Error al borrar cliente:", error);
     return null;
