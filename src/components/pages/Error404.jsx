@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "react-bootstrap";
-import "../../styles/Error404.css";
+import "../../styles/error404.css";
 
 const Error404 = () => {
   return (
