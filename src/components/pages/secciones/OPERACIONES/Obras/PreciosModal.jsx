@@ -1,20 +1,27 @@
 import { Modal, Button, Form, Table } from "react-bootstrap";
 import { useEffect, useState } from "react";
-import { listarMaquinas } from "../../../../../helpers/queriesMaquinas";
 
 //  Validación fila
 const hoy = () => new Date().toISOString().split("T")[0];
 
 const MAQUINA_A_PRECIO = {
   PC1: "PC200", PC2: "PC200", PC3: "PC200", PC4: "PC200", PC5: "PC200",
+  PC200: "PC200",
   JD1: "Retropala", JD2: "Retropala",
+  Retropala: "Retropala",
   WA200: "Pala cargadora",
+  "Pala cargadora": "Pala cargadora",
   Motoniveladora: "Motoniveladora",
   ETX: "Camión batea", EIQ: "Camión batea",
+  "Camión batea": "Camión batea",
   "Carretón chico": "Carretón chico",
   "Carretón grande": "Carretón grande",
   Batea: "Viaje batea",
+  "Viaje batea": "Viaje batea",
 };
+
+// Lista de grupos únicos para el dropdown de Alquiler
+const MAQUINAS_ALQUILER = [...new Set(Object.values(MAQUINA_A_PRECIO))];
 
 const esAlquiler = (clasificacion) =>
   clasificacion === "Alquiler c/gasoil" || clasificacion === "Alquiler s/gasoil";
@@ -37,25 +44,11 @@ const PreciosModal = ({
   gasoilAutomatic,
   ultimaListaPrecios = [],
 }) => {
-  //  Estado para almacenar las máquinas del backend
-  const [maquinasDB, setMaquinasDB] = useState([]);
   const [filasOriginales, setFilasOriginales] = useState(0);
 
   useEffect(() => {
     if (show) {
       setFilasOriginales(editando ? precios.length : 0);
-      const obtenerMaquinas = async () => {
-        try {
-          const respuesta = await listarMaquinas();
-          if (respuesta?.ok) {
-            const data = await respuesta.json();
-            setMaquinasDB(data);
-          }
-        } catch (error) {
-          console.error("Error cargando máquinas:", error);
-        }
-      };
-      obtenerMaquinas();
 
       if (precios.length === 0) {
         setPrecios([
@@ -247,9 +240,9 @@ const PreciosModal = ({
                           }
                         >
                           <option value="">Seleccione máquina</option>
-                          {maquinasDB.map((m) => (
-                            <option key={m._id} value={m.maquina}>
-                              {m.maquina}
+                          {MAQUINAS_ALQUILER.map((nombre) => (
+                            <option key={nombre} value={nombre}>
+                              {nombre}
                             </option>
                           ))}
                         </Form.Select>

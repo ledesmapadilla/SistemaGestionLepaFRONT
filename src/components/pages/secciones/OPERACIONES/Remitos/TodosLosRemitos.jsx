@@ -131,7 +131,7 @@ const TodosLosRemitos = () => {
   };
 
   const exportarExcel = () => {
-    const headers = ["Razón Social", "Obra", "N° Remito", "Fecha", "Maquinista", "$ Hora", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Gasoil (lts)"];
+    const headers = ["Razón Social", "Obra", "N° Remito", "Fecha", "Maquinista", "$/hs Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Gasoil (lts)"];
     const cols = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
@@ -349,7 +349,7 @@ const TodosLosRemitos = () => {
               <th>N° Remito</th>
               <th>Fecha</th>
               <th>Maquinista</th>
-              <th>$ Hora</th>
+              <th>$/hs Maquinista</th>
               <th>Máquina</th>
               <th>Servicio</th>
               <th>Cant.</th>

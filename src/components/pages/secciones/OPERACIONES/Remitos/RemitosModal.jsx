@@ -83,6 +83,21 @@ const buscarCostoHoraVigente = (personalDisponible, nombrePersonal, fechaRef) =>
     return Math.round((vigentes[0].valor / 44) * 100) / 100;
   }
 
+  // Fallback: si no hay entrada vigente a esa fecha, usar la más antigua (el sueldo fue asignado después de registrarse el remito)
+  const conFecha = [...semanal]
+    .filter((s) => s.fecha && s.fecha !== "-" && !isNaN(new Date(s.fecha.slice(0, 10)).getTime()))
+    .sort((a, b) => new Date(a.fecha.slice(0, 10)) - new Date(b.fecha.slice(0, 10)));
+
+  if (conFecha.length > 0) {
+    return Math.round((conFecha[0].valor / 44) * 100) / 100;
+  }
+
+  // Último fallback: entradas sin fecha válida (datos migrados)
+  const sinFecha = semanal.filter((s) => !s.fecha || s.fecha === "-");
+  if (sinFecha.length > 0) {
+    return Math.round((sinFecha[sinFecha.length - 1].valor / 44) * 100) / 100;
+  }
+
   return 0;
 };
 
@@ -476,7 +491,7 @@ const RemitosModal = ({
               <th>Alquiler</th>
               <th>Servicio</th>
               <th>Maquinista</th>
-              <th>$ Hora</th>
+              <th>$/hs Maquinista</th>
               <th>$ Unitario</th>
               <th>Cantidad</th>
               <th>Unidad</th>
