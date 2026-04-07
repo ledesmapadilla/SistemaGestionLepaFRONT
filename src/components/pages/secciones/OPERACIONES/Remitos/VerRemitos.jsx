@@ -294,21 +294,22 @@ const VerRemitos = () => {
                     <td>{remito.estado}</td>
                     <td>{item.gasoil || "-"}</td>
                     <td>
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => handleEliminarItem(remito._id, item._id)}
-                      >
-                        Borrar
-                      </Button>
-                      <Button
-                        variant="outline-warning"
-                        size="sm"
-                        className="mx-2"
-                        onClick={() => handleEditarItem(remito, item)}
-                      >
-                        Editar
-                      </Button>
+                      <div className="d-flex justify-content-center gap-1">
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => handleEliminarItem(remito._id, item._id)}
+                        >
+                          Borrar
+                        </Button>
+                        <Button
+                          variant="outline-warning"
+                          size="sm"
+                          onClick={() => handleEditarItem(remito, item)}
+                        >
+                          Editar
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 )),
