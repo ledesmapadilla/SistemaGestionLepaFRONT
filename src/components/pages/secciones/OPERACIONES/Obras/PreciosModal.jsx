@@ -298,6 +298,8 @@ const PreciosModal = ({
                           <option value="Horas">Horas</option>
                           <option value="Días">Días</option>
                           <option value="m3">m3</option>
+                          <option value="Un">Un</option>
+                          <option value="Viaje">Viaje</option>
                         </Form.Select>
                       ) : (
                         <Form.Control
