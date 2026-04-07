@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Button } from "react-bootstrap";
+import { Table, Button, Modal } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
 import { useLocation, useNavigate } from "react-router-dom";
 import RemitosModal from "./RemitosModal";
@@ -25,6 +25,7 @@ const VerRemitos = () => {
   const [remitos, setRemitos] = useState([]);
   const [precios, setPrecios] = useState(location.state?.precios || []);
   const [showModalRemito, setShowModalRemito] = useState(false);
+  const [obsSeleccionada, setObsSeleccionada] = useState("");
 
   const cargarRemitos = async () => {
     if (!obraId) return;
@@ -268,6 +269,7 @@ const VerRemitos = () => {
               <th>$ total</th>
               <th>Estado</th>
               <th>Gasoil(lts)</th>
+              <th>Observaciones</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -294,6 +296,19 @@ const VerRemitos = () => {
                     <td>{remito.estado}</td>
                     <td>{item.gasoil || "-"}</td>
                     <td>
+                      {item.observaciones ? (
+                        <Button
+                          variant="outline-warning"
+                          size="sm"
+                          onClick={() => setObsSeleccionada(item.observaciones)}
+                        >
+                          <i className="bi bi-eye text-warning"></i>
+                        </Button>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td>
                       <div className="d-flex justify-content-center gap-1">
                         <Button
                           variant="outline-danger"
@@ -316,7 +331,7 @@ const VerRemitos = () => {
               )
             ) : (
               <tr>
-                <td colSpan="13">No hay remitos</td>
+                <td colSpan="14">No hay remitos</td>
               </tr>
             )}
           </tbody>
@@ -364,6 +379,22 @@ const VerRemitos = () => {
           setRemitoEditando(null);
         }}
       />
+
+      <Modal
+        show={!!obsSeleccionada}
+        onHide={() => setObsSeleccionada("")}
+        centered
+      >
+        <Modal.Header closeButton className="border-bottom border-warning">
+          <Modal.Title>Observaciones</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{obsSeleccionada}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setObsSeleccionada("")}>
+            Cerrar
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

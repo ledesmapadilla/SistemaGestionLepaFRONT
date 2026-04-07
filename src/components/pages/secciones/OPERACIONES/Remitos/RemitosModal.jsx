@@ -19,6 +19,7 @@ const filaVacia = {
   gasoil: "",
   personal: "",
   costoHoraPersonal: "",
+  observaciones: "",
 };
 
 const formatearFechaInput = (valor) => {
@@ -337,6 +338,7 @@ const RemitosModal = ({
           unidad: filas[0].unidad || "",
           gasoil: Number(filas[0].gasoil || 0),
           estado: estado,
+          observaciones: filas[0].observaciones || "",
         };
 
         const respuesta = await editarItemRemito(
@@ -496,6 +498,7 @@ const RemitosModal = ({
               <th>Cantidad</th>
               <th>Unidad</th>
               <th>Gasoil</th>
+              <th>Observaciones</th>
               <th></th>
             </tr>
           </thead>
@@ -721,6 +724,16 @@ const RemitosModal = ({
                       />
                     </div>
                   </Form.Group>
+                </td>
+
+                <td>
+                  <Form.Control
+                    type="text"
+                    value={fila.observaciones || ""}
+                    onChange={(e) =>
+                      actualizarFila(index, "observaciones", e.target.value)
+                    }
+                  />
                 </td>
 
                 <td className="text-center">
