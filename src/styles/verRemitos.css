@@ -3,28 +3,35 @@
   color: var(--lepa-orange)
 }
 
-/* Tabla compacta para pantallas 13" */
-.tabla-remitos {
-  font-size: 0.78rem;
+/* Tabla compacta solo en pantallas menores a 15" (~1440px) */
+@media (max-width: 1440px) {
+  .tabla-remitos {
+    font-size: 0.78rem;
+  }
+
+  .tabla-remitos th,
+  .tabla-remitos td {
+    padding: 4px 6px !important;
+    white-space: nowrap;
+  }
+
+  .tabla-remitos .col-truncate {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tabla-remitos .col-truncate-sm {
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .th-long { display: none; }
 }
 
-.tabla-remitos th,
-.tabla-remitos td {
-  padding: 4px 6px !important;
-  white-space: nowrap;
-}
-
-/* Columnas con texto largo: truncar con ellipsis */
-.tabla-remitos .col-truncate {
-  max-width: 130px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tabla-remitos .col-truncate-sm {
-  max-width: 90px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+@media (min-width: 1441px) {
+  .th-short { display: none; }
 }

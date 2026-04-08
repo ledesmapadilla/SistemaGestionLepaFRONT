@@ -351,9 +351,15 @@ const TodosLosRemitos = () => {
               <th>Maquinista</th>
               <th>$/hs</th>
               <th>Máquina</th>
-              <th>Servicio</th>
+              <th>
+                <span className="th-long">Servicio</span>
+                <span className="th-short">Obs.</span>
+              </th>
               <th>Cant.</th>
-              <th>Ud.</th>
+              <th>
+                <span className="th-long">Unidad</span>
+                <span className="th-short">un.</span>
+              </th>
               <th>$ un</th>
               <th>$ total</th>
               <th>Estado</th>
