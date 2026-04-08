@@ -213,7 +213,7 @@ const TodosLosRemitos = () => {
     return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
-    <Container fluid className="my-3 px-4">
+    <Container fluid className="my-3 px-4 container-remitos">
       <div className="mb-2">
         <h4 className="text-center">
           <span className=" ">Listado de todos los remitos</span>
