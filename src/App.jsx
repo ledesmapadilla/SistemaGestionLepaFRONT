@@ -41,7 +41,7 @@ function App() {
               element={
                 <>
                   <Menu />
-                  <main className="container pt-5 mt-5">
+                  <main className="container-fluid px-0 pt-5 mt-5">
                     <Routes>
                       <Route path="/" element={<Inicio />} />
                       <Route path="/clientes" element={<Clientes />} />

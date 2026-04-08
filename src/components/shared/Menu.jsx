@@ -111,23 +111,18 @@ function Menu() {
               </NavDropdown.Item>
             </NavDropdown>
 
-            <Nav.Link
-              className="mx-2 d-flex align-items-center gap-2"
-              style={{ cursor: "default" }}
-              disabled
-            >
-              <span style={{ fontSize: "0.85rem", color: "var(--lepa-gray)" }}>
+            <div className="mx-2 d-flex flex-column align-items-center justify-content-center">
+              <span style={{ fontSize: "0.8rem", color: "var(--lepa-gray)", lineHeight: 1.1 }}>
                 {usuario?.nombre || usuario?.usuario}
               </span>
-            </Nav.Link>
-
-            <Nav.Link
-              onClick={handleLogout}
-              className="mx-2"
-              style={{ color: "var(--lepa-orange)", fontWeight: 600, cursor: "pointer" }}
-            >
-              Cerrar sesión
-            </Nav.Link>
+              <Nav.Link
+                onClick={handleLogout}
+                className="p-0"
+                style={{ color: "var(--lepa-orange)", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem" }}
+              >
+                Cerrar sesión
+              </Nav.Link>
+            </div>
 
           </Nav>
         </Navbar.Collapse>

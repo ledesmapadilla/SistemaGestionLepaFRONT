@@ -493,9 +493,7 @@ const RemitosModal = ({
               <th>Alquiler</th>
               <th>Servicio</th>
               <th>Maquinista</th>
-              <th>$/hs Maquinista</th>
-              <th>$ Unitario</th>
-              <th>Cantidad</th>
+              <th style={{ width: "70px" }}>Cant.</th>
               <th>Unidad</th>
               <th>Gasoil</th>
               <th>Observaciones</th>
@@ -649,36 +647,6 @@ const RemitosModal = ({
                   <Form.Control.Feedback type="invalid">
                     {erroresFilas[index]?.personal}
                   </Form.Control.Feedback>
-                </td>
-
-                <td>
-                  <Form.Control
-                    type="text"
-                    value={
-                      fila.costoHoraPersonal
-                        ? Number(fila.costoHoraPersonal).toLocaleString("es-AR", {
-                            style: "currency",
-                            currency: "ARS",
-                          })
-                        : ""
-                    }
-                    readOnly
-                  />
-                </td>
-
-                <td>
-                  <Form.Control
-                    type="text"
-                    value={
-                      fila.precioUnitario
-                        ? Number(fila.precioUnitario).toLocaleString("es-AR", {
-                            style: "currency",
-                            currency: "ARS",
-                          })
-                        : ""
-                    }
-                    readOnly
-                  />
                 </td>
 
                 <td>

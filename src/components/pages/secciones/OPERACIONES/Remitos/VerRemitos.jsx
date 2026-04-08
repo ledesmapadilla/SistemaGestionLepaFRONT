@@ -298,11 +298,11 @@ const VerRemitos = () => {
                     <td>
                       {item.observaciones ? (
                         <Button
-                          variant="outline-warning"
+                          variant="outline-success"
                           size="sm"
                           onClick={() => setObsSeleccionada(item.observaciones)}
                         >
-                          <i className="bi bi-eye text-warning"></i>
+                          Ver
                         </Button>
                       ) : (
                         "-"
