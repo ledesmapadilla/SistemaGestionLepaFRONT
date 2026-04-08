@@ -84,8 +84,19 @@ const ProveedoresModal = ({
           </Form.Group>
 
           <Form.Group>
-            <Form.Label>Teléfono</Form.Label>
-            <Form.Control {...register("telefono")} />
+            <Form.Label>Teléfono*</Form.Label>
+            <Form.Control
+              {...register("telefono", {
+                required: "El teléfono es obligatorio",
+                setValueAs: (v) => v?.trim(),
+                validate: (value) =>
+                  !proveedores.some(
+                    (p) =>
+                      p.telefono?.trim() === value?.trim() &&
+                      p._id !== proveedorId
+                  ) || "El teléfono ya está registrado en otro proveedor",
+              })}
+            />
             <Form.Text className="text-danger">{errors.telefono?.message}</Form.Text>
           </Form.Group>
         </Modal.Body>

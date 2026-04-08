@@ -27,7 +27,6 @@ const Clientes = () => {
     formState: { errors },
   } = useForm({
     defaultValues: valoresIniciales,
-    mode: "onChange",
   });
   const [clientes, setClientes] = useState([]);
   const [busqueda, setBusqueda] = useState("");
@@ -63,7 +62,6 @@ const Clientes = () => {
         respuesta = await crearCliente(data);
       }
 
-      //backend devolvió error
       if (!respuesta.ok) {
         const errorData = await respuesta.json();
 
@@ -76,7 +74,6 @@ const Clientes = () => {
         return;
       }
 
-      // éxito
       const resData = await respuesta.json();
 
       if (editando) {
@@ -148,7 +145,6 @@ const Clientes = () => {
       email: cliente.email,
       telefono: cliente.telefono,
     });
-
     setShowModal(true);
   };
 
@@ -158,8 +154,6 @@ const Clientes = () => {
     reset(valoresIniciales);
     setShowModal(true);
   };
-
-  
 
   return (
     <>
@@ -181,6 +175,8 @@ const Clientes = () => {
         handleSubmit={handleSubmit}
         errors={errors}
         cerrarModal={cerrarModal}
+        clientes={clientes}
+        clienteId={clienteId}
       />
     </>
   );

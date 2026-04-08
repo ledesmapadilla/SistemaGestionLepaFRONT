@@ -10,6 +10,8 @@ const ClientesModal = ({
   handleSubmit,
   errors,
   cerrarModal,
+  clientes,
+  clienteId,
 }) => {
   return (
     <Modal show={show} onHide={onHide} centered>
@@ -71,6 +73,13 @@ const ClientesModal = ({
             <Form.Control
               {...register("telefono", {
                 required: "El teléfono es obligatorio",
+                setValueAs: (v) => v?.trim(),
+                validate: (value) =>
+                  !clientes.some(
+                    (c) =>
+                      c.telefono?.trim() === value?.trim() &&
+                      c._id !== clienteId
+                  ) || "El teléfono ya está registrado en otro cliente",
               })}
             />
             <Form.Text className="text-danger">

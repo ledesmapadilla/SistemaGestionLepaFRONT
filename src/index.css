@@ -12,9 +12,9 @@ main {
 
 /* SweetAlert2 - Tema oscuro global */
 .swal2-popup {
-  background-color: var(--lepa-black, #111111) !important;
+  background-color: #212529 !important;
   color: var(--lepa-white, #ffffff) !important;
-  border: 1px solid var(--lepa-white, #ffffff) !important;
+  border: 1px solid #495057 !important;
 }
 
 .swal2-title {
@@ -50,7 +50,7 @@ main {
 }
 
 .swal2-input {
-  background-color: var(--lepa-black, #111111) !important;
+  background-color: #212529 !important;
   color: var(--lepa-white, #ffffff) !important;
   border: 1px solid #6b7280 !important;
 }
@@ -61,6 +61,6 @@ main {
 }
 
 .swal2-validation-message {
-  background-color: var(--lepa-black, #111111) !important;
+  background-color: #212529 !important;
   color: #dc2626 !important;
 }
