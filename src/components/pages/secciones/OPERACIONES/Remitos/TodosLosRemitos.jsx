@@ -340,20 +340,20 @@ const TodosLosRemitos = () => {
           striped
           bordered
           hover
-          className="align-middle text-center table-sm"
+          className="align-middle text-center table-sm tabla-remitos"
         >
           <thead className="table-dark">
             <tr>
               <th>Razón Social</th>
               <th>Obra</th>
-              <th>N° Remito</th>
+              <th>Remito</th>
               <th>Fecha</th>
               <th>Maquinista</th>
-              <th>$/hs Maquinista</th>
+              <th>$/hs</th>
               <th>Máquina</th>
               <th>Servicio</th>
               <th>Cant.</th>
-              <th>Unidad</th>
+              <th>Ud.</th>
               <th>$ un</th>
               <th>$ total</th>
               <th>Estado</th>
@@ -366,16 +366,16 @@ const TodosLosRemitos = () => {
               remitosFiltrados.map((remito) =>
                 remito.items.map((item, index) => (
                   <tr key={`${remito._id}-${item._id}`}>
-                    <td>{remito.obra?.razonsocial}</td>
-                    <td className="text-muted">{remito.obra?.nombreobra}</td>
+                    <td className="col-truncate" title={remito.obra?.razonsocial}>{remito.obra?.razonsocial}</td>
+                    <td className="col-truncate text-muted" title={remito.obra?.nombreobra}>{remito.obra?.nombreobra}</td>
                     <td>{remito.remito}</td>
                     <td className="fecha-col">
                       {mostrarFechaDMY(item.fecha || remito.fecha)}
                     </td>
-                    <td>{item.personal || "-"}</td>
+                    <td className="col-truncate-sm" title={item.personal}>{item.personal || "-"}</td>
                     <td>{item.costoHoraPersonal ? `$${formatoMiles(item.costoHoraPersonal)}` : "-"}</td>
-                    <td>{item.maquina || "-"}</td>
-                    <td>{item.servicio || "-"}</td>
+                    <td className="col-truncate-sm" title={item.maquina}>{item.maquina || "-"}</td>
+                    <td className="col-truncate-sm" title={item.servicio}>{item.servicio || "-"}</td>
                     <td>{item.cantidad}</td>
                     <td>{item.unidad}</td>
                     <td>${formatoMiles(item.precioUnitario)}</td>

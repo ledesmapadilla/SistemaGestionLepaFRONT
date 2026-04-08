@@ -1,6 +1,30 @@
 
-
 .nombreTitulos{
-  color: var(--lepa-orange) 
+  color: var(--lepa-orange)
+}
 
+/* Tabla compacta para pantallas 13" */
+.tabla-remitos {
+  font-size: 0.78rem;
+}
+
+.tabla-remitos th,
+.tabla-remitos td {
+  padding: 4px 6px !important;
+  white-space: nowrap;
+}
+
+/* Columnas con texto largo: truncar con ellipsis */
+.tabla-remitos .col-truncate {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tabla-remitos .col-truncate-sm {
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
