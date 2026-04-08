@@ -46,22 +46,20 @@ function Menu() {
 
         <Navbar.Collapse id="navbar-nav">
           <Nav className="ms-auto">
-            <Nav.Link as={Link} to="/" className="mx-5">
+            <Nav.Link as={Link} to="/" className="mx-2">
               Inicio
             </Nav.Link>
-
-
 
             <NavDropdown
               title="Sección Operaciones"
               id="nav-dropdown"
-              className="mx-5"
+              className="mx-2"
             >
               <NavDropdown.Item as={Link} to="/obras" className="text-center">
                 Obras
               </NavDropdown.Item>
 
-              <NavDropdown title="Remitos" id="nav-dropdown" className="mx-5">
+              <NavDropdown title="Remitos" id="nav-dropdown" className="mx-3">
                 <NavDropdown.Item as={Link} to="/remitos-sinfacturar">
                   Remitos sin facturar
                 </NavDropdown.Item>
@@ -70,21 +68,20 @@ function Menu() {
                 </NavDropdown.Item>
               </NavDropdown>
 
-              <NavDropdown title="Informes" id="nav-dropdown" className="mx-5">
+              <NavDropdown title="Informes" id="nav-dropdown" className="mx-3">
                 <NavDropdown.Item as={Link} to="/costos-obra">
                   Análisis de costos
                 </NavDropdown.Item>
               </NavDropdown>
             </NavDropdown>
 
-
-            <NavDropdown title="Sección Mantenimiento" id="nav-dropdown">
+            <NavDropdown title="Sección Mantenimiento" id="nav-dropdown" className="mx-2">
               <NavDropdown.Item as={Link} to="/consumo-aceites">
                 Consumo aceites
               </NavDropdown.Item>
             </NavDropdown>
 
-            <NavDropdown title="Sección Contable" id="nav-dropdown" className="mx-5">
+            <NavDropdown title="Sección Contable" id="nav-dropdown" className="mx-2">
               <NavDropdown.Item as={Link} to="/variables">
                 Variables
               </NavDropdown.Item>
@@ -93,7 +90,7 @@ function Menu() {
               </NavDropdown.Item>
             </NavDropdown>
 
-            <NavDropdown title="ALTAS" id="nav-dropdown" className="mx-5">
+            <NavDropdown title="ALTAS" id="nav-dropdown" className="mx-2">
               <NavDropdown.Item as={Link} to="/proveedores">
                 Proveedores
               </NavDropdown.Item>
@@ -115,7 +112,7 @@ function Menu() {
             </NavDropdown>
 
             <Nav.Link
-              className="mx-3 d-flex align-items-center gap-2"
+              className="mx-2 d-flex align-items-center gap-2"
               style={{ cursor: "default" }}
               disabled
             >
@@ -126,7 +123,7 @@ function Menu() {
 
             <Nav.Link
               onClick={handleLogout}
-              className="mx-3"
+              className="mx-2"
               style={{ color: "var(--lepa-orange)", fontWeight: 600, cursor: "pointer" }}
             >
               Cerrar sesión
