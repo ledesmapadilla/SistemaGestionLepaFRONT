@@ -124,7 +124,7 @@ const AceiteCrud = () => {
         <h4>Alta de aceites</h4>
       </div>
 
-      <Row className="align-items-center mb-3">
+      <Row className="align-items-center mb-3 mx-3">
         <Col xs={12} md={4}>
           <Form.Control
             type="search"

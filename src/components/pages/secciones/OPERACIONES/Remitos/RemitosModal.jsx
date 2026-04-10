@@ -245,7 +245,7 @@ const RemitosModal = ({
       ...nuevasFilas[index],
       maquina: tipo === "Alquiler" ? trabajo : "",
       servicio: tipo === "Servicio" ? trabajo : "",
-      precioUnitario: item?.precio || "",
+      precioUnitario: item ? item.precio : "",
       unidad: item?.unidad || "",
     };
 
@@ -293,8 +293,8 @@ const RemitosModal = ({
           cantidad:
             tieneDatos && !Number(f.cantidad) ? "Complete cantidad" : "",
           precio:
-            tieneDatos && !Number(f.precioUnitario)
-              ? "Seleccione máquina o servicio"
+            tieneDatos && (f.precioUnitario === "" || f.precioUnitario === null || f.precioUnitario === undefined)
+              ? "Ingrese precio"
               : "",
           fecha: !f.fecha ? "Complete fecha" : "",
           personal: tieneDatos && !f.personal ? "Seleccione personal" : "",
@@ -313,7 +313,7 @@ const RemitosModal = ({
       // FILTRAR ÍTEMS VÁLIDOS
       const itemsValidos = filas.filter(
         (f) =>
-          Number(f.cantidad) > 0 && Number(f.precioUnitario) > 0 && f.fecha
+          Number(f.cantidad) > 0 && f.precioUnitario !== "" && f.precioUnitario !== null && f.precioUnitario !== undefined && f.fecha
       );
 
       if (!itemsValidos.length) {

@@ -181,10 +181,10 @@ const MaquinaTabla = () => {
   return (
     <Container className="my-3" fluid> {/* Use fluid para aprovechar ancho completo */}
       <div className="">
-        <h4 className="">Administración de Máquinas</h4>
+        <h4 className="mx-5">Administración de Máquinas</h4>
       </div>
 
-      <Row className="align-items-center mb-3">
+      <Row className="align-items-center mb-3 mx-3">
         <Col xs={12} md={4}>
           <Form.Control
             type="search"
@@ -194,7 +194,7 @@ const MaquinaTabla = () => {
           />
         </Col>
 
-        <Col xs={12} md={4} className="offset-md-4 d-flex flex-column align-items-end gap-2 mt-3 mt-md-0">
+        <Col xs={12} md={4} className="offset-md-4 d-flex flex-column align-items-end gap-2 mt-3 mt-md-0 ">
           <Button variant="outline-success" onClick={() => navigate(-1)} className="px-4">Volver</Button>
           <Button variant="outline-primary" onClick={abrirCrear}>Nueva Máquina</Button>
         </Col>

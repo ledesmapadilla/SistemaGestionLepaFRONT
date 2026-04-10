@@ -21,9 +21,9 @@ const ProveedoresCrud = ({
 
   return (
     <>
-      <h2 className="mt-2">Proveedores</h2>
+      <h2 className="mt-2 mx-3">Proveedores</h2>
 
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-3 mx-3">
         <div className="w-25">
           <Form.Control
             type="search"
@@ -32,7 +32,7 @@ const ProveedoresCrud = ({
             onChange={(e) => setBusqueda(e.target.value)}
           />
         </div>
-        <div className="d-flex flex-column gap-2">
+        <div className="d-flex flex-column gap-2 mx-3">
           <Button variant="outline-success" onClick={() => navigate(-1)}>
             Volver
           </Button>
@@ -42,7 +42,7 @@ const ProveedoresCrud = ({
         </div>
       </div>
 
-      <div className="table-responsive">
+      <div className="table-responsive mx-3 mt-3">
         <Table striped bordered hover className="text-center align-middle">
           <thead className="table-dark">
             <tr>

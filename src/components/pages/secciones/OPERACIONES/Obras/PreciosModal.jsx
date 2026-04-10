@@ -23,6 +23,17 @@ const MAQUINA_A_PRECIO = {
 // Lista de grupos únicos para el dropdown de Alquiler
 const MAQUINAS_ALQUILER = [...new Set(Object.values(MAQUINA_A_PRECIO))];
 
+const MAQUINA_A_UNIDAD = {
+  PC200: "Horas",
+  Retropala: "Horas",
+  "Pala cargadora": "Horas",
+  Motoniveladora: "Horas",
+  "Camión batea": "Viaje",
+  "Carretón chico": "Viaje",
+  "Carretón grande": "Viaje",
+  "Viaje batea": "Viaje",
+};
+
 const esAlquiler = (clasificacion) =>
   clasificacion === "Alquiler c/gasoil" || clasificacion === "Alquiler s/gasoil";
 
@@ -121,22 +132,29 @@ const PreciosModal = ({
                 const precioValor = valor === "Alquiler s/gasoil"
                   ? precioLista.sinGasoil
                   : precioLista.completo;
-                return { ...p, clasificacion: valor, precio: String(Math.round(precioValor)) };
+                return { ...p, clasificacion: valor, precio: precioValor > 0 ? String(Math.round(precioValor)) : "" };
               }
             }
           }
 
-          // Auto-fill precio cuando se selecciona máquina en Alquiler
+          // Auto-fill precio y unidad cuando se selecciona máquina en Alquiler
           if (campo === "trabajo" && esAlquiler(p.clasificacion) && valor) {
             const nombrePrecio = MAQUINA_A_PRECIO[valor];
             if (nombrePrecio) {
+              const unidadDefault = MAQUINA_A_UNIDAD[nombrePrecio] || "";
               const precioLista = ultimaListaPrecios.find((lp) => lp.maquina === nombrePrecio);
               if (precioLista) {
                 const precioValor = p.clasificacion === "Alquiler s/gasoil"
                   ? precioLista.sinGasoil
                   : precioLista.completo;
-                return { ...p, trabajo: valor, precio: String(Math.round(precioValor)) };
+                return {
+                  ...p,
+                  trabajo: valor,
+                  precio: precioValor > 0 ? String(Math.round(precioValor)) : "",
+                  unidad: p.unidad || unidadDefault,
+                };
               }
+              return { ...p, trabajo: valor, unidad: p.unidad || unidadDefault };
             }
           }
 
