@@ -2,8 +2,9 @@ import authFetch from "./authFetch";
 
 const remitosBackend = import.meta.env.VITE_API_REMITOS;
 
-export const listarRemitos = async () => {
-  const res = await authFetch(`${remitosBackend}?t=${Date.now()}`);
+export const listarRemitos = async (estado = "") => {
+  const estadoQuery = estado ? `&estado=${encodeURIComponent(estado)}` : "";
+  const res = await authFetch(`${remitosBackend}?t=${Date.now()}${estadoQuery}`);
   if (!res?.ok) throw new Error("Error al listar remitos");
   return res.json();
 };

@@ -88,6 +88,9 @@ function Menu() {
               <NavDropdown.Item as={Link} to="/precios">
                 Precios
               </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/facturacion">
+                Facturación Cliente
+              </NavDropdown.Item>
             </NavDropdown>
 
             <NavDropdown title="ALTAS" id="nav-dropdown" className="mx-2">

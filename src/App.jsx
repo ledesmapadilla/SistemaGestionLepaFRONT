@@ -25,6 +25,8 @@ import AceiteCrud from "./components/pages/secciones/ALTAS/Aceites/AceiteCrud.js
 import UsuariosCrud from "./components/pages/secciones/ALTAS/Usuarios/UsuariosCrud.jsx";
 import Variables from "./components/pages/secciones/CONTABLE/Variables/Variables.jsx";
 import Precios from "./components/pages/secciones/CONTABLE/Precios/Precios.jsx";
+import FacturacionCliente from "./components/pages/secciones/CONTABLE/Facturacion/FacturacionCliente.jsx";
+import NuevaFactura from "./components/pages/secciones/CONTABLE/Facturacion/NuevaFactura.jsx";
 
 function App() {
   return (
@@ -68,6 +70,8 @@ function App() {
                       <Route path="/usuarios" element={<UsuariosCrud />} />
                       <Route path="/variables" element={<Variables />} />
                       <Route path="/precios" element={<Precios />} />
+                      <Route path="/facturacion" element={<FacturacionCliente />} />
+                      <Route path="/facturacion/nueva" element={<NuevaFactura />} />
                       <Route path="*" element={<Error404 />} />
                     </Routes>
                   </main>
