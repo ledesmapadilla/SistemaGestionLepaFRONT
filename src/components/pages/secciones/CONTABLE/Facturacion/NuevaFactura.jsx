@@ -4,10 +4,10 @@ import { Button, Table, Container, Form, Row, Col, Spinner, InputGroup } from "r
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { crearFactura } from "../../../../../helpers/queriesFacturas";
+import { crearFactura, listarFacturas } from "../../../../../helpers/queriesFacturas";
 import { listarRemitos } from "../../../../../helpers/queriesRemitos";
 
-const hoy = new Date().toISOString().split("T")[0];
+const hoy = new Date().toLocaleDateString("en-CA");
 
 const formatearFecha = (fecha) => {
   if (!fecha) return "-";
@@ -27,6 +27,7 @@ const NuevaFactura = () => {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm();
 
@@ -35,6 +36,8 @@ const NuevaFactura = () => {
   const [remitosSeleccionados, setRemitosSeleccionados] = useState([]);
   const [remitoElegido, setRemitoElegido] = useState("");
   const [loadingDatos, setLoadingDatos] = useState(true);
+  const [numerosExistentes, setNumerosExistentes] = useState([]);
+  const [todasFacturas, setTodasFacturas] = useState([]);
   const [totalBase, setTotalBase] = useState(0);
   const [inputSinIva, setInputSinIva] = useState("");
   const [inputConIva, setInputConIva] = useState("");
@@ -45,11 +48,21 @@ const NuevaFactura = () => {
   const tipoFactura = watch("tipoFactura");
   const ivaRate = tipoFactura === "Factura X" ? 0 : 0.21;
 
+  const esNotaCredito = tipoFactura === "Nota de Crédito";
+
   useEffect(() => {
     const cargar = async () => {
+      setLoadingDatos(true);
       try {
-        const sinFacturar = await listarRemitos("Sin facturar");
-        setTodosRemitos(sinFacturar);
+        const estado = esNotaCredito ? "Facturado" : "Sin facturar";
+        const [remitos, facturas] = await Promise.all([
+          listarRemitos(estado),
+          listarFacturas(),
+        ]);
+        setTodosRemitos(remitos);
+        setRemitosSeleccionados([]);
+        setNumerosExistentes(facturas.map((f) => f.numeroFactura?.toString().trim()));
+        setTodasFacturas(facturas);
       } catch (error) {
         console.error(error);
       } finally {
@@ -57,7 +70,20 @@ const NuevaFactura = () => {
       }
     };
     cargar();
-  }, []);
+  }, [esNotaCredito]);
+
+  useEffect(() => {
+    if (tipoFactura === "Factura X") {
+      const numerosX = todasFacturas
+        .filter((f) => f.tipoFactura === "Factura X")
+        .map((f) => Number(f.numeroFactura))
+        .filter((n) => !isNaN(n));
+      const siguiente = numerosX.length > 0 ? Math.max(...numerosX) + 1 : 1;
+      setValue("numeroFactura", siguiente, { shouldValidate: true });
+    } else {
+      setValue("numeroFactura", "", { shouldValidate: false });
+    }
+  }, [tipoFactura, todasFacturas]);
 
   const clientesConRemitos = [
     ...new Set(todosRemitos.map((r) => r.obra?.razonsocial).filter(Boolean)),
@@ -91,10 +117,12 @@ const NuevaFactura = () => {
     setRemitosSeleccionados(remitosSeleccionados.filter((r) => r._id !== id));
   };
 
+  const signo = esNotaCredito ? -1 : 1;
+
   const totalCalculado = remitosSeleccionados.reduce(
     (sum, r) => sum + calcularTotalRemito(r.items),
     0
-  );
+  ) * signo;
 
   useEffect(() => {
     setTotalBase(totalCalculado);
@@ -139,11 +167,9 @@ const NuevaFactura = () => {
 
   return (
     <Container className="py-4 w-75">
-      <div className="d-flex align-items-center mb-4 gap-3">
-        <Button variant="outline-secondary" size="sm" onClick={() => navigate("/facturacion")}>
-          ← Volver
-        </Button>
+      <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">Nueva Factura</h2>
+        <Button variant="outline-success" onClick={() => navigate("/facturacion")}>Volver</Button>
       </div>
 
       <Form onSubmit={handleSubmit(onSubmit)}>
@@ -154,16 +180,17 @@ const NuevaFactura = () => {
               <Form.Control
                 type="date"
                 max={hoy}
-                {...register("fecha", { required: true })}
+                {...register("fecha", { required: "La fecha es obligatoria" })}
                 isInvalid={!!errors.fecha}
               />
+              <Form.Text className="text-danger">{errors.fecha?.message}</Form.Text>
             </Form.Group>
           </Col>
           <Col md={3}>
             <Form.Group>
               <Form.Label>Tipo de Factura</Form.Label>
               <Form.Select
-                {...register("tipoFactura", { required: true })}
+                {...register("tipoFactura", { required: "El tipo es obligatorio" })}
                 isInvalid={!!errors.tipoFactura}
               >
                 <option value="">Seleccionar...</option>
@@ -172,6 +199,7 @@ const NuevaFactura = () => {
                 <option>Nota de Crédito</option>
                 <option>Nota de Débito</option>
               </Form.Select>
+              <Form.Text className="text-danger">{errors.tipoFactura?.message}</Form.Text>
             </Form.Group>
           </Col>
           <Col md={3}>
@@ -179,16 +207,24 @@ const NuevaFactura = () => {
               <Form.Label>Número de Factura</Form.Label>
               <Form.Control
                 type="text"
-                {...register("numeroFactura", { required: true })}
+                readOnly={tipoFactura === "Factura X"}
+                className={tipoFactura === "Factura X" ? "text-muted" : ""}
+                {...register("numeroFactura", {
+                  required: "El número es obligatorio",
+                  validate: (v) =>
+                    !numerosExistentes.includes(v?.toString().trim()) ||
+                    "Este número de factura ya existe",
+                })}
                 isInvalid={!!errors.numeroFactura}
               />
+              <Form.Text className="text-danger">{errors.numeroFactura?.message}</Form.Text>
             </Form.Group>
           </Col>
           <Col md={3}>
             <Form.Group>
               <Form.Label>Cliente</Form.Label>
               <Form.Select
-                {...register("cliente", { required: true })}
+                {...register("cliente", { required: "El cliente es obligatorio" })}
                 isInvalid={!!errors.cliente}
               >
                 <option value="">Seleccionar...</option>
@@ -198,6 +234,7 @@ const NuevaFactura = () => {
                   </option>
                 ))}
               </Form.Select>
+              <Form.Text className="text-danger">{errors.cliente?.message}</Form.Text>
             </Form.Group>
           </Col>
         </Row>
@@ -229,7 +266,7 @@ const NuevaFactura = () => {
         </Row>
 
         {remitosSeleccionados.length > 0 && (
-          <Table bordered size="sm" className="text-center align-middle mb-2">
+          <Table striped bordered hover className="text-center align-middle mb-2">
             <thead className="table-dark">
               <tr>
                 <th>N° Remito</th>
@@ -244,21 +281,15 @@ const NuevaFactura = () => {
                 <tr key={r._id}>
                   <td>{r.remito}</td>
                   <td>{formatearFecha(r.fecha)}</td>
-                  <td>{r.obra?.nombreobra}</td>
-                  <td>{formatoMoneda(calcularTotalRemito(r.items))}</td>
-                  <td>
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => quitarRemito(r._id)}
-                    >
-                      Quitar
-                    </Button>
+                  <td className="text-muted" title={r.obra?.nombreobra}>{r.obra?.nombreobra}</td>
+                  <td>{formatoMoneda(calcularTotalRemito(r.items) * signo)}</td>
+                  <td className="d-flex gap-1 justify-content-center align-items-center">
+                    <Button variant="outline-danger" size="sm" onClick={() => quitarRemito(r._id)}>Quitar</Button>
                   </td>
                 </tr>
               ))}
             </tbody>
-            <tfoot>
+            <tfoot style={{ borderTop: "2px solid #ffc107" }}>
               <tr>
                 <td colSpan={3} className="text-end">Subtotal (sin IVA):</td>
                 <td>
@@ -303,15 +334,9 @@ const NuevaFactura = () => {
         )}
 
         <div className="d-flex justify-content-end mt-4 gap-2">
-          <Button variant="outline-secondary" onClick={() => navigate("/facturacion")}>
-            Cancelar
-          </Button>
-          <Button variant="outline-light" onClick={agregarRemito} disabled={!remitoElegido}>
-            + Agregar Remito
-          </Button>
-          <Button type="submit" variant="dark">
-            Guardar Factura
-          </Button>
+          <Button variant="outline-secondary" onClick={() => navigate("/facturacion")}>Cancelar</Button>
+          <Button variant="outline-primary" onClick={agregarRemito} disabled={!remitoElegido}>+ Agregar Remito</Button>
+          <Button type="submit" variant="outline-success">Guardar Factura</Button>
         </div>
       </Form>
     </Container>

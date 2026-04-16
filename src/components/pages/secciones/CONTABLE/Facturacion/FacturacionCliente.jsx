@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Button, Table, Badge, Container, Spinner, Modal, Form, Row, Col } from "react-bootstrap";
+import { Button, Table, Container, Spinner, Modal, Form, Row, Col } from "react-bootstrap";
+import XLSXStyle from "xlsx-js-style";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { listarFacturas, editarFactura, borrarFactura } from "../../../../../helpers/queriesFacturas";
 
-const hoy = new Date().toISOString().split("T")[0];
+const hoy = new Date().toLocaleDateString("en-CA");
 
 const formatoMoneda = (valor) => {
   if (valor === undefined || valor === null) return "-";
@@ -28,6 +29,9 @@ const FacturacionCliente = () => {
   const [facturaVerId, setFacturaVerId] = useState(null);
   const facturaVer = facturas.find((f) => f._id === facturaVerId) || null;
   const [facturaEditar, setFacturaEditar] = useState(null);
+  const [filtroNumero, setFiltroNumero] = useState("");
+  const [filtroCliente, setFiltroCliente] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("");
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   useEffect(() => {
@@ -75,12 +79,12 @@ const FacturacionCliente = () => {
 
   const eliminar = async (id) => {
     const result = await Swal.fire({
-      title: "¿Eliminar factura?",
+      title: "¿Borrar factura?",
       text: "Los remitos volverán a estado 'sin facturar'",
       icon: "warning",
       showCancelButton: true,
       customClass: { confirmButton: "swal-btn-danger" },
-      confirmButtonText: "Sí, eliminar",
+      confirmButtonText: "Sí, borrar",
       cancelButtonText: "Cancelar",
     });
 
@@ -93,6 +97,58 @@ const FacturacionCliente = () => {
     }
   };
 
+  const exportarExcel = () => {
+    const headers = ["N° Factura", "Fecha", "Cliente", "Tipo", "Total (con iva)", "Estado"];
+    const cols = ["A", "B", "C", "D", "E", "F"];
+    const currencyFmt = '"$"#,##0.00';
+    const centerAlign = { horizontal: "center", vertical: "center" };
+    const leftAlign = { horizontal: "left", vertical: "center" };
+
+    const filas = facturasFiltradas.map((f) => [
+      f.numeroFactura,
+      formatearFecha(f.fecha),
+      f.cliente,
+      f.tipoFactura,
+      f.tipoFactura === "Factura X" ? f.total : f.total * 1.21,
+      f.estadoPago,
+    ]);
+
+    const ws = {};
+    ws["A1"] = { v: "LISTADO DE FACTURAS", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+
+    headers.forEach((h, i) => {
+      ws[`${cols[i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
+    });
+
+    filas.forEach((fila, rowIdx) => {
+      fila.forEach((val, colIdx) => {
+        const isCurrency = colIdx === 4 && typeof val === "number";
+        ws[`${cols[colIdx]}${rowIdx + 4}`] = {
+          v: val ?? "-",
+          t: isCurrency ? "n" : typeof val === "number" ? "n" : "s",
+          s: { alignment: centerAlign, ...(isCurrency ? { numFmt: currencyFmt } : {}) },
+          ...(isCurrency ? { z: currencyFmt } : {}),
+        };
+      });
+    });
+
+    ws["!ref"] = `A1:F${filas.length + 3}`;
+    ws["!cols"] = [{ wch: 14 }, { wch: 12 }, { wch: 28 }, { wch: 18 }, { wch: 18 }, { wch: 12 }];
+
+    const libro = XLSXStyle.utils.book_new();
+    XLSXStyle.utils.book_append_sheet(libro, ws, "Facturas");
+    XLSXStyle.writeFile(libro, "Listado_Facturas.xlsx");
+  };
+
+  const clientesUnicos = [...new Set(facturas.map((f) => f.cliente).filter(Boolean))].sort();
+
+  const facturasFiltradas = facturas.filter((f) => {
+    const coincideNumero = filtroNumero === "" || f.numeroFactura?.toString().includes(filtroNumero);
+    const coincideCliente = filtroCliente === "" || f.cliente === filtroCliente;
+    const coincideEstado = filtroEstado === "" || f.estadoPago === filtroEstado;
+    return coincideNumero && coincideCliente && coincideEstado;
+  });
+
   const subtotal = facturaVer
     ? (facturaVer.remitos || []).reduce((sum, r) => sum + calcularTotalRemito(r.items), 0)
     : 0;
@@ -100,11 +156,45 @@ const FacturacionCliente = () => {
 
   return (
     <Container className="py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Facturación <small className="text-muted fs-5">(IVA incluido)</small></h2>
-        <Button variant="dark" onClick={() => navigate("/facturacion/nueva")}>
-          + Nueva Factura
-        </Button>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2>Listado de facturas <small className="text-muted fs-5">(iva incluido)</small></h2>
+        <div className="d-flex gap-2">
+          <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
+          <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+          <Button variant="outline-primary" onClick={() => navigate("/facturacion/nueva")}>Nueva Factura</Button>
+        </div>
+      </div>
+
+      <div className="d-flex gap-3 mb-3">
+        <Form.Select
+          value={filtroNumero}
+          onChange={(e) => setFiltroNumero(e.target.value)}
+          style={{ maxWidth: "180px" }}
+        >
+          <option value="">Todos los N°</option>
+          {[...new Set(facturas.map((f) => f.numeroFactura).filter(Boolean))].sort().map((n) => (
+            <option key={n} value={n}>{n}</option>
+          ))}
+        </Form.Select>
+        <Form.Select
+          value={filtroCliente}
+          onChange={(e) => setFiltroCliente(e.target.value)}
+          style={{ maxWidth: "250px" }}
+        >
+          <option value="">Todos los clientes</option>
+          {clientesUnicos.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </Form.Select>
+        <Form.Select
+          value={filtroEstado}
+          onChange={(e) => setFiltroEstado(e.target.value)}
+          style={{ maxWidth: "180px" }}
+        >
+          <option value="">Todos los estados</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="Pagada">Pagada</option>
+        </Form.Select>
       </div>
 
       {loading ? (
@@ -112,7 +202,7 @@ const FacturacionCliente = () => {
           <Spinner animation="border" />
         </div>
       ) : (
-        <Table bordered striped hover size="sm" className="text-center align-middle">
+        <Table striped bordered hover className="text-center align-middle">
           <thead className="table-dark">
             <tr>
               <th>Nro</th>
@@ -125,41 +215,25 @@ const FacturacionCliente = () => {
             </tr>
           </thead>
           <tbody>
-            {facturas.length === 0 ? (
+            {facturasFiltradas.length === 0 ? (
               <tr>
                 <td colSpan={7} className="text-muted py-3">
                   Sin facturas cargadas
                 </td>
               </tr>
             ) : (
-              facturas.map((f) => (
+              facturasFiltradas.map((f) => (
                 <tr key={f._id}>
                   <td>{f.numeroFactura}</td>
                   <td>{formatearFecha(f.fecha)}</td>
                   <td>{f.cliente}</td>
                   <td>{f.tipoFactura}</td>
                   <td>{formatoMoneda(f.tipoFactura === "Factura X" ? f.total : f.total * 1.21)}</td>
-                  <td>
-                    <Badge
-                      bg={f.estadoPago === "Pagada" ? "success" : "warning"}
-                      text={f.estadoPago === "Pagada" ? undefined : "dark"}
-                    >
-                      {f.estadoPago}
-                    </Badge>
-                  </td>
-                  <td>
-                    <Button variant="outline-info" size="sm" className="me-1" onClick={() => setFacturaVerId(f._id)}>
-                      Ver
-                    </Button>
-                    <Button variant="outline-warning" size="sm" className="me-1" onClick={() => abrirEditar(f)}>
-                      Editar
-                    </Button>
-                    <Button variant="outline-secondary" size="sm" className="me-1" onClick={() => toggleEstado(f)}>
-                      {f.estadoPago === "Pagada" ? "Marcar pendiente" : "Marcar pagada"}
-                    </Button>
-                    <Button variant="outline-danger" size="sm" onClick={() => eliminar(f._id)}>
-                      Eliminar
-                    </Button>
+                  <td>{f.estadoPago}</td>
+                  <td className="d-flex gap-1 justify-content-center align-items-center">
+                    <Button variant="outline-success" size="sm" onClick={() => setFacturaVerId(f._id)}>Ver</Button>
+                    <Button variant="outline-warning" size="sm" onClick={() => abrirEditar(f)}>Editar</Button>
+                    <Button variant="outline-danger" size="sm" onClick={() => eliminar(f._id)}>Borrar</Button>
                   </td>
                 </tr>
               ))
@@ -170,7 +244,7 @@ const FacturacionCliente = () => {
 
       {/* Modal ver detalle */}
       <Modal show={!!facturaVerId} onHide={() => setFacturaVerId(null)} size="lg" centered>
-        <Modal.Header closeButton className="bg-dark text-white">
+        <Modal.Header closeButton>
           <Modal.Title>
             Factura {facturaVer?.numeroFactura} — {facturaVer?.cliente}
           </Modal.Title>
@@ -179,17 +253,9 @@ const FacturacionCliente = () => {
           <div className="d-flex gap-4 mb-3 text-muted small">
             <span><strong>Fecha:</strong> {formatearFecha(facturaVer?.fecha)}</span>
             <span><strong>Tipo:</strong> {facturaVer?.tipoFactura}</span>
-            <span>
-              <strong>Estado:</strong>{" "}
-              <Badge
-                bg={facturaVer?.estadoPago === "Pagada" ? "success" : "warning"}
-                text={facturaVer?.estadoPago === "Pagada" ? undefined : "dark"}
-              >
-                {facturaVer?.estadoPago}
-              </Badge>
-            </span>
+            <span><strong>Estado:</strong> {facturaVer?.estadoPago}</span>
           </div>
-          <Table bordered size="sm" className="text-center align-middle">
+          <Table striped bordered hover className="text-center align-middle">
             <thead className="table-dark">
               <tr>
                 <th>N° Remito</th>
@@ -203,7 +269,7 @@ const FacturacionCliente = () => {
                 <tr key={r._id}>
                   <td>{r.remito}</td>
                   <td>{formatearFecha(r.fecha)}</td>
-                  <td>{r.obra?.nombreobra}</td>
+                  <td className="text-muted" title={r.obra?.nombreobra}>{r.obra?.nombreobra}</td>
                   <td>{formatoMoneda(calcularTotalRemito(r.items))}</td>
                 </tr>
               ))}
@@ -225,13 +291,13 @@ const FacturacionCliente = () => {
           </Table>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setFacturaVerId(null)}>Cerrar</Button>
+          <Button variant="outline-secondary" onClick={() => setFacturaVerId(null)}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
 
       {/* Modal editar factura */}
       <Modal show={!!facturaEditar} onHide={() => setFacturaEditar(null)} centered>
-        <Modal.Header closeButton className="bg-dark text-white">
+        <Modal.Header closeButton>
           <Modal.Title>Editar Factura</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit(guardarEdicion)}>
@@ -275,8 +341,8 @@ const FacturacionCliente = () => {
             </Row>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setFacturaEditar(null)}>Cancelar</Button>
-            <Button variant="dark" type="submit">Guardar</Button>
+            <Button variant="outline-secondary" onClick={() => setFacturaEditar(null)}>Cancelar</Button>
+            <Button variant="outline-success" type="submit">Guardar</Button>
           </Modal.Footer>
         </Form>
       </Modal>

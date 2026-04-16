@@ -51,7 +51,7 @@ function Menu() {
             </Nav.Link>
 
             <NavDropdown
-              title="Sección Operaciones"
+              title="Operaciones"
               id="nav-dropdown"
               className="mx-2"
             >
@@ -75,21 +75,24 @@ function Menu() {
               </NavDropdown>
             </NavDropdown>
 
-            <NavDropdown title="Sección Mantenimiento" id="nav-dropdown" className="mx-2">
+            <NavDropdown title="Mantenimiento" id="nav-dropdown" className="mx-2">
               <NavDropdown.Item as={Link} to="/consumo-aceites">
                 Consumo aceites
               </NavDropdown.Item>
             </NavDropdown>
 
-            <NavDropdown title="Sección Contable" id="nav-dropdown" className="mx-2">
+            <NavDropdown title="Contable" id="nav-dropdown" className="mx-2">
               <NavDropdown.Item as={Link} to="/variables">
                 Variables
               </NavDropdown.Item>
               <NavDropdown.Item as={Link} to="/precios">
                 Precios
               </NavDropdown.Item>
+            </NavDropdown>
+
+            <NavDropdown title="Clientes" id="nav-dropdown-clientes" className="mx-2">
               <NavDropdown.Item as={Link} to="/facturacion">
-                Facturación Cliente
+                Facturación Clientes
               </NavDropdown.Item>
             </NavDropdown>
 
