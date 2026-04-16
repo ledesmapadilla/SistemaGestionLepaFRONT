@@ -1,6 +1,7 @@
 import authFetch from "./authFetch";
+import { API } from "./api";
 
-const personalBackend = import.meta.env.VITE_API_PERSONAL;
+const personalBackend = API.personal;
 
 export const listarPersonal = async (query = "") => {
   return authFetch(`${personalBackend}${query}`);

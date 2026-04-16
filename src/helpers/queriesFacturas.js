@@ -1,6 +1,7 @@
 import authFetch from "./authFetch";
+import { API } from "./api";
 
-const facturasBackend = import.meta.env.VITE_API_FACTURAS;
+const facturasBackend = API.facturas;
 
 export const listarFacturas = async () => {
   const res = await authFetch(facturasBackend);

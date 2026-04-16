@@ -1,6 +1,7 @@
 import authFetch from "./authFetch";
+import { API } from "./api";
 
-const consumoGasoilBackend = import.meta.env.VITE_API_CONSUMO_GASOIL;
+const consumoGasoilBackend = API.consumoGasoil;
 
 export const obtenerConsumoGasoil = async () => {
   return authFetch(consumoGasoilBackend);

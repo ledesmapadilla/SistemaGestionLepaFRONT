@@ -1,6 +1,7 @@
 import authFetch from "./authFetch";
+import { API } from "./api";
 
-const remitosBackend = import.meta.env.VITE_API_REMITOS;
+const remitosBackend = API.remitos;
 
 export const listarRemitos = async (estado = "") => {
   const estadoQuery = estado ? `&estado=${encodeURIComponent(estado)}` : "";

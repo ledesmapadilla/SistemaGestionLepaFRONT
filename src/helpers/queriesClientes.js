@@ -1,6 +1,7 @@
 import authFetch from "./authFetch";
+import { API } from "./api";
 
-const clientesBackend = import.meta.env.VITE_API_CLIENTES;
+const clientesBackend = API.clientes;
 
 export const listarClientes = async (query = "") => {
   return authFetch(`${clientesBackend}${query}`);

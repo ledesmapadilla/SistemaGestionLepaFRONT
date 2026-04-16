@@ -1,6 +1,7 @@
 import authFetch from "./authFetch";
+import { API } from "./api";
 
-const obrasBackend = import.meta.env.VITE_API_OBRAS;
+const obrasBackend = API.obras;
 
 export const listarObras = async (query = "") => {
   return authFetch(`${obrasBackend}${query}`);

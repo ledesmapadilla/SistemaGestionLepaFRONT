@@ -1,6 +1,7 @@
 import authFetch from "./authFetch";
+import { API } from "./api";
 
-const URL_MAQUINAS = import.meta.env.VITE_API_MAQUINAS;
+const URL_MAQUINAS = API.maquinas;
 
 export const listarMaquinas = async () => {
   try {

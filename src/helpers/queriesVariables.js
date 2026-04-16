@@ -1,6 +1,7 @@
 import authFetch from "./authFetch";
+import { API } from "./api";
 
-const variablesBackend = import.meta.env.VITE_API_VARIABLES;
+const variablesBackend = API.variables;
 
 export const listarVariables = async () => {
   return authFetch(variablesBackend);

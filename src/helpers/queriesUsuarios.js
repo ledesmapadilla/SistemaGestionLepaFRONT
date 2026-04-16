@@ -1,6 +1,7 @@
 import authFetch from "./authFetch";
+import { API } from "./api";
 
-const usuariosBackend = import.meta.env.VITE_API_USUARIOS;
+const usuariosBackend = API.usuarios;
 
 export const loginUsuario = async (datos) => {
   try {

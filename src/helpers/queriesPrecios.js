@@ -1,6 +1,7 @@
 import authFetch from "./authFetch";
+import { API } from "./api";
 
-const preciosBackend = import.meta.env.VITE_API_PRECIOS;
+const preciosBackend = API.precios;
 
 export const listarPrecios = async () => {
   return authFetch(preciosBackend);

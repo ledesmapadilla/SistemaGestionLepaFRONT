@@ -1,6 +1,7 @@
 import authFetch from "./authFetch";
+import { API } from "./api";
 
-const URL_ACEITES = import.meta.env.VITE_API_ACEITES;
+const URL_ACEITES = API.aceites;
 
 export const listarAceites = async () => {
   try {

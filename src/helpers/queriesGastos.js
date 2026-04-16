@@ -1,6 +1,7 @@
 import authFetch from "./authFetch";
+import { API } from "./api";
 
-const URI_GASTOS = import.meta.env.VITE_API_GASTOS;
+const URI_GASTOS = API.gastos;
 
 export const listarGastosPorObra = async (idObra) => {
   try {
