@@ -362,7 +362,7 @@ const PreciosModal = ({
 
                     {/* ELIMINAR */}
                     <td>
-                      {!esFilaFijaGasoil && !esFilaExistente && (
+                      {!esFilaFijaGasoil && (
                         <Button
                           size="sm"
                           variant="outline-danger"
