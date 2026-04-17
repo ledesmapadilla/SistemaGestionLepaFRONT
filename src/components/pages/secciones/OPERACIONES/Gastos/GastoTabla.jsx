@@ -6,7 +6,7 @@ import {
 } from "../../../../../helpers/queriesGastos.js";
 import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos.js";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
-import { Table, Button, Modal } from "react-bootstrap";
+import { Table, Button, Modal, Spinner } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
@@ -36,6 +36,7 @@ const GastoTabla = () => {
   const obraNombre = state.obraNombre || state.nombreobra || "Obra";
   const razonsocial = state.razonsocial || state.cliente || "-";
 
+  const [loading, setLoading] = useState(true);
   const [gastos, setGastos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -71,6 +72,7 @@ const GastoTabla = () => {
       return;
     }
 
+    setLoading(true);
     try {
       const [remitos, respuestaPersonal, respuestaGastos] = await Promise.all([
         listarRemitosPorObra(obraId),
@@ -200,6 +202,8 @@ const GastoTabla = () => {
 
     } catch (error) {
       console.error("Error cargando datos:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -343,6 +347,8 @@ const GastoTabla = () => {
     }).format(numero);
     return `$ ${numeroFormateado}`;
   };
+
+  if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
     <>

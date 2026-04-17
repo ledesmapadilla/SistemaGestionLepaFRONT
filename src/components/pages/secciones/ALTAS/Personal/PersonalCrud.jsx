@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Form, Container, Row, Col, Modal } from "react-bootstrap";
+import { Table, Button, Form, Container, Row, Col, Modal, Spinner } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import {
@@ -48,6 +48,7 @@ const Personal = () => {
   });
 
   const [personal, setPersonal] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState("");
   const [editando, setEditando] = useState(false);
   const [personalId, setPersonalId] = useState(null);
@@ -65,6 +66,7 @@ const Personal = () => {
       const data = await respuesta.json();
       setPersonal(data);
     }
+    setLoading(false);
   };
 
   const cerrarModal = () => {
@@ -206,6 +208,8 @@ const Personal = () => {
     const numeroFormateado = new Intl.NumberFormat("es-AR").format(valor);
     return `$ ${numeroFormateado}`;
   };
+
+  if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
     <Container className="my-3">

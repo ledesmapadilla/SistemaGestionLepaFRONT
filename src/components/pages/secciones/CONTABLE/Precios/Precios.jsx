@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { Spinner } from "react-bootstrap";
 import {
   crearPrecio as crearPrecioAPI,
   editarPrecio,
@@ -65,6 +66,7 @@ const buildConsumosFromMaquinas = (maquinas, consumosGuardados) => {
 };
 
 const Precios = () => {
+  const [loading, setLoading] = useState(true);
   const [precios, setPrecios] = useState([]);
   const [maquinas, setMaquinas] = useState([]);
   const [showConsumos, setShowConsumos] = useState(false);
@@ -116,6 +118,7 @@ const Precios = () => {
         const data = await respPersonal.json();
         setPersonal(data);
       }
+      setLoading(false);
     };
     cargarDatos();
   }, []);
@@ -433,6 +436,8 @@ const Precios = () => {
       setPorcentajeIndirectos(nuevoPorcentaje);
     }
   };
+
+  if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
     <>

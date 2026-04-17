@@ -7,7 +7,7 @@ import {
   borrarVariable as borrarVariableAPI,
 } from "../../../../../helpers/queriesVariables.js";
 import Swal from "sweetalert2";
-import { Modal, Button, Table } from "react-bootstrap";
+import { Modal, Button, Table, Spinner } from "react-bootstrap";
 import VariablesTabla from "./VariablesTabla.jsx";
 import VariablesModal from "./VariablesModal.jsx";
 
@@ -40,6 +40,7 @@ const Variables = () => {
     mode: "onChange",
   });
 
+  const [loading, setLoading] = useState(true);
   const [variables, setVariables] = useState([]);
   const [editando, setEditando] = useState(false);
   const [variableId, setVariableId] = useState(null);
@@ -54,6 +55,7 @@ const Variables = () => {
         const data = await respuesta.json();
         setVariables(data);
       }
+      setLoading(false);
     };
     cargarVariables();
   }, []);
@@ -178,6 +180,8 @@ const Variables = () => {
     reset({ ...valoresIniciales, fecha: hoy });
     setShowModal(true);
   };
+
+  if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
     <>

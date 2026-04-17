@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Spinner } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import {
   crearCliente,
@@ -29,6 +30,7 @@ const Clientes = () => {
     defaultValues: valoresIniciales,
   });
   const [clientes, setClientes] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState("");
   const [editando, setEditando] = useState(false);
   const [clienteId, setClienteId] = useState(null);
@@ -41,6 +43,7 @@ const Clientes = () => {
         const data = await respuesta.json();
         setClientes(data);
       }
+      setLoading(false);
     };
     cargarClientes();
   }, []);
@@ -154,6 +157,8 @@ const Clientes = () => {
     reset(valoresIniciales);
     setShowModal(true);
   };
+
+  if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
     <>

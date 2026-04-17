@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { Spinner } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
@@ -51,6 +52,7 @@ const Obras = () => {
 
   // ==================== ESTADOS ====================
   const [obras, setObras] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState(() => sessionStorage.getItem("obrasBusqueda") || "");
   const [filtroEstado, setFiltroEstado] = useState("En curso");
 
@@ -94,6 +96,7 @@ const Obras = () => {
         const data = await resp.json();
         setObras(data.filter((o) => o && o._id));
       }
+      setLoading(false);
     };
     cargarObras();
   }, []);
@@ -311,6 +314,8 @@ const Obras = () => {
       },
     });
   };
+
+  if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
     <div className="container">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Modal } from "react-bootstrap";
+import { Table, Button, Modal, Spinner } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
 import { useLocation, useNavigate } from "react-router-dom";
 import RemitosModal from "./RemitosModal";
@@ -22,6 +22,7 @@ const VerRemitos = () => {
   const location = useLocation();
   const { obraId, obraNombre, razonsocial } = location.state || {};
 
+  const [loading, setLoading] = useState(true);
   const [remitos, setRemitos] = useState([]);
   const [precios, setPrecios] = useState(location.state?.precios || []);
   const [showModalRemito, setShowModalRemito] = useState(false);
@@ -36,6 +37,8 @@ const VerRemitos = () => {
     } catch (error) {
       console.error("ERROR AL CARGAR REMITOS:", error);
       setRemitos([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,6 +98,7 @@ const VerRemitos = () => {
   };
 
   if (!obraId) return <p>Obra no seleccionada.</p>;
+  if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   const formatoMiles = (valor) => {
     if (valor === undefined || valor === null) return "-";

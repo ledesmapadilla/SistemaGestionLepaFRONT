@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Spinner } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import {
   crearProveedor,
@@ -33,6 +34,7 @@ const Proveedores = () => {
   const [contactoOriginal, setContactoOriginal] = useState("");
 
   const [proveedores, setProveedores] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState("");
   const [editando, setEditando] = useState(false);
   const [proveedorId, setProveedorId] = useState(null);
@@ -45,6 +47,7 @@ const Proveedores = () => {
         const data = await respuesta.json();
         setProveedores(data);
       }
+      setLoading(false);
     };
     cargarProveedores();
   }, []);
@@ -167,6 +170,8 @@ const Proveedores = () => {
   };
 
   
+
+  if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
     <>
