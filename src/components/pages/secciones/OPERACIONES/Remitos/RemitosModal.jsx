@@ -35,7 +35,7 @@ const obtenerFechaHoy = () => {
   return `${y}-${m}-${d}`;
 };
 
-const buscarPrecioVigente = (precios, clasificacion, trabajo) => {
+const buscarPrecioVigente = (precios, clasificacion, trabajo, fechaRef) => {
   const candidatos = precios.filter(
     (p) =>
       (clasificacion === "Alquiler"
@@ -46,16 +46,31 @@ const buscarPrecioVigente = (precios, clasificacion, trabajo) => {
   if (candidatos.length === 0) return null;
   if (candidatos.length === 1) return candidatos[0];
 
-  // Devolver siempre el precio más reciente (último cargado)
-  // Ordenar por fecha desc; si fechas iguales, el de mayor índice (más nuevo) gana
   const indexados = candidatos.map((p, i) => ({ p, i }));
-  const conFecha = indexados
-    .filter(({ p }) => p.fecha)
-    .sort((a, b) => {
-      const diff = new Date(b.p.fecha) - new Date(a.p.fecha);
-      return diff !== 0 ? diff : b.i - a.i;
-    });
+  const conFecha = indexados.filter(({ p }) => p.fecha);
 
+  if (fechaRef && conFecha.length > 0) {
+    // Candidatos cuya fecha de vigencia es <= fecha del remito
+    const vigentes = conFecha
+      .filter(({ p }) => new Date(p.fecha) <= new Date(fechaRef))
+      .sort((a, b) => {
+        const diff = new Date(b.p.fecha) - new Date(a.p.fecha);
+        return diff !== 0 ? diff : b.i - a.i;
+      });
+    if (vigentes.length > 0) return vigentes[0].p;
+    // Si todos los precios son posteriores a la fecha del remito, usar el más antiguo
+    const masAntiguo = conFecha.sort((a, b) => {
+      const diff = new Date(a.p.fecha) - new Date(b.p.fecha);
+      return diff !== 0 ? diff : a.i - b.i;
+    });
+    return masAntiguo[0].p;
+  }
+
+  // Sin fechaRef: devolver el más reciente
+  conFecha.sort((a, b) => {
+    const diff = new Date(b.p.fecha) - new Date(a.p.fecha);
+    return diff !== 0 ? diff : b.i - a.i;
+  });
   return conFecha.length > 0 ? conFecha[0].p : candidatos[candidatos.length - 1];
 };
 
@@ -234,7 +249,7 @@ const RemitosModal = ({
   const seleccionarPrecio = (index, tipo, trabajo) => {
     const fechaRef = filas[index]?.fecha;
     const preciosObra = obra?.precio || [];
-    const item = buscarPrecioVigente(preciosObra, tipo, trabajo);
+    const item = buscarPrecioVigente(preciosObra, tipo, trabajo, fechaRef);
 
     const nuevasFilas = [...filas];
     nuevasFilas[index] = {
@@ -512,13 +527,13 @@ const RemitosModal = ({
                       // Recalcular precio si ya hay alquiler o servicio seleccionado
                       const preciosObra = obra?.precio || [];
                       if (fila.maquina) {
-                        const item = buscarPrecioVigente(preciosObra, "Alquiler", fila.maquina);
+                        const item = buscarPrecioVigente(preciosObra, "Alquiler", fila.maquina, nuevaFecha);
                         if (item) {
                           actualizarFila(index, "precioUnitario", item.precio);
                           actualizarFila(index, "unidad", item.unidad);
                         }
                       } else if (fila.servicio) {
-                        const item = buscarPrecioVigente(preciosObra, "Servicio", fila.servicio);
+                        const item = buscarPrecioVigente(preciosObra, "Servicio", fila.servicio, nuevaFecha);
                         if (item) {
                           actualizarFila(index, "precioUnitario", item.precio);
                           actualizarFila(index, "unidad", item.unidad);
