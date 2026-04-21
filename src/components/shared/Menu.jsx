@@ -94,6 +94,9 @@ function Menu() {
               <NavDropdown.Item as={Link} to="/facturacion">
                 Facturación Clientes
               </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/cobro-factura">
+                Cobro de factura
+              </NavDropdown.Item>
             </NavDropdown>
 
             <NavDropdown title="ALTAS" id="nav-dropdown" className="mx-2">
