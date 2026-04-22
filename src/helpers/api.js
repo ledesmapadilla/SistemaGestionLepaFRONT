@@ -14,4 +14,5 @@ export const API = {
   precios: `${BASE}/api/precios`,
   consumoGasoil: `${BASE}/api/consumo-gasoil`,
   facturas: `${BASE}/api/facturas`,
+  cobros: `${BASE}/api/cobros`,
 };

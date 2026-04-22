@@ -25,8 +25,11 @@ import AceiteCrud from "./components/pages/secciones/ALTAS/Aceites/AceiteCrud.js
 import UsuariosCrud from "./components/pages/secciones/ALTAS/Usuarios/UsuariosCrud.jsx";
 import Variables from "./components/pages/secciones/CONTABLE/Variables/Variables.jsx";
 import Precios from "./components/pages/secciones/CONTABLE/Precios/Precios.jsx";
-import FacturacionCliente from "./components/pages/secciones/CONTABLE/Facturacion/FacturacionCliente.jsx";
-import NuevaFactura from "./components/pages/secciones/CONTABLE/Facturacion/NuevaFactura.jsx";
+import FacturacionCliente from "./components/pages/secciones/CLIENTES/Facturacion/FacturacionCliente.jsx";
+import NuevaFactura from "./components/pages/secciones/CLIENTES/Facturacion/NuevaFactura.jsx";
+import CobrosTabla from "./components/pages/secciones/CLIENTES/Cobros/CobrosTabla.jsx";
+import NuevoCobro from "./components/pages/secciones/CLIENTES/Cobros/NuevoCobro.jsx";
+import EditarCobro from "./components/pages/secciones/CLIENTES/Cobros/EditarCobro.jsx";
 
 function App() {
   return (
@@ -72,6 +75,9 @@ function App() {
                       <Route path="/precios" element={<Precios />} />
                       <Route path="/facturacion" element={<FacturacionCliente />} />
                       <Route path="/facturacion/nueva" element={<NuevaFactura />} />
+                      <Route path="/cobro-factura" element={<CobrosTabla />} />
+                      <Route path="/cobro-factura/nuevo" element={<NuevoCobro />} />
+                      <Route path="/cobro-factura/editar/:id" element={<EditarCobro />} />
                       <Route path="*" element={<Error404 />} />
                     </Routes>
                   </main>

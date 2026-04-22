@@ -239,7 +239,7 @@ const NuevaFactura = () => {
           </Col>
         </Row>
 
-        <Row className="mb-3">
+        <Row className="mb-3 align-items-end">
           <Col md={6}>
             <Form.Group>
               <Form.Label>Remito</Form.Label>
@@ -262,6 +262,11 @@ const NuevaFactura = () => {
                 ))}
               </Form.Select>
             </Form.Group>
+          </Col>
+          <Col md={6} className="d-flex justify-content-end gap-2">
+            <Button variant="outline-secondary" onClick={() => navigate("/facturacion")}>Cancelar</Button>
+            <Button variant="outline-primary" onClick={agregarRemito} disabled={!remitoElegido}>+ Agregar Remito</Button>
+            <Button type="submit" variant="outline-success">Guardar Factura</Button>
           </Col>
         </Row>
 
@@ -333,11 +338,6 @@ const NuevaFactura = () => {
           </Table>
         )}
 
-        <div className="d-flex justify-content-end mt-4 gap-2">
-          <Button variant="outline-secondary" onClick={() => navigate("/facturacion")}>Cancelar</Button>
-          <Button variant="outline-primary" onClick={agregarRemito} disabled={!remitoElegido}>+ Agregar Remito</Button>
-          <Button type="submit" variant="outline-success">Guardar Factura</Button>
-        </div>
       </Form>
     </Container>
   );

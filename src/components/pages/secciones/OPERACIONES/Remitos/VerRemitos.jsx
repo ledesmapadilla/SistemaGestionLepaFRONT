@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Modal, Spinner } from "react-bootstrap";
+import { Table, Button, Modal, Spinner, Form } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
 import { useLocation, useNavigate } from "react-router-dom";
 import RemitosModal from "./RemitosModal";
@@ -24,6 +24,7 @@ const VerRemitos = () => {
 
   const [loading, setLoading] = useState(true);
   const [remitos, setRemitos] = useState([]);
+  const [filtroRemito, setFiltroRemito] = useState("");
   const [precios, setPrecios] = useState(location.state?.precios || []);
   const [showModalRemito, setShowModalRemito] = useState(false);
   const [obsSeleccionada, setObsSeleccionada] = useState("");
@@ -149,6 +150,23 @@ const VerRemitos = () => {
 
   const totalNoFacturado = calcularTotalNoFacturado();
 
+  const estiloX = {
+    position: "absolute",
+    right: "10px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    cursor: "pointer",
+    color: "#fff",
+    fontSize: "14px",
+    fontWeight: "900",
+    zIndex: 5,
+    userSelect: "none",
+  };
+  const selectActivo = { backgroundImage: "none" };
+
+  const remitosUnicos = [...new Set(remitos.map((r) => r.remito).filter(Boolean))].sort((a, b) => a - b);
+  const remitosFiltrados = filtroRemito ? remitos.filter((r) => String(r.remito) === filtroRemito) : remitos;
+
   const exportarExcel = () => {
     const headers = ["N° Remito", "Fecha", "Maquinista", "$/hs Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Gasoil (lts)"];
     const cols = ["A","B","C","D","E","F","G","H","I","J","K","L"];
@@ -257,6 +275,24 @@ const VerRemitos = () => {
           </Button>
         </div>
       </div>
+      <div className="mb-2" style={{ marginTop: "-0.5rem" }}>
+        <div style={{ position: "relative", width: "180px" }}>
+          <Form.Select
+            value={filtroRemito}
+            onChange={(e) => setFiltroRemito(e.target.value)}
+            style={filtroRemito ? selectActivo : {}}
+          >
+            <option value="">N° Remito</option>
+            {remitosUnicos.map((n) => (
+              <option key={n} value={String(n)}>N° {n}</option>
+            ))}
+          </Form.Select>
+          {filtroRemito && (
+            <span onClick={() => setFiltroRemito("")} style={estiloX}>✕</span>
+          )}
+        </div>
+      </div>
+
       <div className="table-responsive">
         <Table striped bordered hover className="align-middle text-center">
           <thead className="table-dark">
@@ -278,8 +314,8 @@ const VerRemitos = () => {
             </tr>
           </thead>
           <tbody>
-            {remitos.length > 0 ? (
-              remitos.map((remito) =>
+            {remitosFiltrados.length > 0 ? (
+              remitosFiltrados.map((remito) =>
                 remito.items.map((item, index) => (
                   <tr key={`${remito._id}-${item._id}`}>
                     <td>{remito.remito}</td>
