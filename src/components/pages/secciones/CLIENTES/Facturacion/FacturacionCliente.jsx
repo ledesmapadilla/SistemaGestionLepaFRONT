@@ -19,6 +19,13 @@ const formatearFecha = (fecha) => {
   return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : fecha;
 };
 
+const labelEstado = (e) => (e === "Pendiente" ? "Impaga" : e ?? "-");
+
+const obrasDeFactura = (f) => {
+  const nombres = [...new Set((f.remitos || []).map((r) => r.obra?.nombreobra).filter(Boolean))];
+  return nombres.join(", ") || "-";
+};
+
 const calcularTotalRemito = (items = []) =>
   items.reduce((sum, item) => sum + Number(item.cantidad) * Number(item.precioUnitario), 0);
 
@@ -98,8 +105,8 @@ const FacturacionCliente = () => {
   };
 
   const exportarExcel = () => {
-    const headers = ["N° Factura", "Fecha", "Cliente", "Tipo", "Total (con iva)", "Estado"];
-    const cols = ["A", "B", "C", "D", "E", "F"];
+    const headers = ["N° Factura", "Fecha", "Cliente", "Obra", "Tipo", "Total (con iva)", "Estado"];
+    const cols = ["A", "B", "C", "D", "E", "F", "G"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
@@ -108,9 +115,10 @@ const FacturacionCliente = () => {
       f.numeroFactura,
       formatearFecha(f.fecha),
       f.cliente,
+      obrasDeFactura(f),
       f.tipoFactura,
       f.tipoFactura === "Factura X" ? f.total : f.total * 1.21,
-      f.estadoPago,
+      labelEstado(f.estadoPago),
     ]);
 
     const ws = {};
@@ -122,7 +130,7 @@ const FacturacionCliente = () => {
 
     filas.forEach((fila, rowIdx) => {
       fila.forEach((val, colIdx) => {
-        const isCurrency = colIdx === 4 && typeof val === "number";
+        const isCurrency = colIdx === 5 && typeof val === "number";
         ws[`${cols[colIdx]}${rowIdx + 4}`] = {
           v: val ?? "-",
           t: isCurrency ? "n" : typeof val === "number" ? "n" : "s",
@@ -132,8 +140,8 @@ const FacturacionCliente = () => {
       });
     });
 
-    ws["!ref"] = `A1:F${filas.length + 3}`;
-    ws["!cols"] = [{ wch: 14 }, { wch: 12 }, { wch: 28 }, { wch: 18 }, { wch: 18 }, { wch: 12 }];
+    ws["!ref"] = `A1:G${filas.length + 3}`;
+    ws["!cols"] = [{ wch: 14 }, { wch: 12 }, { wch: 28 }, { wch: 24 }, { wch: 18 }, { wch: 18 }, { wch: 12 }];
 
     const libro = XLSXStyle.utils.book_new();
     XLSXStyle.utils.book_append_sheet(libro, ws, "Facturas");
@@ -201,7 +209,7 @@ const FacturacionCliente = () => {
             style={filtroEstado ? selectActivo : {}}
           >
             <option value="">Todos los estados</option>
-            <option value="Pendiente">Pendiente</option>
+            <option value="Pendiente">Impaga</option>
             <option value="Pagada">Pagada</option>
           </Form.Select>
           {filtroEstado && (
@@ -221,6 +229,7 @@ const FacturacionCliente = () => {
               <th>Nro</th>
               <th>Fecha</th>
               <th>Cliente</th>
+              <th>Obra</th>
               <th>Tipo</th>
               <th>Total</th>
               <th>Estado</th>
@@ -230,7 +239,7 @@ const FacturacionCliente = () => {
           <tbody>
             {facturasFiltradas.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-muted py-3">
+                <td colSpan={8} className="text-muted py-3">
                   Sin facturas cargadas
                 </td>
               </tr>
@@ -240,9 +249,10 @@ const FacturacionCliente = () => {
                   <td>{f.numeroFactura}</td>
                   <td>{formatearFecha(f.fecha)}</td>
                   <td>{f.cliente}</td>
+                  <td className="text-muted">{obrasDeFactura(f)}</td>
                   <td>{f.tipoFactura}</td>
                   <td>{formatoMoneda(f.tipoFactura === "Factura X" ? f.total : f.total * 1.21)}</td>
-                  <td>{f.estadoPago}</td>
+                  <td>{labelEstado(f.estadoPago)}</td>
                   <td className="d-flex gap-1 justify-content-center align-items-center">
                     <Button variant="outline-success" size="sm" onClick={() => setFacturaVerId(f._id)}>Ver</Button>
                     <Button variant="outline-warning" size="sm" onClick={() => abrirEditar(f)}>Editar</Button>
@@ -266,7 +276,7 @@ const FacturacionCliente = () => {
           <div className="d-flex gap-4 mb-3 text-muted small">
             <span><strong>Fecha:</strong> {formatearFecha(facturaVer?.fecha)}</span>
             <span><strong>Tipo:</strong> {facturaVer?.tipoFactura}</span>
-            <span><strong>Estado:</strong> {facturaVer?.estadoPago}</span>
+            <span><strong>Estado:</strong> {labelEstado(facturaVer?.estadoPago)}</span>
           </div>
           <Table striped bordered hover className="text-center align-middle">
             <thead className="table-dark">

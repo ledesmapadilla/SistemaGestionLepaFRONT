@@ -35,6 +35,7 @@ const NuevaFactura = () => {
   const [remitosDisponibles, setRemitosDisponibles] = useState([]);
   const [remitosSeleccionados, setRemitosSeleccionados] = useState([]);
   const [remitoElegido, setRemitoElegido] = useState("");
+  const [obraSeleccionada, setObraSeleccionada] = useState("");
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [numerosExistentes, setNumerosExistentes] = useState([]);
   const [todasFacturas, setTodasFacturas] = useState([]);
@@ -89,6 +90,19 @@ const NuevaFactura = () => {
     ...new Set(todosRemitos.map((r) => r.obra?.razonsocial).filter(Boolean)),
   ].sort();
 
+  const obrasConRemitos = clienteSeleccionado
+    ? [...new Set(
+        todosRemitos
+          .filter((r) => r.obra?.razonsocial === clienteSeleccionado)
+          .map((r) => r.obra?.nombreobra)
+          .filter(Boolean)
+      )].sort()
+    : [];
+
+  useEffect(() => {
+    setObraSeleccionada("");
+  }, [clienteSeleccionado]);
+
   useEffect(() => {
     if (!clienteSeleccionado) {
       setRemitosDisponibles([]);
@@ -99,11 +113,12 @@ const NuevaFactura = () => {
     const filtrados = todosRemitos.filter(
       (r) =>
         r.obra?.razonsocial === clienteSeleccionado &&
+        (!obraSeleccionada || r.obra?.nombreobra === obraSeleccionada) &&
         !idsSeleccionados.includes(r._id)
     );
     setRemitosDisponibles(filtrados);
     setRemitoElegido("");
-  }, [clienteSeleccionado, todosRemitos, remitosSeleccionados]);
+  }, [clienteSeleccionado, obraSeleccionada, todosRemitos, remitosSeleccionados]);
 
   const agregarRemito = () => {
     if (!remitoElegido) return;
@@ -174,7 +189,7 @@ const NuevaFactura = () => {
 
       <Form onSubmit={handleSubmit(onSubmit)}>
         <Row className="mb-3">
-          <Col md={3}>
+          <Col md={2}>
             <Form.Group>
               <Form.Label>Fecha</Form.Label>
               <Form.Control
@@ -184,6 +199,38 @@ const NuevaFactura = () => {
                 isInvalid={!!errors.fecha}
               />
               <Form.Text className="text-danger">{errors.fecha?.message}</Form.Text>
+            </Form.Group>
+          </Col>
+          <Col md={3}>
+            <Form.Group>
+              <Form.Label>Cliente</Form.Label>
+              <Form.Select
+                {...register("cliente", { required: "El cliente es obligatorio" })}
+                isInvalid={!!errors.cliente}
+              >
+                <option value="">Seleccionar...</option>
+                {clientesConRemitos.map((nombre) => (
+                  <option key={nombre} value={nombre}>{nombre}</option>
+                ))}
+              </Form.Select>
+              <Form.Text className="text-danger">{errors.cliente?.message}</Form.Text>
+            </Form.Group>
+          </Col>
+          <Col md={2}>
+            <Form.Group>
+              <Form.Label>Obra</Form.Label>
+              <Form.Select
+                value={obraSeleccionada}
+                onChange={(e) => setObraSeleccionada(e.target.value)}
+                disabled={!clienteSeleccionado}
+              >
+                <option value="">
+                  {clienteSeleccionado ? "Todas las obras" : "Primero elegí un cliente"}
+                </option>
+                {obrasConRemitos.map((nombre) => (
+                  <option key={nombre} value={nombre}>{nombre}</option>
+                ))}
+              </Form.Select>
             </Form.Group>
           </Col>
           <Col md={3}>
@@ -202,7 +249,7 @@ const NuevaFactura = () => {
               <Form.Text className="text-danger">{errors.tipoFactura?.message}</Form.Text>
             </Form.Group>
           </Col>
-          <Col md={3}>
+          <Col md={2}>
             <Form.Group>
               <Form.Label>Número de Factura</Form.Label>
               <Form.Control
@@ -220,23 +267,6 @@ const NuevaFactura = () => {
               <Form.Text className="text-danger">{errors.numeroFactura?.message}</Form.Text>
             </Form.Group>
           </Col>
-          <Col md={3}>
-            <Form.Group>
-              <Form.Label>Cliente</Form.Label>
-              <Form.Select
-                {...register("cliente", { required: "El cliente es obligatorio" })}
-                isInvalid={!!errors.cliente}
-              >
-                <option value="">Seleccionar...</option>
-                {clientesConRemitos.map((nombre) => (
-                  <option key={nombre} value={nombre}>
-                    {nombre}
-                  </option>
-                ))}
-              </Form.Select>
-              <Form.Text className="text-danger">{errors.cliente?.message}</Form.Text>
-            </Form.Group>
-          </Col>
         </Row>
 
         <Row className="mb-3 align-items-end">
@@ -251,7 +281,9 @@ const NuevaFactura = () => {
                 <option value="">
                   {clienteSeleccionado
                     ? remitosDisponibles.length === 0
-                      ? "Sin remitos sin facturar para este cliente"
+                      ? obraSeleccionada
+                        ? "Sin remitos sin facturar para esta obra"
+                        : "Sin remitos sin facturar para este cliente"
                       : "Seleccionar remito..."
                     : "Primero elegí un cliente"}
                 </option>

@@ -22,6 +22,15 @@ const totalConIva = (f) =>
 const totalCobro = (cobro) =>
   (cobro?.pagos || []).reduce((sum, p) => sum + (p.montoCobrado || 0), 0);
 
+const obrasDelCobro = (cobro) => {
+  const nombres = [...new Set(
+    (cobro?.pagos || []).flatMap((p) =>
+      (p.factura?.remitos || []).map((r) => r.obra?.nombreobra).filter(Boolean)
+    )
+  )];
+  return nombres.join(", ") || "-";
+};
+
 const CobrosTabla = () => {
   const navigate = useNavigate();
   const [cobros, setCobros] = useState([]);
@@ -70,8 +79,8 @@ const CobrosTabla = () => {
   };
 
   const exportarExcel = () => {
-    const headers = ["Fecha", "Cliente", "Facturas", "Total cobrado", "Medio de pago"];
-    const cols = ["A", "B", "C", "D", "E"];
+    const headers = ["Fecha", "Cliente", "Obra", "Facturas", "Total cobrado", "Medio de pago"];
+    const cols = ["A", "B", "C", "D", "E", "F"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
@@ -79,6 +88,7 @@ const CobrosTabla = () => {
     const filas = cobrosFiltrados.map((c) => [
       formatearFecha(c.fecha),
       c.cliente,
+      obrasDelCobro(c),
       (c.pagos || []).map((p) => `N°${p.factura?.numeroFactura}`).join(", "),
       totalCobro(c),
       c.medioPago ||
@@ -95,7 +105,7 @@ const CobrosTabla = () => {
 
     filas.forEach((fila, rowIdx) => {
       fila.forEach((val, colIdx) => {
-        const isCurrency = colIdx === 3 && typeof val === "number";
+        const isCurrency = colIdx === 4 && typeof val === "number";
         ws[`${cols[colIdx]}${rowIdx + 4}`] = {
           v: val ?? "-",
           t: isCurrency ? "n" : "s",
@@ -105,8 +115,8 @@ const CobrosTabla = () => {
       });
     });
 
-    ws["!ref"] = `A1:E${filas.length + 3}`;
-    ws["!cols"] = [{ wch: 12 }, { wch: 28 }, { wch: 24 }, { wch: 16 }, { wch: 16 }];
+    ws["!ref"] = `A1:F${filas.length + 3}`;
+    ws["!cols"] = [{ wch: 12 }, { wch: 28 }, { wch: 24 }, { wch: 24 }, { wch: 16 }, { wch: 16 }];
 
     const libro = XLSXStyle.utils.book_new();
     XLSXStyle.utils.book_append_sheet(libro, ws, "Cobros");
@@ -242,6 +252,7 @@ const CobrosTabla = () => {
             <tr>
               <th>Fecha</th>
               <th>Cliente</th>
+              <th>Obra</th>
               <th>Facturas</th>
               <th>Total cobrado</th>
               <th>Medio de pago</th>
@@ -251,13 +262,14 @@ const CobrosTabla = () => {
           <tbody>
             {cobrosFiltrados.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-muted py-3">Sin cobros registrados</td>
+                <td colSpan={7} className="text-muted py-3">Sin cobros registrados</td>
               </tr>
             ) : (
               cobrosFiltrados.map((c) => (
                 <tr key={c._id}>
                   <td>{formatearFecha(c.fecha)}</td>
                   <td>{c.cliente}</td>
+                  <td className="text-muted">{obrasDelCobro(c)}</td>
                   <td className="text-muted">
                     {(c.pagos || []).map((p) => `N°${p.factura?.numeroFactura}`).join(", ")}
                   </td>
