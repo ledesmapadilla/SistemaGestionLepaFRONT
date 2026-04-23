@@ -65,34 +65,36 @@ const Login = () => {
           </h4>
 
           <Form onSubmit={handleSubmit(onSubmit)}>
-            <Form.Group className="mb-3">
-              <Form.Label>Usuario*</Form.Label>
+            <Form.Group className="mb-3 d-flex flex-column align-items-center">
+              <Form.Label className="w-75">Usuario*</Form.Label>
               <Form.Control
                 type="text"
+                className="w-75"
                 {...register("usuario", {
                   required: "El usuario es obligatorio",
                 })}
               />
-              <Form.Text className="text-danger">
+              <Form.Text className="text-danger w-75">
                 {errors.usuario?.message}
               </Form.Text>
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Contraseña*</Form.Label>
+            <Form.Group className="mb-3 d-flex flex-column align-items-center">
+              <Form.Label className="w-75">Contraseña*</Form.Label>
               <Form.Control
                 type="password"
+                className="w-75"
                 {...register("contrasena", {
                   required: "La contraseña es obligatoria",
                 })}
               />
-              <Form.Text className="text-danger">
+              <Form.Text className="text-danger w-75">
                 {errors.contrasena?.message}
               </Form.Text>
             </Form.Group>
 
-            <div className="d-grid mt-4">
-              <Button variant="outline-success" type="submit">
+            <div className="d-flex justify-content-center mt-4">
+              <Button variant="outline-success" type="submit" className="w-75">
                 Ingresar
               </Button>
             </div>
