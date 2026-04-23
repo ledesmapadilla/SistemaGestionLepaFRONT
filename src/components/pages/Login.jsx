@@ -66,7 +66,7 @@ const Login = () => {
 
           <Form onSubmit={handleSubmit(onSubmit)}>
             <Form.Group className="mb-3 d-flex flex-column align-items-center">
-              <Form.Label className="w-75">Usuario*</Form.Label>
+              <Form.Label className="w-75 text-center">Usuario*</Form.Label>
               <Form.Control
                 type="text"
                 className="w-75"
@@ -80,7 +80,7 @@ const Login = () => {
             </Form.Group>
 
             <Form.Group className="mb-3 d-flex flex-column align-items-center">
-              <Form.Label className="w-75">Contraseña*</Form.Label>
+              <Form.Label className="w-75 text-center">Contraseña*</Form.Label>
               <Form.Control
                 type="password"
                 className="w-75"
@@ -94,7 +94,7 @@ const Login = () => {
             </Form.Group>
 
             <div className="d-flex justify-content-center mt-4">
-              <Button variant="outline-success" type="submit" className="w-75">
+              <Button variant="outline-success" type="submit" className="w-50">
                 Ingresar
               </Button>
             </div>
