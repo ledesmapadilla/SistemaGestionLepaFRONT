@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Button, Table, Container, Form, Row, Col, Spinner, Modal } from "react-bootstrap";
+import { Button, Table, Container, Form, Spinner, Modal } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import { editarCobro, listarCobros } from "../../../../../helpers/queriesCobros";
@@ -33,8 +33,10 @@ const EditarCobro = () => {
   const [mediosPago, setMediosPago] = useState([]);
   const [showModalPago, setShowModalPago] = useState(false);
   const [loadingDatos, setLoadingDatos] = useState(true);
+  const [editandoMontoId, setEditandoMontoId] = useState(null);
 
   const clienteSeleccionado = watch("cliente");
+  const { onChange: onChangeCliente, ...clienteReg } = register("cliente", { required: "El cliente es obligatorio" });
 
   const saldoFactura = (f) =>
     Math.max(0, totalConIva(f) - (cobradoPorFactura[f._id] || 0));
@@ -53,7 +55,7 @@ const EditarCobro = () => {
         if (cobrosResult.status === "fulfilled") {
           cobro = cobrosResult.value.find((c) => c._id === id);
           cobrosResult.value.forEach((c) => {
-            if (c._id === id) return; // excluir el cobro actual del cálculo de saldo
+            if (c._id === id) return;
             (c.pagos || []).forEach((pago) => {
               const fid = pago.factura?._id ?? pago.factura;
               if (fid) mapa[fid] = (mapa[fid] || 0) + (pago.montoCobrado || 0);
@@ -66,7 +68,7 @@ const EditarCobro = () => {
           const idsEnCobro = new Set((cobro?.pagos || []).map((p) => p.factura?._id ?? p.factura));
           setTodasFacturas(
             facturasResult.value.filter((f) => {
-              if (idsEnCobro.has(f._id)) return true; // siempre incluir las del cobro
+              if (idsEnCobro.has(f._id)) return true;
               if (f.estadoPago === "Pagada") return false;
               return (totalConIva(f) - (mapa[f._id] || 0)) > 0.01;
             })
@@ -228,7 +230,6 @@ const EditarCobro = () => {
       Swal.fire({ icon: "warning", title: "Sin facturas", text: "Agregá al menos una factura al cobro" });
       return;
     }
-
     for (const f of facturasSeleccionadas) {
       const monto = parseFloat(f.montoCobrado);
       if (isNaN(monto) || monto <= 0) {
@@ -236,12 +237,10 @@ const EditarCobro = () => {
         return;
       }
     }
-
     if (mediosPago.length === 0) {
       Swal.fire({ icon: "warning", title: "Sin forma de pago", text: "Agregá al menos una forma de pago" });
       return;
     }
-
     for (const m of mediosPago) {
       if (!m.medioPago) {
         Swal.fire({ icon: "warning", title: "Forma de pago incompleta", text: "Seleccioná el tipo en cada forma de pago" });
@@ -260,7 +259,6 @@ const EditarCobro = () => {
         return;
       }
     }
-
     const totalMediosPago = mediosPago.reduce((sum, m) => sum + (parseFloat(m.monto) || 0), 0);
     if (Math.abs(totalMediosPago - totalCobrado) > 0.01) {
       Swal.fire({
@@ -316,24 +314,24 @@ const EditarCobro = () => {
       </div>
 
       <Form onSubmit={handleSubmit(onSubmit)}>
-        <Row className="mb-3">
-          <Col md={3}>
-            <Form.Group>
-              <Form.Label>Fecha</Form.Label>
+        <div className="d-flex flex-column gap-3 mb-4">
+          <div className="d-flex align-items-center gap-3">
+            <div className="d-flex align-items-center gap-2">
+              <Form.Label className="mb-0 text-nowrap">Fecha</Form.Label>
               <Form.Control
                 type="date"
                 max={hoy}
+                style={{ width: "160px" }}
                 {...register("fecha", { required: "La fecha es obligatoria" })}
                 isInvalid={!!errors.fecha}
               />
-              <Form.Text className="text-danger">{errors.fecha?.message}</Form.Text>
-            </Form.Group>
-          </Col>
-          <Col md={4}>
-            <Form.Group>
-              <Form.Label>Cliente</Form.Label>
+            </div>
+            <div className="d-flex align-items-center gap-2">
+              <Form.Label className="mb-0 text-nowrap">Cliente</Form.Label>
               <Form.Select
-                {...register("cliente", { required: "El cliente es obligatorio" })}
+                style={{ width: "220px" }}
+                {...clienteReg}
+                onChange={(e) => { onChangeCliente(e); setFacturasSeleccionadas([]); setMediosPago([]); }}
                 isInvalid={!!errors.cliente}
               >
                 <option value="">Seleccionar...</option>
@@ -341,16 +339,13 @@ const EditarCobro = () => {
                   <option key={nombre} value={nombre}>{nombre}</option>
                 ))}
               </Form.Select>
-              <Form.Text className="text-danger">{errors.cliente?.message}</Form.Text>
-            </Form.Group>
-          </Col>
-        </Row>
-
-        <Row className="mb-3 align-items-end">
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Factura</Form.Label>
+            </div>
+          </div>
+          <div className="d-flex align-items-center gap-3">
+            <div className="d-flex align-items-center gap-2">
+              <Form.Label className="mb-0 text-nowrap">Factura</Form.Label>
               <Form.Select
+                style={{ width: "340px" }}
                 value={facturaElegida}
                 onChange={(e) => setFacturaElegida(e.target.value)}
                 disabled={!clienteSeleccionado}
@@ -368,23 +363,21 @@ const EditarCobro = () => {
                   </option>
                 ))}
               </Form.Select>
-            </Form.Group>
-          </Col>
-          {facturasSeleccionadas.length > 0 && (
-            <Col md={6} className="d-flex align-items-end gap-3">
-              <Button variant="outline-primary" size="sm" onClick={() => {
+            </div>
+            {facturasSeleccionadas.length > 0 && (
+              <Button type="button" variant="outline-primary" size="sm" onClick={() => {
                 if (mediosPago.length === 0) agregarMedioPago();
                 setShowModalPago(true);
               }}>
                 {mediosPago.length > 0 ? `Formas de pago (${mediosPago.length})` : "+ Agregar forma de pago"}
               </Button>
-            </Col>
-          )}
-        </Row>
+            )}
+          </div>
+        </div>
 
         <div className="d-flex justify-content-end mb-3 gap-2">
-          <Button variant="outline-secondary" onClick={() => navigate("/cobro-factura")}>Cancelar</Button>
-          <Button variant="outline-primary" onClick={agregarFactura} disabled={!facturaElegida}>+ Agregar Factura</Button>
+          <Button type="button" variant="outline-secondary" onClick={() => navigate("/cobro-factura")}>Cancelar</Button>
+          <Button type="button" variant="outline-primary" onClick={agregarFactura} disabled={!facturaElegida}>+ Agregar Factura</Button>
           <Button type="submit" variant="outline-success">Guardar Cambios</Button>
         </div>
 
@@ -409,14 +402,15 @@ const EditarCobro = () => {
                   <td>{formatearFecha(f.fecha)}</td>
                   <td>{formatoMoneda(totalConIva(f))}</td>
                   <td>{formatoMoneda(saldoFactura(f))}</td>
-                  <td style={{ minWidth: "140px" }}>
+                  <td>
                     <Form.Control
-                      type="number"
-                      step="0.01"
-                      min="0.01"
+                      type="text"
                       size="sm"
-                      value={f.montoCobrado}
+                      style={{ width: "130px", margin: "0 auto", textAlign: "center" }}
+                      value={editandoMontoId === f._id ? f.montoCobrado : formatoMoneda(f.montoCobrado)}
+                      onFocus={() => setEditandoMontoId(f._id)}
                       onChange={(e) => actualizarCampo(f._id, "montoCobrado", e.target.value)}
+                      onBlur={() => setEditandoMontoId(null)}
                     />
                   </td>
                   <td>
@@ -436,7 +430,6 @@ const EditarCobro = () => {
             </tfoot>
           </Table>
         )}
-
       </Form>
 
       <Modal show={showModalPago} onHide={cerrarModalPago} size="lg" centered>
@@ -471,7 +464,15 @@ const EditarCobro = () => {
                     </Form.Select>
                   </td>
                   <td style={{ minWidth: "120px" }}>
-                    <Form.Control type="number" size="sm" step="0.01" min="0.01" placeholder="0.00" value={m.monto} onChange={(e) => actualizarMedioPago(m.id, "monto", e.target.value)} />
+                    <Form.Control
+                      type="text"
+                      size="sm"
+                      value={editandoMontoId === m.id ? m.monto : (m.monto ? formatoMoneda(m.monto) : "")}
+                      placeholder="0.00"
+                      onFocus={() => setEditandoMontoId(m.id)}
+                      onChange={(e) => actualizarMedioPago(m.id, "monto", e.target.value)}
+                      onBlur={() => setEditandoMontoId(null)}
+                    />
                   </td>
                   <td style={{ minWidth: "130px" }}>
                     {esCheque(m.medioPago)

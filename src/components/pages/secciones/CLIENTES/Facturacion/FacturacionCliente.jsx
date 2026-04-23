@@ -31,7 +31,7 @@ const FacturacionCliente = () => {
   const [facturaEditar, setFacturaEditar] = useState(null);
   const [filtroNumero, setFiltroNumero] = useState("");
   const [filtroCliente, setFiltroCliente] = useState("");
-  const [filtroEstado, setFiltroEstado] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("Pendiente");
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   useEffect(() => {
@@ -140,6 +140,14 @@ const FacturacionCliente = () => {
     XLSXStyle.writeFile(libro, "Listado_Facturas.xlsx");
   };
 
+  const estiloX = {
+    position: "absolute", right: "10px", top: "50%",
+    transform: "translateY(-50%)", cursor: "pointer",
+    color: "#fff", fontSize: "14px", fontWeight: "900",
+    zIndex: 5, userSelect: "none",
+  };
+  const selectActivo = { backgroundImage: "none" };
+
   const clientesUnicos = [...new Set(facturas.map((f) => f.cliente).filter(Boolean))].sort();
 
   const facturasFiltradas = facturas.filter((f) => {
@@ -186,15 +194,20 @@ const FacturacionCliente = () => {
             <option key={c} value={c}>{c}</option>
           ))}
         </Form.Select>
-        <Form.Select
-          value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
-          style={{ maxWidth: "180px" }}
-        >
-          <option value="">Todos los estados</option>
-          <option value="Pendiente">Pendiente</option>
-          <option value="Pagada">Pagada</option>
-        </Form.Select>
+        <div style={{ position: "relative", width: "180px" }}>
+          <Form.Select
+            value={filtroEstado}
+            onChange={(e) => setFiltroEstado(e.target.value)}
+            style={filtroEstado ? selectActivo : {}}
+          >
+            <option value="">Todos los estados</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Pagada">Pagada</option>
+          </Form.Select>
+          {filtroEstado && (
+            <span onClick={() => setFiltroEstado("")} style={estiloX}>✕</span>
+          )}
+        </div>
       </div>
 
       {loading ? (
