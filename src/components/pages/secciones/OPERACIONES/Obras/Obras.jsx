@@ -162,7 +162,7 @@ const Obras = () => {
             clasificacion: p.clasificacion,
             precio: esNumero ? Number(p.precio) : 0,
             unidad: p.unidad || "Global",
-            observaciones: p.precio?.trim() || "No definido por el momento",
+            observaciones: p.observaciones?.trim() || "-",
             fecha: p.fecha || null,
           };
         }
@@ -268,7 +268,7 @@ const Obras = () => {
     setPrecios(
       (obra.precio || []).map((p) =>
         p.clasificacion === "Precio cerrado"
-          ? { ...p, precio: p.observaciones || "No definido por el momento" }
+          ? { ...p, precio: (p.observaciones === "-" || !p.observaciones) ? "" : p.observaciones }
           : p
       )
     );

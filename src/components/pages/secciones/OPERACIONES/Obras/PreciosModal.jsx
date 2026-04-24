@@ -49,7 +49,7 @@ const filaValida = (fila) => {
   );
 };
 
-const PRECIO_CERRADO_DEFAULT = "No definido por el momento";
+const PRECIO_CERRADO_DEFAULT = "";
 
 const PreciosModal = ({
   show,
@@ -248,33 +248,39 @@ const PreciosModal = ({
                 if (item.clasificacion === "Precio cerrado") {
                   const esNumerico = item.precio !== "" && !isNaN(Number(item.precio));
                   return (
-                    <tr key={index} className="table-warning">
-                      <td className="text-muted fst-italic small align-middle">Precio cerrado</td>
-                      <td className="fw-semibold align-middle">Precio de la obra</td>
-                      <td colSpan="4">
-                        <div className="input-group">
-                          {esNumerico && <span className="input-group-text">$</span>}
-                          <Form.Control
-                            type="text"
-                            value={esNumerico ? formatearMiles(item.precio) : item.precio}
-                            className="text-center"
-                            onChange={(e) => {
-                              const soloDigitos = e.target.value.replace(/\D/g, "");
-                              cambiarCampo(index, "precio", soloDigitos === "" ? PRECIO_CERRADO_DEFAULT : soloDigitos);
-                            }}
-                            onFocus={(e) => {
-                              if (item.precio === PRECIO_CERRADO_DEFAULT) {
-                                cambiarCampo(index, "precio", "");
+                    <tr key={index}>
+                      <td colSpan={7} style={{ border: "none", padding: "0.25rem 0.75rem" }}>
+                        <div style={{ border: "1px solid #ffc107", borderRadius: "0.5rem", display: "flex", alignItems: "center", gap: "1rem", padding: "0.4rem 0.75rem", backgroundColor: "#2c2c2c" }}>
+                          <span className="text-muted fst-italic small">Precio cerrado</span>
+                          <span className="fw-semibold">Precio de la obra</span>
+                          <div className="input-group" style={{ width: "180px", borderRadius: "0.375rem", overflow: "hidden" }}>
+                            {esNumerico && <span className="input-group-text">$</span>}
+                            <Form.Control
+                              type="text"
+                              value={esNumerico ? formatearMiles(item.precio) : ""}
+                              placeholder="Sin definir"
+                              className="text-center"
+                              onChange={(e) => {
+                                const soloDigitos = e.target.value.replace(/\D/g, "");
+                                cambiarCampo(index, "precio", soloDigitos);
+                              }}
+                              onFocus={(e) => {
+                                if (!esNumerico) cambiarCampo(index, "precio", "");
                                 e.target.select();
-                              }
-                            }}
-                            onBlur={() => {
-                              if (item.precio === "") cambiarCampo(index, "precio", PRECIO_CERRADO_DEFAULT);
-                            }}
-                          />
+                              }}
+                            />
+                          </div>
+                          <div className="d-flex align-items-center gap-2 ms-auto">
+                            <span className="text-muted small text-nowrap">Observaciones</span>
+                            <Form.Control
+                              type="text"
+                              value={item.observaciones === "No definido por el momento" ? "" : (item.observaciones || "")}
+                              style={{ width: "350px" }}
+                              onChange={(e) => cambiarCampo(index, "observaciones", e.target.value)}
+                            />
+                          </div>
                         </div>
                       </td>
-                      <td></td>
                     </tr>
                   );
                 }

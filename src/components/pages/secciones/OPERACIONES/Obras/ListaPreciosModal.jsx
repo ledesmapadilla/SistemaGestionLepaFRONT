@@ -49,7 +49,7 @@ const ListaPreciosModal = ({ show, onClose, precios, nombreObra }) => {
                     <td>{item.trabajo}</td>
                     <td>{formatoMoneda(item.precio)}</td>
                     <td>{item.unidad}</td>
-                    <td>{item.observaciones}</td>
+                    <td>{(item.observaciones === "No definido por el momento" || item.observaciones === "-") ? "" : item.observaciones}</td>
                     <td>{item.fecha ? new Date(item.fecha).toLocaleDateString("es-AR") : "-"}</td>
                   </tr>
                 ))

@@ -329,9 +329,9 @@ const VerRemitos = () => {
                     <td>{item.servicio || "-"}</td>
                     <td>{item.cantidad}</td>
                     <td>{item.unidad}</td>
-                    <td>${formatoMiles(item.precioUnitario)}</td>
+                    <td>{item.precioUnitario ? `$${formatoMiles(item.precioUnitario)}` : "Sin definir"}</td>
                     <td>
-                      ${formatoMiles(item.cantidad * item.precioUnitario)}
+                      {item.precioUnitario ? `$${formatoMiles(item.cantidad * item.precioUnitario)}` : "Sin definir"}
                     </td>
                     <td>{remito.estado}</td>
                     <td>{item.gasoil || "-"}</td>
