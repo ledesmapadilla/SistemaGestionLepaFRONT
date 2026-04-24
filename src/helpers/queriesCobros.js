@@ -41,3 +41,12 @@ export const borrarCobro = async (id) => {
     return null;
   }
 };
+
+export const recalcularEstadosFacturas = async () => {
+  try {
+    return await authFetch(`${cobrosBackend}/recalcular-todo`);
+  } catch (error) {
+    console.error("Error al recalcular estados:", error);
+    return null;
+  }
+};

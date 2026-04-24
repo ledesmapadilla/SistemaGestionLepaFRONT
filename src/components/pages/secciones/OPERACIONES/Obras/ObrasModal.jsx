@@ -138,34 +138,58 @@ const ModalObras = ({
             </Form.Group>
 
            
-          {/* Estado */}
-            <Form.Group className="mb-3">
-              <Form.Label>Estado*</Form.Label>
-              {editando || verDetalle ? (
-                // MODO EDITAR: Muestra el Select para cambiar estado
-                <Form.Select
-                  {...register("estado", {
-                    required: "El estado es obligatorio",
-                  })}
-                >
-                  <option value="En curso">En curso</option>
-                  <option value="Terminada (+)">Terminada (+)</option>
-                  <option value="Terminada (-)">Terminada (-)</option>
-                </Form.Select>
-              ) : (
-                // MODO CREAR: Muestra un input de texto fijo (no editable)
-                <Form.Control
-                  type="text"
-                  value="En curso"
-                  readOnly // No permite escribir
-                  className="text-muted" // Estilo visual de "deshabilitado"
-                  {...register("estado")}
-                />
-              )}
-              <Form.Text className="text-danger">
-                {errors.estado?.message}
-              </Form.Text>
-            </Form.Group>
+          {/* Estado + Modalidad */}
+            <div className="row g-2 mb-3 align-items-start">
+              <div className="col-5">
+                <Form.Label>Estado*</Form.Label>
+                {editando || verDetalle ? (
+                  <Form.Select
+                    size="sm"
+                    {...register("estado", {
+                      required: "El estado es obligatorio",
+                    })}
+                  >
+                    <option value="En curso">En curso</option>
+                    <option value="Terminada (+)">Terminada (+)</option>
+                    <option value="Terminada (-)">Terminada (-)</option>
+                  </Form.Select>
+                ) : (
+                  <Form.Control
+                    size="sm"
+                    type="text"
+                    value="En curso"
+                    readOnly
+                    className="text-muted"
+                    {...register("estado")}
+                  />
+                )}
+                <Form.Text className="text-danger">
+                  {errors.estado?.message}
+                </Form.Text>
+              </div>
+
+              <div className="col-7 text-center">
+                <Form.Label>Modalidad</Form.Label>
+                <div className="d-flex gap-3 mt-1 justify-content-center">
+                  <Form.Check
+                    type="radio"
+                    id="modalidad-precio-cerrado"
+                    label="Precio cerrado"
+                    value="Precio cerrado"
+                    disabled={verDetalle}
+                    {...register("modalidad")}
+                  />
+                  <Form.Check
+                    type="radio"
+                    id="modalidad-alquiler"
+                    label="Alquiler"
+                    value="Alquiler"
+                    disabled={verDetalle}
+                    {...register("modalidad")}
+                  />
+                </div>
+              </div>
+            </div>
 
             {/* Fecha y precios */}
             <div className="row g-3 mb-3">
@@ -184,6 +208,7 @@ const ModalObras = ({
                 <Form.Label>Precios*</Form.Label>
                 <div>
                   <Button
+                    type="button"
                     variant="outline-secondary"
                     onClick={abrirModalPrecios}
                   >
@@ -210,7 +235,7 @@ const ModalObras = ({
         </Modal.Body>
 
         <Modal.Footer className="justify-content-center">
-          <Button variant="outline-secondary" onClick={onHide}>
+          <Button type="button" variant="outline-secondary" onClick={onHide}>
             Cancelar
           </Button>
           {!verDetalle && (

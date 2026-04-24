@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Table, Button, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import GastoModal from "../Gastos/GastoModal";
@@ -18,10 +18,20 @@ const CrudObras = ({
   verPrecios,
   verTablaGastos,
 }) => {
-  // AGREGAMOS EL INTERRUPTOR (ESTADO) AQUÍ MISMO ---
   const navigate = useNavigate();
   const [showGastoModal, setShowGastoModal] = useState(false);
   const [obraParaGasto, setObraParaGasto] = useState(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const headerRef = useRef(null);
+
+  useEffect(() => {
+    if (!headerRef.current) return;
+    const observer = new ResizeObserver(() => {
+      setHeaderHeight(headerRef.current?.offsetHeight || 0);
+    });
+    observer.observe(headerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // --- 4. FUNCIONES PARA ABRIR Y CERRAR ---
   const manejarAperturaGasto = (obra) => {
@@ -49,35 +59,37 @@ const CrudObras = ({
 
   return (
     <>
-      <h2 className="mt-2">Obras</h2>
+      <div ref={headerRef} className="sticky-top bg-body pt-2 pb-1" style={{ zIndex: 10 }}>
+        <h2 className="mt-2">Obras</h2>
 
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <div className="d-flex gap-3 w-75">
-          <Form.Control
-            type="search"
-            placeholder="Buscar por razón social o nombre..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
-          <Form.Select
-            value={filtroEstado}
-            onChange={(e) => setFiltroEstado(e.target.value)}
-            style={{ maxWidth: "250px" }}
-          >
-            <option value="">Todos los estados</option>
-            <option value="En curso">En curso</option>
-            <option value="Terminada">Terminadas</option>
-          </Form.Select>
-        </div>
-        <div className="d-flex flex-column gap-2">
-          <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
-          <Button variant="outline-primary" onClick={abrirCrear}>Crear Obra</Button>
+        <div className="d-flex justify-content-between align-items-center mb-2">
+          <div className="d-flex gap-3 w-75">
+            <Form.Control
+              type="search"
+              placeholder="Buscar por razón social o nombre..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+            <Form.Select
+              value={filtroEstado}
+              onChange={(e) => setFiltroEstado(e.target.value)}
+              style={{ maxWidth: "250px" }}
+            >
+              <option value="">Todos los estados</option>
+              <option value="En curso">En curso</option>
+              <option value="Terminada">Terminadas</option>
+            </Form.Select>
+          </div>
+          <div className="d-flex flex-column gap-2">
+            <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+            <Button variant="outline-primary" onClick={abrirCrear}>Crear Obra</Button>
+          </div>
         </div>
       </div>
 
       <div>
         <Table striped bordered hover className="text-center align-middle">
-          <thead className="table-dark">
+          <thead className="table-dark" style={{ position: "sticky", top: headerHeight, zIndex: 5 }}>
             <tr>
               <th>Razón Social</th>
               <th>Nombre de la Obra</th>

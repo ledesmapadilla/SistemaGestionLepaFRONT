@@ -20,7 +20,7 @@ const VerRemitos = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { obraId, obraNombre, razonsocial } = location.state || {};
+  const { obraId, obraNombre, razonsocial, modalidad } = location.state || {};
 
   const [loading, setLoading] = useState(true);
   const [remitos, setRemitos] = useState([]);
@@ -400,6 +400,7 @@ const VerRemitos = () => {
           nombreobra: obraNombre,
           razonsocial,
           precio: precios,
+          modalidad,
         }}
         itemEditando={itemEditando}
         remitoEditando={remitoEditando}

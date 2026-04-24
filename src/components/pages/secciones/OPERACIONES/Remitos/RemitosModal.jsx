@@ -159,7 +159,7 @@ const RemitosModal = ({
     } else {
       // MODO CREAR REMITO
       setRemito("");
-      setEstado("Sin facturar"); // Se inicializa fijo aquí
+      setEstado("Sin facturar");
       setFecha(obtenerFechaHoy());
       setFilas([{ ...filaVacia, fecha: obtenerFechaHoy() }]);
     }
@@ -168,6 +168,9 @@ const RemitosModal = ({
     setErrorFecha("");
     setErrorNumeroRemito("");
   }, [show, itemEditando, remitoEditando]);
+
+  // Estado efectivo para crear: obras de precio cerrado usan "Obra propia"
+  const estadoCreacion = obra?.modalidad === "Precio cerrado" ? "Obra propia" : "Sin facturar";
 
   // ===============================
   // CARGAR PERSONAL
@@ -370,7 +373,7 @@ const RemitosModal = ({
         // CREAR REMITO
         await crearRemito({
           remito: Number(remito),
-          estado, // Se envía "Sin facturar" (valor del state inicial)
+          estado: estadoCreacion,
           obra: obra._id,
           fecha, 
           items: itemsValidos.map((f) => ({
@@ -476,14 +479,15 @@ const RemitosModal = ({
               >
                 <option value="Sin facturar">Sin facturar</option>
                 <option value="Facturado">Facturado</option>
+                <option value="Obra propia">Obra propia</option>
               </Form.Select>
             ) : (
               // MODO CREACIÓN: Input solo lectura
               <Form.Control
                 type="text"
-                value="Sin facturar"
+                value={estadoCreacion}
                 readOnly
-                className="text-center  text-muted"
+                className="text-center text-muted"
                 style={{ cursor: "not-allowed" }}
               />
             )}

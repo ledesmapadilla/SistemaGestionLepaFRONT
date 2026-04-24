@@ -69,7 +69,6 @@ const EditarCobro = () => {
           setTodasFacturas(
             facturasResult.value.filter((f) => {
               if (idsEnCobro.has(f._id)) return true;
-              if (f.estadoPago === "Pagada") return false;
               return (totalConIva(f) - (mapa[f._id] || 0)) > 0.01;
             })
           );

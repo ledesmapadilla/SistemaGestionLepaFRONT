@@ -22,6 +22,7 @@ import {
   listarObras,
   borrarObra as borrarObraAPI,
 } from "../../../../../helpers/queriesObras.js";
+import { crearRemito, listarRemitos } from "../../../../../helpers/queriesRemitos.js";
 
 import "../../../../../styles/clientes.css";
 
@@ -34,6 +35,7 @@ const valoresIniciales = {
   estado: "En curso",
   fecha: hoy(),
   descripcion: "",
+  modalidad: "Alquiler",
 };
 
 const Obras = () => {
@@ -152,14 +154,27 @@ const Obras = () => {
       return;
     }
     try {
-      const preciosNormalizados = precios.map((p) => ({
-        trabajo: p.trabajo,
-        clasificacion: p.clasificacion,
-        precio: Number(p.precio),
-        unidad: p.unidad,
-        observaciones: p.observaciones?.trim() || "-",
-        fecha: p.fecha || null,
-      }));
+      const preciosNormalizados = precios.map((p) => {
+        if (p.clasificacion === "Precio cerrado") {
+          const esNumero = p.precio !== "" && !isNaN(Number(p.precio));
+          return {
+            trabajo: p.trabajo,
+            clasificacion: p.clasificacion,
+            precio: esNumero ? Number(p.precio) : 0,
+            unidad: p.unidad || "Global",
+            observaciones: p.precio?.trim() || "No definido por el momento",
+            fecha: p.fecha || null,
+          };
+        }
+        return {
+          trabajo: p.trabajo,
+          clasificacion: p.clasificacion,
+          precio: Number(p.precio),
+          unidad: p.unidad,
+          observaciones: p.observaciones?.trim() || "-",
+          fecha: p.fecha || null,
+        };
+      });
 
       const dataConPrecios = { ...data, precio: preciosNormalizados };
       let respuesta;
@@ -178,9 +193,53 @@ const Obras = () => {
       }
 
       const resData = await respuesta.json();
+      const obraGuardada = resData.obra || resData;
+
       if (editando)
-        setObras((prev) => prev.map((o) => (o._id === obraId ? resData : o)));
-      else setObras((prev) => [...prev, resData.obra || resData]);
+        setObras((prev) => prev.map((o) => (o._id === obraId ? obraGuardada : o)));
+      else setObras((prev) => [...prev, obraGuardada]);
+
+      // Crear remito automático para obras de precio cerrado (solo al crear)
+      // La obra recién creada no tiene remitos → número 9000 (único por {obra, remito})
+      if (!editando && data.modalidad === "Precio cerrado") {
+        try {
+          const hoyStr = hoy();
+
+          const filaPrecioCerrado = precios.find((p) => p.clasificacion === "Precio cerrado");
+          const precioObra = filaPrecioCerrado?.precio;
+          const esNumerico = precioObra && precioObra !== "No definido por el momento" && !isNaN(Number(precioObra));
+
+          const itemsRemito = [{
+            fecha: hoyStr,
+            maquina: "",
+            servicio: "Precio de la obra",
+            personal: "",
+            cantidad: 1,
+            precioUnitario: esNumerico ? Number(precioObra) : 0,
+            costoHoraPersonal: 0,
+            unidad: "Global",
+            gasoil: 0,
+            observaciones: "",
+          }];
+
+          if (itemsRemito.length > 0) {
+            const todosRemitos = await listarRemitos();
+            const usados = new Set(todosRemitos.map((r) => Number(r.remito)));
+            let nextNum = 9000;
+            while (usados.has(nextNum)) nextNum++;
+
+            await crearRemito({
+              obra: obraGuardada._id,
+              remito: nextNum,
+              fecha: hoyStr,
+              estado: "Sin facturar",
+              items: itemsRemito,
+            });
+          }
+        } catch (err) {
+          console.error("Error al crear remito automático:", err);
+        }
+      }
 
       cerrarModal();
       Swal.fire({
@@ -206,7 +265,13 @@ const Obras = () => {
       ...obra,
       fecha: obra.fecha ? obra.fecha.substring(0, 10) : "",
     });
-    setPrecios(obra.precio || []);
+    setPrecios(
+      (obra.precio || []).map((p) =>
+        p.clasificacion === "Precio cerrado"
+          ? { ...p, precio: p.observaciones || "No definido por el momento" }
+          : p
+      )
+    );
     setShowModal(true);
   };
 
@@ -299,6 +364,7 @@ const Obras = () => {
         obraNombre: obra.nombreobra,
         razonsocial: obra.razonsocial,
         precios: obra.precio,
+        modalidad: obra.modalidad,
       },
     });
   };
@@ -372,6 +438,7 @@ const Obras = () => {
         editando={editando}
         gasoilAutomatic={getGasoilParaFecha(watch("fecha"))}
         ultimaListaPrecios={ultimaListaPrecios}
+        modalidad={watch("modalidad")}
       />
 
       {showListaPrecios && obraSeleccionada && (

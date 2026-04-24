@@ -37,12 +37,19 @@ const MAQUINA_A_UNIDAD = {
 const esAlquiler = (clasificacion) =>
   clasificacion === "Alquiler c/gasoil" || clasificacion === "Alquiler s/gasoil";
 
-const filaValida = (fila) =>
-  fila.clasificacion &&
-  fila.trabajo?.trim() &&
-  fila.precio !== "" &&
-  fila.unidad?.trim() &&
-  fila.fecha;
+const filaValida = (fila) => {
+  if (fila.clasificacion === "Precio cerrado")
+    return !!(fila.clasificacion && fila.trabajo && fila.fecha);
+  return (
+    fila.clasificacion &&
+    fila.trabajo?.trim() &&
+    fila.precio !== "" &&
+    fila.unidad?.trim() &&
+    fila.fecha
+  );
+};
+
+const PRECIO_CERRADO_DEFAULT = "No definido por el momento";
 
 const PreciosModal = ({
   show,
@@ -54,6 +61,7 @@ const PreciosModal = ({
   editando = false,
   gasoilAutomatic,
   ultimaListaPrecios = [],
+  modalidad = "",
 }) => {
   const [filasOriginales, setFilasOriginales] = useState(0);
 
@@ -62,7 +70,7 @@ const PreciosModal = ({
       setFilasOriginales(editando ? precios.length : 0);
 
       if (precios.length === 0) {
-        setPrecios([
+        const filas = [
           {
             clasificacion: "Gasoil",
             trabajo: "-",
@@ -71,7 +79,18 @@ const PreciosModal = ({
             observaciones: "",
             fecha: hoy(),
           },
-        ]);
+        ];
+        if (modalidad === "Precio cerrado") {
+          filas.push({
+            clasificacion: "Precio cerrado",
+            trabajo: "Precio de la obra",
+            precio: PRECIO_CERRADO_DEFAULT,
+            unidad: "Global",
+            observaciones: "",
+            fecha: hoy(),
+          });
+        }
+        setPrecios(filas);
       }
     }
   }, [show]);
@@ -225,6 +244,40 @@ const PreciosModal = ({
                 const esFilaFijaGasoil =
                   index === 0 && item.clasificacion === "Gasoil";
                 const esFilaExistente = editando && index < filasOriginales;
+
+                if (item.clasificacion === "Precio cerrado") {
+                  const esNumerico = item.precio !== "" && !isNaN(Number(item.precio));
+                  return (
+                    <tr key={index} className="table-warning">
+                      <td className="text-muted fst-italic small align-middle">Precio cerrado</td>
+                      <td className="fw-semibold align-middle">Precio de la obra</td>
+                      <td colSpan="4">
+                        <div className="input-group">
+                          {esNumerico && <span className="input-group-text">$</span>}
+                          <Form.Control
+                            type="text"
+                            value={esNumerico ? formatearMiles(item.precio) : item.precio}
+                            className="text-center"
+                            onChange={(e) => {
+                              const soloDigitos = e.target.value.replace(/\D/g, "");
+                              cambiarCampo(index, "precio", soloDigitos === "" ? PRECIO_CERRADO_DEFAULT : soloDigitos);
+                            }}
+                            onFocus={(e) => {
+                              if (item.precio === PRECIO_CERRADO_DEFAULT) {
+                                cambiarCampo(index, "precio", "");
+                                e.target.select();
+                              }
+                            }}
+                            onBlur={() => {
+                              if (item.precio === "") cambiarCampo(index, "precio", PRECIO_CERRADO_DEFAULT);
+                            }}
+                          />
+                        </div>
+                      </td>
+                      <td></td>
+                    </tr>
+                  );
+                }
 
                 return (
                   <tr key={index}>
