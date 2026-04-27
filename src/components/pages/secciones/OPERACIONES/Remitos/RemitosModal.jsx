@@ -653,6 +653,7 @@ const RemitosModal = ({
                     isInvalid={!!erroresFilas[index]?.personal}
                   >
                     <option value="">—</option>
+                    <option value="No aplica">No aplica</option>
                     {personalDisponible.map((persona) => (
                       <option key={persona._id} value={persona.nombre}>
                         {persona.nombre}
