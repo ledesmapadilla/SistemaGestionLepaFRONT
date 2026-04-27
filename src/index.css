@@ -1,4 +1,10 @@
 
+/* Títulos de columnas en tablas */
+thead th {
+  font-weight: normal !important;
+  font-size: 20px !important;
+}
+
 /* bajar footer */
 #root {
   min-height: 100vh;

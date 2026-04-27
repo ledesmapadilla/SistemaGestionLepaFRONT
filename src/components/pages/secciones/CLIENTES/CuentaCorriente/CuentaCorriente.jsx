@@ -243,10 +243,10 @@ const CuentaCorriente = () => {
           <Table striped bordered hover className="text-center align-middle">
             <thead className="table-dark">
               <tr>
-                <th>Cliente</th>
-                <th>Facturado</th>
-                <th>Cobrado</th>
-                <th>Saldo</th>
+                <th >Cliente</th>
+                <th >Facturado</th>
+                <th >Cobrado</th>
+                <th >Saldo</th>
                 <th></th>
               </tr>
             </thead>
@@ -275,13 +275,13 @@ const CuentaCorriente = () => {
           <Table striped bordered hover className="text-center align-middle">
             <thead className="table-dark">
               <tr>
-                <th>Fecha</th>
-                <th>Tipo</th>
-                <th>Descripción</th>
-                <th>Obra</th>
-                <th>Facturado</th>
-                <th>Cobrado</th>
-                <th>Saldo</th>
+                <th >Fecha</th>
+                <th >Tipo</th>
+                <th >Descripción</th>
+                <th >Obra</th>
+                <th >Facturado</th>
+                <th >Cobrado</th>
+                <th >Saldo</th>
               </tr>
             </thead>
             <tbody>
