@@ -217,9 +217,9 @@ const CuentaCorriente = () => {
                 <div className="text-muted" style={{ fontSize: "0.75rem" }}>Cobrado</div>
                 <div className="fw-bold" style={{ fontSize: "0.95rem" }}>{formatoMoneda(totCob)}</div>
               </div>
-              <div className="border rounded px-3 py-1 text-center" style={{ minWidth: "150px", borderColor: totSaldo > 0 ? "#ffc107" : totSaldo < 0 ? "#198754" : undefined }}>
+              <div className="border rounded px-3 py-1 text-center" style={{ minWidth: "150px", borderColor: totSaldo > 0 ? "#0d6efd" : totSaldo < 0 ? "#198754" : undefined }}>
                 <div className="text-muted" style={{ fontSize: "0.75rem" }}>Saldo</div>
-                <div className={`fw-bold ${totSaldo > 0 ? "text-warning" : totSaldo < 0 ? "text-success" : ""}`} style={{ fontSize: "0.95rem" }}>
+                <div className={`fw-bold ${totSaldo > 0 ? "text-primary" : totSaldo < 0 ? "text-success" : ""}`} style={{ fontSize: "0.95rem" }}>
                   {formatoMoneda(totSaldo)}
                 </div>
               </div>
@@ -256,7 +256,7 @@ const CuentaCorriente = () => {
                   <td className="text-start fw-semibold">{r.cliente}</td>
                   <td>{formatoMoneda(r.debito)}</td>
                   <td>{formatoMoneda(r.credito)}</td>
-                  <td className={r.saldo < 0 ? "text-success fw-semibold" : r.saldo > 0 ? "text-warning fw-semibold" : ""}>
+                  <td className={r.saldo < 0 ? "text-success fw-semibold" : r.saldo > 0 ? "text-primary fw-semibold" : ""}>
                     {formatoMoneda(r.saldo)}
                   </td>
                   <td>
@@ -286,14 +286,14 @@ const CuentaCorriente = () => {
             </thead>
             <tbody>
               {movConSaldo.map((m) => (
-                <tr key={`${m._id}-${m.tipo}`} style={{ backgroundColor: m.tipo === "Cobro" ? "#3d3d3d" : "" }}>
+                <tr key={`${m._id}-${m.tipo}`}>
                   <td>{formatearFecha(m.fecha)}</td>
-                  <td>{m.tipo}</td>
+                  <td>{m.tipo === "Cobro" ? <span style={{ textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: "4px" }}>Cobro</span> : m.tipo}</td>
                   <td>{m.descripcion}</td>
                   <td className="text-muted">{(m.obras || []).join(", ") || "-"}</td>
                   <td>{m.debito ? formatoMoneda(m.debito) : "-"}</td>
-                  <td>{m.credito ? formatoMoneda(m.credito) : "-"}</td>
-                  <td className={m.saldo < 0 ? "text-success fw-semibold" : m.saldo > 0 ? "text-warning fw-semibold" : ""}>
+                  <td>{m.credito ? <span style={{ textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: "4px" }}>{formatoMoneda(m.credito)}</span> : "-"}</td>
+                  <td className={m.saldo < 0 ? "text-success fw-semibold" : m.saldo > 0 ? "text-primary fw-semibold" : ""}>
                     {formatoMoneda(m.saldo)}
                   </td>
                 </tr>
