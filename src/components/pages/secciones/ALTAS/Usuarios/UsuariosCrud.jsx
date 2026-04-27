@@ -197,7 +197,7 @@ const UsuariosCrud = () => {
         <Row className="justify-content-center">
           <Col xs={12} md={6} lg={4}>
             <div className="shadow-sm rounded p-4">
-              <h3 className="text-center mb-4">Acceso a Usuarios</h3>
+              <h6 className="text-center mb-4">Acceso a Usuarios</h6>
               <p className="text-center text-muted mb-3">
                 Ingrese la contraseña del superadministrador
               </p>
@@ -236,7 +236,7 @@ const UsuariosCrud = () => {
   return (
     <Container className="my-3">
       <div className="mb-0">
-        <h2 className="mb-0">Usuarios</h2>
+        <h6 className="mb-0">Usuarios</h6>
       </div>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div className="w-25 mt-0">

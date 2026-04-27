@@ -9,35 +9,26 @@
   overflow-x: hidden;
 }
 
-/* Tabla compacta solo en pantallas menores a 15" (~1440px) */
-@media (max-width: 1440px) {
-  .tabla-remitos {
-    font-size: 0.75rem;
-  }
-
-  .tabla-remitos th,
-  .tabla-remitos td {
-    padding: 3px 5px !important;
-    white-space: nowrap;
-  }
-
-  .tabla-remitos .col-truncate {
-    max-width: 110px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .tabla-remitos .col-truncate-sm {
-    max-width: 80px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-.th-long { display: none; }
+.tabla-remitos {
+  font-size: 0.82rem;
 }
 
-@media (min-width: 1441px) {
-  .th-short { display: none; }
+.tabla-remitos th,
+.tabla-remitos td {
+  padding: 4px 6px !important;
+  white-space: nowrap;
+}
+
+.tabla-remitos .col-truncate {
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tabla-remitos .col-truncate-sm {
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

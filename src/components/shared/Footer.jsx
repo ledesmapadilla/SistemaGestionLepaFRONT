@@ -7,7 +7,7 @@ const Footer = () => {
     return (
         <footer className="fondoFooter text-white text-center p-3 mt-4">
             <div className="container ">
-                Copyright @ {anioActual} LEPA Construcciones Srl
+                Copyright @ {anioActual} LEPA Construcciones Srl - L.Padilla
             </div>
         </footer>
     );

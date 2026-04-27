@@ -1,8 +1,15 @@
 
-/* Títulos de columnas en tablas */
 thead th {
   font-weight: normal !important;
-  font-size: 20px !important;
+}
+
+.table {
+  font-size: 0.82rem !important;
+}
+
+.table th,
+.table td {
+  padding: 4px 6px !important;
 }
 
 /* bajar footer */

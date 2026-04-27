@@ -215,9 +215,7 @@ const TodosLosRemitos = () => {
   return (
     <Container fluid className="my-3 px-4 container-remitos">
       <div className="mb-2">
-        <h4 className="text-center">
-          <span className=" ">Listado de todos los remitos</span>
-        </h4>
+        <h6 className="text-center">Listado de todos los remitos</h6>
       </div>
 
       {/* --- 3. BARRA DE BUSCADORES ALINEADA --- */}

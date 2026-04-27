@@ -183,7 +183,7 @@ const NuevaFactura = () => {
   return (
     <Container className="py-4 w-75">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="mb-0">Nueva Factura</h2>
+        <h6 className="mb-0">Nueva Factura</h6>
         <Button variant="outline-success" onClick={() => navigate("/facturacion")}>Volver</Button>
       </div>
 
