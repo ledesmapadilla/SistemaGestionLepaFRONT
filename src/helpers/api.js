@@ -15,4 +15,5 @@ export const API = {
   consumoGasoil: `${BASE}/api/consumo-gasoil`,
   facturas: `${BASE}/api/facturas`,
   cobros: `${BASE}/api/cobros`,
+  cuentaCorriente: `${BASE}/api/cuenta-corriente`,
 };

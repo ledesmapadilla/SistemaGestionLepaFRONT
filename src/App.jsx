@@ -30,6 +30,7 @@ import NuevaFactura from "./components/pages/secciones/CLIENTES/Facturacion/Nuev
 import CobrosTabla from "./components/pages/secciones/CLIENTES/Cobros/CobrosTabla.jsx";
 import NuevoCobro from "./components/pages/secciones/CLIENTES/Cobros/NuevoCobro.jsx";
 import EditarCobro from "./components/pages/secciones/CLIENTES/Cobros/EditarCobro.jsx";
+import CuentaCorriente from "./components/pages/secciones/CLIENTES/CuentaCorriente/CuentaCorriente.jsx";
 
 function App() {
   return (
@@ -78,6 +79,7 @@ function App() {
                       <Route path="/cobro-factura" element={<CobrosTabla />} />
                       <Route path="/cobro-factura/nuevo" element={<NuevoCobro />} />
                       <Route path="/cobro-factura/editar/:id" element={<EditarCobro />} />
+                      <Route path="/cuenta-corriente" element={<CuentaCorriente />} />
                       <Route path="*" element={<Error404 />} />
                     </Routes>
                   </main>

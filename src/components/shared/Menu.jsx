@@ -81,12 +81,12 @@ function Menu() {
               </NavDropdown.Item>
             </NavDropdown>
 
-            <NavDropdown title="Contable" id="nav-dropdown" className="mx-2">
+            <NavDropdown title="Variables" id="nav-dropdown" className="mx-2">
               <NavDropdown.Item as={Link} to="/variables">
                 Variables
               </NavDropdown.Item>
               <NavDropdown.Item as={Link} to="/precios">
-                Precios
+                Precios Máquinas
               </NavDropdown.Item>
             </NavDropdown>
 
@@ -96,6 +96,9 @@ function Menu() {
               </NavDropdown.Item>
               <NavDropdown.Item as={Link} to="/cobro-factura">
                 Cobro de factura
+              </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/cuenta-corriente">
+                Cuenta Corriente
               </NavDropdown.Item>
             </NavDropdown>
 
