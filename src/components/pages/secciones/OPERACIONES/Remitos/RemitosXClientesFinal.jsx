@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Table, Button, Container } from "react-bootstrap";
+import { useEffect, useRef, useState } from "react";
+import { Table, Button } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos";
 import XLSXStyle from "xlsx-js-style";
@@ -12,6 +12,28 @@ const RemitosXClientesFinal = () => {
 
   const [remitos, setRemitos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const headerRef = useRef(null);
+
+  useEffect(() => {
+    const main = document.querySelector("main");
+    const footer = document.querySelector("footer");
+    if (main) {
+      const mainTop = main.getBoundingClientRect().top;
+      const footerH = footer ? footer.offsetHeight + parseInt(window.getComputedStyle(footer).marginTop || "0") : 0;
+      main.style.overflow = "hidden";
+      main.style.display = "flex";
+      main.style.flexDirection = "column";
+      main.style.height = `calc(100vh - ${mainTop}px - ${footerH}px)`;
+    }
+    return () => {
+      if (main) {
+        main.style.overflow = "";
+        main.style.display = "";
+        main.style.flexDirection = "";
+        main.style.height = "";
+      }
+    };
+  }, []);
   // NUEVO ESTADO: Para guardar el total global de la obra
   const [totalObra, setTotalObra] = useState(0);
 
@@ -116,91 +138,75 @@ const RemitosXClientesFinal = () => {
   };
 
   if (!obraId)
-    return <Container className="mt-5">Obra no seleccionada.</Container>;
+    return <div className="mt-5">Obra no seleccionada.</div>;
 
   return (
-    <Container className="my-3">
-      <div className="row align-items-center ">
-        <div className="">
-          <h3 className=" text-center">Remitos sin facturar</h3>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0 }}>
+      <div className="container" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
+        <div ref={headerRef} className="pt-2 pb-1">
+          <h6 className="text-center mb-2">Remitos sin facturar</h6>
+          <div className="row align-items-center mb-2">
+            <div className="col-4">
+              <h6 className="mb-1"><strong>Razón social: </strong><span className="titulosLetras">{razonsocial}</span></h6>
+              <h6 className="mb-0"><strong>Obra:</strong> <span className="titulosLetras">{obraNombre}</span></h6>
+            </div>
+            <div className="col-4 text-center">
+              <h6 className="mb-1">Total Obra: <span className="text-gray">${formatoMiles(totalObra)} + iva</span></h6>
+              <h6 className="mb-0">Sin facturar: <span className="text-gray">${formatoMiles(totalNoFacturado)} + iva</span></h6>
+            </div>
+            <div className="col-4 text-end d-flex gap-2 justify-content-end">
+              <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
+              <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+            </div>
+          </div>
         </div>
-        <div className="col-md-8 my-0 ">
-          <h4 className="mb-0">
-            <strong>Razón social: </strong>
-            <span className="titulosLetras">{razonsocial}</span>
-          </h4>
-          <h4>
-            <strong>Obra:</strong>{" "}
-            <span className="titulosLetras">{obraNombre}</span>
-          </h4>
-        </div>
-        <div className="col-md-4 text-end d-flex gap-2 justify-content-end">
-          <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
-          <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
-        </div>
-      </div>
 
-      {/* SECCIÓN DE TOTALES */}
-      <div className="text-center pb-3">
-        {/* NUEVO: Total Obra */}
-        <h4 className="mb-2">
-          Total Obra:{" "}
-          <span className="text-gray ">${formatoMiles(totalObra)} + iva</span>
-        </h4>
-
-        {/* EXISTENTE: Total sin facturar */}
-        <h5 className="mb-1">
-          Total sin facturar: ${formatoMiles(totalNoFacturado)} + iva
-        </h5>
-      </div>
-
-      <div className="table-responsive shadow-sm">
-        <Table striped bordered hover className="align-middle text-center">
-          <thead className="table-dark">
-            <tr>
-              <th>N° Remito</th>
-              <th>Fecha</th>
-              <th>Maquinista</th>
-              <th>Máquina</th>
-              <th>Servicio</th>
-              <th>Cant.</th>
-              <th>Unidad</th>
-              <th>$ Un.</th>
-              <th>$ Total</th>
-              <th>Gasoil(lts)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {remitos.length > 0 ? (
-              remitos.map((remito) =>
-                remito.items.map((item, index) => (
-                  <tr key={`${remito._id}-${item._id}`}>
-                    <td>{remito.remito}</td>
-                    <td>{mostrarFechaDMY(item.fecha || remito.fecha)}</td>
-                    <td>{item.personal || "-"}</td>
-                    <td>{item.maquina || "-"}</td>
-                    <td>{item.servicio || "-"}</td>
-                    <td>{item.cantidad}</td>
-                    <td>{item.unidad}</td>
-                    <td>${formatoMiles(item.precioUnitario)}</td>
-                    <td className="">
-                      ${formatoMiles(item.cantidad * item.precioUnitario)}
-                    </td>
-                    <td>{item.gasoil || "-"}</td>
-                  </tr>
-                ))
-              )
-            ) : (
+        <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+          <Table striped bordered hover className="align-middle text-center">
+            <thead className="table-dark">
               <tr>
-                <td colSpan="10" className="py-4 text-muted">
-                  No hay remitos pendientes de facturación para esta obra.
-                </td>
+                <th>N° Remito</th>
+                <th>Fecha</th>
+                <th>Maquinista</th>
+                <th>Máquina</th>
+                <th>Servicio</th>
+                <th>Cant.</th>
+                <th>Unidad</th>
+                <th>$ Un.</th>
+                <th>$ Total</th>
+                <th>Gasoil(lts)</th>
               </tr>
-            )}
-          </tbody>
-        </Table>
+            </thead>
+            <tbody>
+              {remitos.length > 0 ? (
+                remitos.map((remito) =>
+                  remito.items.map((item, index) => (
+                    <tr key={`${remito._id}-${item._id}`}>
+                      <td>{remito.remito}</td>
+                      <td>{mostrarFechaDMY(item.fecha || remito.fecha)}</td>
+                      <td>{item.personal || "-"}</td>
+                      <td>{item.maquina || "-"}</td>
+                      <td>{item.servicio || "-"}</td>
+                      <td>{item.cantidad}</td>
+                      <td>{item.unidad}</td>
+                      <td>${formatoMiles(item.precioUnitario)}</td>
+                      <td>${formatoMiles(item.cantidad * item.precioUnitario)}</td>
+                      <td>{item.gasoil || "-"}</td>
+                    </tr>
+                  ))
+                )
+              ) : (
+                <tr>
+                  <td colSpan="10" className="py-4 text-muted">
+                    No hay remitos pendientes de facturación para esta obra.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </Table>
+        </div>
       </div>
-    </Container>
+    </div>
   );
 };
 

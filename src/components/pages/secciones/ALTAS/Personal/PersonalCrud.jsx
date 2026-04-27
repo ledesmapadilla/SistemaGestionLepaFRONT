@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Form, Container, Row, Col, Modal, Spinner } from "react-bootstrap";
+import { Table, Button, Form, Modal, Spinner } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import {
@@ -212,33 +212,25 @@ const Personal = () => {
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
-    <Container className="my-3">
-      <div className="mb-0">
-        <h2 className="mb-0">Personal</h2>
-      </div>
-      <div className="d-flex justify-content-between align-items-center  mb-3">
-        <div className="w-25 mt-0">
+    <>
+    <div className="w-75 mx-auto my-2">
+        <h6 className="text-center mb-3">Personal</h6>
+        <div className="d-flex justify-content-between align-items-center mb-3">
           <Form.Control
+            size="sm"
             type="search"
             placeholder="Buscar por nombre"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
+            style={{ width: "220px" }}
           />
+          <div className="d-flex gap-2">
+            <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+            <Button size="sm" variant="outline-primary" onClick={abrirCrear}>Crear Personal</Button>
+          </div>
         </div>
 
-        <div className="d-flex flex-column gap-2">
-          <Button variant="outline-success" onClick={() => navigate(-1)}>
-            Volver
-          </Button>
-          <Button variant="outline-primary" onClick={abrirCrear}>
-            Crear Personal
-          </Button>
-        </div>
-      </div>
-
-      <Row className="justify-content-center">
-        <Col xs={12} md={12} lg={10} xl={10}>
-          <div className="table-responsive shadow-sm rounded">
+        <div>
             <Table
               striped
               bordered
@@ -303,9 +295,8 @@ const Personal = () => {
                 )}
               </tbody>
             </Table>
-          </div>
-        </Col>
-      </Row>
+        </div>
+    </div>
 
       {/* Modal Ver historial */}
       <Modal show={showVer} onHide={() => setShowVer(false)} centered>
@@ -377,7 +368,7 @@ const Personal = () => {
         personal={personal}
         personalId={personalId}
       />
-    </Container>
+    </>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Container, Form, Spinner, Row, Col } from "react-bootstrap";
+import { Table, Button, Form, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
@@ -119,77 +119,71 @@ const AceiteCrud = () => {
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
-    <Container className="my-3  " fluid>
-      <div className="text-center">
-        <h4>Alta de aceites</h4>
+    <>
+    <div className="w-75 mx-auto my-2">
+      <h6 className="text-center mb-3">Alta de Aceites</h6>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Buscar por nombre o tipo..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          style={{ width: "220px" }}
+        />
+        <div className="d-flex gap-2">
+          <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+          <Button size="sm" variant="outline-primary" onClick={abrirCrear}>Nuevo Aceite</Button>
+        </div>
       </div>
 
-      <Row className="align-items-center mb-3 mx-3">
-        <Col xs={12} md={4}>
-          <Form.Control
-            type="search"
-            placeholder="Buscar por nombre o tipo..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
-        </Col>
-
-        <Col xs={12} md={4} className="offset-md-4 d-flex flex-column align-items-end gap-2 mt-3 mt-md-0">
-          <Button variant="outline-success" onClick={() => navigate(-1)} className="px-4">Volver</Button>
-          <Button variant="outline-primary" onClick={abrirCrear}>Nuevo Aceite</Button>
-        </Col>
-      </Row>
-
-      <Row className="justify-content-center">
-        <Col xs={12} md={10} lg={8}>
-          <div className="table-responsive shadow-sm rounded ">
-            <Table striped bordered hover className="text-center align-middle mb-0 w-75" size="sm">
-              <thead className="table-dark">
-                <tr>
-                  <th>Tipo de Aceite</th>
-                  <th>Marca</th>
-                  <th>Denominación Comercial</th>
-                  <th>Uso</th>
-                  <th>Acciones</th>
+      <div>
+        <Table striped bordered hover className="text-center align-middle mb-0" size="sm">
+          <thead className="table-dark">
+            <tr>
+              <th>Tipo de Aceite</th>
+              <th>Marca</th>
+              <th>Denominación Comercial</th>
+              <th>Uso</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtrados.length === 0 ? (
+              <tr><td colSpan="5" className="py-3">No hay aceites registrados</td></tr>
+            ) : (
+              filtrados.map((item) => (
+                <tr key={item._id}>
+                  <td>{item.tipo || "-"}</td>
+                  <td>{item.marca || "-"}</td>
+                  <td>{item.denominacion || "-"}</td>
+                  <td>{item.uso || "-"}</td>
+                  <td>
+                    <div className="d-flex gap-1 justify-content-center">
+                      <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(item)}>
+                        Editar
+                      </Button>
+                      <Button size="sm" variant="outline-danger" onClick={() => eliminar(item._id)}>
+                        Borrar
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filtrados.length === 0 ? (
-                  <tr><td colSpan="5" className="py-3">No hay aceites registrados</td></tr>
-                ) : (
-                  filtrados.map((item) => (
-                    <tr key={item._id}>
-                      <td>{item.tipo || "-"}</td>
-                      <td>{item.marca || "-"}</td>
-                      <td>{item.denominacion || "-"}</td>
-                      <td>{item.uso || "-"}</td>
-                      <td>
-                        <div className="d-flex gap-1 justify-content-center">
-                          <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(item)}>
-                            Editar
-                          </Button>
-                          <Button size="sm" variant="outline-danger" onClick={() => eliminar(item._id)}>
-                            Borrar
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </Table>
-          </div>
-        </Col>
-      </Row>
+              ))
+            )}
+          </tbody>
+        </Table>
+      </div>
+    </div>
 
-      <AceiteModal
-        show={showModal}
-        onHide={cerrarModal}
-        onSubmit={handleGuardar}
-        editando={editando}
-        aceite={aceiteAEditar}
-      />
-    </Container>
+    <AceiteModal
+      show={showModal}
+      onHide={cerrarModal}
+      onSubmit={handleGuardar}
+      editando={editando}
+      aceite={aceiteAEditar}
+    />
+    </>
   );
 };
 

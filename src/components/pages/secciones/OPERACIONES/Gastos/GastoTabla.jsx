@@ -352,38 +352,28 @@ const GastoTabla = () => {
 
   return (
     <>
-      <div className="mt-3">
-        <h4 className="text-center">LISTADO DE GASTOS</h4>
-      </div>
-      <div className="row align-items-center mb-3">
+    <div className="w-75 mx-auto my-2">
+      <h6 className="text-center mb-2">Gastos</h6>
+      <div className="row align-items-center mb-2">
         <div className="col-4">
-          <h4>
-            Razón social: <span className="nombreTitulos">{razonsocial}</span>
-          </h4>
-          <h4>
-            Obra: <span className="nombreTitulos">{obraNombre}</span>
-          </h4>
+          <h6 className="mb-1">Razón social: <span className="nombreTitulos">{razonsocial}</span></h6>
+          <h6 className="mb-0">Obra: <span className="nombreTitulos">{obraNombre}</span></h6>
         </div>
 
         <div className="col-4 text-center">
-          <div className="">
-            <h4>Total gastos:</h4>
-            <h4 className="">{formatoMiles(calcularTotal())} + iva</h4>
-          </div>
+          <h6 className="mb-0">Total gastos: <span className="text-gray">{formatoMiles(calcularTotal())} + iva</span></h6>
         </div>
 
         <div className="col-4 d-flex flex-column gap-2 align-items-end">
           <div className="d-flex gap-2">
-            <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
-            <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+            <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
+            <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+            <Button size="sm" variant="outline-primary" onClick={handleNuevoGasto}>Cargar gasto</Button>
           </div>
-          <Button variant="outline-primary" onClick={handleNuevoGasto}>
-            Cargar gasto
-          </Button>
         </div>
       </div>
 
-      <div className="table-responsive">
+      <div>
         <Table striped bordered hover className="text-center align-middle">
           <thead className="table-dark">
             <tr>
@@ -501,6 +491,7 @@ const GastoTabla = () => {
           </tbody>
         </Table>
       </div>
+    </div>
 
       <GastoModal
         show={showModal}

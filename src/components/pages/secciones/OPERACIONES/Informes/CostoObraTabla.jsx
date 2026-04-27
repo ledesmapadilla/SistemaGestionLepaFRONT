@@ -54,37 +54,23 @@ const CostoObraTabla = ({ obra, costos, onVolver, onVerGastos }) => {
   };
 
   return (
-    <div className="container my-3">
-      {/* TITULO */}
-      <div className="">
-        <h4 className="text-center">
-          <span className="border-bottom border-gray border-2 pb-1">
-            ANÁLISIS DE COSTOS
-          </span>
-        </h4>
-      </div>
-
-      {/* CABECERA: DATOS DE LA OBRA Y BOTÓN VOLVER */}
-      <div className="d-flex justify-content-between align-items-center mb-4 mt-4">
+    <div className="w-50 mx-auto my-2">
+      {/* CABECERA */}
+      <h6 className="text-center mb-2">Análisis de la obra</h6>
+      <div className="d-flex justify-content-between align-items-center mb-2">
         <div>
-          <h4>
-            Razón social:{" "}
-            <span className="nombreTitulos">{obra?.razonsocial || "-"}</span>
-          </h4>
-          <h4>
-            Obra:{" "}
-            <span className="nombreTitulos">{obra?.nombreobra || "-"}</span>
-          </h4>
+          <h6 className="mb-1">Razón social: <span className="nombreTitulos">{obra?.razonsocial || "-"}</span></h6>
+          <h6 className="mb-0">Obra: <span className="nombreTitulos">{obra?.nombreobra || "-"}</span></h6>
         </div>
 
         <div className="d-flex gap-2">
-          <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
-          <Button variant="outline-success" onClick={onVolver}>Volver</Button>
+          <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
+          <Button size="sm" variant="outline-success" onClick={onVolver}>Volver</Button>
         </div>
       </div>
 
       {/* TABLA */}
-      <div className="table-responsive mb-4">
+      <div className="mb-4">
         <Table striped bordered hover className="align-middle text-center">
           <thead className="table-dark">
             <tr>
@@ -98,7 +84,7 @@ const CostoObraTabla = ({ obra, costos, onVolver, onVerGastos }) => {
             </tr>
           </thead>
           <tbody>
-            <tr className="fs-5">
+            <tr>
               <td className="">${formatoMiles(costos?.gasoil)}</td>
               <td className="">${formatoMiles(costos?.manoObra)}</td>
               <td className="">${formatoMiles(costos?.otros)}</td>

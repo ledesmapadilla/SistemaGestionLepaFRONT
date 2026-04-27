@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Container, Spinner, Button } from "react-bootstrap";
+import { Table, Spinner, Button } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import { listarRemitos } from "../../../../../helpers/queriesRemitos";
 
@@ -71,37 +71,20 @@ const RemitosXClientesObras = () => {
   const formatoMiles = (n) => new Intl.NumberFormat("es-AR").format(n);
 
   if (!razonSocial)
-    return <Container className="mt-5">No se seleccionó un cliente.</Container>;
+    return <div className="mt-5">No se seleccionó un cliente.</div>;
   if (loading)
     return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
-    <Container className="my-4 w-75">
-      <div className="row mb-5 mt-3 align-items-center">
-        <div className="col-12 col-md-8 offset-md-2 text-center">
-          <h3 className=" mb-1">
-            Razón social: <span className="titulosLetras">{razonSocial}</span>
-          </h3>
-          <h4 className="text-muted">Obras con remitos sin facturar</h4>
-        </div>
-        <div className="col-12 col-md-2  mt-3 mt-md-0">
-          <Button
-            variant="outline-success"
-            onClick={() => navigate(-1)}
-            className="w-50 w-md-auto"
-          >
-            Volver
-          </Button>
-        </div>
+    <div className="w-50 mx-auto my-2">
+      <h6 className="text-center mb-1">Obras con remitos sin facturar</h6>
+      <h6 className="text-center mb-1">Razón social: <span className="titulosLetras">{razonSocial}</span></h6>
+      <div className="d-flex justify-content-end mb-3">
+        <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div className="table-responsive">
-        <Table
-          striped
-          bordered
-          hover
-          className="text-center align-middle shadow-sm"
-        >
+      <div>
+        <Table striped bordered hover className="text-center align-middle">
           <thead className="table-dark">
             <tr>
               <th>Nombre de la Obra</th>
@@ -146,7 +129,7 @@ const RemitosXClientesObras = () => {
           </tbody>
         </Table>
       </div>
-    </Container>
+    </div>
   );
 };
 

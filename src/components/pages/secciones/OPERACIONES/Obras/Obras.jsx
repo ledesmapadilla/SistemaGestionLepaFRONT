@@ -384,7 +384,7 @@ const Obras = () => {
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
-    <div className="container">
+    <>
       <CrudObras
         obras={obras}
         busqueda={busqueda}
@@ -449,7 +449,7 @@ const Obras = () => {
           nombreObra={obraSeleccionada.nombreobra}
         />
       )}
-    </div>
+    </>
   );
 };
 

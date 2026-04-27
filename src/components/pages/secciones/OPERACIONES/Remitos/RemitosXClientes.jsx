@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Container, Spinner, Button } from "react-bootstrap";
+import { Table, Spinner, Button } from "react-bootstrap";
 import { listarRemitos } from "../../../../../helpers/queriesRemitos";
 import { useNavigate } from "react-router-dom";
 import XLSXStyle from "xlsx-js-style";
@@ -96,24 +96,15 @@ const RemitosXClientes = () => {
     return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
-    <Container className="my-4 w-75">
-      <div className="row mb-5 mt-3 align-items-center">
-        <div className="col-12 col-md-8 offset-md-2 text-center">
-          <h3 className=" mb-0">Remitos sin facturar</h3>
-        </div>
-        <div className="col-12 col-md-2 mt-3 mt-md-0 d-flex gap-2 justify-content-end">
-          <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
-          <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
-        </div>
+    <div className="w-50 mx-auto my-2">
+      <h6 className="text-center mb-3">Remitos sin facturar</h6>
+      <div className="d-flex justify-content-end gap-2 mb-3">
+        <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
+        <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div className="table-responsive">
-        <Table
-          striped
-          bordered
-          hover
-          className="text-center align-middle shadow-sm"
-        >
+      <div>
+        <Table striped bordered hover className="text-center align-middle" size="sm">
           <thead className="table-dark">
             <tr>
               <th>Razón Social</th>
@@ -156,7 +147,7 @@ const RemitosXClientes = () => {
           </tbody>
         </Table>
       </div>
-    </Container>
+    </div>
   );
 };
 

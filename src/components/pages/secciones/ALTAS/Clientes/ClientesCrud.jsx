@@ -171,29 +171,25 @@ const Clientes = () => {
 
   return (
     <>
-      <h2 className="mt-2 mx-3">Clientes</h2>
-
-      <div className="d-flex justify-content-between align-items-center mb-3 mx-3">
-        <div className="w-25">
+      <div className="w-75 mx-auto mt-2">
+        <h6 className="text-center mb-3">Clientes</h6>
+        <div className="d-flex justify-content-between align-items-center mb-3">
           <Form.Control
+            size="sm"
             type="search"
             placeholder="Buscar por razón social o contacto"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
+            style={{ width: "220px" }}
           />
+          <div className="d-flex gap-2">
+            <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+            <Button size="sm" variant="outline-primary" onClick={abrirCrear}>Crear Cliente</Button>
+          </div>
         </div>
-        <div className="d-flex flex-column gap-2 mx-3">
-          <Button variant="outline-success" onClick={() => navigate(-1)}>
-            Volver
-          </Button>
-          <Button variant="outline-primary" onClick={abrirCrear} className="btn-sin-hover">
-            Crear Cliente
-          </Button>
-        </div>
-      </div>
 
-      <div className="table-responsive mx-3 ">
-        <Table striped bordered hover className="text-center align-middle">
+      <div className="table-responsive">
+        <Table striped bordered hover size="sm" className="text-center align-middle">
           <thead className="table-dark">
             <tr>
               <th>Razón Social</th>
@@ -238,6 +234,7 @@ const Clientes = () => {
             )}
           </tbody>
         </Table>
+      </div>
       </div>
 
       {/* MODAL */}

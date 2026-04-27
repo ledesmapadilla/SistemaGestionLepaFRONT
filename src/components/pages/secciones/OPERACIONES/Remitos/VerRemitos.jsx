@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Table, Button, Modal, Spinner, Form } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -28,6 +28,7 @@ const VerRemitos = () => {
   const [precios, setPrecios] = useState(location.state?.precios || []);
   const [showModalRemito, setShowModalRemito] = useState(false);
   const [obsSeleccionada, setObsSeleccionada] = useState("");
+  const tableContainerRef = useRef(null);
 
   const cargarRemitos = async () => {
     if (!obraId) return;
@@ -58,6 +59,27 @@ const VerRemitos = () => {
     cargarPrecios();
   }, [obraId]);
 
+  useEffect(() => {
+    const main = document.querySelector("main");
+    const footer = document.querySelector("footer");
+    if (main) {
+      const mainTop = main.getBoundingClientRect().top;
+      const footerH = footer ? footer.offsetHeight + parseInt(window.getComputedStyle(footer).marginTop || "0") : 0;
+      main.style.overflow = "hidden";
+      main.style.display = "flex";
+      main.style.flexDirection = "column";
+      main.style.height = `calc(100vh - ${mainTop}px - ${footerH}px)`;
+    }
+    return () => {
+      if (main) {
+        main.style.overflow = "";
+        main.style.display = "";
+        main.style.flexDirection = "";
+        main.style.height = "";
+      }
+    };
+  }, []);
+
   const handleEditarItem = (remito, item) => {
     setItemEditando({
       ...item,
@@ -87,6 +109,30 @@ const VerRemitos = () => {
     } else {
       await eliminarItemRemito(remitoId, itemId);
     }
+
+    await Swal.fire({
+      icon: "success",
+      title: "Eliminado",
+      timer: 1000,
+      showConfirmButton: false,
+    });
+
+    cargarRemitos();
+  };
+
+  const handleEliminarRemito = async (remitoId) => {
+    const result = await Swal.fire({
+      title: "¿Seguro querés borrar este remito?",
+      icon: "warning",
+      showCancelButton: true,
+      customClass: { confirmButton: 'swal-btn-danger' },
+      confirmButtonText: "Sí, borrar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!result.isConfirmed) return;
+
+    await eliminarRemito(remitoId);
 
     await Swal.fire({
       icon: "success",
@@ -231,53 +277,31 @@ const VerRemitos = () => {
   };
 
   return (
-    <div className="container my-3">
-      <div className="">
-        <h4 className="text-center">
-          <span className="border-bottom border-gray border-2 pb-1">
-            LISTADO DE REMITOS
-          </span>
-        </h4>
-      </div>
-      <div className="row align-items-center mb-3">
+    <div className="container mt-3 px-4" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0 }}>
+      <h6 className="text-center mb-2">Remitos</h6>
+      <div className="row align-items-center mb-2">
         <div className="col-4">
-          <h4>
-            Razón social: <span className="nombreTitulos">{razonsocial}</span>
-          </h4>
-          <h4>
-            Obra: <span className="nombreTitulos">{obraNombre}</span>
-          </h4>
+          <h6 className="mb-1">Razón social: <span className="nombreTitulos">{razonsocial}</span></h6>
+          <h6 className="mb-0">Obra: <span className="nombreTitulos">{obraNombre}</span></h6>
         </div>
 
-        <div className="col-4 text-center my-4">
-          {/* NUEVO: Total Obra */}
-          <h4>
-            Total Obra:{" "}
-            <span className="text-gray">${formatoMiles(totalObra)} + iva</span>
-          </h4>
-
-          {/* EXISTENTE: Total sin facturar */}
-          <h5>
-            Total sin facturar:{" "}
-            <span className="text-gray">
-              ${formatoMiles(totalNoFacturado)} + iva
-            </span>
-          </h5>
+        <div className="col-4 text-center">
+          <h6 className="mb-1">Total Obra: <span className="text-gray">${formatoMiles(totalObra)} + iva</span></h6>
+          <h6 className="mb-0">Sin facturar: <span className="text-gray">${formatoMiles(totalNoFacturado)} + iva</span></h6>
         </div>
 
         <div className="col-4 d-flex flex-column gap-2 align-items-end">
           <div className="d-flex gap-2">
-            <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
-            <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+            <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
+            <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+            <Button size="sm" variant="outline-primary" onClick={() => setShowModalRemito(true)}>Cargar Remito</Button>
           </div>
-          <Button variant="outline-primary" onClick={() => setShowModalRemito(true)}>
-            Cargar Remito
-          </Button>
         </div>
       </div>
-      <div className="mb-2" style={{ marginTop: "-0.5rem" }}>
-        <div style={{ position: "relative", width: "180px" }}>
+      <div className="mb-2">
+        <div style={{ position: "relative", width: "170px" }}>
           <Form.Select
+            size="sm"
             value={filtroRemito}
             onChange={(e) => setFiltroRemito(e.target.value)}
             style={filtroRemito ? selectActivo : {}}
@@ -293,8 +317,8 @@ const VerRemitos = () => {
         </div>
       </div>
 
-      <div className="table-responsive">
-        <Table striped bordered hover className="align-middle text-center">
+      <div ref={tableContainerRef} style={{ flex: 1, overflowY: "auto", minHeight: 0 }} className="table-responsive">
+        <Table striped bordered hover className="align-middle text-center tabla-remitos">
           <thead className="table-dark">
             <tr>
               <th>N° Remito</th>
@@ -315,32 +339,80 @@ const VerRemitos = () => {
           </thead>
           <tbody>
             {remitosFiltrados.length > 0 ? (
-              remitosFiltrados.map((remito) =>
-                remito.items.map((item, index) => (
-                  <tr key={`${remito._id}-${item._id}`}>
+              remitosFiltrados.map((remito) => {
+                const items = remito.items;
+                const esUnico = items.length === 1;
+                const item0 = items[0];
+
+                const totalImporte = items.reduce(
+                  (sum, i) => sum + i.cantidad * i.precioUnitario,
+                  0,
+                );
+                const totalCantidad = items.reduce(
+                  (sum, i) => sum + Number(i.cantidad || 0),
+                  0,
+                );
+                const totalGasoilRemito = items.reduce(
+                  (acc, i) => acc + Number(i.gasoil || 0),
+                  0,
+                );
+
+                const campo = (fn) => {
+                  const valores = items.map(fn).filter(Boolean);
+                  if (!valores.length) return "-";
+                  const todos = valores.every((v) => v === valores[0]);
+                  return todos ? valores[0] : "Varios";
+                };
+
+                const campoPrecio = (fn) => {
+                  const valores = items.map(fn).filter((v) => v != null && v !== 0);
+                  if (!valores.length) return null;
+                  const todos = valores.every((v) => v === valores[0]);
+                  return todos ? valores[0] : null;
+                };
+
+                const obsTexto = items
+                  .map((i) => i.observaciones)
+                  .filter(Boolean)
+                  .join(" / ");
+
+                const precioUnitarioComun = campoPrecio((i) => i.precioUnitario);
+                const costoHoraComun = campoPrecio((i) => i.costoHoraPersonal);
+
+                return (
+                  <tr key={remito._id}>
                     <td>{remito.remito}</td>
                     <td className="fecha-col">
-                      {mostrarFechaDMY(item.fecha || remito.fecha)}
+                      {mostrarFechaDMY(item0.fecha || remito.fecha)}
                     </td>
-
-                    <td>{item.personal || "-"}</td>
-                    <td>{item.costoHoraPersonal ? `$${formatoMiles(item.costoHoraPersonal)}` : "-"}</td>
-                    <td>{item.maquina || "-"}</td>
-                    <td>{item.servicio || "-"}</td>
-                    <td>{item.cantidad}</td>
-                    <td>{item.unidad}</td>
-                    <td>{item.precioUnitario ? `$${formatoMiles(item.precioUnitario)}` : "Sin definir"}</td>
+                    <td>{campo((i) => i.personal)}</td>
                     <td>
-                      {item.precioUnitario ? `$${formatoMiles(item.cantidad * item.precioUnitario)}` : "Sin definir"}
+                      {costoHoraComun
+                        ? `$${formatoMiles(costoHoraComun)}`
+                        : "-"}
+                    </td>
+                    <td>{campo((i) => i.maquina)}</td>
+                    <td>{campo((i) => i.servicio)}</td>
+                    <td>{totalCantidad || "-"}</td>
+                    <td>{campo((i) => i.unidad)}</td>
+                    <td>
+                      {precioUnitarioComun
+                        ? `$${formatoMiles(precioUnitarioComun)}`
+                        : "-"}
+                    </td>
+                    <td>
+                      {totalImporte
+                        ? `$${formatoMiles(totalImporte)}`
+                        : "Sin definir"}
                     </td>
                     <td>{remito.estado}</td>
-                    <td>{item.gasoil || "-"}</td>
+                    <td>{totalGasoilRemito || "-"}</td>
                     <td>
-                      {item.observaciones ? (
+                      {obsTexto ? (
                         <Button
                           variant="outline-success"
                           size="sm"
-                          onClick={() => setObsSeleccionada(item.observaciones)}
+                          onClick={() => setObsSeleccionada(obsTexto)}
                         >
                           Ver
                         </Button>
@@ -353,22 +425,22 @@ const VerRemitos = () => {
                         <Button
                           variant="outline-danger"
                           size="sm"
-                          onClick={() => handleEliminarItem(remito._id, item._id)}
+                          onClick={() => handleEliminarRemito(remito._id)}
                         >
                           Borrar
                         </Button>
                         <Button
                           variant="outline-warning"
                           size="sm"
-                          onClick={() => handleEditarItem(remito, item)}
+                          onClick={() => handleEditarItem(remito, item0)}
                         >
                           Editar
                         </Button>
                       </div>
                     </td>
                   </tr>
-                )),
-              )
+                );
+              })
             ) : (
               <tr>
                 <td colSpan="14">No hay remitos</td>

@@ -172,8 +172,8 @@ const FacturacionCliente = () => {
 
   return (
     <Container className="py-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2>Listado de facturas <small className="text-muted fs-5">(iva incluido)</small></h2>
+      <h6 className="text-center mb-2">Listado de facturas <small className="text-muted">(iva incluido)</small></h6>
+      <div className="d-flex justify-content-end align-items-center mb-3">
         <div className="d-flex gap-2">
           <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
           <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Container, Spinner, Row, Col, Form } from "react-bootstrap";
+import { Table, Button, Spinner, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
@@ -230,63 +230,50 @@ const AceiteTabla = () => {
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
-    <Container className="my-3" fluid>
-      <div className="text-center">
-        <h4>Movimientos de Aceites</h4>
+    <>
+    <div className="w-75 mx-auto my-2">
+      <h6 className="text-center mb-3">Movimientos de Aceites</h6>
+
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="d-flex gap-2">
+          <Button size="sm" variant="outline-primary" onClick={() => setShowCompraModal(true)}>Compra de Aceite</Button>
+          <Button size="sm" variant="outline-danger" onClick={() => setShowConsumoModal(true)}>Consumo de Aceite</Button>
+        </div>
+        <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <Row className="align-items-center mb-3">
-        <Col xs={12} className="d-flex justify-content-between mt-3 mt-md-0">
-          <div className="d-flex gap-2">
-            <Button variant="outline-primary" onClick={() => setShowCompraModal(true)}>Compra de Aceite</Button>
-            <Button variant="outline-danger" onClick={() => setShowConsumoModal(true)}>Consumo de Aceite</Button>
-          </div>
-          <Button variant="outline-success" onClick={() => navigate(-1)} className="px-4">Volver</Button>
-        </Col>
-      </Row>
+      <div className="d-flex gap-2 mb-3">
+        <div className="position-relative flex-fill">
+          <Form.Select size="sm" value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)} style={filtroTipo ? { backgroundImage: "none" } : {}}>
+            <option value="">Tipo de Aceite (todos)</option>
+            {tiposUnicos.map((t) => <option key={t} value={t}>{t}</option>)}
+          </Form.Select>
+          {filtroTipo && <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroTipo("")}>✕</button>}
+        </div>
+        <div className="position-relative flex-fill">
+          <Form.Select size="sm" value={filtroMaquina} onChange={(e) => setFiltroMaquina(e.target.value)} style={filtroMaquina ? { backgroundImage: "none" } : {}}>
+            <option value="">Máquina (todas)</option>
+            {maquinasUnicas.map((m) => <option key={m} value={m}>{m}</option>)}
+          </Form.Select>
+          {filtroMaquina && <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroMaquina("")}>✕</button>}
+        </div>
+        <div className="position-relative flex-fill">
+          <Form.Select size="sm" value={filtroRS} onChange={(e) => setFiltroRS(e.target.value)} style={filtroRS ? { backgroundImage: "none" } : {}}>
+            <option value="">Razón Social (todas)</option>
+            {rsUnicas.map((rs) => <option key={rs} value={rs}>{rs}</option>)}
+          </Form.Select>
+          {filtroRS && <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroRS("")}>✕</button>}
+        </div>
+        <div className="position-relative flex-fill">
+          <Form.Select size="sm" value={filtroObra} onChange={(e) => setFiltroObra(e.target.value)} style={filtroObra ? { backgroundImage: "none" } : {}}>
+            <option value="">Obra (todas)</option>
+            {obrasUnicas.map((o) => <option key={o} value={o}>{o}</option>)}
+          </Form.Select>
+          {filtroObra && <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroObra("")}>✕</button>}
+        </div>
+      </div>
 
-      <Row className="mb-3">
-        <Col xs={12} md={3}>
-          <div className="position-relative">
-            <Form.Select size="sm" value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)} style={filtroTipo ? { backgroundImage: "none" } : {}}>
-              <option value="">Tipo de Aceite (todos)</option>
-              {tiposUnicos.map((t) => <option key={t} value={t}>{t}</option>)}
-            </Form.Select>
-            {filtroTipo && <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroTipo("")}>✕</button>}
-          </div>
-        </Col>
-        <Col xs={12} md={3} className="mt-2 mt-md-0">
-          <div className="position-relative">
-            <Form.Select size="sm" value={filtroMaquina} onChange={(e) => setFiltroMaquina(e.target.value)} style={filtroMaquina ? { backgroundImage: "none" } : {}}>
-              <option value="">Máquina (todas)</option>
-              {maquinasUnicas.map((m) => <option key={m} value={m}>{m}</option>)}
-            </Form.Select>
-            {filtroMaquina && <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroMaquina("")}>✕</button>}
-          </div>
-        </Col>
-        <Col xs={12} md={3} className="mt-2 mt-md-0">
-          <div className="position-relative">
-            <Form.Select size="sm" value={filtroRS} onChange={(e) => setFiltroRS(e.target.value)} style={filtroRS ? { backgroundImage: "none" } : {}}>
-              <option value="">Razón Social (todas)</option>
-              {rsUnicas.map((rs) => <option key={rs} value={rs}>{rs}</option>)}
-            </Form.Select>
-            {filtroRS && <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroRS("")}>✕</button>}
-          </div>
-        </Col>
-        <Col xs={12} md={3} className="mt-2 mt-md-0">
-          <div className="position-relative">
-            <Form.Select size="sm" value={filtroObra} onChange={(e) => setFiltroObra(e.target.value)} style={filtroObra ? { backgroundImage: "none" } : {}}>
-              <option value="">Obra (todas)</option>
-              {obrasUnicas.map((o) => <option key={o} value={o}>{o}</option>)}
-            </Form.Select>
-            {filtroObra && <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroObra("")}>✕</button>}
-          </div>
-        </Col>
-      </Row>
-
-      <Row className="justify-content-center">
-        <Col xs={12}>
-          <div className="table-responsive shadow-sm rounded">
+      <div>
             <Table striped bordered hover className="text-center align-middle mb-0" size="sm">
               <thead className="table-dark">
                 <tr>
@@ -341,9 +328,8 @@ const AceiteTabla = () => {
                 )}
               </tbody>
             </Table>
-          </div>
-        </Col>
-      </Row>
+      </div>
+    </div>
 
       <AceiteCompraModal
         show={showCompraModal}
@@ -364,7 +350,7 @@ const AceiteTabla = () => {
         editando={true}
         consumo={consumoAEditar}
       />
-    </Container>
+    </>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Container, Form, Spinner, Row, Col } from "react-bootstrap";
+import { Table, Button, Form, Spinner } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -179,31 +179,25 @@ const MaquinaTabla = () => {
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
-    <Container className="my-3" fluid> {/* Use fluid para aprovechar ancho completo */}
-      <div className="">
-        <h4 className="mx-5">Administración de Máquinas</h4>
-      </div>
-
-      <Row className="align-items-center mb-3 mx-3">
-        <Col xs={12} md={4}>
+    <>
+    <div className="w-75 mx-auto my-2">
+        <h6 className="text-center mb-3">Administración de Máquinas</h6>
+        <div className="d-flex justify-content-between align-items-center mb-3">
           <Form.Control
+            size="sm"
             type="search"
             placeholder="Buscar por nombre, marca o patente..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
+            style={{ width: "320px" }}
           />
-        </Col>
+          <div className="d-flex gap-2">
+            <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+            <Button size="sm" variant="outline-primary" onClick={abrirCrear}>Nueva Máquina</Button>
+          </div>
+        </div>
 
-        <Col xs={12} md={4} className="offset-md-4 d-flex flex-column align-items-end gap-2 mt-3 mt-md-0 ">
-          <Button variant="outline-success" onClick={() => navigate(-1)} className="px-4">Volver</Button>
-          <Button variant="outline-primary" onClick={abrirCrear}>Nueva Máquina</Button>
-        </Col>
-      </Row>
-
-      {/* FILA DE LA TABLA - AHORA MÁS ANCHA (Col-12) */}
-      <Row className="justify-content-center">
-        <Col xs={12}> {/* Cambiado de lg={8} xl={6} a xs={12} para que entren todas las columnas */}
-          <div className="table-responsive shadow-sm rounded">
+      <div>
             <Table striped bordered hover className="text-center align-middle mb-0" size="sm">
               <thead className="table-dark">
                 <tr>
@@ -254,9 +248,8 @@ const MaquinaTabla = () => {
                 )}
               </tbody>
             </Table>
-          </div>
-        </Col>
-      </Row>
+      </div>
+    </div>
 
       <MaquinaModal 
         show={showModal}
@@ -269,7 +262,7 @@ const MaquinaTabla = () => {
         maquinas={maquinas}
         maquinaId={maquinaId}
       />
-    </Container>
+    </>
   );
 };
 

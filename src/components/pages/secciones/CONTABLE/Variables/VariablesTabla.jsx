@@ -50,11 +50,14 @@ const VariablesTabla = ({
 
   return (
     <>
-      <div className="d-flex justify-content-end gap-2 mt-2">
-        <Button variant="outline-success" onClick={() => navigate(-1)}>
+      <div className="w-75 mx-auto my-2">
+      <h6 className="text-center mb-3">Variables</h6>
+      <div className="d-flex justify-content-end gap-2 mb-3">
+        <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>
           Volver
         </Button>
         <Button
+          size="sm"
           variant="outline-primary"
           onClick={abrirCrear}
           className="btn-sin-hover"
@@ -63,9 +66,7 @@ const VariablesTabla = ({
         </Button>
       </div>
 
-      <h2 className="text-center mb-2">Variables</h2>
-
-      <div className="table-responsive w-75 mx-auto">
+      <div>
         <Table striped bordered hover className="text-center align-middle">
           <thead className="table-dark">
             <tr>
@@ -121,6 +122,7 @@ const VariablesTabla = ({
             )}
           </tbody>
         </Table>
+      </div>
       </div>
     </>
   );

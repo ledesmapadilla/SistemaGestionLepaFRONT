@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Container, Form, Spinner, Row, Col } from "react-bootstrap";
+import { Table, Button, Form, Spinner } from "react-bootstrap";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import { listarAceites, editarCompraAPI, borrarCompraAPI } from "../../../../../helpers/queriesAceites";
@@ -102,29 +102,25 @@ const AceiteTablaCompra = () => {
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
-    <Container className="my-3" fluid>
-      <div className="text-center">
-        <h4>Compras de Aceite</h4>
+    <>
+    <div className="w-50 mx-auto my-2">
+      <h6 className="text-center mb-3">Compras de Aceite</h6>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Buscar por tipo de aceite o proveedor..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          style={{ width: "280px" }}
+        />
+        <div className="d-flex gap-2">
+          {busqueda && <Button size="sm" variant="outline-warning" onClick={() => setBusqueda("")}>Ver todos</Button>}
+          <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+        </div>
       </div>
 
-      <Row className="align-items-center mb-3">
-        <Col xs={12} md={4}>
-          <Form.Control
-            type="search"
-            placeholder="Buscar por tipo de aceite o proveedor..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
-        </Col>
-        <Col xs={12} md={8} className="d-flex justify-content-end gap-2 mt-3 mt-md-0">
-          {busqueda && <Button variant="outline-warning" onClick={() => setBusqueda("")}>compra TODOS aceites</Button>}
-          <Button variant="outline-success" onClick={() => navigate(-1)} className="px-4">Volver</Button>
-        </Col>
-      </Row>
-
-      <Row className="justify-content-center">
-        <Col xs={12}>
-          <div className="table-responsive shadow-sm rounded">
+      <div>
             <Table striped bordered hover className="text-center align-middle mb-0" size="sm">
               <thead className="table-dark">
                 <tr>
@@ -164,9 +160,8 @@ const AceiteTablaCompra = () => {
                 )}
               </tbody>
             </Table>
-          </div>
-        </Col>
-      </Row>
+      </div>
+    </div>
 
       <AceiteCompraModal
         show={showEditModal}
@@ -175,7 +170,7 @@ const AceiteTablaCompra = () => {
         editando={true}
         compra={compraAEditar}
       />
-    </Container>
+    </>
   );
 };
 

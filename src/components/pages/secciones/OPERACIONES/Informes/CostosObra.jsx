@@ -34,10 +34,11 @@ const buscarPrecioVigente = (precios, clasificacion, trabajo, fechaRef) => {
 const CostosObra = () => {
   const [obras, setObras] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate(); // Hook de navegación
+  const navigate = useNavigate();
 
-  const [busqueda, setBusqueda] = useState("");
-  const [filtroEstado, setFiltroEstado] = useState("");
+  const [busquedaCliente, setBusquedaCliente] = useState("");
+  const [razonSocialSeleccionada, setRazonSocialSeleccionada] = useState(null);
+  const [filtroEstado, setFiltroEstado] = useState("En curso");
   const [obraSeleccionada, setObraSeleccionada] = useState(null);
   const [datosAnalisis, setDatosAnalisis] = useState(null);
   const [loadingAnalisis, setLoadingAnalisis] = useState(false);
@@ -63,16 +64,39 @@ const CostosObra = () => {
     cargarDatos();
   }, []);
 
+  useEffect(() => {
+    const main = document.querySelector("main");
+    const footer = document.querySelector("footer");
+    if (main) {
+      const mainTop = main.getBoundingClientRect().top;
+      const footerH = footer ? footer.offsetHeight + parseInt(window.getComputedStyle(footer).marginTop || "0") : 0;
+      main.style.overflow = "hidden";
+      main.style.display = "flex";
+      main.style.flexDirection = "column";
+      main.style.height = `calc(100vh - ${mainTop}px - ${footerH}px)`;
+    }
+    return () => {
+      if (main) {
+        main.style.overflow = "";
+        main.style.display = "";
+        main.style.flexDirection = "";
+        main.style.height = "";
+      }
+    };
+  }, []);
+
+  // Razones sociales únicas
+  const razonesUnicas = [...new Set(obras.map((o) => o.razonsocial).filter(Boolean))]
+    .filter((r) => r.toLowerCase().includes(busquedaCliente.trim().toLowerCase()))
+    .sort();
+
+  // Obras del cliente seleccionado
   const obrasFiltradas = obras.filter((obra) => {
-    if (!obra) return false;
-    const texto = busqueda.trim().toLowerCase();
-    const razon = obra.razonsocial?.toLowerCase() || "";
-    const nombreob = obra.nombreobra?.toLowerCase() || "";
-    const coincideTexto = razon.includes(texto) || nombreob.includes(texto);
+    if (!obra || obra.razonsocial !== razonSocialSeleccionada) return false;
     const coincideEstado =
       filtroEstado === "" ||
       (filtroEstado === "Terminada" ? obra.estado?.startsWith("Terminada") : obra.estado === filtroEstado);
-    return coincideTexto && coincideEstado;
+    return coincideEstado;
   });
 
   const handleAnalisis = async (obra) => {
@@ -215,6 +239,11 @@ const CostosObra = () => {
     setDatosAnalisis(null);
   };
 
+  const handleVolverAClientes = () => {
+    setRazonSocialSeleccionada(null);
+    setFiltroEstado("En curso");
+  };
+
  
   // --- FUNCIÓN PARA IR A VER LOS GASTOS ---
   const handleVerGastos = () => {
@@ -253,53 +282,97 @@ const CostosObra = () => {
     );
   }
 
-  return (
-    <>
-      <div className="mb-3 justify-content-center d-flex">
-        <h2 className="m-2 ">Análisis y resultado de cada obra</h2>
-      </div>
-      <div className="d-flex justify-content-end mb-3 w-75 mx-auto">
-        <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
-      </div>
-      <div className="d-flex flex-column flex-md-row gap-3 w-50 mx-auto mb-4">
-        <Form.Control type="search" placeholder="Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
-        <Form.Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
-          <option value="">Todos los estados</option>
-          <option value="En curso">En curso</option>
-          <option value="Terminada">Terminada</option>
-        </Form.Select>
-      </div>
-      <div className="table-responsive w-75 mx-auto">
-        <Table striped bordered hover className="text-center align-middle">
-          <thead className="table-dark">
-            <tr>
-              <th>Razón Social</th>
-              <th>Nombre de la Obra</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {obrasFiltradas.length === 0 ? (
-              <tr><td colSpan="4">No hay obras que coincidan con los filtros</td></tr>
-            ) : (
-              obrasFiltradas.map((obra) => (
-                <tr key={obra._id}>
-                  <td>{obra.razonsocial}</td>
-                  <td>{obra.nombreobra}</td>
-                  <td>{obra.estado}</td>
-                  <td>
-                    <Button variant="outline-primary" onClick={() => handleAnalisis(obra)}>
-                      Análisis
-                    </Button>
-                  </td>
+  // PASO 1: elegir razón social
+  if (!razonSocialSeleccionada) {
+    return (
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0 }}>
+        <div style={{ width: "50%", marginLeft: "auto", marginRight: "auto", display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
+          <div className="pt-2 pb-1">
+            <h6 className="text-center mb-2">Análisis y resultado de cada obra</h6>
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <Form.Control size="sm" type="search" placeholder="Buscar razón social..." value={busquedaCliente} onChange={(e) => setBusquedaCliente(e.target.value)} style={{ width: "55%" }} />
+              <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+            </div>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+            <Table striped bordered hover className="text-center align-middle" size="sm">
+              <thead className="table-dark">
+                <tr>
+                  <th>Razón Social</th>
+                  <th></th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </Table>
+              </thead>
+              <tbody>
+                {razonesUnicas.length === 0 ? (
+                  <tr><td colSpan="2">No hay clientes</td></tr>
+                ) : (
+                  razonesUnicas.map((razon) => (
+                    <tr key={razon}>
+                      <td className="text-start ps-3">{razon}</td>
+                      <td>
+                        <Button size="sm" variant="outline-primary" onClick={() => setRazonSocialSeleccionada(razon)}>Ver obras</Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </Table>
+          </div>
+        </div>
       </div>
-    </>
+    );
+  }
+
+  const estiloX = { position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", cursor: "pointer", color: "#fff", fontSize: "14px", fontWeight: "900", zIndex: 5, userSelect: "none" };
+  const selectActivo = { backgroundImage: "none" };
+
+  // PASO 2: obras del cliente seleccionado
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0 }}>
+      <div style={{ width: "50%", marginLeft: "auto", marginRight: "auto", display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
+        <div className="pt-2 pb-1">
+          <h6 className="text-center mb-1">Análisis y resultado de cada obra</h6>
+          <h6 className="text-center mb-2">Razón social: <span className="nombreTitulos">{razonSocialSeleccionada}</span></h6>
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <div style={{ position: "relative", width: "200px" }}>
+              <Form.Select size="sm" value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} style={filtroEstado ? selectActivo : {}}>
+                <option value="">Todos los estados</option>
+                <option value="En curso">En curso</option>
+                <option value="Terminada">Terminada</option>
+              </Form.Select>
+              {filtroEstado && <span onClick={() => setFiltroEstado("")} style={estiloX}>✕</span>}
+            </div>
+            <Button size="sm" variant="outline-success" onClick={handleVolverAClientes}>Volver</Button>
+          </div>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+          <Table striped bordered hover className="text-center align-middle" size="sm">
+            <thead className="table-dark">
+              <tr>
+                <th>Nombre de la Obra</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {obrasFiltradas.length === 0 ? (
+                <tr><td colSpan="3">No hay obras para este cliente</td></tr>
+              ) : (
+                obrasFiltradas.map((obra) => (
+                  <tr key={obra._id}>
+                    <td>{obra.nombreobra}</td>
+                    <td>{obra.estado}</td>
+                    <td>
+                      <Button size="sm" variant="outline-primary" onClick={() => handleAnalisis(obra)}>Análisis</Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </div>
+      </div>
+    </div>
   );
 };
 

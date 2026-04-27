@@ -125,33 +125,34 @@ const PreciosTabla = ({
 
   return (
     <>
-      <div className="position-relative d-flex align-items-center mt-2">
-        <h2 className="mb-0 w-100 text-center">
-          Precios - {nombrePrincipal}{fechaPrincipal ? <span className="fs-5 fw-normal"> ({fechaPrincipal})</span> : ""}
-        </h2>
+      <div className="w-75 mx-auto my-2">
+      <div className="position-relative d-flex align-items-center mb-2">
+        <h6 className="mb-0 w-100 text-center">
+          Precios - {nombrePrincipal}{fechaPrincipal ? <span className="fw-normal"> ({fechaPrincipal})</span> : ""}
+        </h6>
         <div className="position-absolute end-0 d-flex gap-2">
-          <Button variant="outline-primary" className="px-4 py-2" onClick={onCrearLista}>
+          <Button size="sm" variant="outline-primary" onClick={onCrearLista}>
             Crear lista precios
           </Button>
-          <Button variant="outline-secondary" className="px-4 py-2" onClick={() => setShowHistorial(true)}>
+          <Button size="sm" variant="outline-secondary" onClick={() => setShowHistorial(true)}>
             Historial
           </Button>
         </div>
       </div>
 
-      <div className="d-flex justify-content-end gap-2 mt-3">
-        <Button variant="outline-warning" onClick={onAbrirConsumos}>
+      <div className="d-flex justify-content-end gap-2 mb-3">
+        <Button size="sm" variant="outline-warning" onClick={onAbrirConsumos}>
           Consumos gasoil
         </Button>
-        <Button variant="outline-light" onClick={exportarExcel}>
+        <Button size="sm" variant="outline-light" onClick={exportarExcel}>
           Excel
         </Button>
-        <Button variant="outline-success" onClick={() => navigate(-1)}>
+        <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>
           Volver
         </Button>
       </div>
 
-      <div className="table-responsive mt-3 w-75 mx-auto">
+      <div>
         <Table striped bordered hover className="text-center align-middle">
           <thead className="table-dark">
             <tr>
@@ -388,6 +389,7 @@ const PreciosTabla = ({
             </tr>
           </tbody>
         </Table>
+      </div>
       </div>
 
       <HistorialPreciosModal
