@@ -88,6 +88,9 @@ function Menu() {
               <NavDropdown.Item as={Link} to="/precios">
                 Precios Máquinas
               </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/cheques">
+                Cheques de Terceros
+              </NavDropdown.Item>
             </NavDropdown>
 
             <NavDropdown title="Clientes" id="nav-dropdown-clientes" className="mx-2">

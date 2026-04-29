@@ -42,6 +42,18 @@ export const borrarCobro = async (id) => {
   }
 };
 
+export const actualizarEstadoCheque = async (cobroId, medioIndex, estado, observaciones, proveedor = "") => {
+  try {
+    return await authFetch(`${cobrosBackend}/${cobroId}/medio/${medioIndex}`, {
+      method: "PATCH",
+      body: JSON.stringify({ estado, observaciones, proveedor }),
+    });
+  } catch (error) {
+    console.error("Error al actualizar estado:", error);
+    return null;
+  }
+};
+
 export const recalcularEstadosFacturas = async () => {
   try {
     return await authFetch(`${cobrosBackend}/recalcular-todo`);
