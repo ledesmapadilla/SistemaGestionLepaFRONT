@@ -22,7 +22,13 @@ const Inicio = () => {
       <img
         src={logosimple}
         alt="LEPA"
-        style={{ position: "absolute", top: "1.5rem", left: "1.5rem", height: "140px", filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.6))" }}
+        style={{
+          position: "absolute",
+          top: "1.5rem",
+          left: "2.5rem",
+          height: "140px",
+          filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.6))",
+        }}
       />
       <div
         style={{
