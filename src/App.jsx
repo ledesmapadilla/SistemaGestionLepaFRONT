@@ -23,15 +23,15 @@ import AceiteTabla from "./components/pages/secciones/MANTENIMIENTO/aceites/Acei
 import AceiteTablaCompra from "./components/pages/secciones/MANTENIMIENTO/aceites/AceiteTablaCompra.jsx";
 import AceiteCrud from "./components/pages/secciones/ALTAS/Aceites/AceiteCrud.jsx";
 import UsuariosCrud from "./components/pages/secciones/ALTAS/Usuarios/UsuariosCrud.jsx";
-import Variables from "./components/pages/secciones/CONTABLE/Variables/Variables.jsx";
-import Precios from "./components/pages/secciones/CONTABLE/Precios/Precios.jsx";
+import Variables from "./components/pages/secciones/OPERACIONES/Variables/Variables.jsx";
+import Precios from "./components/pages/secciones/OPERACIONES/PreciosMaquinas/Precios.jsx";
 import FacturacionCliente from "./components/pages/secciones/CLIENTES/Facturacion/FacturacionCliente.jsx";
 import NuevaFactura from "./components/pages/secciones/CLIENTES/Facturacion/NuevaFactura.jsx";
 import CobrosTabla from "./components/pages/secciones/CLIENTES/Cobros/CobrosTabla.jsx";
 import NuevoCobro from "./components/pages/secciones/CLIENTES/Cobros/NuevoCobro.jsx";
 import EditarCobro from "./components/pages/secciones/CLIENTES/Cobros/EditarCobro.jsx";
 import CuentaCorriente from "./components/pages/secciones/CLIENTES/CuentaCorriente/CuentaCorriente.jsx";
-import Cheques from "./components/pages/secciones/CONTABLE/Variables/Cheques.jsx";
+import Cheques from "./components/pages/secciones/CONTABLE/Cheques/Cheques.jsx";
 
 function App() {
   return (
@@ -40,6 +40,16 @@ function App() {
         <Routes>
           {/* Login sin Menu ni Footer */}
           <Route path="/login" element={<Login />} />
+
+          {/* Inicio sin Menu, con Footer */}
+          <Route element={<RutaProtegida />}>
+            <Route path="/" element={
+              <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+                <Inicio />
+                <Footer style={{ backgroundColor: "#000", marginTop: 0 }} />
+              </div>
+            } />
+          </Route>
 
           {/* Rutas protegidas con Menu y Footer */}
           <Route element={<RutaProtegida />}>
@@ -50,7 +60,6 @@ function App() {
                   <Menu />
                   <main className="container-fluid px-0 pt-5 mt-5">
                     <Routes>
-                      <Route path="/" element={<Inicio />} />
                       <Route path="/clientes" element={<Clientes />} />
                       <Route path="/proveedores" element={<Proveedores />} />
                       <Route path="/obras" element={<Obras />} />

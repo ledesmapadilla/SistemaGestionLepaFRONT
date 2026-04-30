@@ -73,6 +73,13 @@ function Menu() {
                   Análisis de costos
                 </NavDropdown.Item>
               </NavDropdown>
+
+              <NavDropdown.Item as={Link} to="/variables">
+                Variables
+              </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/precios">
+                Precios Máquinas
+              </NavDropdown.Item>
             </NavDropdown>
 
             <NavDropdown title="Mantenimiento" id="nav-dropdown" className="mx-2">
@@ -81,13 +88,7 @@ function Menu() {
               </NavDropdown.Item>
             </NavDropdown>
 
-            <NavDropdown title="Variables" id="nav-dropdown" className="mx-2">
-              <NavDropdown.Item as={Link} to="/variables">
-                Variables
-              </NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/precios">
-                Precios Máquinas
-              </NavDropdown.Item>
+            <NavDropdown title="Contable" id="nav-dropdown" className="mx-2">
               <NavDropdown.Item as={Link} to="/cheques">
                 Cheques de Terceros
               </NavDropdown.Item>

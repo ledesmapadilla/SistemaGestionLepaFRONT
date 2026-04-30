@@ -1,58 +1,51 @@
-import { Row, Col, Card } from "react-bootstrap";
-
-const secciones = [
-  { titulo: "Sección Operativa" },
-  { titulo: "Sección Mantenimiento" },
-  { titulo: "Sección Contable" },
-  { titulo: "Otra Sección" },
-];
-
-const cardStyle = {
-  backgroundColor: "#9ca3af",
-  color: "var(--lepa-black)",
-  transition: "box-shadow 0.3s, transform 0.3s",
-  cursor: "default",
-};
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import logosimple from "../../assets/logosimpletr.png";
 
 const Inicio = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    document.body.style.backgroundImage = "url('/img/textura%20piedra%20gris.jpg')";
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundPosition = "center";
+    document.body.style.backgroundAttachment = "fixed";
+    return () => {
+      document.body.style.backgroundImage = "";
+      document.body.style.backgroundSize = "";
+      document.body.style.backgroundPosition = "";
+      document.body.style.backgroundAttachment = "";
+    };
+  }, []);
+
   return (
-    <div
-      className="d-flex flex-column"
-      style={{ minHeight: "calc(100vh - 120px)" }}
-    >
-      <h2 className="my-4 text-center" style={{ color: "var(--lepa-orange)" }}>
-        Tablero de control
-      </h2>
-      <Row className="g-5 flex-grow-1 w-75 mx-auto">
-        {secciones.map((sec) => (
-          <Col key={sec.titulo} xs={12} md={6} className="d-flex">
-            <Card
-              className="w-100 card-inicio rounded-4"
-              style={cardStyle}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = "0 8px 30px rgba(245, 158, 11, 0.5)";
-                e.currentTarget.style.transform = "translateY(-10px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = "none";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              <Card.Header
-                className="fw-bold text-center"
-                style={{ ...cardStyle, borderBottom: "2px solid var(--lepa-orange)", fontSize: "1.3rem", borderRadius: "calc(0.75rem - 1px) calc(0.75rem - 1px) 0 0" }}
-              >
-                {sec.titulo}
-              </Card.Header>
-              <Card.Body>
-                <p className="mb-0" style={{ color: "var(--lepa-gray)" }}>
-                  Sin datos cargados
-                </p>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+    <div style={{ flex: 1, position: "relative" }}>
+      <img
+        src={logosimple}
+        alt="LEPA"
+        style={{ position: "absolute", top: "1.5rem", left: "1.5rem", height: "140px", filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.6))" }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%) scaleX(0.85)",
+          textAlign: "center",
+          color: "#000",
+          textShadow: "2px 2px 8px rgba(0,0,0,0.5)",
+          letterSpacing: "0.01em",
+          fontWeight: 900,
+          fontSize: "7rem",
+          whiteSpace: "nowrap",
+          cursor: "pointer",
+          transition: "color 0.3s",
+        }}
+        onClick={() => navigate("/obras")}
+        onMouseEnter={(e) => { e.currentTarget.style.color = "var(--lepa-orange)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = "#000"; }}
+      >
+        SISTEMA DE GESTIÓN
+      </div>
     </div>
   );
 };
