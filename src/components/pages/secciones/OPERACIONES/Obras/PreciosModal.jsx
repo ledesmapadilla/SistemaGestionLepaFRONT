@@ -212,9 +212,20 @@ const PreciosModal = ({
 
   const listaValida = precios.length > 0 && precios.every(filaValida);
 
-  const formatearMiles = (valor) => {
-    if (!valor) return "";
-    return valor.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const [focusadoPrecio, setFocusadoPrecio] = useState(null);
+
+  const normalizarPrecio = (val) => {
+    val = val.replace(/[^\d.]/g, "");
+    const partes = val.split(".");
+    if (partes.length > 2) val = partes[0] + "." + partes[1];
+    return val;
+  };
+
+  const formatearMoneda = (valor) => {
+    if (valor === "" || valor == null) return "";
+    const num = parseFloat(valor);
+    if (isNaN(num)) return valor.toString();
+    return num.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   };
 
   return (
@@ -257,17 +268,12 @@ const PreciosModal = ({
                             {esNumerico && <span className="input-group-text">$</span>}
                             <Form.Control
                               type="text"
-                              value={esNumerico ? formatearMiles(item.precio) : ""}
+                              value={focusadoPrecio === index ? item.precio : formatearMoneda(item.precio)}
                               placeholder="Sin definir"
                               className="text-center"
-                              onChange={(e) => {
-                                const soloDigitos = e.target.value.replace(/\D/g, "");
-                                cambiarCampo(index, "precio", soloDigitos);
-                              }}
-                              onFocus={(e) => {
-                                if (!esNumerico) cambiarCampo(index, "precio", "");
-                                e.target.select();
-                              }}
+                              onFocus={() => setFocusadoPrecio(index)}
+                              onBlur={() => setFocusadoPrecio(null)}
+                              onChange={(e) => cambiarCampo(index, "precio", normalizarPrecio(e.target.value))}
                             />
                           </div>
                           <div className="d-flex align-items-center gap-2 ms-auto">
@@ -342,17 +348,13 @@ const PreciosModal = ({
                         <span className="input-group-text">$</span>
                         <Form.Control
                           type="text"
-                          value={formatearMiles(item.precio)}
+                          value={focusadoPrecio === index ? item.precio : formatearMoneda(item.precio)}
                           placeholder="0"
                           disabled={esFilaExistente}
                           isInvalid={invalida && item.precio === ""}
-                          onChange={(e) => {
-                            const soloNumeros = e.target.value.replace(
-                              /\D/g,
-                              "",
-                            );
-                            cambiarCampo(index, "precio", soloNumeros);
-                          }}
+                          onFocus={() => setFocusadoPrecio(index)}
+                          onBlur={() => setFocusadoPrecio(null)}
+                          onChange={(e) => cambiarCampo(index, "precio", normalizarPrecio(e.target.value))}
                         />
                         <Form.Control.Feedback type="invalid">
                           Ingrese precio

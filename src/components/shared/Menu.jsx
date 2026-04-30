@@ -86,6 +86,9 @@ function Menu() {
               <NavDropdown.Item as={Link} to="/consumo-aceites">
                 Consumo aceites
               </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/service-maquinas">
+                Service máquinas
+              </NavDropdown.Item>
             </NavDropdown>
 
             <NavDropdown title="Contable" id="nav-dropdown" className="mx-2">
@@ -103,6 +106,15 @@ function Menu() {
               </NavDropdown.Item>
               <NavDropdown.Item as={Link} to="/cuenta-corriente">
                 Cuenta Corriente
+              </NavDropdown.Item>
+            </NavDropdown>
+
+            <NavDropdown title="Personal" id="nav-dropdown-personal" className="mx-2">
+              <NavDropdown.Item as={Link} to="/personal/asistencia">
+                Asistencia
+              </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/personal/gastos-semanales">
+                Gastos Semanales
               </NavDropdown.Item>
             </NavDropdown>
 

@@ -32,6 +32,9 @@ import NuevoCobro from "./components/pages/secciones/CLIENTES/Cobros/NuevoCobro.
 import EditarCobro from "./components/pages/secciones/CLIENTES/Cobros/EditarCobro.jsx";
 import CuentaCorriente from "./components/pages/secciones/CLIENTES/CuentaCorriente/CuentaCorriente.jsx";
 import Cheques from "./components/pages/secciones/CONTABLE/Cheques/Cheques.jsx";
+import Asistencia from "./components/pages/secciones/PERSONAL/Asistencia/Asistencia.jsx";
+import GastosSemanales from "./components/pages/secciones/PERSONAL/GastosSemanales/GastosSemanales.jsx";
+import ServiceMaquinas from "./components/pages/secciones/MANTENIMIENTO/ServiceMaquinas/ServiceMaquinas.jsx";
 
 function App() {
   return (
@@ -81,6 +84,7 @@ function App() {
                       <Route path="/aceites" element={<AceiteCrud />} />
                       <Route path="/consumo-aceites" element={<AceiteTabla />} />
                       <Route path="/compras-aceites" element={<AceiteTablaCompra />} />
+                      <Route path="/service-maquinas" element={<ServiceMaquinas />} />
                       <Route path="/usuarios" element={<UsuariosCrud />} />
                       <Route path="/variables" element={<Variables />} />
                       <Route path="/precios" element={<Precios />} />
@@ -91,6 +95,8 @@ function App() {
                       <Route path="/cobro-factura/editar/:id" element={<EditarCobro />} />
                       <Route path="/cuenta-corriente" element={<CuentaCorriente />} />
                       <Route path="/cheques" element={<Cheques />} />
+                      <Route path="/personal/asistencia" element={<Asistencia />} />
+                      <Route path="/personal/gastos-semanales" element={<GastosSemanales />} />
                       <Route path="*" element={<Error404 />} />
                     </Routes>
                   </main>
