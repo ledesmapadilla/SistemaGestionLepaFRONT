@@ -32,7 +32,7 @@ const Inicio = () => {
           height: "220px",
           filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.6))",
           cursor: "pointer",
-          transition: "transform 0.2s, filter 0.2s",
+          transition: "filter 0.2s",
         }}
         onMouseEnter={(e) => { e.currentTarget.style.filter = "drop-shadow(0 6px 18px rgba(0,0,0,0.8)) brightness(1.1)"; }}
         onMouseLeave={(e) => { e.currentTarget.style.filter = "drop-shadow(0 4px 12px rgba(0,0,0,0.6))"; }}
