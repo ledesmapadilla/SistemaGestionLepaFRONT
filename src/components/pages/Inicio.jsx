@@ -30,12 +30,12 @@ const Inicio = () => {
           left: "50%",
           transform: "translate(-50%, -50%)",
           height: "220px",
-          filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.6))",
+          filter: "drop-shadow(0 12px 40px rgba(0,0,0,1)) drop-shadow(0 4px 12px rgba(0,0,0,0.9)) drop-shadow(0 0 60px rgba(0,0,0,0.7))",
           cursor: "pointer",
           transition: "filter 0.2s",
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.filter = "drop-shadow(0 6px 18px rgba(0,0,0,0.8)) brightness(1.1)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.filter = "drop-shadow(0 4px 12px rgba(0,0,0,0.6))"; }}
+        onMouseEnter={(e) => { e.currentTarget.style.filter = "drop-shadow(0 16px 50px rgba(0,0,0,1)) drop-shadow(0 6px 16px rgba(0,0,0,0.95)) drop-shadow(0 0 80px rgba(0,0,0,0.8)) brightness(1.1)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.filter = "drop-shadow(0 12px 40px rgba(0,0,0,1)) drop-shadow(0 4px 12px rgba(0,0,0,0.9)) drop-shadow(0 0 60px rgba(0,0,0,0.7))"; }}
       />
     </div>
   );
