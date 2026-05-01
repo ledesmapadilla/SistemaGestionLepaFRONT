@@ -6,6 +6,7 @@ import { listarObras } from "../../../../../helpers/queriesObras.js";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
 import { listarAsistencia, obtenerAsistenciaPorFecha, guardarAsistencia as guardarAsistenciaAPI } from "../../../../../helpers/queriesAsistencia.js";
+import { listarServices } from "../../../../../helpers/queriesServiceMaquinas.js";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -39,20 +40,23 @@ const Asistencia = () => {
 
   const [registros, setRegistros] = useState({});
   const [borrador, setBorrador] = useState([]);
+  const [listaServices, setListaServices] = useState([]);
 
   const anios = Array.from({ length: 10 }, (_, i) => 2026 + i);
 
   useEffect(() => {
     const cargar = async () => {
-      const [resP, resM, resO, resA] = await Promise.all([
+      const [resP, resM, resO, resA, resSvc] = await Promise.all([
         listarPersonal(),
         listarMaquinas(),
         listarObras(),
         listarAsistencia(),
+        listarServices(),
       ]);
       if (resP?.ok) setListaPersonal(await resP.json());
       if (resM?.ok) setListaMaquinas(await resM.json());
       if (resO?.ok) setListaObras(await resO.json());
+      if (resSvc?.ok) setListaServices(await resSvc.json());
       if (resA?.ok) {
         const docs = await resA.json();
         const mapa = {};
@@ -78,8 +82,14 @@ const Asistencia = () => {
   ];
 
   const keyDia = diaKey(anio, mes, diaSeleccionado);
+  const hoyKey = diaKey(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  const editandoHoy = keyDia === hoyKey;
 
   const abrirDia = async (dia) => {
+    const fechaDia = new Date(anio, mes, dia);
+    const hoyInicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    if (fechaDia > hoyInicio) return;
+
     const key = diaKey(anio, mes, dia);
     let filas;
     if (registros[key]) {
@@ -104,7 +114,59 @@ const Asistencia = () => {
     setDiaSeleccionado(null);
   };
 
+  const getMaxHorometroPorMaquina = () => {
+    const mapa = {};
+
+    // Desde registros de Asistencia (excluyendo el día que se edita)
+    Object.entries(registros).forEach(([fecha, filas]) => {
+      if (fecha === keyDia) return;
+      filas.forEach((fila) => {
+        if (fila.maquina && fila.horometro !== "" && fila.horometro != null) {
+          const val = Number(fila.horometro);
+          if (!isNaN(val) && val > 0) {
+            const key = fila.maquina.toLowerCase().trim();
+            if (mapa[key] == null || val > mapa[key]) mapa[key] = val;
+          }
+        }
+      });
+    });
+
+    // Desde registros de ServiceMaquina
+    listaServices.forEach((s) => {
+      if (s.maquina?.maquina && s.horometro != null) {
+        const val = Number(s.horometro);
+        if (!isNaN(val) && val > 0) {
+          const key = s.maquina.maquina.toLowerCase().trim();
+          if (mapa[key] == null || val > mapa[key]) mapa[key] = val;
+        }
+      }
+    });
+
+    return mapa;
+  };
+
   const guardarModal = async () => {
+    if (editandoHoy) {
+      const maxPorMaquina = getMaxHorometroPorMaquina();
+      const invalidos = borrador.filter((fila) => {
+        if (!fila.maquina || fila.horometro === "" || fila.horometro == null) return false;
+        const max = maxPorMaquina[fila.maquina.toLowerCase().trim()];
+        return max != null && Number(fila.horometro) < max;
+      });
+
+      if (invalidos.length > 0) {
+        const detalle = invalidos
+          .map((f) => `${f.maquina}: mín ${Number(maxPorMaquina[f.maquina.toLowerCase().trim()]).toLocaleString("es-AR")} hs`)
+          .join("\n");
+        Swal.fire({
+          icon: "warning",
+          title: "Horómetro inválido",
+          text: `El valor ingresado es menor al registrado:\n${detalle}`,
+        });
+        return;
+      }
+    }
+
     await guardarAsistenciaAPI(keyDia, borrador);
     setRegistros((prev) => ({ ...prev, [keyDia]: borrador }));
     setBorrador([]);
@@ -234,26 +296,32 @@ const Asistencia = () => {
         {celdas.map((dia, i) =>
           dia === null ? (
             <div key={`vacio-${i}`} />
-          ) : (
+          ) : (() => {
+            const esFuturo = new Date(anio, mes, dia) > new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+            const esDomingo = (primerDiaSemana + dia - 1) % 7 === 6;
+            const bgBase = esFuturo ? "#3a3a3a" : esHoy(dia) ? "#fff3cd" : esDomingo ? "#666" : "#c0c0c0";
+            const bgHover = esFuturo ? "#3a3a3a" : esHoy(dia) ? "#ffe69c" : esDomingo ? "#555" : "#a8a8a8";
+            return (
             <div
               key={dia}
               onClick={() => abrirDia(dia)}
               className="rounded text-center"
               style={{
-                cursor: "pointer",
+                cursor: esFuturo ? "not-allowed" : "pointer",
                 padding: "4px",
                 height: 56,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                background: esHoy(dia) ? "#fff3cd" : (primerDiaSemana + dia - 1) % 7 === 6 ? "#666" : "#c0c0c0",
+                background: bgBase,
                 border: "2px solid #ffc107",
                 transition: "background 0.15s",
                 userSelect: "none",
+                opacity: esFuturo ? 0.4 : 1,
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = esHoy(dia) ? "#ffe69c" : (primerDiaSemana + dia - 1) % 7 === 6 ? "#555" : "#a8a8a8"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = esHoy(dia) ? "#fff3cd" : (primerDiaSemana + dia - 1) % 7 === 6 ? "#666" : "#c0c0c0"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = bgHover; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = bgBase; }}
             >
               <span style={{ fontSize: "1rem", fontWeight: 600, color: "#000" }}>
                 {dia}
@@ -264,7 +332,8 @@ const Asistencia = () => {
                 </div>
               )}
             </div>
-          )
+            );
+          })()
         )}
       </div>
 
@@ -387,14 +456,19 @@ const Asistencia = () => {
                         <span style={{ color: "#dc3545", fontSize: "1.2rem", fontWeight: 700 }}>
                           {calcularHorometroZamorano(fila.entra)}
                         </span>
-                      ) : (
-                        <Form.Control
-                          size="sm"
-                          type="number"
-                          value={fila.horometro}
-                          onChange={(e) => actualizarCelda(fila.id, "horometro", e.target.value)}
-                        />
-                      )}
+                      ) : (() => {
+                        const maxPorMaquina = getMaxHorometroPorMaquina();
+                        const maqKey = fila.maquina?.toLowerCase().trim();
+                        const maxPrevio = maqKey ? maxPorMaquina[maqKey] : null;
+                        return (
+                          <Form.Control
+                            size="sm"
+                            type="number"
+                            value={fila.horometro}
+                            onChange={(e) => actualizarCelda(fila.id, "horometro", e.target.value)}
+                          />
+                        );
+                      })()}
                     </td>
                     <td>
                       <Form.Select
