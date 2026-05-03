@@ -1,25 +1,21 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logosimple from "../../assets/logosimpletr.png";
 
 const Inicio = () => {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    document.body.style.backgroundImage = "url('/img/textura%20piedra%20gris.jpg')";
-    document.body.style.backgroundSize = "cover";
-    document.body.style.backgroundPosition = "center";
-    document.body.style.backgroundAttachment = "fixed";
-    return () => {
-      document.body.style.backgroundImage = "";
-      document.body.style.backgroundSize = "";
-      document.body.style.backgroundPosition = "";
-      document.body.style.backgroundAttachment = "";
-    };
-  }, []);
-
   return (
     <div style={{ flex: 1, position: "relative" }}>
+      <div style={{
+        position: "fixed",
+        inset: 0,
+        backgroundImage: "url('/img/textura%20piedra%20gris.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        filter: "blur(4px)",
+        transform: "scale(1.05)",
+        zIndex: 0,
+      }} />
       <img
         src={logosimple}
         alt="LEPA"
@@ -33,6 +29,7 @@ const Inicio = () => {
           filter: "drop-shadow(0 6px 18px rgba(0,0,0,0.55)) drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
           cursor: "pointer",
           transition: "filter 0.2s",
+          zIndex: 1,
         }}
         onMouseEnter={(e) => { e.currentTarget.style.filter = "drop-shadow(0 8px 24px rgba(0,0,0,0.65)) drop-shadow(0 3px 8px rgba(0,0,0,0.45)) brightness(1.1)"; }}
         onMouseLeave={(e) => { e.currentTarget.style.filter = "drop-shadow(0 6px 18px rgba(0,0,0,0.55)) drop-shadow(0 2px 6px rgba(0,0,0,0.35))"; }}

@@ -1,4 +1,4 @@
-import { Modal, Table } from "react-bootstrap";
+import { Modal, Table, Button } from "react-bootstrap";
 
 const fmt = (val) =>
   val != null && val !== "" ? Number(val).toLocaleString("es-AR") : "-";
@@ -6,7 +6,7 @@ const fmt = (val) =>
 const fmtFecha = (f) =>
   f ? new Date(f + "T12:00:00").toLocaleDateString("es-AR") : "-";
 
-const HistorialModal = ({ show, onHide, maquinaNombre, historialHoras, historialService }) => {
+const HistorialModal = ({ show, onHide, maquinaNombre, historialHoras, historialService, onBorrarService }) => {
   const filas = Math.max(historialHoras.length, historialService.length);
 
   return (
@@ -25,6 +25,7 @@ const HistorialModal = ({ show, onHide, maquinaNombre, historialHoras, historial
                   <th>Fecha</th>
                   <th>Horómetro</th>
                   <th>Fecha Últ. Service</th>
+                  <th></th>
                   <th>Horómetro Últ. Service</th>
                 </tr>
               </thead>
@@ -37,6 +38,16 @@ const HistorialModal = ({ show, onHide, maquinaNombre, historialHoras, historial
                       <td>{fmtFecha(h?.fecha)}</td>
                       <td>{fmt(h?.horometro)}</td>
                       <td className="text-primary">{fmtFecha(s?.fecha)}</td>
+                      <td>
+                        {s && (
+                          <Button
+                            size="sm"
+                            variant="outline-danger"
+                            style={{ padding: "0 6px", fontSize: "0.75rem" }}
+                            onClick={() => onBorrarService(s._id)}
+                          >✕</Button>
+                        )}
+                      </td>
                       <td className="text-primary">{fmt(s?.horometro)}</td>
                     </tr>
                   );

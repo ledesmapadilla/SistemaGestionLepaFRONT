@@ -18,4 +18,5 @@ export const API = {
   cuentaCorriente: `${BASE}/api/cuenta-corriente`,
   asistencia: `${BASE}/api/asistencia`,
   serviceMaquina: `${BASE}/api/service-maquina`,
+  tablero: `${BASE}/api/tablero`,
 };

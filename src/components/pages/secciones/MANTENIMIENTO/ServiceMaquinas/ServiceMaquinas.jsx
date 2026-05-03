@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Table, Button, Spinner } from "react-bootstrap";
+import { Table, Button, Spinner, Form } from "react-bootstrap";
+import * as XLSXStyle from "xlsx-js-style";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -7,6 +8,7 @@ import {
   listarServices,
   crearService,
   editarService,
+  borrarService,
 } from "../../../../../helpers/queriesServiceMaquinas.js";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
 import { listarAsistencia } from "../../../../../helpers/queriesAsistencia.js";
@@ -71,6 +73,7 @@ const ServiceMaquinas = () => {
   const [historialService, setHistorialService] = useState([]);
   const [historialNombre, setHistorialNombre] = useState("");
   const [loading, setLoading] = useState(true);
+  const [filtroMaquina, setFiltroMaquina] = useState("");
 
   useEffect(() => {
     cargarDatos();
@@ -112,11 +115,16 @@ const ServiceMaquinas = () => {
     );
   };
 
-  // Último registro tipo "service" (para columnas Fecha/Horómetro Últ. Service)
+  // Último registro tipo "service" (excluye fechas futuras para evitar registros mal cargados)
   const getUltimoService = (maquinaId) => {
+    const hoy = new Date();
     return (
       services
-        .filter((s) => s.maquina?._id === maquinaId && s.tipo === "service")
+        .filter((s) =>
+          s.maquina?._id === maquinaId &&
+          s.tipo === "service" &&
+          new Date(s.fecha || s.createdAt) <= hoy
+        )
         .sort((a, b) => new Date(b.fecha || b.createdAt) - new Date(a.fecha || a.createdAt))[0] || null
     );
   };
@@ -172,7 +180,7 @@ const ServiceMaquinas = () => {
       const payload = {
         maquina: maquinaSeleccionada._id,
         fecha: data.fecha,
-        horometro: Number(data.horometro),
+        horometro: data.horometro !== "" ? Number(data.horometro) : undefined,
         tipo: "service",
       };
 
@@ -231,10 +239,9 @@ const ServiceMaquinas = () => {
     const horasOrdenadas = Object.entries(mapaHoras)
       .map(([fecha, horometro]) => ({ fecha, horometro, tipo: "horas" }));
 
-    // Registros tipo "service" de ServiceMaquina
     const deServiceReg = services
-      .filter((s) => s.maquina?._id === maquina._id && s.horometro != null && s.fecha && s.tipo === "service")
-      .map((s) => ({ fecha: s.fecha.slice(0, 10), horometro: s.horometro, tipo: "service" }));
+      .filter((s) => s.maquina?._id === maquina._id && s.fecha && s.tipo === "service")
+      .map((s) => ({ _id: s._id, fecha: s.fecha.slice(0, 10), horometro: s.horometro, tipo: "service" }));
 
     const horasFinales = horasOrdenadas.sort((a, b) => b.fecha.localeCompare(a.fecha));
     const serviceFinales = deServiceReg.sort((a, b) => b.fecha.localeCompare(a.fecha));
@@ -243,6 +250,25 @@ const ServiceMaquinas = () => {
     setHistorialHoras(horasFinales);
     setHistorialService(serviceFinales);
     setShowHistorial(true);
+  };
+
+  const handleBorrarService = async (serviceId) => {
+    const confirmacion = await Swal.fire({
+      icon: "warning",
+      title: "¿Borrar este registro?",
+      showCancelButton: true,
+      confirmButtonText: "Sí, borrar",
+      cancelButtonText: "Cancelar",
+    });
+    if (!confirmacion.isConfirmed) return;
+    const respuesta = await borrarService(serviceId);
+    if (!respuesta?.ok) {
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudo eliminar el registro" });
+      return;
+    }
+    setServices((prev) => prev.filter((s) => s._id !== serviceId));
+    setHistorialService((prev) => prev.filter((s) => s._id !== serviceId));
+    Swal.fire({ icon: "success", title: "Registro eliminado", timer: 1500, showConfirmButton: false });
   };
 
   // --- Modal Service ---
@@ -352,15 +378,96 @@ const ServiceMaquinas = () => {
     }
   };
 
-  const estadoBadge = (estado) => {
-    if (!estado) return <span className="text-muted">-</span>;
-    const colores = {
-      "Operativo": "text-success fw-bold",
-      "En servicio programado": "text-primary fw-bold",
-      "Requiere atención": "text-warning fw-bold",
-      "Fuera de servicio": "text-danger fw-bold",
-    };
-    return <span className={colores[estado] || ""}>{estado}</span>;
+  const exportarExcel = () => {
+    const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
+    const estHeader = { font: { bold: true }, alignment: { horizontal: "center", vertical: "center" } };
+    const estTitulo = { font: { bold: true, sz: 14 }, alignment: { horizontal: "left", vertical: "center" } };
+
+    const wb = XLSXStyle.utils.book_new();
+    const ws = {};
+
+    ws["A1"] = { v: "Service de Máquinas", t: "s", s: estTitulo };
+    ws["A2"] = { v: "", t: "s" };
+
+    const headers = ["Máquina", "Fecha Últ. Registro", "Horómetro (hs)", "Fecha Últ. Service", "Horómetro Últ. Service", "Estado", "Observaciones"];
+    const cols = "ABCDEFG";
+    headers.forEach((h, i) => {
+      ws[`${cols[i]}3`] = { v: h, t: "s", s: estHeader };
+    });
+
+    const fmtFecha = (f) => f ? new Date(f + "T12:00:00").toLocaleDateString("es-AR") : "";
+
+    maquinas.forEach((m, rowIdx) => {
+      const row = rowIdx + 4;
+      const s = getUltimoService(m._id);
+      const { fecha, horometro } = getDatosHorometro(m._id, m.maquina);
+      const vals = [
+        m.maquina,
+        fmtFecha(fecha),
+        horometro != null ? Number(horometro) : "",
+        s?.fecha ? fmtFecha(s.fecha.slice(0, 10)) : "",
+        s?.horometro != null ? Number(s.horometro) : "",
+        (() => {
+          if (esEIQoETX(m.maquina)) {
+            if (!s?.fecha) return "";
+            const fp = new Date(s.fecha.slice(0,10) + "T12:00:00");
+            fp.setDate(fp.getDate() + 90);
+            return new Date() < fp ? "OK" : "ATRASADO";
+          }
+          if (horometro != null && s?.horometro != null)
+            return Number(horometro) < Number(s.horometro) + 250 ? "OK" : "ATRASADO";
+          return "";
+        })(),
+        s?.observaciones || "",
+      ];
+      vals.forEach((v, i) => {
+        ws[`${cols[i]}${row}`] = { v: v ?? "", t: typeof v === "number" ? "n" : "s", s: estCentro };
+      });
+    });
+
+    const lastRow = maquinas.length + 3;
+    ws["!ref"] = `A1:G${lastRow}`;
+    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
+    ws["!cols"] = [{ wch: 20 }, { wch: 18 }, { wch: 16 }, { wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 28 }];
+
+    XLSXStyle.utils.book_append_sheet(wb, ws, "Service Máquinas");
+    XLSXStyle.writeFile(wb, "Service_Maquinas.xlsx");
+  };
+
+  const estiloX = {
+    position: "absolute",
+    right: "10px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    cursor: "pointer",
+    color: "#fff",
+  };
+  const selectActivo = { backgroundImage: "none" };
+
+  const maquinasFiltradas = filtroMaquina
+    ? maquinas.filter((m) => m._id === filtroMaquina)
+    : maquinas;
+
+  const esEIQoETX = (nombre) => {
+    const n = nombre?.toLowerCase() || "";
+    return n.includes("eiq") || n.includes("etx");
+  };
+
+  const estadoBadge = (horometroActual, ultimoServiceHorometro, maquinaNombre, ultimoServiceFecha) => {
+    if (esEIQoETX(maquinaNombre)) {
+      if (!ultimoServiceFecha) return <span style={{ color: "#dc3545", fontWeight: 700 }}>ATRASADO</span>;
+      const fechaProximo = new Date(ultimoServiceFecha + "T12:00:00");
+      fechaProximo.setDate(fechaProximo.getDate() + 90);
+      return new Date() < fechaProximo
+        ? <span className="text-success fw-bold">OK</span>
+        : <span style={{ color: "#dc3545", fontWeight: 700 }}>ATRASADO</span>;
+    }
+    if (horometroActual == null || ultimoServiceHorometro == null)
+      return <span className="text-muted">-</span>;
+    const proximo = Number(ultimoServiceHorometro) + 250;
+    return Number(horometroActual) < proximo
+      ? <span className="text-success fw-bold">OK</span>
+      : <span style={{ color: "#dc3545", fontWeight: 700 }}>ATRASADO</span>;
   };
 
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
@@ -369,8 +476,28 @@ const ServiceMaquinas = () => {
     <>
       <div className="w-75 mx-auto my-2">
         <h6 className="text-center mb-3">Service de Máquinas</h6>
-        <div className="d-flex justify-content-end mb-3">
+        <div className="d-flex justify-content-end gap-2 mb-3">
+          <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
           <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+        </div>
+
+        <div className="mb-2">
+          <div style={{ position: "relative", width: "200px" }}>
+            <Form.Select
+              size="sm"
+              value={filtroMaquina}
+              onChange={(e) => setFiltroMaquina(e.target.value)}
+              style={filtroMaquina ? selectActivo : {}}
+            >
+              <option value="">Todas las máquinas</option>
+              {maquinas.map((m) => (
+                <option key={m._id} value={m._id}>{m.maquina}</option>
+              ))}
+            </Form.Select>
+            {filtroMaquina && (
+              <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>
+            )}
+          </div>
         </div>
 
         <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
@@ -388,10 +515,10 @@ const ServiceMaquinas = () => {
             </tr>
           </thead>
           <tbody>
-            {maquinas.length === 0 ? (
+            {maquinasFiltradas.length === 0 ? (
               <tr><td colSpan="8" className="py-3">No hay máquinas registradas</td></tr>
             ) : (
-              maquinas.map((m) => {
+              maquinasFiltradas.map((m) => {
                 const s = getUltimoService(m._id);
                 const { fecha, horometro } = getDatosHorometro(m._id, m.maquina);
                 return (
@@ -405,7 +532,7 @@ const ServiceMaquinas = () => {
                     <td>{fmtHorometro(horometro)}</td>
                     <td className="text-primary">{s?.fecha ? new Date(s.fecha.slice(0,10) + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
                     <td className="text-primary">{fmtHorometro(s?.horometro)}</td>
-                    <td>{estadoBadge(s?.estado)}</td>
+                    <td>{estadoBadge(horometro, s?.horometro, m.maquina, s?.fecha?.slice(0, 10))}</td>
                     <td
                       style={{ maxWidth: "220px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
                       title={s?.observaciones}
@@ -454,6 +581,7 @@ const ServiceMaquinas = () => {
           register={registerService}
           errors={errorsService}
           maquinaNombre={maquinaSeleccionada.maquina}
+          esEIQoETX={esEIQoETX(maquinaSeleccionada.maquina)}
           ultimoHorometro={getDatosHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina).horometro}
           horometroMin={
             getDatosHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina).horometro != null
@@ -469,6 +597,7 @@ const ServiceMaquinas = () => {
         maquinaNombre={historialNombre}
         historialHoras={historialHoras}
         historialService={historialService}
+        onBorrarService={handleBorrarService}
       />
 
       {maquinaSeleccionada && (

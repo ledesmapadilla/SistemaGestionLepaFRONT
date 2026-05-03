@@ -10,6 +10,7 @@ const NuevoServiceModal = ({
   maquinaNombre,
   ultimoHorometro,
   horometroMin,
+  esEIQoETX,
 }) => {
   return (
     <Modal show={show} onHide={onHide} centered>
@@ -37,15 +38,17 @@ const NuevoServiceModal = ({
             </Col>
             <Col md={6}>
               <Form.Group className="mb-3">
-                <Form.Label className="d-block text-center">Horómetro service *</Form.Label>
+                <Form.Label className="d-block text-center">
+                  Horómetro service {esEIQoETX ? "" : "*"}
+                </Form.Label>
                 <Form.Control
                   type="number"
                   className="text-center"
                   min={horometroMin ?? 0}
                   {...register("horometro", {
-                    required: "El horómetro es obligatorio",
+                    required: esEIQoETX ? false : "El horómetro es obligatorio",
                     validate: (v) =>
-                      horometroMin == null || Number(v) >= horometroMin ||
+                      !v || horometroMin == null || Number(v) >= horometroMin ||
                       `No puede ser menor a ${Number(horometroMin).toLocaleString("es-AR")}`,
                   })}
                 />

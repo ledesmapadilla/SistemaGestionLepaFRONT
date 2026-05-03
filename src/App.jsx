@@ -35,6 +35,7 @@ import Cheques from "./components/pages/secciones/CONTABLE/Cheques/Cheques.jsx";
 import Asistencia from "./components/pages/secciones/PERSONAL/Asistencia/Asistencia.jsx";
 import GastosSemanales from "./components/pages/secciones/PERSONAL/GastosSemanales/GastosSemanales.jsx";
 import ServiceMaquinas from "./components/pages/secciones/MANTENIMIENTO/ServiceMaquinas/ServiceMaquinas.jsx";
+import TableroControl from "./components/pages/secciones/MANTENIMIENTO/TableroControl/TableroControl.jsx";
 
 function App() {
   return (
@@ -85,6 +86,7 @@ function App() {
                       <Route path="/consumo-aceites" element={<AceiteTabla />} />
                       <Route path="/compras-aceites" element={<AceiteTablaCompra />} />
                       <Route path="/service-maquinas" element={<ServiceMaquinas />} />
+                      <Route path="/tablero-control" element={<TableroControl />} />
                       <Route path="/usuarios" element={<UsuariosCrud />} />
                       <Route path="/variables" element={<Variables />} />
                       <Route path="/precios" element={<Precios />} />
