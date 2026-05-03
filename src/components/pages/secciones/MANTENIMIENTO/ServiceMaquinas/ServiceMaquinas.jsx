@@ -115,16 +115,10 @@ const ServiceMaquinas = () => {
     );
   };
 
-  // Último registro tipo "service" (excluye fechas futuras para evitar registros mal cargados)
   const getUltimoService = (maquinaId) => {
-    const hoy = new Date();
     return (
       services
-        .filter((s) =>
-          s.maquina?._id === maquinaId &&
-          s.tipo === "service" &&
-          new Date(s.fecha || s.createdAt) <= hoy
-        )
+        .filter((s) => s.maquina?._id === maquinaId && s.tipo !== "horas")
         .sort((a, b) => new Date(b.fecha || b.createdAt) - new Date(a.fecha || a.createdAt))[0] || null
     );
   };
@@ -240,7 +234,7 @@ const ServiceMaquinas = () => {
       .map(([fecha, horometro]) => ({ fecha, horometro, tipo: "horas" }));
 
     const deServiceReg = services
-      .filter((s) => s.maquina?._id === maquina._id && s.fecha && s.tipo === "service")
+      .filter((s) => s.maquina?._id === maquina._id && s.fecha && s.tipo !== "horas")
       .map((s) => ({ _id: s._id, fecha: s.fecha.slice(0, 10), horometro: s.horometro, tipo: "service" }));
 
     const horasFinales = horasOrdenadas.sort((a, b) => b.fecha.localeCompare(a.fecha));
@@ -414,8 +408,10 @@ const ServiceMaquinas = () => {
             fp.setDate(fp.getDate() + 90);
             return new Date() < fp ? "OK" : "ATRASADO";
           }
-          if (horometro != null && s?.horometro != null)
-            return Number(horometro) < Number(s.horometro) + 250 ? "OK" : "ATRASADO";
+          if (horometro != null && s?.horometro != null) {
+            const intervalo = esVehiculo(m.maquina) ? 10000 : 250;
+            return Number(horometro) < Number(s.horometro) + intervalo ? "OK" : "ATRASADO";
+          }
           return "";
         })(),
         s?.observaciones || "",
@@ -453,6 +449,11 @@ const ServiceMaquinas = () => {
     return n.includes("eiq") || n.includes("etx");
   };
 
+  const esVehiculo = (nombre) => {
+    const n = nombre?.toLowerCase() || "";
+    return n.includes("nissan") || n.includes("ranger") || n.includes("fiat");
+  };
+
   const estadoBadge = (horometroActual, ultimoServiceHorometro, maquinaNombre, ultimoServiceFecha) => {
     if (esEIQoETX(maquinaNombre)) {
       if (!ultimoServiceFecha) return <span style={{ color: "#dc3545", fontWeight: 700 }}>ATRASADO</span>;
@@ -464,7 +465,8 @@ const ServiceMaquinas = () => {
     }
     if (horometroActual == null || ultimoServiceHorometro == null)
       return <span className="text-muted">-</span>;
-    const proximo = Number(ultimoServiceHorometro) + 250;
+    const intervalo = esVehiculo(maquinaNombre) ? 10000 : 250;
+    const proximo = Number(ultimoServiceHorometro) + intervalo;
     return Number(horometroActual) < proximo
       ? <span className="text-success fw-bold">OK</span>
       : <span style={{ color: "#dc3545", fontWeight: 700 }}>ATRASADO</span>;
