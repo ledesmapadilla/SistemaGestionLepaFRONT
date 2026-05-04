@@ -456,7 +456,7 @@ const ServiceMaquinas = () => {
 
   const estadoBadge = (horometroActual, ultimoServiceHorometro, maquinaNombre, ultimoServiceFecha) => {
     if (esEIQoETX(maquinaNombre)) {
-      if (!ultimoServiceFecha) return <span style={{ color: "#dc3545", fontWeight: 700 }}>ATRASADO</span>;
+      if (!ultimoServiceFecha) return <span className="text-muted">-</span>;
       const fechaProximo = new Date(ultimoServiceFecha + "T12:00:00");
       fechaProximo.setDate(fechaProximo.getDate() + 90);
       return new Date() < fechaProximo

@@ -362,7 +362,6 @@ const Asistencia = () => {
                   <th style={{ width: 120 }}>Horómetro</th>
                   <th>Obra</th>
                   <th style={{ width: 140 }}>Observaciones</th>
-                  <th style={{ width: 80 }}>Borrar</th>
                 </tr>
               </thead>
               <tbody>
@@ -491,11 +490,6 @@ const Asistencia = () => {
                         value={fila.observaciones}
                         onChange={(e) => actualizarCelda(fila.id, "observaciones", e.target.value)}
                       />
-                    </td>
-                    <td>
-                      <Button size="sm" variant="outline-danger" onClick={() => borrarFila(fila.id)}>
-                        Borrar
-                      </Button>
                     </td>
                   </tr>
                 ))}
