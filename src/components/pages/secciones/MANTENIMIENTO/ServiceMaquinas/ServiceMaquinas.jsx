@@ -29,7 +29,7 @@ const valoresIniciales = {
 };
 
 const valoresHorasIniciales = { horometro: "" };
-const valoresServiceIniciales = { fecha: "", horometro: "" };
+const valoresServiceIniciales = { fecha: "", horometro: "", observaciones: "" };
 
 const EXCLUIDAS = [
   "carreton grande", "carretón grande",
@@ -175,6 +175,7 @@ const ServiceMaquinas = () => {
         maquina: maquinaSeleccionada._id,
         fecha: data.fecha,
         horometro: data.horometro !== "" ? Number(data.horometro) : undefined,
+        observaciones: data.observaciones || undefined,
         tipo: "service",
       };
 
@@ -507,6 +508,7 @@ const ServiceMaquinas = () => {
           <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
             <tr>
               <th>Máquina</th>
+              <th>Frecuencia</th>
               <th>Fecha Últ. Registro</th>
               <th>Horómetro (hs)</th>
               <th>Fecha Últ. Service</th>
@@ -518,7 +520,7 @@ const ServiceMaquinas = () => {
           </thead>
           <tbody>
             {maquinasFiltradas.length === 0 ? (
-              <tr><td colSpan="8" className="py-3">No hay máquinas registradas</td></tr>
+              <tr><td colSpan="9" className="py-3">No hay máquinas registradas</td></tr>
             ) : (
               maquinasFiltradas.map((m) => {
                 const s = getUltimoService(m._id);
@@ -526,6 +528,9 @@ const ServiceMaquinas = () => {
                 return (
                   <tr key={m._id}>
                     <td className="fw-bold">{m.maquina}</td>
+                    <td className="text-muted" style={{ fontSize: "0.75rem" }}>
+                      {esEIQoETX(m.maquina) ? "90 días" : esVehiculo(m.maquina) ? "10.000 km" : "250 hs"}
+                    </td>
                     <td>
                       {fecha
                         ? new Date(fecha + "T12:00:00").toLocaleDateString("es-AR")

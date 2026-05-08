@@ -58,6 +58,14 @@ const NuevoServiceModal = ({
               </Form.Group>
             </Col>
           </Row>
+          <Form.Group className="mb-2">
+            <Form.Label>Observaciones</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={2}
+              {...register("observaciones")}
+            />
+          </Form.Group>
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={onHide}>Cancelar</Button>

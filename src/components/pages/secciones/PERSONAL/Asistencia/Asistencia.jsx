@@ -41,6 +41,7 @@ const Asistencia = () => {
   const [registros, setRegistros] = useState({});
   const [borrador, setBorrador] = useState([]);
   const [listaServices, setListaServices] = useState([]);
+  const [semanaResumen, setSemanaResumen] = useState(null);
 
   const anios = Array.from({ length: 10 }, (_, i) => 2026 + i);
 
@@ -69,6 +70,10 @@ const Asistencia = () => {
     };
     cargar();
   }, []);
+
+  const personalVisible = listaPersonal.filter(
+    (p) => !p.nombre.toLowerCase().includes("nares")
+  );
 
   const diasEnMes = new Date(anio, mes + 1, 0).getDate();
   const primerDiaSemana = (new Date(anio, mes, 1).getDay() + 6) % 7;
@@ -99,10 +104,10 @@ const Asistencia = () => {
       if (res?.ok) {
         const data = await res.json();
         filas = data?.registros?.length
-          ? data.registros.map((r, i) => ({ ...r, id: r.id || i }))
-          : listaPersonal.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", ausente: false, horometro: "", entra: "", sale: "", observaciones: "" }));
+          ? data.registros.map((r, i) => ({ ...r, id: r.id || i, remito: r.personal?.toLowerCase().includes("zamorano") || !r.obra ? true : r.remito }))
+          : personalVisible.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", ausente: false, remito: true, horometro: "", entra: "", sale: "", observaciones: "" }));
       } else {
-        filas = listaPersonal.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", ausente: false, horometro: "", entra: "", sale: "", observaciones: "" }));
+        filas = personalVisible.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", ausente: false, remito: true, horometro: "", entra: "", sale: "", observaciones: "" }));
       }
     }
     setBorrador(filas.map((f) => ({ ...f })));
@@ -184,6 +189,7 @@ const Asistencia = () => {
       maquina: "",
       obra: "",
       ausente: false,
+      remito: false,
       horometro: "",
       entra: "",
       sale: "",
@@ -195,7 +201,7 @@ const Asistencia = () => {
 
   const exportarExcel = () => {
     const titulo = `Asistencia - ${diaSeleccionado} de ${MESES[mes]} ${anio}`;
-    const headers = ["Personal", "Ausente", "Entra", "Sale", "Máquina", "Horómetro", "Obra", "Observaciones"];
+    const headers = ["Personal", "Ausente", "Remito", "Entra", "Sale", "Máquina", "Horómetro", "Obra", "Observaciones"];
     const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
     const estHeader = { font: { bold: true }, alignment: { horizontal: "center", vertical: "center" } };
     const estTitulo = { font: { bold: true, sz: 14 }, alignment: { horizontal: "left", vertical: "center" } };
@@ -206,7 +212,7 @@ const Asistencia = () => {
     ws["A1"] = { v: titulo, t: "s", s: estTitulo };
     ws["A2"] = { v: "", t: "s" };
 
-    const cols = "ABCDEFGH";
+    const cols = "ABCDEFGHI";
     headers.forEach((h, i) => {
       ws[`${cols[i]}3`] = { v: h, t: "s", s: estHeader };
     });
@@ -216,6 +222,7 @@ const Asistencia = () => {
       const vals = [
         fila.personal,
         fila.ausente ? "Ausente" : "Presente",
+        fila.remito ? "Sí" : "No",
         fila.entra,
         fila.sale,
         fila.maquina,
@@ -231,26 +238,59 @@ const Asistencia = () => {
     });
 
     const lastRow = borrador.length + 3;
-    ws["!ref"] = `A1:H${lastRow}`;
-    ws["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 18 }, { wch: 12 }, { wch: 22 }, { wch: 24 }];
+    ws["!ref"] = `A1:I${lastRow}`;
+    ws["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 18 }, { wch: 12 }, { wch: 22 }, { wch: 24 }];
 
     XLSXStyle.utils.book_append_sheet(wb, ws, "Asistencia");
     XLSXStyle.writeFile(wb, `Asistencia_${diaSeleccionado}_${MESES[mes]}_${anio}.xlsx`);
   };
 
-  const borrarFila = (id) => {
-    Swal.fire({
-      title: "¿Eliminar registro?",
-      icon: "warning",
-      showCancelButton: true,
-      customClass: { confirmButton: "swal-btn-danger" },
-      confirmButtonText: "Sí, borrar",
-      cancelButtonText: "Cancelar",
-    }).then((res) => {
-      if (res.isConfirmed) {
-        setBorrador((prev) => prev.filter((r) => r.id !== id));
-      }
+  const esNarese = (nombre) => {
+    if (!nombre) return true;
+    const n = nombre.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    return n.includes("nares");
+  };
+
+  const horometroStrAMins = (str) => {
+    if (!str || str === "0") return 0;
+    const parts = str.split(":");
+    return parseInt(parts[0]) * 60 + (parts[1] ? parseInt(parts[1]) : 0);
+  };
+
+  const minsAHoras = (mins) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m === 0 ? `${h} hs` : `${h}:${String(m).padStart(2, "0")} hs`;
+  };
+
+  const abrirResumen = (diasSemana) => {
+    const mapa = {};
+    diasSemana.forEach((d) => {
+      const regs = registros[diaKey(anio, mes, d)] || [];
+      regs.forEach((r) => {
+        if (!r.personal || esNarese(r.personal)) return;
+        if (!mapa[r.personal]) mapa[r.personal] = { ausentes: 0, sinRemito: 0, observaciones: [], horometroMins: 0 };
+        if (r.ausente) mapa[r.personal].ausentes += 1;
+        if (!r.remito) mapa[r.personal].sinRemito += 1;
+        if (r.observaciones) mapa[r.personal].observaciones.push(r.observaciones);
+        if (r.personal.toLowerCase().includes("zamorano"))
+          mapa[r.personal].horometroMins += horometroStrAMins(calcularHorometroZamorano(r.entra));
+      });
     });
+    const filas = Object.entries(mapa)
+      .filter(([nombre]) => !esNarese(nombre))
+      .map(([nombre, datos]) => {
+        const esZamorano = nombre.toLowerCase().includes("zamorano");
+        return {
+          nombre,
+          ausentes: esZamorano ? (datos.horometroMins > 0 ? minsAHoras(datos.horometroMins) : 0) : datos.ausentes,
+          sinRemito: datos.sinRemito,
+          observaciones: datos.observaciones.join(" / "),
+        };
+      });
+    const desde = diasSemana[0];
+    const hasta = diasSemana[diasSemana.length - 1];
+    setSemanaResumen({ filas, label: `${desde} al ${hasta} de ${MESES[mes].toLowerCase()} ${anio}` });
   };
 
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
@@ -282,10 +322,10 @@ const Asistencia = () => {
       </div>
 
       {/* Grilla */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
-        {DIAS_SEMANA.map((d) => (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr) 0.5fr", gap: 8 }}>
+        {[...DIAS_SEMANA, ""].map((d) => (
           <div
-            key={d}
+            key={d || "resumen-header"}
             className="text-center fw-semibold"
             style={{ fontSize: "0.82rem", paddingBottom: 4, color: "white" }}
           >
@@ -293,48 +333,91 @@ const Asistencia = () => {
           </div>
         ))}
 
-        {celdas.map((dia, i) =>
-          dia === null ? (
-            <div key={`vacio-${i}`} />
-          ) : (() => {
+        {celdas.map((dia, i) => {
+          const items = [];
+
+          if (dia === null) {
+            items.push(<div key={`vacio-${i}`} />);
+          } else {
             const esFuturo = new Date(anio, mes, dia) > new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
             const esDomingo = (primerDiaSemana + dia - 1) % 7 === 6;
-            const bgBase = esFuturo ? "#3a3a3a" : esHoy(dia) ? "#fff3cd" : esDomingo ? "#666" : "#c0c0c0";
-            const bgHover = esFuturo ? "#3a3a3a" : esHoy(dia) ? "#ffe69c" : esDomingo ? "#555" : "#a8a8a8";
-            return (
-            <div
-              key={dia}
-              onClick={() => abrirDia(dia)}
-              className="rounded text-center"
-              style={{
-                cursor: esFuturo ? "not-allowed" : "pointer",
-                padding: "4px",
-                height: 56,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                background: bgBase,
-                border: "2px solid #ffc107",
-                transition: "background 0.15s",
-                userSelect: "none",
-                opacity: esFuturo ? 0.4 : 1,
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = bgHover; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = bgBase; }}
-            >
-              <span style={{ fontSize: "1rem", fontWeight: 600, color: "#000" }}>
-                {dia}
-              </span>
-              {registros[diaKey(anio, mes, dia)]?.length > 0 && (
-                <div style={{ fontSize: "0.7rem", color: "#333", marginTop: 2 }}>
-                  ✓
-                </div>
-              )}
-            </div>
+            const regsDelDia = registros[diaKey(anio, mes, dia)];
+            const aplicaRemito = new Date(anio, mes, dia) >= new Date(2026, 4, 1);
+            const algunoSinRemito = aplicaRemito && regsDelDia?.length > 0 && regsDelDia.some((r) => !r.remito);
+            const bgBase = esFuturo ? "#3a3a3a" : algunoSinRemito ? "#dc3545" : esHoy(dia) ? "#fff3cd" : esDomingo ? "#666" : "#c0c0c0";
+            const bgHover = esFuturo ? "#3a3a3a" : algunoSinRemito ? "#bb2d3b" : esHoy(dia) ? "#ffe69c" : esDomingo ? "#555" : "#a8a8a8";
+            items.push(
+              <div
+                key={dia}
+                onClick={() => abrirDia(dia)}
+                className="rounded text-center"
+                style={{
+                  cursor: esFuturo ? "not-allowed" : "pointer",
+                  padding: "4px",
+                  height: 56,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: bgBase,
+                  border: "2px solid #ffc107",
+                  transition: "background 0.15s",
+                  userSelect: "none",
+                  opacity: esFuturo ? 0.4 : 1,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = bgHover; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = bgBase; }}
+              >
+                <span style={{ fontSize: "1rem", fontWeight: 600, color: algunoSinRemito ? "#fff" : "#000" }}>
+                  {dia}
+                </span>
+                {registros[diaKey(anio, mes, dia)]?.length > 0 && (
+                  <div style={{ fontSize: "0.7rem", color: "#333", marginTop: 2 }}>
+                    ✓
+                  </div>
+                )}
+              </div>
             );
-          })()
-        )}
+          }
+
+          if ((i + 1) % 7 === 0) {
+            const diasSemana = celdas.slice(i - 6, i + 1).filter((d) => d !== null);
+            const hoyInicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+            const semanaFutura = diasSemana.every((d) => new Date(anio, mes, d) > hoyInicio);
+            const semanaRoja = !semanaFutura && diasSemana.some((d) => {
+              const regs = registros[diaKey(anio, mes, d)];
+              const aplica = new Date(anio, mes, d) >= new Date(2026, 4, 1);
+              return aplica && regs?.length > 0 && regs.some((r) => !r.remito);
+            });
+            const bgResumen = semanaFutura ? "#3a3a3a" : semanaRoja ? "#dc3545" : "#fff3cd";
+            items.push(
+              <div
+                key={`resumen-${i}`}
+                className="rounded text-center"
+                style={{
+                  padding: "4px",
+                  height: 56,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: bgResumen,
+                  border: "2px solid #ffc107",
+                  userSelect: "none",
+                  cursor: semanaFutura ? "not-allowed" : "pointer",
+                  opacity: semanaFutura ? 0.4 : 1,
+                }}
+                onClick={() => !semanaFutura && abrirResumen(diasSemana)}
+              >
+                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: semanaRoja || semanaFutura ? "#fff" : "#000" }}>
+                  Resumen
+                </span>
+              </div>
+            );
+          }
+
+          return items;
+        })}
       </div>
 
       {/* Modal */}
@@ -356,6 +439,7 @@ const Asistencia = () => {
                 <tr>
                   <th style={{ width: 200 }}>Personal</th>
                   <th style={{ width: 60 }}>Ausente</th>
+                  <th style={{ width: 60 }}>Remito</th>
                   <th style={{ width: 100 }}>Entra</th>
                   <th style={{ width: 100 }}>Sale</th>
                   <th>Máquina</th>
@@ -381,10 +465,16 @@ const Asistencia = () => {
                         <Form.Select
                           size="sm"
                           value={fila.personal}
-                          onChange={(e) => actualizarCelda(fila.id, "personal", e.target.value)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setBorrador((prev) => prev.map((r) =>
+                              r.id === fila.id
+                                ? { ...r, personal: val, remito: val.toLowerCase().includes("zamorano") ? true : r.remito }
+                                : r
+                            ));
+                          }}
                         >
-                          <option value="">-</option>
-                          {listaPersonal.map((p) => (
+                          {personalVisible.map((p) => (
                             <option key={p._id} value={p.nombre}>{p.nombre}</option>
                           ))}
                         </Form.Select>
@@ -399,6 +489,17 @@ const Asistencia = () => {
                         className="d-flex justify-content-center"
                         style={{ cursor: "pointer" }}
                       />
+                    </td>
+                    <td>
+                      <div className="d-flex justify-content-center">
+                        <input
+                          type="radio"
+                          checked={fila.remito}
+                          onChange={() => {}}
+                          onClick={() => actualizarCelda(fila.id, "remito", !fila.remito)}
+                          style={{ cursor: "pointer", accentColor: "#198754", width: 16, height: 16 }}
+                        />
+                      </div>
                     </td>
                     <td>
                       <div className="d-flex align-items-center gap-1">
@@ -473,7 +574,14 @@ const Asistencia = () => {
                       <Form.Select
                         size="sm"
                         value={fila.obra}
-                        onChange={(e) => actualizarCelda(fila.id, "obra", e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setBorrador((prev) => prev.map((r) =>
+                            r.id === fila.id
+                              ? { ...r, obra: val, remito: val === "Taller" || val === "" }
+                              : r
+                          ));
+                        }}
                       >
                         <option value="">-</option>
                         <option value="Otras">Otras</option>
@@ -503,6 +611,36 @@ const Asistencia = () => {
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={cerrarModal}>Cerrar</Button>
           <Button variant="outline-success" onClick={guardarModal}>Guardar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal Resumen semanal */}
+      <Modal show={!!semanaResumen} onHide={() => setSemanaResumen(null)} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Resumen {semanaResumen?.label}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Table striped bordered hover className="text-center align-middle mx-auto" style={{ width: "75%" }}>
+            <thead className="table-dark">
+              <tr>
+                <th>Personal</th>
+                <th>Ausentes</th>
+                <th>Sin Remito</th>
+              </tr>
+            </thead>
+            <tbody>
+              {semanaResumen?.filas.map((f, i) => (
+                <tr key={i}>
+                  <td>{f.nombre}</td>
+                  <td>{f.ausentes || "-"}</td>
+                  <td>{f.sinRemito || "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setSemanaResumen(null)}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
     </div>
