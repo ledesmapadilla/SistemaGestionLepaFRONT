@@ -172,7 +172,11 @@ const Asistencia = () => {
       }
     }
 
-    await guardarAsistenciaAPI(keyDia, borrador);
+    const respuesta = await guardarAsistenciaAPI(keyDia, borrador);
+    if (!respuesta?.ok) {
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudo guardar la asistencia" });
+      return;
+    }
     setRegistros((prev) => ({ ...prev, [keyDia]: borrador }));
     setBorrador([]);
     setDiaSeleccionado(null);
