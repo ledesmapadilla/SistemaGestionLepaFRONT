@@ -14,6 +14,7 @@ const MESES = [
 ];
 const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
+
 const diaKey = (anio, mes, dia) =>
   `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
 
@@ -21,7 +22,7 @@ const calcularHorometroZamorano = (entra, sale) => {
   let diff = 0;
   if (entra) {
     const [h, m] = entra.split(":").map(Number);
-    diff += h * 60 + m - 8 * 60;
+    diff += h * 60 + m - (8 * 60 + 30);
   }
   if (sale) {
     const [h, m] = sale.split(":").map(Number);
@@ -317,9 +318,10 @@ const Asistencia = () => {
         const esZamorano = datos.nombre.toLowerCase().includes("zamorano");
         return {
           nombre: datos.nombre,
-          ausentes: esZamorano ? (datos.horometroMins > 0 ? minsAHoras(datos.horometroMins) : 0) : datos.ausentes,
+          ausentes: esZamorano ? 0 : datos.ausentes,
           sinRemito: datos.sinRemito,
           observaciones: datos.observaciones.join(" / "),
+          totalHs: esZamorano ? minsAHoras(datos.horometroMins) : null,
         };
       });
     const desde = diasSemana[0];
@@ -539,12 +541,12 @@ const Asistencia = () => {
                       <div className="d-flex align-items-center gap-1">
                         <Form.Control
                           size="sm"
-                          type="time"
+                          type="text"
+                          placeholder="hh:mm"
                           value={fila.entra}
-                          onChange={(e) => {
-                            actualizarCelda(fila.id, "entra", e.target.value);
-                            if (e.target.value.length === 5) e.target.blur();
-                          }}
+                          onChange={(e) => actualizarCelda(fila.id, "entra", e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+                          style={{ width: 80 }}
                         />
                         {fila.entra && (
                           <span
@@ -558,12 +560,12 @@ const Asistencia = () => {
                       <div className="d-flex align-items-center gap-1">
                         <Form.Control
                           size="sm"
-                          type="time"
+                          type="text"
+                          placeholder="hh:mm"
                           value={fila.sale}
-                          onChange={(e) => {
-                            actualizarCelda(fila.id, "sale", e.target.value);
-                            if (e.target.value.length === 5) e.target.blur();
-                          }}
+                          onChange={(e) => actualizarCelda(fila.id, "sale", e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+                          style={{ width: 80 }}
                         />
                         {fila.sale && (
                           <span
@@ -654,12 +656,13 @@ const Asistencia = () => {
           <Modal.Title>Resumen {semanaResumen?.label}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Table striped bordered hover className="text-center align-middle mx-auto" style={{ width: "75%" }}>
+          <Table striped bordered hover className="text-center align-middle mx-auto" style={{ width: "80%" }}>
             <thead className="table-dark">
               <tr>
                 <th>Personal</th>
                 <th>Ausentes</th>
                 <th>Sin Remito</th>
+                <th>Total hs</th>
               </tr>
             </thead>
             <tbody>
@@ -668,6 +671,9 @@ const Asistencia = () => {
                   <td>{f.nombre}</td>
                   <td>{f.ausentes || "-"}</td>
                   <td>{f.sinRemito || "-"}</td>
+                  <td style={f.totalHs ? { fontWeight: 700, color: f.totalHs.startsWith("-") ? "#198754" : "#dc3545" } : {}}>
+                    {f.totalHs ?? "-"}
+                  </td>
                 </tr>
               ))}
             </tbody>
