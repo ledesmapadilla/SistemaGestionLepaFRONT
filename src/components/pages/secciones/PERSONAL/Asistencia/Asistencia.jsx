@@ -110,7 +110,14 @@ const Asistencia = () => {
         filas = personalVisible.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", ausente: false, remito: true, horometro: "", entra: "", sale: "", observaciones: "" }));
       }
     }
-    setBorrador(filas.map((f) => ({ ...f })));
+    const vistos = new Set();
+    const filasDedup = filas.filter((f) => {
+      const nombre = f.personal?.trim().toLowerCase();
+      if (!nombre || vistos.has(nombre)) return false;
+      vistos.add(nombre);
+      return true;
+    });
+    setBorrador(filasDedup.map((f) => ({ ...f })));
     setDiaSeleccionado(dia);
   };
 
@@ -172,12 +179,19 @@ const Asistencia = () => {
       }
     }
 
-    const respuesta = await guardarAsistenciaAPI(keyDia, borrador);
+    const vistosGuardar = new Set();
+    const borradorDedup = borrador.filter((f) => {
+      const nombre = f.personal?.trim().toLowerCase();
+      if (!nombre || vistosGuardar.has(nombre)) return false;
+      vistosGuardar.add(nombre);
+      return true;
+    });
+    const respuesta = await guardarAsistenciaAPI(keyDia, borradorDedup);
     if (!respuesta?.ok) {
       Swal.fire({ icon: "error", title: "Error", text: "No se pudo guardar la asistencia" });
       return;
     }
-    setRegistros((prev) => ({ ...prev, [keyDia]: borrador }));
+    setRegistros((prev) => ({ ...prev, [keyDia]: borradorDedup }));
     setBorrador([]);
     setDiaSeleccionado(null);
   };
@@ -273,20 +287,21 @@ const Asistencia = () => {
       const regs = registros[diaKey(anio, mes, d)] || [];
       regs.forEach((r) => {
         if (!r.personal || esNarese(r.personal)) return;
-        if (!mapa[r.personal]) mapa[r.personal] = { ausentes: 0, sinRemito: 0, observaciones: [], horometroMins: 0 };
-        if (r.ausente) mapa[r.personal].ausentes += 1;
-        if (!r.remito) mapa[r.personal].sinRemito += 1;
-        if (r.observaciones) mapa[r.personal].observaciones.push(r.observaciones);
+        const keyNombre = r.personal.trim().toLowerCase();
+        if (!mapa[keyNombre]) mapa[keyNombre] = { nombre: r.personal, ausentes: 0, sinRemito: 0, observaciones: [], horometroMins: 0 };
+        if (r.ausente) mapa[keyNombre].ausentes += 1;
+        if (!r.remito) mapa[keyNombre].sinRemito += 1;
+        if (r.observaciones) mapa[keyNombre].observaciones.push(r.observaciones);
         if (r.personal.toLowerCase().includes("zamorano"))
-          mapa[r.personal].horometroMins += horometroStrAMins(calcularHorometroZamorano(r.entra));
+          mapa[keyNombre].horometroMins += horometroStrAMins(calcularHorometroZamorano(r.entra));
       });
     });
-    const filas = Object.entries(mapa)
-      .filter(([nombre]) => !esNarese(nombre))
-      .map(([nombre, datos]) => {
-        const esZamorano = nombre.toLowerCase().includes("zamorano");
+    const filas = Object.values(mapa)
+      .filter((datos) => !esNarese(datos.nombre))
+      .map((datos) => {
+        const esZamorano = datos.nombre.toLowerCase().includes("zamorano");
         return {
-          nombre,
+          nombre: datos.nombre,
           ausentes: esZamorano ? (datos.horometroMins > 0 ? minsAHoras(datos.horometroMins) : 0) : datos.ausentes,
           sinRemito: datos.sinRemito,
           observaciones: datos.observaciones.join(" / "),
