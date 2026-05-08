@@ -105,9 +105,9 @@ const Asistencia = () => {
         const data = await res.json();
         filas = data?.registros?.length
           ? data.registros.map((r, i) => ({ ...r, id: r.id || i, remito: r.personal?.toLowerCase().includes("zamorano") || !r.obra ? true : r.remito }))
-          : personalVisible.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", ausente: false, remito: true, horometro: "", entra: "", sale: "", observaciones: "" }));
+          : personalVisible.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", ausente: false, remito: true, horometro: "", entra: "", sale: p.nombre.toLowerCase().includes("zamorano") ? "17:00" : "", observaciones: "" }));
       } else {
-        filas = personalVisible.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", ausente: false, remito: true, horometro: "", entra: "", sale: "", observaciones: "" }));
+        filas = personalVisible.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", ausente: false, remito: true, horometro: "", entra: "", sale: p.nombre.toLowerCase().includes("zamorano") ? "17:00" : "", observaciones: "" }));
       }
     }
     const vistos = new Set();
