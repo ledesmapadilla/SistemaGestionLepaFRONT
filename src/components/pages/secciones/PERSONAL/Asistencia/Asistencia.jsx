@@ -17,14 +17,23 @@ const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const diaKey = (anio, mes, dia) =>
   `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
 
-const calcularHorometroZamorano = (entra) => {
-  if (!entra) return "0";
-  const [h, m] = entra.split(":").map(Number);
-  const diff = h * 60 + m - 8 * 60;
-  if (diff <= 0) return "0";
-  const horas = Math.floor(diff / 60);
-  const mins = diff % 60;
-  return mins === 0 ? `${horas}` : `${horas}:${String(mins).padStart(2, "0")}`;
+const calcularHorometroZamorano = (entra, sale) => {
+  let diff = 0;
+  if (entra) {
+    const [h, m] = entra.split(":").map(Number);
+    diff += h * 60 + m - 8 * 60;
+  }
+  if (sale) {
+    const [h, m] = sale.split(":").map(Number);
+    diff -= h * 60 + m - 17 * 60;
+  }
+  if (diff === 0) return "0";
+  const neg = diff < 0;
+  const abs = Math.abs(diff);
+  const horas = Math.floor(abs / 60);
+  const mins = abs % 60;
+  const str = mins === 0 ? `${horas}` : `${horas}:${String(mins).padStart(2, "0")}`;
+  return neg ? `-${str}` : str;
 };
 
 const Asistencia = () => {
@@ -245,7 +254,7 @@ const Asistencia = () => {
         fila.sale,
         fila.maquina,
         fila.personal?.toLowerCase().includes("zamorano")
-          ? calcularHorometroZamorano(fila.entra)
+          ? calcularHorometroZamorano(fila.entra, fila.sale)
           : fila.horometro,
         fila.obra,
         fila.observaciones,
@@ -271,14 +280,20 @@ const Asistencia = () => {
 
   const horometroStrAMins = (str) => {
     if (!str || str === "0") return 0;
-    const parts = str.split(":");
-    return parseInt(parts[0]) * 60 + (parts[1] ? parseInt(parts[1]) : 0);
+    const neg = str.startsWith("-");
+    const abs = neg ? str.slice(1) : str;
+    const parts = abs.split(":");
+    const total = parseInt(parts[0]) * 60 + (parts[1] ? parseInt(parts[1]) : 0);
+    return neg ? -total : total;
   };
 
   const minsAHoras = (mins) => {
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return m === 0 ? `${h} hs` : `${h}:${String(m).padStart(2, "0")} hs`;
+    const neg = mins < 0;
+    const abs = Math.abs(mins);
+    const h = Math.floor(abs / 60);
+    const m = abs % 60;
+    const str = m === 0 ? `${h} hs` : `${h}:${String(m).padStart(2, "0")} hs`;
+    return neg ? `-${str}` : str;
   };
 
   const abrirResumen = (diasSemana) => {
@@ -293,7 +308,7 @@ const Asistencia = () => {
         if (!r.remito) mapa[keyNombre].sinRemito += 1;
         if (r.observaciones) mapa[keyNombre].observaciones.push(r.observaciones);
         if (r.personal.toLowerCase().includes("zamorano"))
-          mapa[keyNombre].horometroMins += horometroStrAMins(calcularHorometroZamorano(r.entra));
+          mapa[keyNombre].horometroMins += horometroStrAMins(calcularHorometroZamorano(r.entra, r.sale));
       });
     });
     const filas = Object.values(mapa)
@@ -573,7 +588,7 @@ const Asistencia = () => {
                     <td>
                       {fila.personal?.toLowerCase().includes("zamorano") ? (
                         <span style={{ color: "#dc3545", fontSize: "1.2rem", fontWeight: 700 }}>
-                          {calcularHorometroZamorano(fila.entra)}
+                          {calcularHorometroZamorano(fila.entra, fila.sale)}
                         </span>
                       ) : (() => {
                         const maxPorMaquina = getMaxHorometroPorMaquina();
