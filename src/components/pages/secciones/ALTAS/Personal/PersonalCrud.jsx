@@ -14,11 +14,17 @@ import PersonalModal from "./PersonalModal.jsx";
 const valoresIniciales = {
   nombre: "",
   semanal: "",
+  cantJornales: "",
 };
 
 const ultimoSemanal = (val) => {
   if (Array.isArray(val) && val.length) return val[val.length - 1].valor;
   if (typeof val === "number") return val;
+  return 0;
+};
+
+const ultimoCantJornales = (val) => {
+  if (Array.isArray(val) && val.length) return Number(val[val.length - 1].cantJornales || 0);
   return 0;
 };
 
@@ -93,7 +99,7 @@ const Personal = () => {
         dataToSend = {
           nombre: data.nombre,
           semanal: data.semanal
-            ? [{ valor: Number(data.semanal), fecha: hoy }]
+            ? [{ valor: Number(data.semanal), fecha: hoy, cantJornales: Number(data.cantJornales) || 0 }]
             : [],
         };
         respuesta = await crearPersonal(dataToSend);
@@ -262,7 +268,7 @@ const Personal = () => {
                       <td className="fw-bold">{persona.nombre}</td>
                       <td className="text-nowrap">{formatoMiles(valSemanal)}</td>
                       <td className="text-nowrap">{formatoMiles(valSemanal / 44)}</td>
-                      <td className="text-nowrap">{formatoMiles(valSemanal / 5.5)}</td>
+                      <td className="text-nowrap">{ultimoCantJornales(persona.semanal) > 0 ? formatoMiles(valSemanal / ultimoCantJornales(persona.semanal)) : "-"}</td>
                       <td className="text-nowrap">{ultimaFecha(persona.semanal)}</td>
                       <td>
                         <div className="d-flex gap-2 justify-content-center">
@@ -318,8 +324,12 @@ const Personal = () => {
                     <td>{formatoMiles(val / 44)}</td>
                   </tr>
                   <tr>
+                    <td className="fw-bold">Cant. jornales semanales</td>
+                    <td>{ultimoCantJornales(personaVer?.semanal) || "-"}</td>
+                  </tr>
+                  <tr>
                     <td className="fw-bold">Jornal</td>
-                    <td>{formatoMiles(val / 5.5)}</td>
+                    <td>{ultimoCantJornales(personaVer?.semanal) > 0 ? formatoMiles(val / ultimoCantJornales(personaVer?.semanal)) : "-"}</td>
                   </tr>
                 </tbody>
               </Table>

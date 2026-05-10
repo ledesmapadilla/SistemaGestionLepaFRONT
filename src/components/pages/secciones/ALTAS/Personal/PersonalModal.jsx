@@ -46,7 +46,7 @@ const PersonalModal = ({
   const agregarFila = () => {
     const today = new Date();
     const hoy = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
-    setHistorial([...historial, { valor: "", fecha: hoy, disabled: false }]);
+    setHistorial([...historial, { valor: "", fecha: hoy, cantJornales: "", disabled: false }]);
   };
 
   const actualizarFila = (index, campo, value) => {
@@ -70,6 +70,7 @@ const PersonalModal = ({
       const semanalArray = historial.map(({ disabled, ...rest }) => ({
         valor: Number(rest.valor),
         fecha: rest.fecha,
+        cantJornales: Number(rest.cantJornales) || 0,
       }));
       onSubmit({ nombre: data.nombre, semanal: semanalArray });
     } else {
@@ -80,6 +81,9 @@ const PersonalModal = ({
   const ultimoValor = historial.length
     ? Number(historial[historial.length - 1].valor || 0)
     : 0;
+
+  const ultimoCantJornales = historial.length ? Number(historial[historial.length - 1].cantJornales || 0) : 0;
+  const jornal = ultimoCantJornales > 0 ? ultimoValor / ultimoCantJornales : 0;
 
   return (
     <Modal show={show} onHide={onHide} centered>
@@ -124,7 +128,7 @@ const PersonalModal = ({
                   </tr>
                   <tr>
                     <td className="fw-bold">Jornal</td>
-                    <td>{formatoMiles(ultimoValor / 5.5)}</td>
+                    <td>{jornal > 0 ? formatoMiles(jornal) : "-"}</td>
                   </tr>
                 </tbody>
               </Table>
@@ -134,13 +138,14 @@ const PersonalModal = ({
                 <thead className="table-dark">
                   <tr>
                     <th>Valor</th>
+                    <th>Cant. Jornales</th>
                     <th>Fecha</th>
                   </tr>
                 </thead>
                 <tbody>
                   {historial.length === 0 ? (
                     <tr>
-                      <td colSpan="2" className="py-2 text-muted">Sin historial</td>
+                      <td colSpan="3" className="py-2 text-muted">Sin historial</td>
                     </tr>
                   ) : (
                     historial.map((fila, index) => (
@@ -157,6 +162,20 @@ const PersonalModal = ({
                               className="text-center"
                               value={fila.valor}
                               onChange={(e) => actualizarFila(index, "valor", e.target.value)}
+                            />
+                          )}
+                        </td>
+                        <td>
+                          {fila.disabled ? (
+                            fila.cantJornales || "-"
+                          ) : (
+                            <Form.Control
+                              type="number"
+                              step="0.5"
+                              min="0"
+                              className="text-center"
+                              value={fila.cantJornales}
+                              onChange={(e) => actualizarFila(index, "cantJornales", e.target.value)}
                             />
                           )}
                         </td>
@@ -199,24 +218,41 @@ const PersonalModal = ({
               </div>
             </>
           ) : (
-            <Form.Group className="mb-3">
-              <Form.Label className="d-block text-center fw-bold">Semanal</Form.Label>
-              <Form.Control
-                className="text-center"
-                type="number"
-                step="0.01"
-                min="0"
-                {...register("semanal", {
-                  min: {
-                    value: 0,
-                    message: "Las horas semanales no pueden ser negativas",
-                  },
-                })}
-              />
-              <Form.Text className="text-danger d-block text-center">
-                {errors.semanal?.message}
-              </Form.Text>
-            </Form.Group>
+            <>
+              <Form.Group className="mb-3">
+                <Form.Label className="d-block text-center fw-bold">Semanal</Form.Label>
+                <Form.Control
+                  className="text-center"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register("semanal", {
+                    min: {
+                      value: 0,
+                      message: "Las horas semanales no pueden ser negativas",
+                    },
+                  })}
+                />
+                <Form.Text className="text-danger d-block text-center">
+                  {errors.semanal?.message}
+                </Form.Text>
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label className="d-block text-center fw-bold">Cant. de jornales semanales</Form.Label>
+                <Form.Control
+                  className="text-center w-50 mx-auto"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  {...register("cantJornales", {
+                    min: { value: 0, message: "No puede ser negativo" },
+                  })}
+                />
+                <Form.Text className="text-danger d-block text-center">
+                  {errors.cantJornales?.message}
+                </Form.Text>
+              </Form.Group>
+            </>
           )}
         </Modal.Body>
 

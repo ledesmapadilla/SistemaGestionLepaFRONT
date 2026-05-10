@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, Modal, Form, Table, Spinner } from "react-bootstrap";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
@@ -7,6 +8,7 @@ import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
 import { listarAsistencia, obtenerAsistenciaPorFecha, guardarAsistencia as guardarAsistenciaAPI } from "../../../../../helpers/queriesAsistencia.js";
 import { listarServices } from "../../../../../helpers/queriesServiceMaquinas.js";
+import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -17,25 +19,6 @@ const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 const diaKey = (anio, mes, dia) =>
   `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
-
-const calcularHorometroZamorano = (entra, sale) => {
-  let diff = 0;
-  if (entra) {
-    const [h, m] = entra.split(":").map(Number);
-    diff += h * 60 + m - (8 * 60 + 30);
-  }
-  if (sale) {
-    const [h, m] = sale.split(":").map(Number);
-    diff -= h * 60 + m - 17 * 60;
-  }
-  if (diff === 0) return "0";
-  const neg = diff < 0;
-  const abs = Math.abs(diff);
-  const horas = Math.floor(abs / 60);
-  const mins = abs % 60;
-  const str = mins === 0 ? `${horas}` : `${horas}:${String(mins).padStart(2, "0")}`;
-  return neg ? `-${str}` : str;
-};
 
 const Asistencia = () => {
   const hoy = new Date();
@@ -53,6 +36,7 @@ const Asistencia = () => {
   const [listaServices, setListaServices] = useState([]);
   const [semanaResumen, setSemanaResumen] = useState(null);
 
+  const navigate = useNavigate();
   const anios = Array.from({ length: 10 }, (_, i) => 2026 + i);
 
   useEffect(() => {
@@ -81,9 +65,7 @@ const Asistencia = () => {
     cargar();
   }, []);
 
-  const personalVisible = listaPersonal.filter(
-    (p) => !p.nombre.toLowerCase().includes("nares")
-  );
+  const personalVisible = listaPersonal;
 
   const diasEnMes = new Date(anio, mes + 1, 0).getDate();
   const primerDiaSemana = (new Date(anio, mes, 1).getDay() + 6) % 7;
@@ -99,6 +81,7 @@ const Asistencia = () => {
   const keyDia = diaKey(anio, mes, diaSeleccionado);
   const hoyKey = diaKey(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
   const editandoHoy = keyDia === hoyKey;
+  const esSabadoModal = diaSeleccionado ? new Date(anio, mes, diaSeleccionado).getDay() === 6 : false;
 
   const abrirDia = async (dia) => {
     const fechaDia = new Date(anio, mes, dia);
@@ -115,9 +98,9 @@ const Asistencia = () => {
         const data = await res.json();
         filas = data?.registros?.length
           ? data.registros.map((r, i) => ({ ...r, id: r.id || i, remito: r.personal?.toLowerCase().includes("zamorano") || !r.obra ? true : r.remito, sale: r.personal?.toLowerCase().includes("zamorano") && !r.sale ? "17:00" : r.sale }))
-          : personalVisible.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", ausente: false, remito: true, horometro: "", entra: "", sale: p.nombre.toLowerCase().includes("zamorano") ? "17:00" : "", observaciones: "" }));
+          : personalVisible.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", mediaFalta: false, ausente: false, remito: true, horometro: "", entra: "", sale: p.nombre.toLowerCase().includes("zamorano") ? "17:00" : "", observaciones: "" }));
       } else {
-        filas = personalVisible.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", ausente: false, remito: true, horometro: "", entra: "", sale: p.nombre.toLowerCase().includes("zamorano") ? "17:00" : "", observaciones: "" }));
+        filas = personalVisible.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", mediaFalta: false, ausente: false, remito: true, horometro: "", entra: "", sale: p.nombre.toLowerCase().includes("zamorano") ? "17:00" : "", observaciones: "" }));
       }
     }
     const vistos = new Set();
@@ -279,15 +262,6 @@ const Asistencia = () => {
     return n.includes("nares");
   };
 
-  const horometroStrAMins = (str) => {
-    if (!str || str === "0") return 0;
-    const neg = str.startsWith("-");
-    const abs = neg ? str.slice(1) : str;
-    const parts = abs.split(":");
-    const total = parseInt(parts[0]) * 60 + (parts[1] ? parseInt(parts[1]) : 0);
-    return neg ? -total : total;
-  };
-
   const minsAHoras = (mins) => {
     const neg = mins < 0;
     const abs = Math.abs(mins);
@@ -300,12 +274,14 @@ const Asistencia = () => {
   const abrirResumen = (diasSemana) => {
     const mapa = {};
     diasSemana.forEach((d) => {
+      const esSabado = new Date(anio, mes, d).getDay() === 6;
       const regs = registros[diaKey(anio, mes, d)] || [];
       regs.forEach((r) => {
         if (!r.personal || esNarese(r.personal)) return;
         const keyNombre = r.personal.trim().toLowerCase();
         if (!mapa[keyNombre]) mapa[keyNombre] = { nombre: r.personal, ausentes: 0, sinRemito: 0, observaciones: [], horometroMins: 0 };
-        if (r.ausente) mapa[keyNombre].ausentes += 1;
+        if (r.ausente) mapa[keyNombre].ausentes += esSabado ? 0.5 : 1;
+        if (r.mediaFalta) mapa[keyNombre].ausentes += 0.5;
         if (!r.remito) mapa[keyNombre].sinRemito += 1;
         if (r.observaciones) mapa[keyNombre].observaciones.push(r.observaciones);
         if (r.personal.toLowerCase().includes("zamorano"))
@@ -358,8 +334,8 @@ const Asistencia = () => {
       </div>
 
       {/* Grilla */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr) 0.5fr", gap: 8 }}>
-        {[...DIAS_SEMANA, ""].map((d) => (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr) 0.5fr 0.5fr", gap: 8 }}>
+        {[...DIAS_SEMANA, "", ""].map((d) => (
           <div
             key={d || "resumen-header"}
             className="text-center fw-semibold"
@@ -450,6 +426,29 @@ const Asistencia = () => {
                 </span>
               </div>
             );
+            items.push(
+              <div
+                key={`gastos-${i}`}
+                className="rounded text-center"
+                style={{
+                  padding: "4px",
+                  height: 56,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "#d1ecf1",
+                  border: "2px solid #ffc107",
+                  userSelect: "none",
+                  cursor: "pointer",
+                }}
+                onClick={() => navigate(`/personal/gastos-semanales?semana=${diaKey(anio, mes, diasSemana[0])}`)}
+              >
+                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#000" }}>
+                  Gastos Semanal
+                </span>
+              </div>
+            );
           }
 
           return items;
@@ -474,6 +473,7 @@ const Asistencia = () => {
               <thead className="table-dark">
                 <tr>
                   <th style={{ width: 200 }}>Personal</th>
+                  <th style={{ width: 80 }}>Media Falta</th>
                   <th style={{ width: 60 }}>Ausente</th>
                   <th style={{ width: 60 }}>Remito</th>
                   <th style={{ width: 100 }}>Entra</th>
@@ -517,14 +517,42 @@ const Asistencia = () => {
                       )}
                     </td>
                     <td>
-                      <Form.Check
-                        type="radio"
-                        checked={fila.ausente}
-                        onChange={() => {}}
-                        onClick={() => actualizarCelda(fila.id, "ausente", !fila.ausente)}
-                        className="d-flex justify-content-center"
-                        style={{ cursor: "pointer" }}
-                      />
+                      <div className="d-flex justify-content-center">
+                        <input
+                          type="radio"
+                          checked={!!fila.mediaFalta}
+                          onChange={() => {}}
+                          onClick={() => {
+                            if (esSabadoModal) return;
+                            const nuevoValor = !fila.mediaFalta;
+                            setBorrador((prev) => prev.map((r) =>
+                              r.id === fila.id
+                                ? { ...r, mediaFalta: nuevoValor, ausente: nuevoValor ? false : r.ausente }
+                                : r
+                            ));
+                          }}
+                          disabled={esSabadoModal}
+                          style={{ cursor: esSabadoModal ? "not-allowed" : "pointer", accentColor: "#ffc107", width: 16, height: 16 }}
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <div className="d-flex justify-content-center">
+                        <input
+                          type="radio"
+                          checked={fila.ausente}
+                          onChange={() => {}}
+                          onClick={() => {
+                            const nuevoValor = !fila.ausente;
+                            setBorrador((prev) => prev.map((r) =>
+                              r.id === fila.id
+                                ? { ...r, ausente: nuevoValor, mediaFalta: nuevoValor ? false : r.mediaFalta }
+                                : r
+                            ));
+                          }}
+                          style={{ cursor: "pointer", width: 16, height: 16 }}
+                        />
+                      </div>
                     </td>
                     <td>
                       <div className="d-flex justify-content-center">
