@@ -100,7 +100,12 @@ const GastosSemanales = () => {
       ...asistenciaRaws.map((r) => r?.ok ? r.json() : Promise.resolve(null)),
     ]);
 
-    const personalVisible = personal;
+    const sabado = new Date(fechaLunes);
+    sabado.setDate(sabado.getDate() + 5);
+    const sabadoKey = toKey(sabado);
+    const personalVisible = personal.filter((p) =>
+      !p.createdAt || p.createdAt.slice(0, 10) <= sabadoKey
+    );
     const nombresPersonalDB = new Set(personalVisible.map((p) => p.nombre.trim().toLowerCase()));
 
     // Contar ausencias por persona: ausente hábil=1, ausente sáb=0.5, mediaFalta=0.5

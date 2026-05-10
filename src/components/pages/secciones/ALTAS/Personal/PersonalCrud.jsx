@@ -8,6 +8,7 @@ import {
   listarPersonal,
   borrarPersonal as borrarPersonalAPI,
 } from "../../../../../helpers/queriesPersonal.js";
+import { eliminarPersonalDeAsistencias } from "../../../../../helpers/queriesAsistencia.js";
 import Swal from "sweetalert2";
 import PersonalModal from "./PersonalModal.jsx";
 
@@ -91,6 +92,7 @@ const Personal = () => {
         dataToSend = {
           nombre: data.nombre,
           semanal: data.semanal,
+          activo: data.activo !== undefined ? data.activo : true,
         };
         respuesta = await editarPersonal(personalId, dataToSend);
       } else {
@@ -159,8 +161,12 @@ const Personal = () => {
     });
 
     if (result.isConfirmed) {
+      const persona = personal.find((p) => p._id === id);
       const respuesta = await borrarPersonalAPI(id);
       if (respuesta?.ok) {
+        const hoy = new Date();
+        const desde = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
+        if (persona?.nombre) await eliminarPersonalDeAsistencias(persona.nombre, desde);
         setPersonal(personal.filter((p) => p._id !== id));
         Swal.fire({
           icon: "success",
@@ -250,13 +256,14 @@ const Personal = () => {
                   <th>Hora</th>
                   <th>Jornal</th>
                   <th>Fecha últ. edición</th>
+                  <th>Estado</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
                 {personalFiltrado.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="py-3">
+                    <td colSpan="7" className="py-3">
                       No hay personal cargado
                     </td>
                   </tr>
@@ -270,6 +277,11 @@ const Personal = () => {
                       <td className="text-nowrap">{formatoMiles(valSemanal / 44)}</td>
                       <td className="text-nowrap">{ultimoCantJornales(persona.semanal) > 0 ? formatoMiles(valSemanal / ultimoCantJornales(persona.semanal)) : "-"}</td>
                       <td className="text-nowrap">{ultimaFecha(persona.semanal)}</td>
+                      <td>
+                        <span className={`badge ${persona.activo !== false ? "bg-success" : "bg-danger"}`}>
+                          {persona.activo !== false ? "Activo" : "Desactivado"}
+                        </span>
+                      </td>
                       <td>
                         <div className="d-flex gap-2 justify-content-center">
                           <Button

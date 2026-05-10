@@ -56,7 +56,7 @@ const Asistencia = () => {
         const docs = await resA.json();
         const mapa = {};
         docs.forEach((doc) => {
-          mapa[doc.fecha] = doc.registros.map((r, i) => ({ ...r, id: r.id || i, sale: r.personal?.toLowerCase().includes("zamorano") && !r.sale ? "17:00" : r.sale }));
+          mapa[doc.fecha] = doc.registros.map((r, i) => ({ ...r, id: r.id || i, remito: r.personal?.toLowerCase().includes("zamorano") || !r.obra || r.obra === "Taller" ? true : r.remito, sale: r.personal?.toLowerCase().includes("zamorano") && !r.sale ? "17:00" : r.sale }));
         });
         setRegistros(mapa);
       }
@@ -83,26 +83,45 @@ const Asistencia = () => {
   const editandoHoy = keyDia === hoyKey;
   const esSabadoModal = diaSeleccionado ? new Date(anio, mes, diaSeleccionado).getDay() === 6 : false;
 
+  const filtrarPersonalParaDia = (key) =>
+    personalVisible.filter((p) => {
+      if (p.fechaAlta && p.fechaAlta > key) return false;
+      if (p.activo === false) {
+        if (!p.fechaDesactivado || p.fechaDesactivado <= key) return false;
+      }
+      return true;
+    });
+
+  const personalDelDia = diaSeleccionado ? filtrarPersonalParaDia(keyDia) : [];
+
   const abrirDia = async (dia) => {
     const fechaDia = new Date(anio, mes, dia);
     const hoyInicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
     if (fechaDia > hoyInicio) return;
 
     const key = diaKey(anio, mes, dia);
+
+    const personalDelDia = filtrarPersonalParaDia(key);
+    const filaDePersonal = (p) => ({
+      id: p._id, personal: p.nombre, maquina: "", obra: "", mediaFalta: false,
+      ausente: false, remito: true, horometro: "", entra: "",
+      sale: p.nombre.toLowerCase().includes("zamorano") ? "17:00" : "", observaciones: "",
+    });
+
     let filas;
-    if (registros[key]) {
-      filas = registros[key];
+    const res = await obtenerAsistenciaPorFecha(key);
+    if (res?.ok) {
+      const data = await res.json();
+      filas = data?.registros?.length
+        ? data.registros.map((r, i) => ({ ...r, id: r.id || i, remito: r.personal?.toLowerCase().includes("zamorano") || !r.obra || r.obra === "Taller" ? true : r.remito, sale: r.personal?.toLowerCase().includes("zamorano") && !r.sale ? "17:00" : r.sale }))
+        : personalDelDia.map(filaDePersonal);
     } else {
-      const res = await obtenerAsistenciaPorFecha(key);
-      if (res?.ok) {
-        const data = await res.json();
-        filas = data?.registros?.length
-          ? data.registros.map((r, i) => ({ ...r, id: r.id || i, remito: r.personal?.toLowerCase().includes("zamorano") || !r.obra ? true : r.remito, sale: r.personal?.toLowerCase().includes("zamorano") && !r.sale ? "17:00" : r.sale }))
-          : personalVisible.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", mediaFalta: false, ausente: false, remito: true, horometro: "", entra: "", sale: p.nombre.toLowerCase().includes("zamorano") ? "17:00" : "", observaciones: "" }));
-      } else {
-        filas = personalVisible.map((p) => ({ id: p._id, personal: p.nombre, maquina: "", obra: "", mediaFalta: false, ausente: false, remito: true, horometro: "", entra: "", sale: p.nombre.toLowerCase().includes("zamorano") ? "17:00" : "", observaciones: "" }));
-      }
+      filas = registros[key] ?? personalDelDia.map(filaDePersonal);
     }
+
+    const nombresPermitidos = new Set(personalVisible.map((p) => p.nombre.trim().toLowerCase()));
+    filas = filas.filter((f) => !f.personal || f.personalLibre || nombresPermitidos.has(f.personal.trim().toLowerCase()));
+
     const vistos = new Set();
     const filasDedup = filas.filter((f) => {
       const nombre = f.personal?.trim().toLowerCase();
@@ -110,7 +129,13 @@ const Asistencia = () => {
       vistos.add(nombre);
       return true;
     });
-    setBorrador(filasDedup.map((f) => ({ ...f })));
+
+    // Agregar personal del día que no estaba en los registros guardados
+    const faltantes = personalDelDia
+      .filter((p) => !vistos.has(p.nombre.trim().toLowerCase()))
+      .map(filaDePersonal);
+
+    setBorrador([...filasDedup, ...faltantes].map((f) => ({ ...f })));
     setDiaSeleccionado(dia);
   };
 
@@ -193,23 +218,6 @@ const Asistencia = () => {
     setBorrador((prev) => prev.map((r) => (r.id === id ? { ...r, [campo]: valor } : r)));
   };
 
-  const agregarFila = () => {
-    const nueva = {
-      id: Date.now(),
-      personal: "",
-      maquina: "",
-      obra: "",
-      ausente: false,
-      remito: false,
-      horometro: "",
-      entra: "",
-      sale: "",
-      observaciones: "",
-      personalLibre: true,
-    };
-    setBorrador((prev) => [...prev, nueva]);
-  };
-
   const exportarExcel = () => {
     const titulo = `Asistencia - ${diaSeleccionado} de ${MESES[mes]} ${anio}`;
     const headers = ["Personal", "Ausente", "Remito", "Entra", "Sale", "Máquina", "Horómetro", "Obra", "Observaciones"];
@@ -256,11 +264,8 @@ const Asistencia = () => {
     XLSXStyle.writeFile(wb, `Asistencia_${diaSeleccionado}_${MESES[mes]}_${anio}.xlsx`);
   };
 
-  const esNarese = (nombre) => {
-    if (!nombre) return true;
-    const n = nombre.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-    return n.includes("nares");
-  };
+  const normNombre = (s) =>
+    (s || "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
   const minsAHoras = (mins) => {
     const neg = mins < 0;
@@ -272,13 +277,15 @@ const Asistencia = () => {
   };
 
   const abrirResumen = (diasSemana) => {
+    const nombresEnAlta = new Set(listaPersonal.map((p) => normNombre(p.nombre)));
     const mapa = {};
     diasSemana.forEach((d) => {
+      const key = diaKey(anio, mes, d);
       const esSabado = new Date(anio, mes, d).getDay() === 6;
-      const regs = registros[diaKey(anio, mes, d)] || [];
+      const regs = registros[key] || [];
       regs.forEach((r) => {
-        if (!r.personal || esNarese(r.personal)) return;
-        const keyNombre = r.personal.trim().toLowerCase();
+        if (!r.personal) return;
+        const keyNombre = normNombre(r.personal);
         if (!mapa[keyNombre]) mapa[keyNombre] = { nombre: r.personal, ausentes: 0, sinRemito: 0, observaciones: [], horometroMins: 0 };
         if (r.ausente) mapa[keyNombre].ausentes += esSabado ? 0.5 : 1;
         if (r.mediaFalta) mapa[keyNombre].ausentes += 0.5;
@@ -287,9 +294,14 @@ const Asistencia = () => {
         if (r.personal.toLowerCase().includes("zamorano"))
           mapa[keyNombre].horometroMins += horometroStrAMins(calcularHorometroZamorano(r.entra, r.sale));
       });
+      // Agregar personas que deberían estar ese día aunque no tengan registro guardado
+      filtrarPersonalParaDia(key).forEach((p) => {
+        const keyNombre = normNombre(p.nombre);
+        if (!mapa[keyNombre]) mapa[keyNombre] = { nombre: p.nombre, ausentes: 0, sinRemito: 0, observaciones: [], horometroMins: 0 };
+      });
     });
     const filas = Object.values(mapa)
-      .filter((datos) => !esNarese(datos.nombre))
+      .filter((datos) => nombresEnAlta.has(normNombre(datos.nombre)))
       .map((datos) => {
         const esZamorano = datos.nombre.toLowerCase().includes("zamorano");
         return {
@@ -335,21 +347,22 @@ const Asistencia = () => {
 
       {/* Grilla */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr) 0.5fr 0.5fr", gap: 8 }}>
-        {[...DIAS_SEMANA, "", ""].map((d) => (
+        {[...DIAS_SEMANA, "resumen", "gastos"].map((d, idx) => (
           <div
-            key={d || "resumen-header"}
+            key={d}
             className="text-center fw-semibold"
-            style={{ fontSize: "0.82rem", paddingBottom: 4, color: "white" }}
+            style={{ fontSize: "0.82rem", paddingBottom: 4, color: "white", ...(idx === 5 && { marginLeft: 12 }) }}
           >
-            {d}
+            {idx < 7 ? d : ""}
           </div>
         ))}
 
         {celdas.map((dia, i) => {
           const items = [];
 
+          const esSabadoCol = i % 7 === 5;
           if (dia === null) {
-            items.push(<div key={`vacio-${i}`} />);
+            items.push(<div key={`vacio-${i}`} style={esSabadoCol ? { marginLeft: 12 } : undefined} />);
           } else {
             const esFuturo = new Date(anio, mes, dia) > new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
             const esDomingo = (primerDiaSemana + dia - 1) % 7 === 6;
@@ -376,6 +389,7 @@ const Asistencia = () => {
                   transition: "background 0.15s",
                   userSelect: "none",
                   opacity: esFuturo ? 0.4 : 1,
+                  ...(esSabadoCol && { marginLeft: 12 }),
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = bgHover; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = bgBase; }}
@@ -510,7 +524,10 @@ const Asistencia = () => {
                             ));
                           }}
                         >
-                          {personalVisible.map((p) => (
+                          {fila.personal && !personalDelDia.some((p) => p.nombre === fila.personal) && (
+                            <option value={fila.personal}>{fila.personal}</option>
+                          )}
+                          {personalDelDia.map((p) => (
                             <option key={p._id} value={p.nombre}>{p.nombre}</option>
                           ))}
                         </Form.Select>
@@ -668,9 +685,6 @@ const Asistencia = () => {
               </tbody>
             </Table>
           </div>
-          <Button variant="outline-primary" size="sm" onClick={agregarFila}>
-            Agregar fila
-          </Button>
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={cerrarModal}>Cerrar</Button>
@@ -711,6 +725,7 @@ const Asistencia = () => {
           <Button variant="outline-secondary" onClick={() => setSemanaResumen(null)}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
+
     </div>
   );
 };

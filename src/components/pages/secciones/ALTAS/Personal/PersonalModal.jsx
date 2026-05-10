@@ -23,9 +23,12 @@ const PersonalModal = ({
   errors,
   editando,
   personal,
-  personalId
+  personalId,
+  titulo,
+  validarUnico = true,
 }) => {
   const [historial, setHistorial] = useState([]);
+  const [activo, setActivo] = useState(true);
 
   useEffect(() => {
     if (show && editando) {
@@ -38,8 +41,10 @@ const PersonalModal = ({
         arr = [{ valor: raw, fecha: "-" }];
       }
       setHistorial(arr.map((item) => ({ ...item, disabled: true })));
+      setActivo(persona?.activo !== false);
     } else {
       setHistorial([]);
+      setActivo(true);
     }
   }, [show, editando, personalId, personal]);
 
@@ -72,7 +77,7 @@ const PersonalModal = ({
         fecha: rest.fecha,
         cantJornales: Number(rest.cantJornales) || 0,
       }));
-      onSubmit({ nombre: data.nombre, semanal: semanalArray });
+      onSubmit({ nombre: data.nombre, semanal: semanalArray, activo });
     } else {
       onSubmit(data);
     }
@@ -89,7 +94,7 @@ const PersonalModal = ({
     <Modal show={show} onHide={onHide} centered>
       <Modal.Header closeButton className="bg-dark text-white">
         <Modal.Title>
-          {editando ? "Editar Personal" : "Crear Personal"}
+          {titulo ?? (editando ? "Editar Personal" : "Crear Personal")}
         </Modal.Title>
       </Modal.Header>
 
@@ -102,6 +107,7 @@ const PersonalModal = ({
               {...register("nombre", {
                 required: "El nombre es obligatorio",
                 validate: (value) =>
+                  !validarUnico ||
                   !personal.some(
                     (p) =>
                       p.nombre.toLowerCase().trim() ===
@@ -129,6 +135,18 @@ const PersonalModal = ({
                   <tr>
                     <td className="fw-bold">Jornal</td>
                     <td>{jornal > 0 ? formatoMiles(jornal) : "-"}</td>
+                  </tr>
+                  <tr>
+                    <td className="fw-bold">Estado</td>
+                    <td>
+                      <Form.Check
+                        type="switch"
+                        id="switch-activo"
+                        label={activo ? "Activo" : "Desactivado"}
+                        checked={activo}
+                        onChange={(e) => setActivo(e.target.checked)}
+                      />
+                    </td>
                   </tr>
                 </tbody>
               </Table>

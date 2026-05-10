@@ -32,3 +32,14 @@ export const guardarAsistencia = async (fecha, registros) => {
     return null;
   }
 };
+
+export const eliminarPersonalDeAsistencias = async (nombre, desde) => {
+  try {
+    const params = new URLSearchParams({ nombre });
+    if (desde) params.append("desde", desde);
+    return await authFetch(`${URL}/personal?${params}`, { method: "DELETE" });
+  } catch (error) {
+    console.error("Error al eliminar personal de asistencias:", error);
+    return null;
+  }
+};
