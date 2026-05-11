@@ -242,14 +242,15 @@ const Personal = () => {
           </div>
         </div>
 
-        <div>
+        <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
             <Table
               striped
               bordered
               hover
+              size="sm"
               className="text-center align-middle mb-0"
             >
-              <thead className="table-dark">
+              <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                 <tr>
                   <th>Nombre</th>
                   <th>Semanal</th>
@@ -318,7 +319,7 @@ const Personal = () => {
 
       {/* Modal Ver historial */}
       <Modal show={showVer} onHide={() => setShowVer(false)} centered>
-        <Modal.Header closeButton className="bg-dark text-white">
+        <Modal.Header closeButton>
           <Modal.Title>{personaVer?.nombre}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
