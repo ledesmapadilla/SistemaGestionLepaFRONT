@@ -354,10 +354,7 @@ const TodosLosRemitos = () => {
                 <span className="th-short">Obs.</span>
               </th>
               <th>Cant.</th>
-              <th>
-                <span className="th-long">Unidad</span>
-                <span className="th-short">un.</span>
-              </th>
+              <th>Un.</th>
               <th>$ un</th>
               <th>$ total</th>
               <th>Estado</th>

@@ -102,6 +102,7 @@ const CrudObras = ({
             >
               <option value="">Todos los estados</option>
               <option value="En curso">En curso</option>
+              <option value="Terminada, para análisis">Terminada, para análisis</option>
               <option value="Terminada">Terminadas</option>
             </Form.Select>
           </div>
@@ -113,7 +114,7 @@ const CrudObras = ({
       </div>
 
       <div ref={tableContainerRef} className="px-3" style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-        <Table striped bordered hover className="text-center align-middle">
+        <Table striped bordered hover className="text-center align-middle" style={{ fontSize: "0.82rem" }}>
           <thead className="table-dark">
             <tr>
               <th>Razón Social</th>
