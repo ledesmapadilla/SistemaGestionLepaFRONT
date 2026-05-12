@@ -26,12 +26,12 @@ const Inicio = () => {
           left: "50%",
           transform: "translate(-50%, -50%)",
           height: "220px",
-          filter: "drop-shadow(0 6px 18px rgba(0,0,0,0.55)) drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+          filter: "brightness(1.15)",
           cursor: "pointer",
           transition: "filter 0.2s",
           zIndex: 1,
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.filter = "drop-shadow(0 8px 24px rgba(0,0,0,0.65)) drop-shadow(0 3px 8px rgba(0,0,0,0.45)) brightness(1.1)"; }}
+        onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.25)"; }}
         onMouseLeave={(e) => { e.currentTarget.style.filter = "drop-shadow(0 6px 18px rgba(0,0,0,0.55)) drop-shadow(0 2px 6px rgba(0,0,0,0.35))"; }}
       />
     </div>
