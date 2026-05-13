@@ -212,6 +212,7 @@ const Asistencia = () => {
     setRegistros((prev) => ({ ...prev, [keyDia]: borradorDedup }));
     setBorrador([]);
     setDiaSeleccionado(null);
+    Swal.fire({ icon: "success", title: "Guardado", text: "Asistencia guardada correctamente", timer: 1500, showConfirmButton: false });
   };
 
   const actualizarCelda = (id, campo, valor) => {
