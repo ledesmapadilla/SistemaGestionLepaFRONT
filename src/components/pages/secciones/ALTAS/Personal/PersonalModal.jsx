@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Button, Form, Table } from "react-bootstrap";
+import { Modal, Button, Form, Table, Spinner } from "react-bootstrap";
 
 const formatoMiles = (valor) => {
   if (
@@ -26,6 +26,7 @@ const PersonalModal = ({
   personalId,
   titulo,
   validarUnico = true,
+  submitting = false,
 }) => {
   const [historial, setHistorial] = useState([]);
   const [activo, setActivo] = useState(true);
@@ -275,11 +276,11 @@ const PersonalModal = ({
         </Modal.Body>
 
         <Modal.Footer className="justify-content-center">
-          <Button variant="outline-secondary" onClick={onHide}>
+          <Button variant="outline-secondary" onClick={onHide} disabled={submitting}>
             Cancelar
           </Button>
-          <Button variant="outline-success" type="submit">
-            Guardar
+          <Button variant="outline-success" type="submit" disabled={submitting}>
+            {submitting ? <><Spinner size="sm" animation="border" className="me-1" />Guardando...</> : "Guardar"}
           </Button>
         </Modal.Footer>
       </Form>

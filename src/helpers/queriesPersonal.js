@@ -4,7 +4,12 @@ import { API } from "./api";
 const personalBackend = API.personal;
 
 export const listarPersonal = async (query = "") => {
-  return authFetch(`${personalBackend}${query}`);
+  try {
+    return await authFetch(`${personalBackend}${query}`);
+  } catch (error) {
+    console.error("Error al listar personal:", error);
+    return null;
+  }
 };
 
 export const crearPersonal = async (personal) => {

@@ -56,6 +56,7 @@ const Personal = () => {
 
   const [personal, setPersonal] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [editando, setEditando] = useState(false);
   const [personalId, setPersonalId] = useState(null);
@@ -68,12 +69,17 @@ const Personal = () => {
   }, []);
 
   const cargarPersonal = async () => {
-    const respuesta = await listarPersonal();
-    if (respuesta?.ok) {
-      const data = await respuesta.json();
-      setPersonal(data);
+    try {
+      const respuesta = await listarPersonal();
+      if (respuesta?.ok) {
+        const data = await respuesta.json();
+        setPersonal(data);
+      }
+    } catch (error) {
+      console.error("Error al cargar personal:", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const cerrarModal = () => {
@@ -84,6 +90,7 @@ const Personal = () => {
   };
 
   const onSubmit = async (data) => {
+    setSubmitting(true);
     try {
       let respuesta;
       let dataToSend;
@@ -105,6 +112,15 @@ const Personal = () => {
             : [],
         };
         respuesta = await crearPersonal(dataToSend);
+      }
+
+      if (!respuesta) {
+        Swal.fire({
+          icon: "error",
+          title: "Error de conexión",
+          text: "No se pudo conectar con el servidor. Intente de nuevo.",
+        });
+        return;
       }
 
       if (!respuesta.ok) {
@@ -146,6 +162,8 @@ const Personal = () => {
         title: "Error inesperado",
         text: "No se pudo procesar la solicitud",
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -390,6 +408,7 @@ const Personal = () => {
         editando={editando}
         personal={personal}
         personalId={personalId}
+        submitting={submitting}
       />
     </>
   );
