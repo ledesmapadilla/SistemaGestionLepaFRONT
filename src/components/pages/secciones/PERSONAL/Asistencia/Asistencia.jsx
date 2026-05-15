@@ -716,7 +716,7 @@ const Asistencia = () => {
                   <td>{f.nombre}</td>
                   <td>{f.ausentes || "-"}</td>
                   <td>{f.sinRemito || "-"}</td>
-                  <td style={f.totalHs ? { fontWeight: 700, color: f.totalHs.startsWith("-") ? "#198754" : "#dc3545" } : {}}>
+                  <td style={f.totalHs ? { fontWeight: 700, color: f.totalHs.startsWith("-") ? "#dc3545" : "#198754" } : {}}>
                     {f.totalHs ?? "-"}
                   </td>
                 </tr>
