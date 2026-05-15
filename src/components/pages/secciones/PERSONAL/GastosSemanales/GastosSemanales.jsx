@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Button, Table, Form, Spinner } from "react-bootstrap";
+import { Button, Table, Form, Spinner, Modal } from "react-bootstrap";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { obtenerAsistenciaPorFecha } from "../../../../../helpers/queriesAsistencia.js";
 import { obtenerGastoSemanalPorSemana, guardarGastoSemanal } from "../../../../../helpers/queriesGastoSemanal.js";
@@ -69,6 +69,8 @@ const GastosSemanales = () => {
   const [loading, setLoading] = useState(true);
   const [registros, setRegistros] = useState([]);
   const [nombresPersonal, setNombresPersonal] = useState(new Set());
+  const [asistenciaSemana, setAsistenciaSemana] = useState([]);
+  const [verPersonal, setVerPersonal] = useState(null);
   const modificado = useRef(false);
   const autoSaveTimer = useRef(null);
 
@@ -190,6 +192,7 @@ const GastosSemanales = () => {
       const filasAsistencia = soloEnAsistencia.map(filaSoloAsistencia);
       setRegistros([...filasPersonal, ...filasAsistencia]);
     }
+    setAsistenciaSemana(asistenciaDocs);
     modificado.current = false;
     setLoading(false);
   }, []);
@@ -252,6 +255,7 @@ const GastosSemanales = () => {
                   <th style={{ minWidth: 110 }}>Otros, favor pers.(+)</th>
                   <th style={{ minWidth: 110 }}>Pagar</th>
                   <th style={{ minWidth: 180 }}>Observaciones</th>
+                  <th style={{ width: 60 }}></th>
                   <th style={{ width: 40 }}></th>
                 </tr>
               </thead>
@@ -280,6 +284,11 @@ const GastosSemanales = () => {
                       />
                     </td>
                     <td className="text-center">
+                      {r.personal && (
+                        <Button variant="outline-success" size="sm" onClick={() => setVerPersonal(r.personal)}>Ver</Button>
+                      )}
+                    </td>
+                    <td className="text-center">
                       {!nombresPersonal.has(r.personal.trim().toLowerCase()) && r.personal && (
                         <span
                           onClick={() => {
@@ -304,6 +313,7 @@ const GastosSemanales = () => {
                   <td style={{ color: totalPagar < 0 ? "#dc3545" : "#ffc107" }}>{pesos(totalPagar)}</td>
                   <td />
                   <td />
+                  <td />
                 </tr>
               </tfoot>
             </Table>
@@ -311,6 +321,70 @@ const GastosSemanales = () => {
 
         </>
       )}
+      <Modal show={!!verPersonal} onHide={() => setVerPersonal(null)} centered size="xl">
+        <Modal.Header closeButton>
+          <Modal.Title>Asistencia — {verPersonal} — {labelSemana}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {(() => {
+            const DIAS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+            const diasModal = Array.from({ length: 6 }, (_, i) => {
+              const d = new Date(lunes);
+              d.setDate(d.getDate() + i);
+              return d;
+            });
+            return (
+              <Table striped bordered hover className="text-center align-middle">
+                <thead className="table-dark">
+                  <tr>
+                    <th>Día</th>
+                    <th>Estado</th>
+                    <th>Entra</th>
+                    <th>Sale</th>
+                    <th>Máquina</th>
+                    <th>Horómetro</th>
+                    <th>Obra</th>
+                    <th>Observaciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {diasModal.map((d, idx) => {
+                    const label = `${DIAS[d.getDay()]} ${formatFecha(d)}`;
+                    const reg = asistenciaSemana[idx]?.registros?.find(
+                      (r) => r.personal?.trim().toLowerCase() === verPersonal?.trim().toLowerCase()
+                    );
+                    if (!reg) return (
+                      <tr key={idx}>
+                        <td>{label}</td>
+                        <td colSpan={7} className="text-muted">Sin registro</td>
+                      </tr>
+                    );
+                    const esZamorano = reg.personal?.toLowerCase().includes("zamorano");
+                    const estado = reg.ausente ? "Ausente" : reg.mediaFalta ? "Media falta" : "Presente";
+                    const colorEstado = reg.ausente ? "#dc3545" : reg.mediaFalta ? "#ffc107" : "#198754";
+                    return (
+                      <tr key={idx}>
+                        <td>{label}</td>
+                        <td style={{ color: colorEstado, fontWeight: 600 }}>{estado}</td>
+                        <td>{reg.entra || "-"}</td>
+                        <td>{reg.sale || "-"}</td>
+                        <td>{reg.maquina || "-"}</td>
+                        <td>{esZamorano ? calcularHorometroZamorano(reg.entra, reg.sale) : (reg.horometro || "-")}</td>
+                        <td>{reg.obra || "-"}</td>
+                        <td>{reg.observaciones || "-"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            );
+          })()}
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setVerPersonal(null)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
+
     </div>
   );
 };
