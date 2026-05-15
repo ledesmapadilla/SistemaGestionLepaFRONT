@@ -174,11 +174,22 @@ const GastosSemanales = () => {
       personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), adelanto: 0, extras: 0, otros: 0, observaciones: "",
     });
 
+    // Mapa de semanal actual por nombre (desde Personal DB)
+    const semanalActualMap = {};
+    personalVisible.forEach((p) => {
+      const ultimo = p.semanal?.length ? p.semanal[p.semanal.length - 1] : null;
+      semanalActualMap[p.nombre.trim().toLowerCase()] = ultimo ? ultimo.valor : null;
+    });
+
     if (gastoDoc?.registros?.length) {
-      const existentes = gastoDoc.registros.map((r) => ({
-        ...r,
-        ausentismo: calcAusentismo(r.personal),
-      }));
+      const existentes = gastoDoc.registros.map((r) => {
+        const semanalActual = semanalActualMap[r.personal?.trim().toLowerCase()];
+        return {
+          ...r,
+          semanal: semanalActual !== null && semanalActual !== undefined ? semanalActual : r.semanal,
+          ausentismo: calcAusentismo(r.personal),
+        };
+      });
       const nombresExistentes = new Set(existentes.map((r) => r.personal.trim().toLowerCase()));
       const nuevosDePersonal = personalVisible
         .filter((p) => !nombresExistentes.has(p.nombre.trim().toLowerCase()))
