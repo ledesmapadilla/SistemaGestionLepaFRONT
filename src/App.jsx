@@ -1,6 +1,19 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, Component } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Spinner } from "react-bootstrap";
+
+class ChunkErrorBoundary extends Component {
+  componentDidCatch(error) {
+    if (
+      error?.message?.includes("Failed to fetch dynamically imported module") ||
+      error?.message?.includes("Importing a module script failed") ||
+      error?.name === "ChunkLoadError"
+    ) {
+      window.location.reload();
+    }
+  }
+  render() { return this.props.children; }
+}
 
 import { AuthProvider } from "./context/AuthContext";
 import RutaProtegida from "./components/shared/RutaProtegida";
@@ -57,12 +70,14 @@ function App() {
           {/* Inicio sin Menu, con Footer */}
           <Route element={<RutaProtegida />}>
             <Route path="/" element={
-              <Suspense fallback={<PageSpinner />}>
-                <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-                  <Inicio />
-                  <Footer style={{ backgroundColor: "#000", marginTop: 0 }} />
-                </div>
-              </Suspense>
+              <ChunkErrorBoundary>
+                <Suspense fallback={<PageSpinner />}>
+                  <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+                    <Inicio />
+                    <Footer style={{ backgroundColor: "#000", marginTop: 0 }} />
+                  </div>
+                </Suspense>
+              </ChunkErrorBoundary>
             } />
           </Route>
 
@@ -74,6 +89,7 @@ function App() {
                 <>
                   <Menu />
                   <main className="container-fluid px-0 pt-5 mt-5">
+                    <ChunkErrorBoundary>
                     <Suspense fallback={<PageSpinner />}>
                     <Routes>
                       <Route path="/clientes" element={<Clientes />} />
@@ -114,6 +130,7 @@ function App() {
                       <Route path="*" element={<Error404 />} />
                     </Routes>
                     </Suspense>
+                    </ChunkErrorBoundary>
                   </main>
                   <Footer />
                 </>
