@@ -1,41 +1,50 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Spinner } from "react-bootstrap";
 
 import { AuthProvider } from "./context/AuthContext";
 import RutaProtegida from "./components/shared/RutaProtegida";
 import Login from "./components/pages/Login";
-import Inicio from "./components/pages/Inicio";
 import Footer from "./components/shared/Footer";
 import Menu from "./components/shared/Menu";
-import Error404 from "./components/pages/Error404";
-import Clientes from "./components/pages/secciones/ALTAS/Clientes/Clientes.jsx";
-import Proveedores from "./components/pages/secciones/ALTAS/Proveedores/Proveedores.jsx";
-import Obras from "./components/pages/secciones/OPERACIONES/Obras/Obras.jsx";
-import VerRemitos from "./components/pages/secciones/OPERACIONES/Remitos/VerRemitos.jsx";
-import PersonalCrud from "./components/pages/secciones/ALTAS/Personal/PersonalCrud.jsx";
-import RemitosXClientes from "./components/pages/secciones/OPERACIONES/Remitos/RemitosXClientes.jsx";
-import RemitosXClientesObras from "./components/pages/secciones/OPERACIONES/Remitos/RemitoXClientesObras.jsx";
-import RemitosXClientesFinal from "./components/pages/secciones/OPERACIONES/Remitos/RemitosXClientesFinal";
-import MaquinaTabla from "./components/pages/secciones/ALTAS/Maquinas/MaquinaTabla.jsx";
-import GastoTabla from "./components/pages/secciones/OPERACIONES/Gastos/GastoTabla.jsx";
-import TodosLosRemitos from "./components/pages/secciones/OPERACIONES/Remitos/TodosLosRemitos.jsx";
-import CostosObra from "./components/pages/secciones/OPERACIONES/Informes/CostosObra.jsx";
-import AceiteTabla from "./components/pages/secciones/MANTENIMIENTO/aceites/AceiteTabla.jsx";
-import AceiteTablaCompra from "./components/pages/secciones/MANTENIMIENTO/aceites/AceiteTablaCompra.jsx";
-import AceiteCrud from "./components/pages/secciones/ALTAS/Aceites/AceiteCrud.jsx";
-import UsuariosCrud from "./components/pages/secciones/ALTAS/Usuarios/UsuariosCrud.jsx";
-import Variables from "./components/pages/secciones/OPERACIONES/Variables/Variables.jsx";
-import Precios from "./components/pages/secciones/OPERACIONES/PreciosMaquinas/Precios.jsx";
-import FacturacionCliente from "./components/pages/secciones/CLIENTES/Facturacion/FacturacionCliente.jsx";
-import NuevaFactura from "./components/pages/secciones/CLIENTES/Facturacion/NuevaFactura.jsx";
-import CobrosTabla from "./components/pages/secciones/CLIENTES/Cobros/CobrosTabla.jsx";
-import NuevoCobro from "./components/pages/secciones/CLIENTES/Cobros/NuevoCobro.jsx";
-import EditarCobro from "./components/pages/secciones/CLIENTES/Cobros/EditarCobro.jsx";
-import CuentaCorriente from "./components/pages/secciones/CLIENTES/CuentaCorriente/CuentaCorriente.jsx";
-import Cheques from "./components/pages/secciones/CONTABLE/Cheques/Cheques.jsx";
-import Asistencia from "./components/pages/secciones/PERSONAL/Asistencia/Asistencia.jsx";
-import GastosSemanales from "./components/pages/secciones/PERSONAL/GastosSemanales/GastosSemanales.jsx";
-import ServiceMaquinas from "./components/pages/secciones/MANTENIMIENTO/ServiceMaquinas/ServiceMaquinas.jsx";
-import TableroControl from "./components/pages/secciones/MANTENIMIENTO/TableroControl/TableroControl.jsx";
+
+const Inicio = lazy(() => import("./components/pages/Inicio"));
+const Error404 = lazy(() => import("./components/pages/Error404"));
+const Clientes = lazy(() => import("./components/pages/secciones/ALTAS/Clientes/Clientes.jsx"));
+const Proveedores = lazy(() => import("./components/pages/secciones/ALTAS/Proveedores/Proveedores.jsx"));
+const Obras = lazy(() => import("./components/pages/secciones/OPERACIONES/Obras/Obras.jsx"));
+const VerRemitos = lazy(() => import("./components/pages/secciones/OPERACIONES/Remitos/VerRemitos.jsx"));
+const PersonalCrud = lazy(() => import("./components/pages/secciones/ALTAS/Personal/PersonalCrud.jsx"));
+const RemitosXClientes = lazy(() => import("./components/pages/secciones/OPERACIONES/Remitos/RemitosXClientes.jsx"));
+const RemitosXClientesObras = lazy(() => import("./components/pages/secciones/OPERACIONES/Remitos/RemitoXClientesObras.jsx"));
+const RemitosXClientesFinal = lazy(() => import("./components/pages/secciones/OPERACIONES/Remitos/RemitosXClientesFinal"));
+const MaquinaTabla = lazy(() => import("./components/pages/secciones/ALTAS/Maquinas/MaquinaTabla.jsx"));
+const GastoTabla = lazy(() => import("./components/pages/secciones/OPERACIONES/Gastos/GastoTabla.jsx"));
+const TodosLosRemitos = lazy(() => import("./components/pages/secciones/OPERACIONES/Remitos/TodosLosRemitos.jsx"));
+const CostosObra = lazy(() => import("./components/pages/secciones/OPERACIONES/Informes/CostosObra.jsx"));
+const AceiteTabla = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/aceites/AceiteTabla.jsx"));
+const AceiteTablaCompra = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/aceites/AceiteTablaCompra.jsx"));
+const AceiteCrud = lazy(() => import("./components/pages/secciones/ALTAS/Aceites/AceiteCrud.jsx"));
+const UsuariosCrud = lazy(() => import("./components/pages/secciones/ALTAS/Usuarios/UsuariosCrud.jsx"));
+const Variables = lazy(() => import("./components/pages/secciones/OPERACIONES/Variables/Variables.jsx"));
+const Precios = lazy(() => import("./components/pages/secciones/OPERACIONES/PreciosMaquinas/Precios.jsx"));
+const FacturacionCliente = lazy(() => import("./components/pages/secciones/CLIENTES/Facturacion/FacturacionCliente.jsx"));
+const NuevaFactura = lazy(() => import("./components/pages/secciones/CLIENTES/Facturacion/NuevaFactura.jsx"));
+const CobrosTabla = lazy(() => import("./components/pages/secciones/CLIENTES/Cobros/CobrosTabla.jsx"));
+const NuevoCobro = lazy(() => import("./components/pages/secciones/CLIENTES/Cobros/NuevoCobro.jsx"));
+const EditarCobro = lazy(() => import("./components/pages/secciones/CLIENTES/Cobros/EditarCobro.jsx"));
+const CuentaCorriente = lazy(() => import("./components/pages/secciones/CLIENTES/CuentaCorriente/CuentaCorriente.jsx"));
+const Cheques = lazy(() => import("./components/pages/secciones/CONTABLE/Cheques/Cheques.jsx"));
+const Asistencia = lazy(() => import("./components/pages/secciones/PERSONAL/Asistencia/Asistencia.jsx"));
+const GastosSemanales = lazy(() => import("./components/pages/secciones/PERSONAL/GastosSemanales/GastosSemanales.jsx"));
+const ServiceMaquinas = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/ServiceMaquinas/ServiceMaquinas.jsx"));
+const TableroControl = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/TableroControl/TableroControl.jsx"));
+
+const PageSpinner = () => (
+  <div className="d-flex justify-content-center mt-5">
+    <Spinner animation="border" />
+  </div>
+);
 
 function App() {
   return (
@@ -48,10 +57,12 @@ function App() {
           {/* Inicio sin Menu, con Footer */}
           <Route element={<RutaProtegida />}>
             <Route path="/" element={
-              <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-                <Inicio />
-                <Footer style={{ backgroundColor: "#000", marginTop: 0 }} />
-              </div>
+              <Suspense fallback={<PageSpinner />}>
+                <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+                  <Inicio />
+                  <Footer style={{ backgroundColor: "#000", marginTop: 0 }} />
+                </div>
+              </Suspense>
             } />
           </Route>
 
@@ -63,6 +74,7 @@ function App() {
                 <>
                   <Menu />
                   <main className="container-fluid px-0 pt-5 mt-5">
+                    <Suspense fallback={<PageSpinner />}>
                     <Routes>
                       <Route path="/clientes" element={<Clientes />} />
                       <Route path="/proveedores" element={<Proveedores />} />
@@ -101,6 +113,7 @@ function App() {
                       <Route path="/personal/gastos-semanales" element={<GastosSemanales />} />
                       <Route path="*" element={<Error404 />} />
                     </Routes>
+                    </Suspense>
                   </main>
                   <Footer />
                 </>

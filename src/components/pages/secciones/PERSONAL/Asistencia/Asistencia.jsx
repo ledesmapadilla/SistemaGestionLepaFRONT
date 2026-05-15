@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Modal, Form, Table, Spinner } from "react-bootstrap";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
@@ -6,7 +6,7 @@ import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
 import { listarObras } from "../../../../../helpers/queriesObras.js";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
-import { listarAsistencia, obtenerAsistenciaPorFecha, guardarAsistencia as guardarAsistenciaAPI } from "../../../../../helpers/queriesAsistencia.js";
+import { listarAsistencia, guardarAsistencia as guardarAsistenciaAPI } from "../../../../../helpers/queriesAsistencia.js";
 import { listarServices } from "../../../../../helpers/queriesServiceMaquinas.js";
 import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
 
@@ -26,7 +26,8 @@ const Asistencia = () => {
   const [mes, setMes] = useState(hoy.getMonth());
   const [diaSeleccionado, setDiaSeleccionado] = useState(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loadingDatos, setLoadingDatos] = useState(true);
+  const [loadingMes, setLoadingMes] = useState(true);
   const [listaPersonal, setListaPersonal] = useState([]);
   const [listaMaquinas, setListaMaquinas] = useState([]);
   const [listaObras, setListaObras] = useState([]);
@@ -38,32 +39,49 @@ const Asistencia = () => {
 
   const navigate = useNavigate();
   const anios = Array.from({ length: 10 }, (_, i) => 2026 + i);
+  const loading = loadingDatos || loadingMes;
 
+  // Carga referencia (personal, máquinas, obras, services) — solo al montar
   useEffect(() => {
     const cargar = async () => {
-      const [resP, resM, resO, resA, resSvc] = await Promise.all([
+      const [resP, resM, resO, resSvc] = await Promise.all([
         listarPersonal(),
         listarMaquinas(),
         listarObras(),
-        listarAsistencia(),
         listarServices(),
       ]);
       if (resP?.ok) setListaPersonal(await resP.json());
       if (resM?.ok) setListaMaquinas(await resM.json());
       if (resO?.ok) setListaObras(await resO.json());
       if (resSvc?.ok) setListaServices(await resSvc.json());
+      setLoadingDatos(false);
+    };
+    cargar();
+  }, []);
+
+  // Carga asistencia solo del mes/año seleccionado — se recarga al cambiar mes
+  useEffect(() => {
+    const cargarAsistencia = async () => {
+      setLoadingMes(true);
+      setRegistros({});
+      const resA = await listarAsistencia(anio, mes);
       if (resA?.ok) {
         const docs = await resA.json();
         const mapa = {};
         docs.forEach((doc) => {
-          mapa[doc.fecha] = doc.registros.map((r, i) => ({ ...r, id: r.id || i, remito: r.personal?.toLowerCase().includes("zamorano") || !r.obra || r.obra === "Taller" ? true : r.remito, sale: r.personal?.toLowerCase().includes("zamorano") && !r.sale ? "17:00" : r.sale }));
+          mapa[doc.fecha] = doc.registros.map((r, i) => ({
+            ...r,
+            id: r.id || i,
+            remito: r.personal?.toLowerCase().includes("zamorano") || !r.obra || r.obra === "Taller" ? true : r.remito,
+            sale: r.personal?.toLowerCase().includes("zamorano") && !r.sale ? "17:00" : r.sale,
+          }));
         });
         setRegistros(mapa);
       }
-      setLoading(false);
+      setLoadingMes(false);
     };
-    cargar();
-  }, []);
+    cargarAsistencia();
+  }, [anio, mes]);
 
   const personalVisible = listaPersonal;
 
@@ -94,7 +112,7 @@ const Asistencia = () => {
 
   const personalDelDia = diaSeleccionado ? filtrarPersonalParaDia(keyDia) : [];
 
-  const abrirDia = async (dia) => {
+  const abrirDia = (dia) => {
     const fechaDia = new Date(anio, mes, dia);
     const hoyInicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
     if (fechaDia > hoyInicio) return;
@@ -108,16 +126,11 @@ const Asistencia = () => {
       sale: p.nombre.toLowerCase().includes("zamorano") ? "17:00" : "", observaciones: "",
     });
 
-    let filas;
-    const res = await obtenerAsistenciaPorFecha(key);
-    if (res?.ok) {
-      const data = await res.json();
-      filas = data?.registros?.length
-        ? data.registros.map((r, i) => ({ ...r, id: r.id || i, remito: r.personal?.toLowerCase().includes("zamorano") || !r.obra || r.obra === "Taller" ? true : r.remito, sale: r.personal?.toLowerCase().includes("zamorano") && !r.sale ? "17:00" : r.sale }))
-        : personalDelDia.map(filaDePersonal);
-    } else {
-      filas = registros[key] ?? personalDelDia.map(filaDePersonal);
-    }
+    // Usar datos del caché (cargados al abrir el mes); no hacer request adicional
+    const cachedRows = registros[key];
+    let filas = cachedRows?.length
+      ? cachedRows
+      : personalDelDia.map(filaDePersonal);
 
     const nombresPermitidos = new Set(personalVisible.map((p) => p.nombre.trim().toLowerCase()));
     filas = filas.filter((f) => !f.personal || f.personalLibre || nombresPermitidos.has(f.personal.trim().toLowerCase()));
@@ -144,40 +157,34 @@ const Asistencia = () => {
     setDiaSeleccionado(null);
   };
 
-  const getMaxHorometroPorMaquina = () => {
+  const maxPorMaquina = useMemo(() => {
     const mapa = {};
-
-    // Desde registros de Asistencia (excluyendo el día que se edita)
     Object.entries(registros).forEach(([fecha, filas]) => {
       if (fecha === keyDia) return;
       filas.forEach((fila) => {
         if (fila.maquina && fila.horometro !== "" && fila.horometro != null) {
           const val = Number(fila.horometro);
           if (!isNaN(val) && val > 0) {
-            const key = fila.maquina.toLowerCase().trim();
-            if (mapa[key] == null || val > mapa[key]) mapa[key] = val;
+            const k = fila.maquina.toLowerCase().trim();
+            if (mapa[k] == null || val > mapa[k]) mapa[k] = val;
           }
         }
       });
     });
-
-    // Desde registros de ServiceMaquina
     listaServices.forEach((s) => {
       if (s.maquina?.maquina && s.horometro != null) {
         const val = Number(s.horometro);
         if (!isNaN(val) && val > 0) {
-          const key = s.maquina.maquina.toLowerCase().trim();
-          if (mapa[key] == null || val > mapa[key]) mapa[key] = val;
+          const k = s.maquina.maquina.toLowerCase().trim();
+          if (mapa[k] == null || val > mapa[k]) mapa[k] = val;
         }
       }
     });
-
     return mapa;
-  };
+  }, [registros, listaServices, keyDia]);
 
   const guardarModal = async () => {
     if (editandoHoy) {
-      const maxPorMaquina = getMaxHorometroPorMaquina();
       const invalidos = borrador.filter((fila) => {
         if (!fila.maquina || fila.horometro === "" || fila.horometro == null) return false;
         const max = maxPorMaquina[fila.maquina.toLowerCase().trim()];
@@ -638,19 +645,14 @@ const Asistencia = () => {
                         <span style={{ color: "#dc3545", fontSize: "1.2rem", fontWeight: 700 }}>
                           {calcularHorometroZamorano(fila.entra, fila.sale)}
                         </span>
-                      ) : (() => {
-                        const maxPorMaquina = getMaxHorometroPorMaquina();
-                        const maqKey = fila.maquina?.toLowerCase().trim();
-                        const maxPrevio = maqKey ? maxPorMaquina[maqKey] : null;
-                        return (
-                          <Form.Control
-                            size="sm"
-                            type="number"
-                            value={fila.horometro}
-                            onChange={(e) => actualizarCelda(fila.id, "horometro", e.target.value)}
-                          />
-                        );
-                      })()}
+                      ) : (
+                        <Form.Control
+                          size="sm"
+                          type="number"
+                          value={fila.horometro}
+                          onChange={(e) => actualizarCelda(fila.id, "horometro", e.target.value)}
+                        />
+                      )}
                     </td>
                     <td>
                       <Form.Select

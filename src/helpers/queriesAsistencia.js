@@ -3,9 +3,10 @@ import { API } from "./api";
 
 const URL = API.asistencia;
 
-export const listarAsistencia = async () => {
+export const listarAsistencia = async (anio, mes) => {
   try {
-    return await authFetch(URL);
+    const params = anio !== undefined && mes !== undefined ? `?anio=${anio}&mes=${mes}` : "";
+    return await authFetch(`${URL}${params}`);
   } catch (error) {
     console.error("Error al listar asistencia:", error);
     return null;
