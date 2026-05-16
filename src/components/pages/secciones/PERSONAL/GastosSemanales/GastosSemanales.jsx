@@ -255,7 +255,7 @@ const GastosSemanales = () => {
             }}>+ Agregar personal</Button>
           </div>
           <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "65vh" }}>
-            <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
+            <Table striped bordered hover className="text-center align-middle">
               <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                 <tr>
                   <th style={{ minWidth: 160 }}>Personal</th>
