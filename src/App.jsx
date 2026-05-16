@@ -52,6 +52,8 @@ const Asistencia = lazy(() => import("./components/pages/secciones/PERSONAL/Asis
 const GastosSemanales = lazy(() => import("./components/pages/secciones/PERSONAL/GastosSemanales/GastosSemanales.jsx"));
 const ServiceMaquinas = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/ServiceMaquinas/ServiceMaquinas.jsx"));
 const TableroControl = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/TableroControl/TableroControl.jsx"));
+const FacturacionProveedor = lazy(() => import("./components/pages/secciones/PROVEEDORES/Facturacion/FacturacionProveedor.jsx"));
+const NuevaFacturaProveedor = lazy(() => import("./components/pages/secciones/PROVEEDORES/Facturacion/NuevaFacturaProveedor.jsx"));
 
 const PageSpinner = () => (
   <div className="d-flex justify-content-center mt-5">
@@ -127,6 +129,8 @@ function App() {
                       <Route path="/cheques" element={<Cheques />} />
                       <Route path="/personal/asistencia" element={<Asistencia />} />
                       <Route path="/personal/gastos-semanales" element={<GastosSemanales />} />
+                      <Route path="/facturacion-proveedores" element={<FacturacionProveedor />} />
+                      <Route path="/facturacion-proveedores/nueva" element={<NuevaFacturaProveedor />} />
                       <Route path="*" element={<Error404 />} />
                     </Routes>
                     </Suspense>

@@ -112,6 +112,12 @@ function Menu() {
               </NavDropdown.Item>
             </NavDropdown>
 
+            <NavDropdown title="Proveedores" id="nav-dropdown-proveedores" className="mx-2">
+              <NavDropdown.Item as={Link} to="/facturacion-proveedores">
+                Facturación Proveedores
+              </NavDropdown.Item>
+            </NavDropdown>
+
             <NavDropdown title="Personal" id="nav-dropdown-personal" className="mx-2">
               <NavDropdown.Item as={Link} to="/personal/asistencia">
                 Asistencia

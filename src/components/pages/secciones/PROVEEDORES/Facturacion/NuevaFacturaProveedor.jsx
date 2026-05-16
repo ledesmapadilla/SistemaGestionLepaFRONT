@@ -1,0 +1,220 @@
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { Button, Container, Form, Row, Col, Spinner } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import { crearFacturaProveedor, listarFacturasProveedores } from "../../../../../helpers/queriesFacturasProveedores";
+import { listarProveedores } from "../../../../../helpers/queriesProveedores";
+
+const hoy = new Date().toLocaleDateString("en-CA");
+
+const formatoMoneda = (valor) =>
+  Number(valor).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+
+const NuevaFacturaProveedor = () => {
+  const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm();
+
+  const [proveedores, setProveedores] = useState([]);
+  const [todasFacturas, setTodasFacturas] = useState([]);
+  const [numerosExistentes, setNumerosExistentes] = useState([]);
+  const [loadingDatos, setLoadingDatos] = useState(true);
+
+  const tipoFactura = watch("tipoFactura");
+  const totalRaw = watch("total");
+  const ivaRate = tipoFactura === "Factura X" ? 0 : 0.21;
+  const totalConIva = totalRaw ? Number(totalRaw) * (1 + ivaRate) : 0;
+
+  useEffect(() => {
+    const cargar = async () => {
+      try {
+        const [resProveedores, facturas] = await Promise.all([
+          listarProveedores(),
+          listarFacturasProveedores(),
+        ]);
+        const dataProveedores = resProveedores?.ok ? await resProveedores.json() : [];
+        setProveedores(dataProveedores);
+        setTodasFacturas(facturas);
+        setNumerosExistentes(facturas.map((f) => f.numeroFactura?.toString().trim()));
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoadingDatos(false);
+      }
+    };
+    cargar();
+  }, []);
+
+  useEffect(() => {
+    if (tipoFactura === "Factura X") {
+      const numerosX = todasFacturas
+        .filter((f) => f.tipoFactura === "Factura X")
+        .map((f) => Number(f.numeroFactura))
+        .filter((n) => !isNaN(n));
+      const siguiente = numerosX.length > 0 ? Math.max(...numerosX) + 1 : 1;
+      setValue("numeroFactura", siguiente, { shouldValidate: true });
+    } else {
+      setValue("numeroFactura", "", { shouldValidate: false });
+    }
+  }, [tipoFactura, todasFacturas]);
+
+  const onSubmit = async (data) => {
+    const payload = {
+      fecha: data.fecha,
+      tipoFactura: data.tipoFactura,
+      numeroFactura: data.numeroFactura,
+      proveedor: data.proveedor,
+      concepto: data.concepto || "",
+      total: Number(data.total),
+    };
+
+    try {
+      const respuesta = await crearFacturaProveedor(payload);
+      if (respuesta?.ok) {
+        Swal.fire({ icon: "success", title: "Factura creada", timer: 2000, showConfirmButton: false });
+        navigate("/facturacion-proveedores");
+      } else {
+        const err = await respuesta.json();
+        Swal.fire({ icon: "error", title: "Error", text: err.msg || "No se pudo crear la factura" });
+      }
+    } catch (error) {
+      Swal.fire({ icon: "error", title: "Error inesperado", text: "No se pudo procesar la solicitud" });
+    }
+  };
+
+  if (loadingDatos) {
+    return (
+      <Container className="py-5 text-center">
+        <Spinner animation="border" />
+      </Container>
+    );
+  }
+
+  return (
+    <Container className="py-4 w-75">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h6 className="mb-0">Nueva Factura — Proveedor</h6>
+        <Button variant="outline-success" onClick={() => navigate("/facturacion-proveedores")}>Volver</Button>
+      </div>
+
+      <Form onSubmit={handleSubmit(onSubmit)}>
+        <Row className="mb-3">
+          <Col md={2}>
+            <Form.Group>
+              <Form.Label>Fecha</Form.Label>
+              <Form.Control
+                type="date"
+                max={hoy}
+                {...register("fecha", { required: "La fecha es obligatoria" })}
+                isInvalid={!!errors.fecha}
+              />
+              <Form.Text className="text-danger">{errors.fecha?.message}</Form.Text>
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group>
+              <Form.Label>Proveedor</Form.Label>
+              <Form.Select
+                {...register("proveedor", { required: "El proveedor es obligatorio" })}
+                isInvalid={!!errors.proveedor}
+              >
+                <option value="">Seleccionar...</option>
+                {proveedores.map((p) => (
+                  <option key={p._id} value={p.razonsocial}>{p.razonsocial}</option>
+                ))}
+              </Form.Select>
+              <Form.Text className="text-danger">{errors.proveedor?.message}</Form.Text>
+            </Form.Group>
+          </Col>
+          <Col md={3}>
+            <Form.Group>
+              <Form.Label>Tipo de Factura</Form.Label>
+              <Form.Select
+                {...register("tipoFactura", { required: "El tipo es obligatorio" })}
+                isInvalid={!!errors.tipoFactura}
+              >
+                <option value="">Seleccionar...</option>
+                <option>Factura A</option>
+                <option>Factura B</option>
+                <option>Factura C</option>
+                <option>Factura X</option>
+                <option>Nota de Crédito</option>
+                <option>Nota de Débito</option>
+              </Form.Select>
+              <Form.Text className="text-danger">{errors.tipoFactura?.message}</Form.Text>
+            </Form.Group>
+          </Col>
+          <Col md={3}>
+            <Form.Group>
+              <Form.Label>Número de Factura</Form.Label>
+              <Form.Control
+                type="text"
+                readOnly={tipoFactura === "Factura X"}
+                className={tipoFactura === "Factura X" ? "text-muted" : ""}
+                {...register("numeroFactura", {
+                  required: "El número es obligatorio",
+                  validate: (v) =>
+                    !numerosExistentes.includes(v?.toString().trim()) ||
+                    "Este número ya existe",
+                })}
+                isInvalid={!!errors.numeroFactura}
+              />
+              <Form.Text className="text-danger">{errors.numeroFactura?.message}</Form.Text>
+            </Form.Group>
+          </Col>
+        </Row>
+
+        <Row className="mb-3">
+          <Col md={6}>
+            <Form.Group>
+              <Form.Label>Concepto</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Descripción del servicio o producto"
+                {...register("concepto")}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={3}>
+            <Form.Group>
+              <Form.Label>Total (sin IVA)</Form.Label>
+              <Form.Control
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                {...register("total", { required: "El total es obligatorio", min: { value: 0, message: "Debe ser positivo" } })}
+                isInvalid={!!errors.total}
+              />
+              <Form.Text className="text-danger">{errors.total?.message}</Form.Text>
+            </Form.Group>
+          </Col>
+          <Col md={3} className="d-flex flex-column justify-content-end">
+            <Form.Group>
+              <Form.Label>Total + IVA ({ivaRate === 0 ? "0%" : "21%"})</Form.Label>
+              <Form.Control
+                type="text"
+                readOnly
+                className="text-muted"
+                value={totalRaw ? formatoMoneda(totalConIva) : ""}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+
+        <div className="d-flex justify-content-end gap-2 mt-3">
+          <Button variant="outline-secondary" onClick={() => navigate("/facturacion-proveedores")}>Cancelar</Button>
+          <Button type="submit" variant="outline-success">Guardar Factura</Button>
+        </div>
+      </Form>
+    </Container>
+  );
+};
+
+export default NuevaFacturaProveedor;
