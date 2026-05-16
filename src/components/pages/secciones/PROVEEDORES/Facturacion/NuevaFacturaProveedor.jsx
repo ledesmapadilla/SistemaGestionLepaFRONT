@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { crearFacturaProveedor, listarFacturasProveedores } from "../../../../../helpers/queriesFacturasProveedores";
 import { listarProveedores } from "../../../../../helpers/queriesProveedores";
+import { listarObras } from "../../../../../helpers/queriesObras";
 
 const hoy = new Date().toLocaleDateString("en-CA");
 
@@ -22,6 +23,7 @@ const NuevaFacturaProveedor = () => {
   } = useForm();
 
   const [proveedores, setProveedores] = useState([]);
+  const [obras, setObras] = useState([]);
   const [todasFacturas, setTodasFacturas] = useState([]);
   const [numerosExistentes, setNumerosExistentes] = useState([]);
   const [loadingDatos, setLoadingDatos] = useState(true);
@@ -34,12 +36,15 @@ const NuevaFacturaProveedor = () => {
   useEffect(() => {
     const cargar = async () => {
       try {
-        const [resProveedores, facturas] = await Promise.all([
+        const [resProveedores, resObras, facturas] = await Promise.all([
           listarProveedores(),
+          listarObras("?estado=En curso"),
           listarFacturasProveedores(),
         ]);
         const dataProveedores = resProveedores?.ok ? await resProveedores.json() : [];
+        const dataObras = resObras?.ok ? await resObras.json() : [];
         setProveedores(dataProveedores);
+        setObras(dataObras.filter((o) => o.estado === "En curso"));
         setTodasFacturas(facturas);
         setNumerosExistentes(facturas.map((f) => f.numeroFactura?.toString().trim()));
       } catch (error) {
@@ -71,6 +76,7 @@ const NuevaFacturaProveedor = () => {
       numeroFactura: data.numeroFactura,
       proveedor: data.proveedor,
       concepto: data.concepto || "",
+      obra: data.obra || "",
       total: Number(data.total),
     };
 
@@ -171,7 +177,7 @@ const NuevaFacturaProveedor = () => {
         </Row>
 
         <Row className="mb-3">
-          <Col md={6}>
+          <Col md={4}>
             <Form.Group>
               <Form.Label>Concepto</Form.Label>
               <Form.Control
@@ -181,7 +187,18 @@ const NuevaFacturaProveedor = () => {
               />
             </Form.Group>
           </Col>
-          <Col md={3}>
+          <Col md={4}>
+            <Form.Group>
+              <Form.Label>Obra a imputar</Form.Label>
+              <Form.Select {...register("obra")}>
+                <option value="">Sin imputar</option>
+                {obras.map((o) => (
+                  <option key={o._id} value={o.nombreobra}>{o.nombreobra}</option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Col>
+          <Col md={2}>
             <Form.Group>
               <Form.Label>Total (sin IVA)</Form.Label>
               <Form.Control
@@ -195,7 +212,7 @@ const NuevaFacturaProveedor = () => {
               <Form.Text className="text-danger">{errors.total?.message}</Form.Text>
             </Form.Group>
           </Col>
-          <Col md={3} className="d-flex flex-column justify-content-end">
+          <Col md={2} className="d-flex flex-column justify-content-end">
             <Form.Group>
               <Form.Label>Total + IVA ({ivaRate === 0 ? "0%" : "21%"})</Form.Label>
               <Form.Control

@@ -9,6 +9,7 @@ import {
   editarFacturaProveedor,
   borrarFacturaProveedor,
 } from "../../../../../helpers/queriesFacturasProveedores";
+import { listarObras } from "../../../../../helpers/queriesObras";
 import "../../../../../styles/clientes.css";
 
 const hoy = new Date().toLocaleDateString("en-CA");
@@ -29,6 +30,7 @@ const labelEstado = (e) => (e === "Pendiente" ? "Impaga" : e ?? "-");
 const FacturacionProveedor = () => {
   const navigate = useNavigate();
   const [facturas, setFacturas] = useState([]);
+  const [obras, setObras] = useState([]);
   const [loading, setLoading] = useState(true);
   const [facturaVerId, setFacturaVerId] = useState(null);
   const facturaVer = facturas.find((f) => f._id === facturaVerId) || null;
@@ -44,8 +46,13 @@ const FacturacionProveedor = () => {
 
   const cargarFacturas = async () => {
     try {
-      const data = await listarFacturasProveedores();
+      const [data, resObras] = await Promise.all([
+        listarFacturasProveedores(),
+        listarObras(),
+      ]);
       setFacturas(data);
+      const dataObras = resObras?.ok ? await resObras.json() : [];
+      setObras(dataObras.filter((o) => o.estado === "En curso"));
     } catch (error) {
       console.error(error);
     } finally {
@@ -60,6 +67,7 @@ const FacturacionProveedor = () => {
       tipoFactura: f.tipoFactura,
       numeroFactura: f.numeroFactura,
       concepto: f.concepto,
+      obra: f.obra || "",
       total: f.total,
     });
   };
@@ -107,8 +115,8 @@ const FacturacionProveedor = () => {
   };
 
   const exportarExcel = () => {
-    const headers = ["N° Factura", "Fecha", "Proveedor", "Concepto", "Tipo", "Total", "Estado"];
-    const cols = ["A", "B", "C", "D", "E", "F", "G"];
+    const headers = ["N° Factura", "Fecha", "Proveedor", "Concepto", "Obra", "Tipo", "Total", "Estado"];
+    const cols = ["A", "B", "C", "D", "E", "F", "G", "H"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
@@ -118,6 +126,7 @@ const FacturacionProveedor = () => {
       formatearFecha(f.fecha),
       f.proveedor,
       f.concepto || "-",
+      f.obra || "-",
       f.tipoFactura,
       f.total,
       labelEstado(f.estadoPago),
@@ -132,7 +141,7 @@ const FacturacionProveedor = () => {
 
     filas.forEach((fila, rowIdx) => {
       fila.forEach((val, colIdx) => {
-        const isCurrency = colIdx === 5 && typeof val === "number";
+        const isCurrency = colIdx === 6 && typeof val === "number";
         ws[`${cols[colIdx]}${rowIdx + 4}`] = {
           v: val ?? "-",
           t: isCurrency ? "n" : typeof val === "number" ? "n" : "s",
@@ -142,8 +151,8 @@ const FacturacionProveedor = () => {
       });
     });
 
-    ws["!ref"] = `A1:G${filas.length + 3}`;
-    ws["!cols"] = [{ wch: 14 }, { wch: 12 }, { wch: 28 }, { wch: 30 }, { wch: 18 }, { wch: 16 }, { wch: 12 }];
+    ws["!ref"] = `A1:H${filas.length + 3}`;
+    ws["!cols"] = [{ wch: 14 }, { wch: 12 }, { wch: 28 }, { wch: 28 }, { wch: 28 }, { wch: 18 }, { wch: 16 }, { wch: 12 }];
 
     const libro = XLSXStyle.utils.book_new();
     XLSXStyle.utils.book_append_sheet(libro, ws, "Facturas Proveedores");
@@ -227,6 +236,7 @@ const FacturacionProveedor = () => {
               <th>Fecha</th>
               <th>Proveedor</th>
               <th>Concepto</th>
+              <th>Obra</th>
               <th>Tipo</th>
               <th>Total</th>
               <th>Estado</th>
@@ -236,7 +246,7 @@ const FacturacionProveedor = () => {
           <tbody>
             {facturasFiltradas.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-muted py-3">
+                <td colSpan={9} className="text-muted py-3">
                   Sin facturas cargadas
                 </td>
               </tr>
@@ -247,6 +257,7 @@ const FacturacionProveedor = () => {
                   <td>{formatearFecha(f.fecha)}</td>
                   <td>{f.proveedor}</td>
                   <td className="text-muted">{f.concepto || "-"}</td>
+                  <td className="text-muted">{f.obra || "-"}</td>
                   <td>{f.tipoFactura}</td>
                   <td>{formatoMoneda(f.total)}</td>
                   <td>
@@ -282,6 +293,7 @@ const FacturacionProveedor = () => {
             <span><strong>Fecha:</strong> {formatearFecha(facturaVer?.fecha)}</span>
             <span><strong>Tipo:</strong> {facturaVer?.tipoFactura}</span>
             <span><strong>Concepto:</strong> {facturaVer?.concepto || "-"}</span>
+            <span><strong>Obra:</strong> {facturaVer?.obra || "-"}</span>
             <span><strong>Total:</strong> {formatoMoneda(facturaVer?.total)}</span>
             <span><strong>Estado:</strong> {labelEstado(facturaVer?.estadoPago)}</span>
           </div>
@@ -346,6 +358,19 @@ const FacturacionProveedor = () => {
                     {...register("concepto")}
                     placeholder="Descripción del servicio o producto"
                   />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row className="mb-3">
+              <Col md={12}>
+                <Form.Group>
+                  <Form.Label>Obra a imputar</Form.Label>
+                  <Form.Select {...register("obra")}>
+                    <option value="">Sin imputar</option>
+                    {obras.map((o) => (
+                      <option key={o._id} value={o.nombreobra}>{o.nombreobra}</option>
+                    ))}
+                  </Form.Select>
                 </Form.Group>
               </Col>
             </Row>
