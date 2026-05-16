@@ -30,7 +30,7 @@ const NuevaFacturaProveedor = () => {
 
   const tipoFactura = watch("tipoFactura");
   const totalRaw = watch("total");
-  const ivaRate = tipoFactura === "Factura X" ? 0 : 0.21;
+  const ivaRate = (tipoFactura === "Factura X" || tipoFactura === "Factura B") ? 0 : 0.21;
   const totalConIva = totalRaw ? Number(totalRaw) * (1 + ivaRate) : 0;
 
   useEffect(() => {
