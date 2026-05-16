@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Button, Table, Container, Spinner, Modal, Form, Row, Col } from "react-bootstrap";
+import { Button, Table, Container, Spinner, Modal, Form, Row, Col, InputGroup } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -38,7 +38,9 @@ const FacturacionProveedor = () => {
   const [filtroNumero, setFiltroNumero] = useState("");
   const [filtroProveedor, setFiltroProveedor] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Pendiente");
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm();
+  const [editandoTotal, setEditandoTotal] = useState(false);
+  const [inputTotal, setInputTotal] = useState("");
 
   useEffect(() => {
     cargarFacturas();
@@ -362,12 +364,18 @@ const FacturacionProveedor = () => {
               <Col md={8}>
                 <Form.Group>
                   <Form.Label>Total</Form.Label>
-                  <Form.Control
-                    type="number"
-                    step="0.01"
-                    {...register("total", { required: true, min: 0 })}
-                    isInvalid={!!errors.total}
-                  />
+                  <InputGroup>
+                    <Form.Control
+                      type="text"
+                      value={editandoTotal ? inputTotal : formatoMoneda(watch("total") ?? 0)}
+                      onFocus={() => { setEditandoTotal(true); setInputTotal(String(watch("total") ?? "")); }}
+                      onChange={(e) => setInputTotal(e.target.value)}
+                      onBlur={() => { setValue("total", parseFloat(inputTotal) || 0, { shouldValidate: true }); setEditandoTotal(false); }}
+                      isInvalid={!!errors.total}
+                    />
+                    <InputGroup.Text>✏</InputGroup.Text>
+                  </InputGroup>
+                  <input type="hidden" {...register("total", { required: true })} />
                 </Form.Group>
               </Col>
               <Col md={4}>
