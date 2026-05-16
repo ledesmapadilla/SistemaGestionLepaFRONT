@@ -169,7 +169,7 @@ const FacturacionProveedor = () => {
 
   return (
     <Container className="py-4">
-      <h6 className="text-center mb-2">Facturación Proveedores</h6>
+      <h6 className="text-center mb-2">Facturación Proveedores <small className="text-muted">(iva incluido)</small></h6>
       <div className="d-flex justify-content-end align-items-center mb-3">
         <div className="d-flex gap-2">
           <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
