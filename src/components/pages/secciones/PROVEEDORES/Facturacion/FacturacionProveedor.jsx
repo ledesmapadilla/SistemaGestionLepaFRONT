@@ -38,7 +38,9 @@ const FacturacionProveedor = () => {
   const [filtroNumero, setFiltroNumero] = useState("");
   const [filtroProveedor, setFiltroProveedor] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Pendiente");
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm();
+  const [editandoTotal, setEditandoTotal] = useState(false);
+  const [inputTotal, setInputTotal] = useState("");
 
   useEffect(() => {
     cargarFacturas();
@@ -68,6 +70,7 @@ const FacturacionProveedor = () => {
       numeroFactura: f.numeroFactura,
       concepto: f.concepto,
       obra: f.obra || "",
+      total: f.total,
     });
   };
 
@@ -362,9 +365,13 @@ const FacturacionProveedor = () => {
                   <Form.Label>Total</Form.Label>
                   <Form.Control
                     type="text"
-                    readOnly
-                    value={formatoMoneda(facturaEditar?.total ?? 0)}
+                    value={editandoTotal ? inputTotal : formatoMoneda(watch("total") ?? 0)}
+                    onFocus={() => { setEditandoTotal(true); setInputTotal(String(watch("total") ?? "")); }}
+                    onChange={(e) => setInputTotal(e.target.value)}
+                    onBlur={() => { setValue("total", parseFloat(inputTotal) || 0, { shouldValidate: true }); setEditandoTotal(false); }}
+                    isInvalid={!!errors.total}
                   />
+                  <input type="hidden" {...register("total", { required: true })} />
                 </Form.Group>
               </Col>
             </Row>
