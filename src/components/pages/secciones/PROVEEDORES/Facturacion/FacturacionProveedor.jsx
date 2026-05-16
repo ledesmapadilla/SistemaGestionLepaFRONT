@@ -69,6 +69,7 @@ const FacturacionProveedor = () => {
       concepto: f.concepto,
       obra: f.obra || "",
       total: f.total,
+      estadoPago: f.estadoPago,
     });
   };
 
@@ -83,15 +84,6 @@ const FacturacionProveedor = () => {
       Swal.fire({ icon: "success", title: "Factura actualizada", timer: 2000, showConfirmButton: false });
     } else {
       Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar la factura" });
-    }
-  };
-
-  const toggleEstado = async (factura) => {
-    const nuevoEstado = factura.estadoPago === "Pagada" ? "Pendiente" : "Pagada";
-    const respuesta = await editarFacturaProveedor(factura._id, { estadoPago: nuevoEstado });
-    if (respuesta?.ok) {
-      const data = await respuesta.json();
-      setFacturas(facturas.map((f) => (f._id === factura._id ? data.factura : f)));
     }
   };
 
@@ -260,15 +252,7 @@ const FacturacionProveedor = () => {
                   <td className="text-muted">{f.obra || "-"}</td>
                   <td>{f.tipoFactura}</td>
                   <td>{formatoMoneda(f.total)}</td>
-                  <td>
-                    <span
-                      style={{ cursor: "pointer", textDecoration: "underline dotted" }}
-                      onClick={() => toggleEstado(f)}
-                      title="Click para cambiar estado"
-                    >
-                      {labelEstado(f.estadoPago)}
-                    </span>
-                  </td>
+                  <td>{labelEstado(f.estadoPago)}</td>
                   <td className="d-flex gap-1 justify-content-center align-items-center">
                     <Button variant="outline-success" size="sm" onClick={() => setFacturaVerId(f._id)}>Ver</Button>
                     <Button variant="outline-warning" size="sm" onClick={() => abrirEditar(f)}>Editar</Button>
@@ -375,7 +359,7 @@ const FacturacionProveedor = () => {
               </Col>
             </Row>
             <Row className="mb-3">
-              <Col md={12}>
+              <Col md={8}>
                 <Form.Group>
                   <Form.Label>Total</Form.Label>
                   <Form.Control
@@ -384,6 +368,15 @@ const FacturacionProveedor = () => {
                     {...register("total", { required: true, min: 0 })}
                     isInvalid={!!errors.total}
                   />
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Estado</Form.Label>
+                  <Form.Select {...register("estadoPago", { required: true })}>
+                    <option value="Pendiente">Impaga</option>
+                    <option value="Pagada">Pagada</option>
+                  </Form.Select>
                 </Form.Group>
               </Col>
             </Row>
