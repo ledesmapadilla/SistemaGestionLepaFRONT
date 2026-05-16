@@ -5,6 +5,7 @@ import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { obtenerAsistenciaPorFecha } from "../../../../../helpers/queriesAsistencia.js";
 import { obtenerGastoSemanalPorSemana, guardarGastoSemanal } from "../../../../../helpers/queriesGastoSemanal.js";
 import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
+import "../../../../../styles/clientes.css";
 
 const getMonday = (date) => {
   const d = new Date(date);
