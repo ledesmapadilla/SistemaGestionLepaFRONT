@@ -143,7 +143,7 @@ const CuentaCorriente = () => {
 
   return (
     <div className="w-75 mx-auto my-2">
-      <h6 className="text-center mb-2">Cuenta Corriente</h6>
+      <h6 className="text-center mb-2">Cuenta Corriente Cliente</h6>
       <div className="d-flex justify-content-end align-items-center mb-3">
         <div className="d-flex gap-2">
           {(filtroCliente ? movConSaldo.length : resumenPorCliente.length) > 0 && (
@@ -153,7 +153,7 @@ const CuentaCorriente = () => {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "start", marginBottom: "1.5rem", gap: "1rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", marginBottom: "1.5rem", gap: "1rem" }}>
         {/* Filtros apilados — izquierda */}
         <div className="d-flex flex-column gap-2">
           <div className="d-flex align-items-center gap-2">
@@ -162,7 +162,7 @@ const CuentaCorriente = () => {
               <Form.Select
                 value={filtroCliente}
                 onChange={handleCliente}
-                style={filtroCliente ? { backgroundImage: "none" } : {}}
+                style={filtroCliente ? { backgroundImage: "none", height: "50px" } : { height: "50px" }}
               >
                 <option value="">Todos los clientes</option>
                 {clientes.map((c) => (
@@ -183,7 +183,7 @@ const CuentaCorriente = () => {
                   value={filtroObra}
                   onChange={(e) => setFiltroObra(e.target.value)}
                   disabled={obrasDisponibles.length === 0}
-                  style={filtroObra ? { backgroundImage: "none" } : {}}
+                  style={filtroObra ? { backgroundImage: "none", height: "50px" } : { height: "50px" }}
                 >
                   <option value="">Todas las obras</option>
                   {obrasDisponibles.map((o) => (

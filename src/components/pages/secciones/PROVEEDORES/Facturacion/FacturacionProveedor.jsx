@@ -225,7 +225,7 @@ const FacturacionProveedor = () => {
         <Table striped bordered hover className="text-center align-middle">
           <thead className="table-dark">
             <tr>
-              <th>Nro</th>
+              <th>N° Factura</th>
               <th>Fecha</th>
               <th>Proveedor</th>
               <th>Concepto</th>

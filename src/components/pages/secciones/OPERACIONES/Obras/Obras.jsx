@@ -32,6 +32,7 @@ const valoresIniciales = {
   razonsocial: "",
   nombreobra: "",
   contacto: "",
+  telefono: "",
   estado: "En curso",
   fecha: hoy(),
   descripcion: "",

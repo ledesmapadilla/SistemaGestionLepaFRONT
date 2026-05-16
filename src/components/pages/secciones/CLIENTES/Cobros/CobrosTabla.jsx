@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button, Table, Container, Spinner, Modal, Form } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
 import { useNavigate } from "react-router-dom";
@@ -12,7 +12,7 @@ const formatoMoneda = (valor) => {
 
 const formatearFecha = (fecha) => {
   if (!fecha) return "-";
-  const p = fecha.split("-");
+  const p = fecha.substring(0, 10).split("-");
   return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : fecha;
 };
 
@@ -123,28 +123,57 @@ const CobrosTabla = () => {
     XLSXStyle.writeFile(libro, "Listado_Cobros.xlsx");
   };
 
-  // Procesar cobros cronológicamente para calcular saldo acumulado por factura
-  const cobrosAsc = [...cobros].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-  const runningCobrado = {};
-  const saldosPorCobro = {};   // { cobroId: { facturaId: saldo } }
-  const totalSaldoPorCobro = {}; // { cobroId: number }
-
-  cobrosAsc.forEach((cobro) => {
-    const saldosEsteCobro = {};
-    let totalSaldo = 0;
-    (cobro.pagos || []).forEach((pago) => {
-      const id = pago.factura?._id ?? pago.factura;
-      if (!id) return;
-      runningCobrado[id] = (runningCobrado[id] || 0) + (pago.montoCobrado || 0);
-      const saldo = Math.max(0, totalConIva(pago.factura) - runningCobrado[id]);
-      saldosEsteCobro[id] = saldo;
-      totalSaldo += saldo;
+  const { saldosPorCobro, totalSaldoPorCobro } = useMemo(() => {
+    const cobrosAsc = [...cobros].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    const runningCobrado = {};
+    const saldosPorCobro = {};
+    const totalSaldoPorCobro = {};
+    cobrosAsc.forEach((cobro) => {
+      const saldosEsteCobro = {};
+      let totalSaldo = 0;
+      (cobro.pagos || []).forEach((pago) => {
+        const id = pago.factura?._id ?? pago.factura;
+        if (!id) return;
+        runningCobrado[id] = (runningCobrado[id] || 0) + (pago.montoCobrado || 0);
+        const saldo = Math.max(0, totalConIva(pago.factura) - runningCobrado[id]);
+        saldosEsteCobro[id] = saldo;
+        totalSaldo += saldo;
+      });
+      saldosPorCobro[cobro._id] = saldosEsteCobro;
+      totalSaldoPorCobro[cobro._id] = totalSaldo;
     });
-    saldosPorCobro[cobro._id] = saldosEsteCobro;
-    totalSaldoPorCobro[cobro._id] = totalSaldo;
-  });
+    return { saldosPorCobro, totalSaldoPorCobro };
+  }, [cobros]);
 
-  const clientesUnicos = [...new Set(cobros.map((c) => c.cliente).filter(Boolean))].sort();
+  const clientesUnicos = useMemo(
+    () => [...new Set(cobros.map((c) => c.cliente).filter(Boolean))].sort(),
+    [cobros]
+  );
+
+  const facturasUnicas = useMemo(
+    () => [...new Set(
+      cobros.flatMap((c) => (c.pagos || []).map((p) => p.factura?.numeroFactura).filter(Boolean))
+    )].sort((a, b) => a - b),
+    [cobros]
+  );
+
+  const cobrosFiltrados = useMemo(
+    () => [...cobros].reverse().filter((c) => {
+      const coincideCliente = filtroCliente === "" || c.cliente === filtroCliente;
+      const coincideMedio =
+        filtroMedio === "" ||
+        c.medioPago === filtroMedio ||
+        (c.mediosPago || []).some((m) => m.medioPago === filtroMedio);
+      const coincideFactura =
+        filtroFactura === "" ||
+        (c.pagos || []).some((p) => String(p.factura?.numeroFactura) === filtroFactura);
+      const fecha = c.fecha?.split("T")[0] ?? "";
+      const coincideDesde = filtroDesde === "" || fecha >= filtroDesde;
+      const coincideHasta = filtroHasta === "" || fecha <= filtroHasta;
+      return coincideCliente && coincideMedio && coincideFactura && coincideDesde && coincideHasta;
+    }),
+    [cobros, filtroCliente, filtroMedio, filtroFactura, filtroDesde, filtroHasta]
+  );
 
   const estiloX = {
     position: "absolute",
@@ -161,28 +190,9 @@ const CobrosTabla = () => {
 
   const selectActivo = { backgroundImage: "none" };
 
-  const facturasUnicas = [...new Set(
-    cobros.flatMap((c) => (c.pagos || []).map((p) => p.factura?.numeroFactura).filter(Boolean))
-  )].sort((a, b) => a - b);
-
-  const cobrosFiltrados = [...cobros].reverse().filter((c) => {
-    const coincideCliente = filtroCliente === "" || c.cliente === filtroCliente;
-    const coincideMedio =
-      filtroMedio === "" ||
-      c.medioPago === filtroMedio ||
-      (c.mediosPago || []).some((m) => m.medioPago === filtroMedio);
-    const coincideFactura =
-      filtroFactura === "" ||
-      (c.pagos || []).some((p) => String(p.factura?.numeroFactura) === filtroFactura);
-    const fecha = c.fecha?.split("T")[0] ?? "";
-    const coincideDesde = filtroDesde === "" || fecha >= filtroDesde;
-    const coincideHasta = filtroHasta === "" || fecha <= filtroHasta;
-    return coincideCliente && coincideMedio && coincideFactura && coincideDesde && coincideHasta;
-  });
-
   return (
     <Container className="py-4">
-      <h6 className="text-center mb-2">Cobros</h6>
+      <h6 className="text-center mb-2">Cobros Clientes</h6>
       <div className="d-flex justify-content-end align-items-center mb-3">
         <div className="d-flex gap-2">
           <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>

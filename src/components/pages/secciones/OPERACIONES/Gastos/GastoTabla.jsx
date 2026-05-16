@@ -11,6 +11,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
 import GastoModal from "./GastoModal";
+import { listarPagosProveedoresPorObra } from "../../../../../helpers/queriesPagosProveedores";
 
 const buscarPrecioVigente = (precios, clasificacion, trabajo, fechaRef) => {
   const candidatos = precios.filter(
@@ -58,6 +59,8 @@ const GastoTabla = () => {
   const [maquinistaVer, setMaquinistaVer] = useState(null);
   const [showVerGasto, setShowVerGasto] = useState(false);
   const [gastoVer, setGastoVer] = useState(null);
+  const [pagosProveedoresObra, setPagosProveedoresObra] = useState([]);
+  const [pagoProvVer, setPagoProvVer] = useState(null);
 
   useEffect(() => {
     cargarDatos();
@@ -74,10 +77,11 @@ const GastoTabla = () => {
 
     setLoading(true);
     try {
-      const [remitos, respuestaPersonal, respuestaGastos] = await Promise.all([
+      const [remitos, respuestaPersonal, respuestaGastos, todosPagos] = await Promise.all([
         listarRemitosPorObra(obraId),
         listarPersonal(),
         listarGastosPorObra(obraId),
+        listarPagosProveedoresPorObra(obraNombre).catch(() => []),
       ]);
 
       let personalDB = [];
@@ -89,6 +93,18 @@ const GastoTabla = () => {
         const datosGastos = await respuestaGastos.json();
         setGastos(datosGastos);
       }
+
+      const pagosObra = (todosPagos || []).flatMap((pago) => {
+        const itemsObra = (pago.pagos || []).filter((item) => item.factura?.obra === obraNombre);
+        return itemsObra.map((item) => ({
+          _id: `${pago._id}-${item.factura?._id ?? item.factura}`,
+          fecha: pago.fecha,
+          proveedor: pago.proveedor,
+          factura: item.factura,
+          montoPagado: item.montoPagado,
+        }));
+      });
+      setPagosProveedoresObra(pagosObra);
 
       // --- CÁLCULO GASOIL POR FECHA ---
       let cantidadGasoil = 0;
@@ -281,6 +297,15 @@ const GastoTabla = () => {
         maq.total,
         maq.tipo === "servicio" ? "Servicios acumulados" : "Horas acumuladas",
       ]),
+      // Pagos a proveedores
+      ...pagosProveedoresObra.map((p) => [
+        `Pago a ${p.proveedor}`,
+        1,
+        "pago",
+        p.montoPagado,
+        p.montoPagado,
+        `Fact. ${p.factura?.tipoFactura} N°${p.factura?.numeroFactura}${p.factura?.concepto ? ` — ${p.factura.concepto}` : ""}`,
+      ]),
       // Gastos manuales
       ...gastos.map((g) => [
         g.item,
@@ -335,7 +360,12 @@ const GastoTabla = () => {
       0
     );
 
-    return totalGastosManuales + infoGasoil.total + totalMaquinistas;
+    const totalPagosProveedores = pagosProveedoresObra.reduce(
+      (sum, p) => sum + (p.montoPagado || 0),
+      0
+    );
+
+    return totalGastosManuales + infoGasoil.total + totalMaquinistas + totalPagosProveedores;
   };
 
   const formatoMiles = (valor) => {
@@ -435,7 +465,25 @@ const GastoTabla = () => {
               </tr>
             ))}
 
-            {/* 3. GASTOS MANUALES */}
+            {/* 3. PAGOS A PROVEEDORES */}
+            {pagosProveedoresObra.map((p) => (
+              <tr key={p._id}>
+                <td style={{ color: "#f0a500" }}>Pago a {p.proveedor}</td>
+                <td>1</td>
+                <td>pago</td>
+                <td className="text-nowrap">{formatoMiles(p.montoPagado)}</td>
+                <td className="text-nowrap">{formatoMiles(p.montoPagado)}</td>
+                <td className="text-muted">
+                  Fact. {p.factura?.tipoFactura} N°{p.factura?.numeroFactura}
+                  {p.factura?.concepto ? ` — ${p.factura.concepto}` : ""}
+                </td>
+                <td>
+                  <Button size="sm" variant="outline-success" onClick={() => setPagoProvVer(p)}>Ver</Button>
+                </td>
+              </tr>
+            ))}
+
+            {/* 4. GASTOS MANUALES */}
             {gastosFiltrados.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-4">
@@ -632,6 +680,42 @@ const GastoTabla = () => {
           <Button variant="outline-secondary" onClick={() => setShowVerGasto(false)}>
             Cerrar
           </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* MODAL VER PAGO PROVEEDOR */}
+      <Modal show={!!pagoProvVer} onHide={() => setPagoProvVer(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Pago a {pagoProvVer?.proveedor}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Table bordered size="sm" className="align-middle mb-0">
+            <tbody>
+              <tr>
+                <td className="fw-bold">Fecha de pago</td>
+                <td>{pagoProvVer?.fecha ? pagoProvVer.fecha.substring(0, 10).split("-").reverse().join("-") : "-"}</td>
+              </tr>
+              <tr>
+                <td className="fw-bold">Tipo de factura</td>
+                <td>{pagoProvVer?.factura?.tipoFactura || "-"}</td>
+              </tr>
+              <tr>
+                <td className="fw-bold">N° Factura</td>
+                <td>{pagoProvVer?.factura?.numeroFactura || "-"}</td>
+              </tr>
+              <tr>
+                <td className="fw-bold">Concepto</td>
+                <td>{pagoProvVer?.factura?.concepto || "-"}</td>
+              </tr>
+              <tr>
+                <td className="fw-bold">Monto pagado</td>
+                <td>{formatoMiles(pagoProvVer?.montoPagado || 0)}</td>
+              </tr>
+            </tbody>
+          </Table>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setPagoProvVer(null)}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
     </>

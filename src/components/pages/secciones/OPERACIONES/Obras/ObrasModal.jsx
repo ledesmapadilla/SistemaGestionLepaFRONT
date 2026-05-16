@@ -94,18 +94,26 @@ const ModalObras = ({
               })}
             />
 
-            {/* Contacto */}
-            <Form.Group className="mb-3">
-              <Form.Label>Contacto*</Form.Label>
-              <Form.Control
-                {...register("contacto", {
-                  required: "El contacto es obligatorio",
-                })}
-              />
-              <Form.Text className="text-danger">
-                {errors.contacto?.message}
-              </Form.Text>
-            </Form.Group>
+            {/* Contacto + Teléfono */}
+            <div className="row g-2 mb-3">
+              <div className="col-7">
+                <Form.Label>Contacto*</Form.Label>
+                <Form.Control
+                  {...register("contacto", {
+                    required: "El contacto es obligatorio",
+                  })}
+                />
+                <Form.Text className="text-danger">
+                  {errors.contacto?.message}
+                </Form.Text>
+              </div>
+              <div className="col-5">
+                <Form.Label>Teléfono</Form.Label>
+                <Form.Control
+                  {...register("telefono")}
+                />
+              </div>
+            </div>
 
             {/* Nombre Obra */}
             <Form.Group className="mb-3">

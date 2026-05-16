@@ -27,11 +27,15 @@ const NuevaFacturaProveedor = () => {
   const [todasFacturas, setTodasFacturas] = useState([]);
   const [numerosExistentes, setNumerosExistentes] = useState([]);
   const [loadingDatos, setLoadingDatos] = useState(true);
+  const [editandoTotal, setEditandoTotal] = useState(false);
 
   const tipoFactura = watch("tipoFactura");
   const totalRaw = watch("total");
   const ivaRate = (tipoFactura === "Factura X" || tipoFactura === "Factura B") ? 0 : 0.21;
-  const totalConIva = totalRaw ? Number(totalRaw) * (1 + ivaRate) : 0;
+  const totalNum = totalRaw ? parseFloat(String(totalRaw).replace(",", ".")) : 0;
+  const totalConIva = totalNum * (1 + ivaRate);
+
+  register("total", { required: "El total es obligatorio", validate: (v) => parseFloat(String(v).replace(",", ".")) >= 0 || "Debe ser positivo" });
 
   useEffect(() => {
     const cargar = async () => {
@@ -77,7 +81,7 @@ const NuevaFacturaProveedor = () => {
       proveedor: data.proveedor,
       concepto: data.concepto || "",
       obra: data.obra || "",
-      total: Number(data.total),
+      total: parseFloat(String(data.total).replace(",", ".")),
     };
 
     try {
@@ -202,11 +206,13 @@ const NuevaFacturaProveedor = () => {
             <Form.Group>
               <Form.Label>Total (sin IVA)</Form.Label>
               <Form.Control
-                type="number"
-                step="0.01"
-                min="0"
+                type="text"
                 placeholder="0.00"
-                {...register("total", { required: "El total es obligatorio", min: { value: 0, message: "Debe ser positivo" } })}
+                value={editandoTotal ? (totalRaw ?? "") : (totalRaw ? formatoMoneda(Number(totalRaw)) : "")}
+                onFocus={() => setEditandoTotal(true)}
+                onChange={(e) => setValue("total", e.target.value, { shouldValidate: true })}
+                onBlur={() => setEditandoTotal(false)}
+                onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
                 isInvalid={!!errors.total}
               />
               <Form.Text className="text-danger">{errors.total?.message}</Form.Text>
@@ -219,7 +225,7 @@ const NuevaFacturaProveedor = () => {
                 type="text"
                 readOnly
                 className="text-muted"
-                value={totalRaw ? formatoMoneda(totalConIva) : ""}
+                value={totalNum ? formatoMoneda(totalConIva) : ""}
               />
             </Form.Group>
           </Col>

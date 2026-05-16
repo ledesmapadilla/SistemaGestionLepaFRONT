@@ -54,6 +54,9 @@ const ServiceMaquinas = lazy(() => import("./components/pages/secciones/MANTENIM
 const TableroControl = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/TableroControl/TableroControl.jsx"));
 const FacturacionProveedor = lazy(() => import("./components/pages/secciones/PROVEEDORES/Facturacion/FacturacionProveedor.jsx"));
 const NuevaFacturaProveedor = lazy(() => import("./components/pages/secciones/PROVEEDORES/Facturacion/NuevaFacturaProveedor.jsx"));
+const PagosProveedoresTabla = lazy(() => import("./components/pages/secciones/PROVEEDORES/Pagos/PagosProveedoresTabla.jsx"));
+const NuevoPagoProveedor = lazy(() => import("./components/pages/secciones/PROVEEDORES/Pagos/NuevoPagoProveedor.jsx"));
+const CuentaCorrienteProveedor = lazy(() => import("./components/pages/secciones/PROVEEDORES/CuentaCorriente/CuentaCorrienteProveedor.jsx"));
 
 const PageSpinner = () => (
   <div className="d-flex justify-content-center mt-5">
@@ -131,6 +134,9 @@ function App() {
                       <Route path="/personal/gastos-semanales" element={<GastosSemanales />} />
                       <Route path="/facturacion-proveedores" element={<FacturacionProveedor />} />
                       <Route path="/facturacion-proveedores/nueva" element={<NuevaFacturaProveedor />} />
+                      <Route path="/pago-proveedores" element={<PagosProveedoresTabla />} />
+                      <Route path="/pago-proveedores/nuevo" element={<NuevoPagoProveedor />} />
+                      <Route path="/cuenta-corriente-proveedores" element={<CuentaCorrienteProveedor />} />
                       <Route path="*" element={<Error404 />} />
                     </Routes>
                     </Suspense>

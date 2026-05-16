@@ -108,13 +108,19 @@ function Menu() {
                 Cobro de factura
               </NavDropdown.Item>
               <NavDropdown.Item as={Link} to="/cuenta-corriente">
-                Cuenta Corriente
+                Cuenta Corriente Cliente
               </NavDropdown.Item>
             </NavDropdown>
 
             <NavDropdown title="Proveedores" id="nav-dropdown-proveedores" className="mx-2">
               <NavDropdown.Item as={Link} to="/facturacion-proveedores">
                 Facturación Proveedores
+              </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/pago-proveedores">
+                Pago de Facturas
+              </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/cuenta-corriente-proveedores">
+                Cuenta Corriente Proveedores
               </NavDropdown.Item>
             </NavDropdown>
 

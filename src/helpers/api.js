@@ -21,4 +21,6 @@ export const API = {
   serviceMaquina: `${BASE}/api/service-maquina`,
   tablero: `${BASE}/api/tablero`,
   facturasProveedores: `${BASE}/api/facturas-proveedores`,
+  pagosProveedores: `${BASE}/api/pagos-proveedores`,
+  cuentaCorrienteProveedores: `${BASE}/api/cuenta-corriente-proveedores`,
 };

@@ -1,6 +1,8 @@
 
 thead th {
   font-weight: normal !important;
+  background-color: #374151 !important;
+  color: #ffffff !important;
 }
 
 .table {
