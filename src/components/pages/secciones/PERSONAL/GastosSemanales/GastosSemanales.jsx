@@ -256,18 +256,18 @@ const GastosSemanales = () => {
           </div>
           <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "65vh" }}>
             <Table striped bordered hover className="text-center align-middle">
-              <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1, backgroundColor: "#212529" }}>
+              <thead className="table-dark">
                 <tr>
-                  <th style={{ minWidth: 160, backgroundColor: "#212529" }}>Personal</th>
-                  <th style={{ minWidth: 110, backgroundColor: "#212529" }}>Semanal Teórico</th>
-                  <th style={{ minWidth: 110, backgroundColor: "#212529" }}>Ausentismo</th>
-                  <th style={{ minWidth: 110, backgroundColor: "#212529" }}>Adelanto</th>
-                  <th style={{ minWidth: 110, backgroundColor: "#212529" }}>Extras, favor pers.(+)</th>
-                  <th style={{ minWidth: 110, backgroundColor: "#212529" }}>Otros, favor pers.(+)</th>
-                  <th style={{ minWidth: 110, backgroundColor: "#212529" }}>Pagar</th>
-                  <th style={{ minWidth: 180, backgroundColor: "#212529" }}>Observaciones</th>
-                  <th style={{ width: 60, backgroundColor: "#212529" }}></th>
-                  <th style={{ width: 40, backgroundColor: "#212529" }}></th>
+                  <th style={{ minWidth: 160 }}>Personal</th>
+                  <th style={{ minWidth: 110 }}>Semanal Teórico</th>
+                  <th style={{ minWidth: 110 }}>Ausentismo</th>
+                  <th style={{ minWidth: 110 }}>Adelanto</th>
+                  <th style={{ minWidth: 110 }}>Extras, favor pers.(+)</th>
+                  <th style={{ minWidth: 110 }}>Otros, favor pers.(+)</th>
+                  <th style={{ minWidth: 110 }}>Pagar</th>
+                  <th style={{ minWidth: 180 }}>Observaciones</th>
+                  <th style={{ width: 60 }}></th>
+                  <th style={{ width: 40 }}></th>
                 </tr>
               </thead>
               <tbody>
