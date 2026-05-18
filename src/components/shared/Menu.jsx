@@ -46,10 +46,6 @@ function Menu() {
 
         <Navbar.Collapse id="navbar-nav">
           <Nav className="ms-auto">
-            <Nav.Link as={Link} to="/" className="mx-2">
-              Inicio
-            </Nav.Link>
-
             <NavDropdown
               title="Operaciones"
               id="nav-dropdown"
