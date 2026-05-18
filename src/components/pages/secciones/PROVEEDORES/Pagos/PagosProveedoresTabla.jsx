@@ -219,8 +219,9 @@ const PagosProveedoresTabla = () => {
           <Spinner animation="border" />
         </div>
       ) : (
+        <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
         <Table striped bordered hover className="text-center align-middle" style={{ fontSize: "0.82rem" }}>
-          <thead className="table-dark">
+          <thead className="table-dark sticky-top">
             <tr>
               <th>Fecha pago</th>
               <th>Proveedor</th>
@@ -266,6 +267,7 @@ const PagosProveedoresTabla = () => {
             )}
           </tbody>
         </Table>
+        </div>
       )}
 
       {/* Modal ver detalle */}
