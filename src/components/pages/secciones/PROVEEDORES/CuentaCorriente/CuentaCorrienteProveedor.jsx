@@ -105,7 +105,7 @@ const CuentaCorrienteProveedor = () => {
 
     const cols = ["A", "B", "C", "D", "E", "F"];
     const titulo = `CUENTA CORRIENTE — ${filtroProveedor}`;
-    const headers = ["Fecha", "Tipo", "Descripción", "Obra", "A pagar", "Pagado", "Saldo"];
+    const headers = ["Fecha", "N° Factura", "Descripción", "Obra", "A pagar", "Pagado", "Saldo"];
     const numCols = new Set([4, 5, 6]);
     const ws = {};
     ws["A1"] = { v: titulo, t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
@@ -115,7 +115,7 @@ const CuentaCorrienteProveedor = () => {
     });
     movConSaldo.forEach((m, ri) => {
       const fila = [
-        formatearFecha(m.fecha), m.tipo, m.descripcion,
+        formatearFecha(m.fecha), m.numeroFactura, m.descripcion,
         m.obra || "-",
         m.debito || 0, m.credito || 0, m.saldo ?? 0,
       ];
@@ -207,42 +207,45 @@ const CuentaCorrienteProveedor = () => {
         resumenPorProveedor.length === 0 ? (
           <p className="text-muted">Sin movimientos.</p>
         ) : (
-          <Table striped bordered hover className="text-center align-middle">
-            <thead className="table-dark">
-              <tr>
-                <th>Proveedor</th>
-                <th>A pagar</th>
-                <th>Pagado</th>
-                <th>Saldo</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {resumenPorProveedor.map((r) => (
-                <tr key={r.proveedor}>
-                  <td className="text-start fw-semibold">{r.proveedor}</td>
-                  <td>{formatoMoneda(r.debito)}</td>
-                  <td>{formatoMoneda(r.credito)}</td>
-                  <td className={r.saldo < 0 ? "text-success fw-semibold" : r.saldo > 0 ? "text-primary fw-semibold" : ""}>
-                    {formatoMoneda(r.saldo)}
-                  </td>
-                  <td>
-                    <Button size="sm" variant="outline-success" onClick={() => setFiltroProveedor(r.proveedor)}>Ver</Button>
-                  </td>
+          <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+            <Table striped bordered hover className="text-center align-middle">
+              <thead className="table-dark sticky-top">
+                <tr>
+                  <th>Proveedor</th>
+                  <th>A pagar</th>
+                  <th>Pagado</th>
+                  <th>Saldo</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {resumenPorProveedor.map((r) => (
+                  <tr key={r.proveedor}>
+                    <td className="text-start fw-semibold">{r.proveedor}</td>
+                    <td>{formatoMoneda(r.debito)}</td>
+                    <td>{formatoMoneda(r.credito)}</td>
+                    <td className={r.saldo < 0 ? "text-success fw-semibold" : r.saldo > 0 ? "text-primary fw-semibold" : ""}>
+                      {formatoMoneda(r.saldo)}
+                    </td>
+                    <td>
+                      <Button size="sm" variant="outline-success" onClick={() => setFiltroProveedor(r.proveedor)}>Ver</Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
         )
       ) : (
         movConSaldo.length === 0 ? (
           <p className="text-muted">Sin movimientos para este proveedor.</p>
         ) : (
+          <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
           <Table striped bordered hover className="text-center align-middle">
-            <thead className="table-dark">
+            <thead className="table-dark sticky-top">
               <tr>
                 <th>Fecha</th>
-                <th>Tipo</th>
+                <th>N° Factura</th>
                 <th>Descripción</th>
                 <th>Obra</th>
                 <th>A pagar</th>
@@ -254,7 +257,7 @@ const CuentaCorrienteProveedor = () => {
               {movConSaldo.map((m) => (
                 <tr key={`${m._id}-${m.tipo}`}>
                   <td>{formatearFecha(m.fecha)}</td>
-                  <td>{m.tipo === "Pago" ? <span style={{ textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: "4px" }}>Pago</span> : m.tipo}</td>
+                  <td>{m.tipo === "Pago" ? <span style={{ textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: "4px" }}>{m.numeroFactura}</span> : m.numeroFactura}</td>
                   <td>{m.descripcion}</td>
                   <td className="text-muted">{m.obra || "-"}</td>
                   <td>{m.debito ? formatoMoneda(m.debito) : "-"}</td>
@@ -266,6 +269,7 @@ const CuentaCorrienteProveedor = () => {
               ))}
             </tbody>
           </Table>
+          </div>
         )
       )}
     </div>
