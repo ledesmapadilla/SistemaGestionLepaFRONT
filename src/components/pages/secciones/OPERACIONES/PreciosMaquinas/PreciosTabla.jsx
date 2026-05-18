@@ -126,7 +126,7 @@ const PreciosTabla = ({
   return (
     <>
       <div className="w-75 mx-auto my-2">
-      <div className="position-relative d-flex align-items-center mb-2">
+      <div className="position-relative d-flex align-items-center mb-3">
         <h6 className="mb-0 w-100 text-center">
           Precios - {nombrePrincipal}{fechaPrincipal ? <span className="fw-normal"> ({fechaPrincipal})</span> : ""}
         </h6>
@@ -140,7 +140,7 @@ const PreciosTabla = ({
         </div>
       </div>
 
-      <div className="d-flex justify-content-end gap-2 mb-3">
+      <div className="d-flex justify-content-end gap-2 mb-4">
         <Button size="sm" variant="outline-warning" onClick={onAbrirConsumos}>
           Consumos gasoil
         </Button>
