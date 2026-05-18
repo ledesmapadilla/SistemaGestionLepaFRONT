@@ -240,66 +240,70 @@ const CuentaCorriente = () => {
         resumenPorCliente.length === 0 ? (
           <p className="text-muted">Sin movimientos.</p>
         ) : (
-          <Table striped bordered hover className="text-center align-middle">
-            <thead className="table-dark">
-              <tr>
-                <th >Cliente</th>
-                <th >Facturado</th>
-                <th >Cobrado</th>
-                <th >Saldo</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {resumenPorCliente.map((r) => (
-                <tr key={r.cliente}>
-                  <td className="text-start fw-semibold">{r.cliente}</td>
-                  <td>{formatoMoneda(r.debito)}</td>
-                  <td>{formatoMoneda(r.credito)}</td>
-                  <td className={r.saldo < 0 ? "text-success fw-semibold" : r.saldo > 0 ? "text-primary fw-semibold" : ""}>
-                    {formatoMoneda(r.saldo)}
-                  </td>
-                  <td>
-                    <Button size="sm" variant="outline-success" onClick={() => setFiltroCliente(r.cliente)}>Ver</Button>
-                  </td>
+          <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+            <Table striped bordered hover className="text-center align-middle">
+              <thead className="table-dark sticky-top">
+                <tr>
+                  <th>Cliente</th>
+                  <th>Facturado</th>
+                  <th>Cobrado</th>
+                  <th>Saldo</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {resumenPorCliente.map((r) => (
+                  <tr key={r.cliente}>
+                    <td className="text-start fw-semibold">{r.cliente}</td>
+                    <td>{formatoMoneda(r.debito)}</td>
+                    <td>{formatoMoneda(r.credito)}</td>
+                    <td className={r.saldo < 0 ? "text-success fw-semibold" : r.saldo > 0 ? "text-primary fw-semibold" : ""}>
+                      {formatoMoneda(r.saldo)}
+                    </td>
+                    <td>
+                      <Button size="sm" variant="outline-success" onClick={() => setFiltroCliente(r.cliente)}>Ver</Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
         )
       ) : (
         // Vista detalle: movimientos del cliente seleccionado
         movConSaldo.length === 0 ? (
           <p className="text-muted">Sin movimientos para este cliente.</p>
         ) : (
-          <Table striped bordered hover className="text-center align-middle">
-            <thead className="table-dark">
-              <tr>
-                <th >Fecha</th>
-                <th >Tipo</th>
-                <th >Descripción</th>
-                <th >Obra</th>
-                <th >Facturado</th>
-                <th >Cobrado</th>
-                <th >Saldo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {movConSaldo.map((m) => (
-                <tr key={`${m._id}-${m.tipo}`}>
-                  <td>{formatearFecha(m.fecha)}</td>
-                  <td>{m.tipo === "Cobro" ? <span style={{ textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: "4px" }}>Cobro</span> : m.tipo}</td>
-                  <td>{m.descripcion}</td>
-                  <td className="text-muted">{(m.obras || []).join(", ") || "-"}</td>
-                  <td>{m.debito ? formatoMoneda(m.debito) : "-"}</td>
-                  <td>{m.credito ? <span style={{ textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: "4px" }}>{formatoMoneda(m.credito)}</span> : "-"}</td>
-                  <td className={m.saldo < 0 ? "text-success fw-semibold" : m.saldo > 0 ? "text-primary fw-semibold" : ""}>
-                    {formatoMoneda(m.saldo)}
-                  </td>
+          <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+            <Table striped bordered hover className="text-center align-middle">
+              <thead className="table-dark sticky-top">
+                <tr>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Descripción</th>
+                  <th>Obra</th>
+                  <th>Facturado</th>
+                  <th>Cobrado</th>
+                  <th>Saldo</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {movConSaldo.map((m) => (
+                  <tr key={`${m._id}-${m.tipo}`}>
+                    <td>{formatearFecha(m.fecha)}</td>
+                    <td>{m.tipo === "Cobro" ? <span style={{ textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: "4px" }}>Cobro</span> : m.tipo}</td>
+                    <td>{m.descripcion}</td>
+                    <td className="text-muted">{(m.obras || []).join(", ") || "-"}</td>
+                    <td>{m.debito ? formatoMoneda(m.debito) : "-"}</td>
+                    <td>{m.credito ? <span style={{ textDecoration: "underline", textDecorationThickness: "1px", textUnderlineOffset: "4px" }}>{formatoMoneda(m.credito)}</span> : "-"}</td>
+                    <td className={m.saldo < 0 ? "text-success fw-semibold" : m.saldo > 0 ? "text-primary fw-semibold" : ""}>
+                      {formatoMoneda(m.saldo)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
         )
       )}
     </div>
