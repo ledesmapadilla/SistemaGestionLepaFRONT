@@ -4,15 +4,15 @@ import { API } from "./api";
 const remitosBackend = API.remitos;
 
 export const listarRemitos = async (estado = "") => {
-  const estadoQuery = estado ? `&estado=${encodeURIComponent(estado)}` : "";
-  const res = await authFetch(`${remitosBackend}?t=${Date.now()}${estadoQuery}`);
+  const estadoQuery = estado ? `?estado=${encodeURIComponent(estado)}` : "";
+  const res = await authFetch(`${remitosBackend}${estadoQuery}`);
   if (!res?.ok) throw new Error("Error al listar remitos");
   return res.json();
 };
 
 export const listarRemitosPorObra = async (idObra) => {
   try {
-    const res = await authFetch(`${remitosBackend}?obra=${idObra}&t=${Date.now()}`);
+    const res = await authFetch(`${remitosBackend}?obra=${idObra}`);
     if (!res?.ok) throw new Error("Error al listar remitos por obra");
     return res.json();
   } catch (error) {
