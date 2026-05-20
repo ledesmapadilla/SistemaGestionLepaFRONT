@@ -176,10 +176,13 @@ const RemitosModal = ({
   // CARGAR PERSONAL
   // ===============================
   useEffect(() => {
+    if (!show) return;
+    let cancelado = false;
+
     const cargarPersonal = async () => {
       try {
         const respuesta = await listarPersonal();
-        if (respuesta?.ok) {
+        if (!cancelado && respuesta?.ok) {
           const data = await respuesta.json();
           setPersonalDisponible(data);
         }
@@ -189,6 +192,7 @@ const RemitosModal = ({
     };
 
     cargarPersonal();
+    return () => { cancelado = true; };
   }, [show]);
 
   // ===============================
