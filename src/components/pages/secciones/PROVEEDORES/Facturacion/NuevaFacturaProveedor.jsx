@@ -214,6 +214,7 @@ const NuevaFacturaProveedor = () => {
                 onBlur={() => setEditandoTotal(false)}
                 onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
                 isInvalid={!!errors.total}
+                style={{ textAlign: "center", borderColor: "#ffc107", boxShadow: "none" }}
               />
               <Form.Text className="text-danger">{errors.total?.message}</Form.Text>
             </Form.Group>
