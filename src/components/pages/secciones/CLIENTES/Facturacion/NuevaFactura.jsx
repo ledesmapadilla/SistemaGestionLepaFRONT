@@ -34,6 +34,7 @@ const NuevaFactura = () => {
   const [remitosDisponibles, setRemitosDisponibles] = useState([]);
   const [remitosSeleccionados, setRemitosSeleccionados] = useState([]);
   const [montosAFacturar, setMontosAFacturar] = useState({});
+  const [inputFocusadoId, setInputFocusadoId] = useState(null);
   const [remitoElegido, setRemitoElegido] = useState("");
   const [obraSeleccionada, setObraSeleccionada] = useState("");
   const [loadingDatos, setLoadingDatos] = useState(true);
@@ -331,24 +332,27 @@ const NuevaFactura = () => {
                     <td>{formatoMoneda(saldo * signo)}</td>
                     <td>
                       <Form.Control
-                        type="number"
+                        type="text"
                         size="sm"
-                        min={0}
-                        max={saldo}
-                        step="0.01"
                         disabled={esNotaCredito}
-                        value={montosAFacturar[r._id] ?? saldo}
-                        onFocus={() =>
-                          setMontosAFacturar((prev) => ({ ...prev, [r._id]: "" }))
+                        value={
+                          inputFocusadoId === r._id
+                            ? (montosAFacturar[r._id] ?? "")
+                            : formatoMoneda(montosAFacturar[r._id] ?? saldo)
                         }
-                        onBlur={() =>
+                        onFocus={() => {
+                          setInputFocusadoId(r._id);
+                          setMontosAFacturar((prev) => ({ ...prev, [r._id]: "" }));
+                        }}
+                        onBlur={() => {
+                          setInputFocusadoId(null);
                           setMontosAFacturar((prev) => {
                             const v = prev[r._id];
                             return v === "" || v == null
                               ? { ...prev, [r._id]: 0 }
                               : prev;
-                          })
-                        }
+                          });
+                        }}
                         onChange={(e) => {
                           const raw = e.target.value;
                           if (raw === "") {
