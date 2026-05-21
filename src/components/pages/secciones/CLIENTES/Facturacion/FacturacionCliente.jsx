@@ -303,9 +303,9 @@ const FacturacionCliente = () => {
                 );
               })}
             </tbody>
-            <tfoot>
+            <tfoot style={{ borderTop: "2px solid #ffc107" }}>
               <tr>
-                <td colSpan={3} className="text-end">Subtotal:</td>
+                <td colSpan={3} className="text-end">Subtotal factura:</td>
                 <td>{formatoMoneda(subtotal)}</td>
               </tr>
               <tr>
@@ -313,7 +313,7 @@ const FacturacionCliente = () => {
                 <td>{formatoMoneda(subtotal * ivaRateVer)}</td>
               </tr>
               <tr>
-                <td colSpan={3} className="text-end fw-bold">Total + IVA:</td>
+                <td colSpan={3} className="text-end fw-bold">Total factura:</td>
                 <td className="fw-bold">{formatoMoneda(subtotal * (1 + ivaRateVer))}</td>
               </tr>
             </tfoot>
