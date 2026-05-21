@@ -165,9 +165,7 @@ const FacturacionCliente = () => {
     return coincideNumero && coincideCliente && coincideEstado;
   });
 
-  const subtotal = facturaVer
-    ? (facturaVer.remitos || []).reduce((sum, r) => sum + calcularTotalRemito(r.items), 0)
-    : 0;
+  const subtotal = facturaVer?.total ?? 0;
   const ivaRateVer = facturaVer?.tipoFactura === "Factura X" ? 0 : 0.21;
 
   return (
@@ -290,14 +288,20 @@ const FacturacionCliente = () => {
               </tr>
             </thead>
             <tbody>
-              {(facturaVer?.remitos || []).map((r) => (
-                <tr key={r._id}>
-                  <td>{r.remito}</td>
-                  <td>{formatearFecha(r.fecha)}</td>
-                  <td className="text-muted" title={r.obra?.nombreobra}>{r.obra?.nombreobra}</td>
-                  <td>{formatoMoneda(calcularTotalRemito(r.items))}</td>
-                </tr>
-              ))}
+              {(facturaVer?.remitos || []).map((r) => {
+                const entrada = (facturaVer?.montosPorRemito || []).find(
+                  (m) => m.remitoId?.toString() === r._id?.toString()
+                );
+                const montoFila = entrada ? entrada.monto : calcularTotalRemito(r.items);
+                return (
+                  <tr key={r._id}>
+                    <td>{r.remito}</td>
+                    <td>{formatearFecha(r.fecha)}</td>
+                    <td className="text-muted" title={r.obra?.nombreobra}>{r.obra?.nombreobra}</td>
+                    <td>{formatoMoneda(montoFila)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
             <tfoot>
               <tr>

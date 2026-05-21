@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Button, Table, Container, Form, Row, Col, Spinner, InputGroup } from "react-bootstrap";
-import "bootstrap-icons/font/bootstrap-icons.css";
+import { Button, Table, Container, Form, Row, Col, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { crearFactura, listarFacturas } from "../../../../../helpers/queriesFacturas";
@@ -34,22 +33,21 @@ const NuevaFactura = () => {
   const [todosRemitos, setTodosRemitos] = useState([]);
   const [remitosDisponibles, setRemitosDisponibles] = useState([]);
   const [remitosSeleccionados, setRemitosSeleccionados] = useState([]);
+  const [montosAFacturar, setMontosAFacturar] = useState({});
   const [remitoElegido, setRemitoElegido] = useState("");
   const [obraSeleccionada, setObraSeleccionada] = useState("");
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [numerosExistentes, setNumerosExistentes] = useState([]);
   const [todasFacturas, setTodasFacturas] = useState([]);
-  const [totalBase, setTotalBase] = useState(0);
-  const [inputSinIva, setInputSinIva] = useState("");
-  const [inputConIva, setInputConIva] = useState("");
-  const [editandoSinIva, setEditandoSinIva] = useState(false);
-  const [editandoConIva, setEditandoConIva] = useState(false);
 
   const clienteSeleccionado = watch("cliente");
   const tipoFactura = watch("tipoFactura");
   const ivaRate = tipoFactura === "Factura X" ? 0 : 0.21;
-
   const esNotaCredito = tipoFactura === "Nota de Crédito";
+  const signo = esNotaCredito ? -1 : 1;
+
+  const totalBase =
+    Object.values(montosAFacturar).reduce((sum, m) => sum + (Number(m) || 0), 0) * signo;
 
   useEffect(() => {
     const cargar = async () => {
@@ -62,6 +60,7 @@ const NuevaFactura = () => {
         ]);
         setTodosRemitos(remitos);
         setRemitosSeleccionados([]);
+        setMontosAFacturar({});
         setNumerosExistentes(facturas.map((f) => f.numeroFactura?.toString().trim()));
         setTodasFacturas(facturas);
       } catch (error) {
@@ -124,24 +123,23 @@ const NuevaFactura = () => {
     if (!remitoElegido) return;
     const remito = todosRemitos.find((r) => r._id === remitoElegido);
     if (!remito) return;
+    const totalRem = calcularTotalRemito(remito.items);
+    const saldo = esNotaCredito
+      ? totalRem
+      : totalRem - (remito.montoFacturado || 0);
     setRemitosSeleccionados((prev) => [...prev, remito]);
+    setMontosAFacturar((prev) => ({ ...prev, [remito._id]: saldo }));
     setRemitoElegido("");
   };
 
   const quitarRemito = (id) => {
     setRemitosSeleccionados(remitosSeleccionados.filter((r) => r._id !== id));
+    setMontosAFacturar((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
   };
-
-  const signo = esNotaCredito ? -1 : 1;
-
-  const totalCalculado = remitosSeleccionados.reduce(
-    (sum, r) => sum + calcularTotalRemito(r.items),
-    0
-  ) * signo;
-
-  useEffect(() => {
-    setTotalBase(totalCalculado);
-  }, [remitosSeleccionados, tipoFactura]);
 
   const onSubmit = async (data) => {
     if (remitosSeleccionados.length === 0) {
@@ -156,6 +154,10 @@ const NuevaFactura = () => {
       cliente: data.cliente,
       remitos: remitosSeleccionados.map((r) => r._id),
       total: totalBase,
+      montosPorRemito: remitosSeleccionados.map((r) => ({
+        remitoId: r._id,
+        monto: Number(montosAFacturar[r._id]) || 0,
+      })),
     };
 
     try {
@@ -282,16 +284,20 @@ const NuevaFactura = () => {
                   {clienteSeleccionado
                     ? remitosDisponibles.length === 0
                       ? obraSeleccionada
-                        ? "Sin remitos sin facturar para esta obra"
-                        : "Sin remitos sin facturar para este cliente"
+                        ? "Sin remitos con saldo para esta obra"
+                        : "Sin remitos con saldo para este cliente"
                       : "Seleccionar remito..."
                     : "Primero elegí un cliente"}
                 </option>
-                {remitosDisponibles.map((r) => (
-                  <option key={r._id} value={r._id}>
-                    Remito #{r.remito} — {r.obra?.nombreobra} ({formatearFecha(r.fecha)})
-                  </option>
-                ))}
+                {remitosDisponibles.map((r) => {
+                  const saldo = calcularTotalRemito(r.items) - (r.montoFacturado || 0);
+                  return (
+                    <option key={r._id} value={r._id}>
+                      Remito #{r.remito} — {r.obra?.nombreobra} ({formatearFecha(r.fecha)})
+                      {r.montoFacturado > 0 ? ` · Saldo: ${formatoMoneda(saldo)}` : ""}
+                    </option>
+                  );
+                })}
               </Form.Select>
             </Form.Group>
           </Col>
@@ -309,67 +315,65 @@ const NuevaFactura = () => {
                 <th>N° Remito</th>
                 <th>Fecha</th>
                 <th>Obra</th>
-                <th>Precio Total</th>
+                <th>Saldo disponible</th>
+                <th>A facturar</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {remitosSeleccionados.map((r) => (
-                <tr key={r._id}>
-                  <td>{r.remito}</td>
-                  <td>{formatearFecha(r.fecha)}</td>
-                  <td className="text-muted" title={r.obra?.nombreobra}>{r.obra?.nombreobra}</td>
-                  <td>{formatoMoneda(calcularTotalRemito(r.items) * signo)}</td>
-                  <td className="d-flex gap-1 justify-content-center align-items-center">
-                    <Button variant="outline-danger" size="sm" onClick={() => quitarRemito(r._id)}>Quitar</Button>
-                  </td>
-                </tr>
-              ))}
+              {remitosSeleccionados.map((r) => {
+                const totalRem = calcularTotalRemito(r.items);
+                const saldo = esNotaCredito ? totalRem : totalRem - (r.montoFacturado || 0);
+                return (
+                  <tr key={r._id}>
+                    <td>{r.remito}</td>
+                    <td>{formatearFecha(r.fecha)}</td>
+                    <td className="text-muted" title={r.obra?.nombreobra}>{r.obra?.nombreobra}</td>
+                    <td>{formatoMoneda(saldo * signo)}</td>
+                    <td>
+                      <Form.Control
+                        type="number"
+                        size="sm"
+                        min={0}
+                        max={saldo}
+                        step="0.01"
+                        disabled={esNotaCredito}
+                        value={montosAFacturar[r._id] ?? saldo}
+                        onChange={(e) =>
+                          setMontosAFacturar((prev) => ({
+                            ...prev,
+                            [r._id]: parseFloat(e.target.value) || 0,
+                          }))
+                        }
+                        style={{ width: "140px", textAlign: "right" }}
+                      />
+                    </td>
+                    <td>
+                      <Button variant="outline-danger" size="sm" onClick={() => quitarRemito(r._id)}>Quitar</Button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
             <tfoot style={{ borderTop: "2px solid #ffc107" }}>
               <tr>
-                <td colSpan={3} className="text-end">Subtotal (sin IVA):</td>
-                <td>
-                  <InputGroup size="sm">
-                    <Form.Control
-                      type="text"
-                      className="text-center"
-                      value={editandoSinIva ? inputSinIva : formatoMoneda(totalBase)}
-                      onFocus={() => { setEditandoSinIva(true); setInputSinIva(String(totalBase)); }}
-                      onChange={(e) => setInputSinIva(e.target.value)}
-                      onBlur={() => { setTotalBase(parseFloat(inputSinIva) || 0); setEditandoSinIva(false); }}
-                    />
-                    <InputGroup.Text><i className="bi bi-pencil" /></InputGroup.Text>
-                  </InputGroup>
-                </td>
+                <td colSpan={4} className="text-end">Subtotal (sin IVA):</td>
+                <td>{formatoMoneda(Math.abs(totalBase))}</td>
                 <td></td>
               </tr>
               <tr>
-                <td colSpan={3} className="text-end">IVA {ivaRate === 0 ? "0%" : "21%"}:</td>
-                <td>{formatoMoneda(totalBase * ivaRate)}</td>
+                <td colSpan={4} className="text-end">IVA {ivaRate === 0 ? "0%" : "21%"}:</td>
+                <td>{formatoMoneda(Math.abs(totalBase) * ivaRate)}</td>
                 <td></td>
               </tr>
               <tr>
-                <td colSpan={3} className="text-end fw-bold">Total + IVA:</td>
-                <td>
-                  <InputGroup size="sm">
-                    <Form.Control
-                      type="text"
-                      className="text-center fw-bold"
-                      value={editandoConIva ? inputConIva : formatoMoneda(totalBase * (1 + ivaRate))}
-                      onFocus={() => { setEditandoConIva(true); setInputConIva(String(+(totalBase * (1 + ivaRate)).toFixed(2))); }}
-                      onChange={(e) => setInputConIva(e.target.value)}
-                      onBlur={() => { setTotalBase((parseFloat(inputConIva) || 0) / (1 + ivaRate)); setEditandoConIva(false); }}
-                    />
-                    <InputGroup.Text><i className="bi bi-pencil" /></InputGroup.Text>
-                  </InputGroup>
-                </td>
+                <td colSpan={4} className="text-end fw-bold">Total + IVA:</td>
+                <td className="fw-bold">{formatoMoneda(Math.abs(totalBase) * (1 + ivaRate))}</td>
                 <td></td>
               </tr>
             </tfoot>
           </Table>
         )}
-
       </Form>
     </Container>
   );
