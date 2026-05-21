@@ -338,8 +338,24 @@ const NuevaFactura = () => {
                         step="0.01"
                         disabled={esNotaCredito}
                         value={montosAFacturar[r._id] ?? saldo}
+                        onFocus={() =>
+                          setMontosAFacturar((prev) => ({ ...prev, [r._id]: "" }))
+                        }
+                        onBlur={() =>
+                          setMontosAFacturar((prev) => {
+                            const v = prev[r._id];
+                            return v === "" || v == null
+                              ? { ...prev, [r._id]: 0 }
+                              : prev;
+                          })
+                        }
                         onChange={(e) => {
-                          const val = parseFloat(e.target.value) || 0;
+                          const raw = e.target.value;
+                          if (raw === "") {
+                            setMontosAFacturar((prev) => ({ ...prev, [r._id]: "" }));
+                            return;
+                          }
+                          const val = parseFloat(raw) || 0;
                           setMontosAFacturar((prev) => ({
                             ...prev,
                             [r._id]: Math.min(val, saldo),
