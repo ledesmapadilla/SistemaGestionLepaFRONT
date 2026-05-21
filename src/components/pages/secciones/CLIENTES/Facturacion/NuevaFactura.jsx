@@ -53,11 +53,19 @@ const NuevaFactura = () => {
     const cargar = async () => {
       setLoadingDatos(true);
       try {
-        const estado = esNotaCredito ? "Facturado" : "Sin facturar";
-        const [remitos, facturas] = await Promise.all([
+        const estado = esNotaCredito ? "Facturado" : "";
+        const [remitosRaw, facturas] = await Promise.all([
           listarRemitos(estado),
           listarFacturas(),
         ]);
+        // Para facturas normales: mostrar solo remitos con saldo pendiente
+        // Incluye "Sin facturar" y también "Facturado" con montoFacturado < total (facturación parcial previa)
+        const remitos = esNotaCredito
+          ? remitosRaw
+          : remitosRaw.filter((r) => {
+              const total = calcularTotalRemito(r.items);
+              return total - (r.montoFacturado || 0) > 0;
+            });
         setTodosRemitos(remitos);
         setRemitosSeleccionados([]);
         setMontosAFacturar({});
