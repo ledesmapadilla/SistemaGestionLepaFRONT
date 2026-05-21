@@ -59,10 +59,11 @@ const NuevaFactura = () => {
           listarFacturas(),
         ]);
         // Para facturas normales: mostrar solo remitos con saldo pendiente
-        // Incluye "Sin facturar" y también "Facturado" con montoFacturado < total (facturación parcial previa)
+        // "Obra propia" es seguimiento interno de obras precio cerrado → nunca facturable
         const remitos = esNotaCredito
           ? remitosRaw
           : remitosRaw.filter((r) => {
+              if (r.estado === "Obra propia") return false;
               const total = calcularTotalRemito(r.items);
               return total - (r.montoFacturado || 0) > 0;
             });
