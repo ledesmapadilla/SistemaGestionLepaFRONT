@@ -32,8 +32,8 @@ const NuevaFacturaProveedor = () => {
   const tipoFactura = watch("tipoFactura");
   const totalRaw = watch("total");
   const ivaRate = (tipoFactura === "Factura X" || tipoFactura === "Factura B") ? 0 : 0.21;
-  const totalNum = totalRaw ? parseFloat(String(totalRaw).replace(",", ".")) : 0;
-  const totalConIva = totalNum * (1 + ivaRate);
+  const totalConIvaNum = totalRaw ? parseFloat(String(totalRaw).replace(",", ".")) : 0;
+  const totalSinIva = totalConIvaNum / (1 + ivaRate);
 
   register("total", { required: "El total es obligatorio", validate: (v) => parseFloat(String(v).replace(",", ".")) >= 0 || "Debe ser positivo" });
 
@@ -81,7 +81,7 @@ const NuevaFacturaProveedor = () => {
       proveedor: data.proveedor,
       concepto: data.concepto || "",
       obra: data.obra || "",
-      total: parseFloat(String(data.total).replace(",", ".")),
+      total: totalConIvaNum / (1 + ivaRate),
     };
 
     try {
@@ -204,7 +204,7 @@ const NuevaFacturaProveedor = () => {
           </Col>
           <Col md={2}>
             <Form.Group>
-              <Form.Label>Total (sin IVA)</Form.Label>
+              <Form.Label>Total + iva ({ivaRate === 0 ? "0%" : "21%"})</Form.Label>
               <Form.Control
                 type="text"
                 placeholder="0.00"
@@ -220,12 +220,12 @@ const NuevaFacturaProveedor = () => {
           </Col>
           <Col md={2} className="d-flex flex-column justify-content-end">
             <Form.Group>
-              <Form.Label>Total + IVA ({ivaRate === 0 ? "0%" : "21%"})</Form.Label>
+              <Form.Label>Total sin iva</Form.Label>
               <Form.Control
                 type="text"
                 readOnly
                 className="text-muted"
-                value={totalNum ? formatoMoneda(totalConIva) : ""}
+                value={totalConIvaNum ? formatoMoneda(totalSinIva) : ""}
               />
             </Form.Group>
           </Col>
