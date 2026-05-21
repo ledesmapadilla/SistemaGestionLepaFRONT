@@ -204,7 +204,7 @@ const NuevaFacturaProveedor = () => {
           </Col>
           <Col md={2}>
             <Form.Group>
-              <Form.Label>Total factura (iva)</Form.Label>
+              <Form.Label>Total factura (iva {ivaRate === 0 ? "0%" : "21%"})</Form.Label>
               <Form.Control
                 type="text"
                 placeholder="0.00"
