@@ -10,6 +10,12 @@ export const listarRemitos = async (estado = "") => {
   return res.json();
 };
 
+export const listarRemitosDisponibles = async () => {
+  const res = await authFetch(`${remitosBackend}?disponibles=true`);
+  if (!res?.ok) throw new Error("Error al listar remitos disponibles");
+  return res.json();
+};
+
 export const listarRemitosPorObra = async (idObra) => {
   try {
     const res = await authFetch(`${remitosBackend}?obra=${idObra}`);

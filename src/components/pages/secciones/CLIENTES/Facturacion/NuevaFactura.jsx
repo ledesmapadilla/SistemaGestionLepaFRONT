@@ -4,7 +4,7 @@ import { Button, Table, Container, Form, Row, Col, Spinner } from "react-bootstr
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { crearFactura, listarFacturas } from "../../../../../helpers/queriesFacturas";
-import { listarRemitos } from "../../../../../helpers/queriesRemitos";
+import { listarRemitos, listarRemitosDisponibles } from "../../../../../helpers/queriesRemitos";
 
 const hoy = new Date().toLocaleDateString("en-CA");
 
@@ -53,21 +53,11 @@ const NuevaFactura = () => {
     const cargar = async () => {
       setLoadingDatos(true);
       try {
-        const estado = esNotaCredito ? "Facturado" : "";
         const [remitosRaw, facturas] = await Promise.all([
-          listarRemitos(estado),
+          esNotaCredito ? listarRemitos("Facturado") : listarRemitosDisponibles(),
           listarFacturas(),
         ]);
-        // Para facturas normales: mostrar solo remitos con saldo pendiente
-        // "Obra propia" es seguimiento interno de obras precio cerrado → nunca facturable
-        const remitos = esNotaCredito
-          ? remitosRaw
-          : remitosRaw.filter((r) => {
-              if (r.estado === "Obra propia") return false;
-              const total = calcularTotalRemito(r.items);
-              return total - (r.montoFacturado || 0) > 0;
-            });
-        setTodosRemitos(remitos);
+        setTodosRemitos(remitosRaw);
         setRemitosSeleccionados([]);
         setMontosAFacturar({});
         setNumerosExistentes(facturas.map((f) => f.numeroFactura?.toString().trim()));
