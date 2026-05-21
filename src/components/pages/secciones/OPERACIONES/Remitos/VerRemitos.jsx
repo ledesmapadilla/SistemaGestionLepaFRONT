@@ -28,6 +28,7 @@ const VerRemitos = () => {
   const [precios, setPrecios] = useState(location.state?.precios || []);
   const [showModalRemito, setShowModalRemito] = useState(false);
   const [obsSeleccionada, setObsSeleccionada] = useState("");
+  const [remitoVer, setRemitoVer] = useState(null);
   const tableContainerRef = useRef(null);
 
   const cargarRemitos = async () => {
@@ -423,6 +424,13 @@ const VerRemitos = () => {
                     <td>
                       <div className="d-flex justify-content-center gap-1">
                         <Button
+                          variant="outline-success"
+                          size="sm"
+                          onClick={() => setRemitoVer(remito)}
+                        >
+                          Ver
+                        </Button>
+                        <Button
                           variant="outline-danger"
                           size="sm"
                           onClick={() => handleEliminarRemito(remito._id)}
@@ -492,6 +500,64 @@ const VerRemitos = () => {
           setRemitoEditando(null);
         }}
       />
+
+      <Modal show={!!remitoVer} onHide={() => setRemitoVer(null)} size="xl" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Remito N° {remitoVer?.remito}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="d-flex gap-4 mb-3 text-muted small">
+            <span><strong>Fecha:</strong> {mostrarFechaDMY(remitoVer?.items?.[0]?.fecha || remitoVer?.fecha)}</span>
+            <span><strong>Estado:</strong> {remitoVer?.estado}</span>
+          </div>
+          <Table striped bordered hover className="text-center align-middle">
+            <thead className="table-dark">
+              <tr>
+                <th>Fecha</th>
+                <th>Maquinista</th>
+                <th>$/hs</th>
+                <th>Máquina</th>
+                <th>Servicio</th>
+                <th>Cant.</th>
+                <th>Unidad</th>
+                <th>$ Unitario</th>
+                <th>$ Total</th>
+                <th>Gasoil (lts)</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(remitoVer?.items || []).map((item, idx) => (
+                <tr key={idx}>
+                  <td>{mostrarFechaDMY(item.fecha || remitoVer.fecha)}</td>
+                  <td>{item.personal || "-"}</td>
+                  <td>{item.costoHoraPersonal ? `$${formatoMiles(item.costoHoraPersonal)}` : "-"}</td>
+                  <td>{item.maquina || "-"}</td>
+                  <td>{item.servicio || "-"}</td>
+                  <td>{item.cantidad}</td>
+                  <td>{item.unidad || "-"}</td>
+                  <td>{item.precioUnitario ? `$${formatoMiles(item.precioUnitario)}` : "-"}</td>
+                  <td>{item.cantidad && item.precioUnitario ? `$${formatoMiles(item.cantidad * item.precioUnitario)}` : "-"}</td>
+                  <td>{item.gasoil || "-"}</td>
+                  <td>{item.observaciones || "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot style={{ borderTop: "2px solid #ffc107" }}>
+              <tr>
+                <td colSpan={8} className="text-end fw-bold">Total:</td>
+                <td className="fw-bold">
+                  ${formatoMiles((remitoVer?.items || []).reduce((sum, i) => sum + i.cantidad * i.precioUnitario, 0))}
+                </td>
+                <td colSpan={2}></td>
+              </tr>
+            </tfoot>
+          </Table>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setRemitoVer(null)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
 
       <Modal
         show={!!obsSeleccionada}
