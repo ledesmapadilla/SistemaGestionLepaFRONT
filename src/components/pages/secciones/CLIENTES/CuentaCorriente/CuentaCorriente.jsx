@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { obtenerCuentaCorriente } from "../../../../../helpers/queriesCuentaCorriente";
 
 const formatoMoneda = (valor) => {
-  if (valor === undefined || valor === null || valor === 0) return "-";
+  if (valor === undefined || valor === null) return "-";
   return Number(valor).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 };
 
