@@ -336,20 +336,20 @@ const NuevoCobro = () => {
                 ))}
               </Form.Select>
             </div>
-            {facturasSeleccionadas.length > 0 && (
-              <Button type="button" variant="outline-primary" size="sm" onClick={() => {
-                if (mediosPago.length === 0) agregarMedioPago();
-                setShowModalPago(true);
-              }}>
-                {mediosPago.length > 0 ? `Formas de pago (${mediosPago.length})` : "+ Agregar forma de pago"}
-              </Button>
-            )}
+            <Button type="button" variant="outline-primary" size="sm" onClick={agregarFactura} disabled={!facturaElegida}>+ Agregar Factura</Button>
           </div>
         </div>
 
         <div className="d-flex justify-content-end mb-3 gap-2">
           <Button type="button" variant="outline-secondary" onClick={() => navigate("/cobro-factura")}>Cancelar</Button>
-          <Button type="button" variant="outline-primary" onClick={agregarFactura} disabled={!facturaElegida}>+ Agregar Factura</Button>
+          {facturasSeleccionadas.length > 0 && (
+            <Button type="button" variant="outline-primary" onClick={() => {
+              if (mediosPago.length === 0) agregarMedioPago();
+              setShowModalPago(true);
+            }}>
+              {mediosPago.length > 0 ? `Formas de pago (${mediosPago.length})` : "+ Agregar forma de pago"}
+            </Button>
+          )}
           <Button type="submit" variant="outline-success">Guardar Cobro</Button>
         </div>
 
