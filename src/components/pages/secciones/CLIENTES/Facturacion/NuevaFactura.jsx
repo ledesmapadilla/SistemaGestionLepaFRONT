@@ -338,12 +338,13 @@ const NuevaFactura = () => {
                         step="0.01"
                         disabled={esNotaCredito}
                         value={montosAFacturar[r._id] ?? saldo}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
                           setMontosAFacturar((prev) => ({
                             ...prev,
-                            [r._id]: parseFloat(e.target.value) || 0,
-                          }))
-                        }
+                            [r._id]: Math.min(val, saldo),
+                          }));
+                        }}
                         style={{ width: "140px", textAlign: "right" }}
                       />
                     </td>
