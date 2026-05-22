@@ -79,6 +79,9 @@ function Menu() {
             </NavDropdown>
 
             <NavDropdown title="Mantenimiento" id="nav-dropdown" className="mx-2">
+              <NavDropdown.Item as={Link} to="/departamento-mantenimiento">
+                Departamento de Mantenimiento
+              </NavDropdown.Item>
               <NavDropdown.Item as={Link} to="/tablero-control">
                 Tablero de Control
               </NavDropdown.Item>
