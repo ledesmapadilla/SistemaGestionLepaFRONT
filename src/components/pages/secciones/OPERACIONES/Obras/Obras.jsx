@@ -233,7 +233,7 @@ const Obras = () => {
               obra: obraGuardada._id,
               remito: nextNum,
               fecha: hoyStr,
-              estado: "Sin facturar",
+              estado: "Obra propia",
               items: itemsRemito,
             });
           }
