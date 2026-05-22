@@ -42,9 +42,10 @@ const RemitosXClientesFinal = () => {
     try {
       const data = await listarRemitosPorObra(obraId);
 
-      // 1. CALCULAMOS EL TOTAL OBRA (Con todos los remitos, facturados o no)
+      // 1. CALCULAMOS EL TOTAL OBRA (Con todos los remitos, facturados o no, excluyendo "Precio de la obra")
       const totalGlobal = data.reduce((total, remito) => {
         const subtotalRemito = remito.items.reduce((sum, item) => {
+          if (item.servicio === "Precio de la obra") return sum;
           return sum + item.cantidad * item.precioUnitario;
         }, 0);
         return total + subtotalRemito;
@@ -77,9 +78,10 @@ const RemitosXClientesFinal = () => {
     return `${d}-${m}-${y}`;
   };
 
-  // Cálculo del total solo de lo que se ve en esta tabla (Sin facturar)
+  // Cálculo del total solo de lo que se ve en esta tabla (Sin facturar, excluyendo "Precio de la obra")
   const totalNoFacturado = remitos.reduce((total, remito) => {
     const subtotalRemito = remito.items.reduce((sum, item) => {
+      if (item.servicio === "Precio de la obra") return sum;
       return sum + item.cantidad * item.precioUnitario;
     }, 0);
     return total + subtotalRemito;

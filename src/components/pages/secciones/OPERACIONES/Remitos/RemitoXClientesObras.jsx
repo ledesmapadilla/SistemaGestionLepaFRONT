@@ -43,6 +43,7 @@ const RemitosXClientesObras = () => {
 
             const subtotalRemito =
               remito.items?.reduce((sum, item) => {
+                if (item.servicio === "Precio de la obra") return sum;
                 const cant = Number(item.cantidad) || 0;
                 const precio = Number(item.precioUnitario) || 0;
                 return sum + cant * precio;
