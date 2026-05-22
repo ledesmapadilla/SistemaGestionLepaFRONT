@@ -163,17 +163,14 @@ const VerRemitos = () => {
         return total + subtotalRemito;
       }, 0);
   };
+  // Calcula el total absoluto de todos los remitos cargados
   const calcularTotalObra = () => {
-    if (modalidad === "Precio cerrado") {
-      return (precios || [])
-        .filter((p) => p.clasificacion === "Precio cerrado")
-        .reduce((sum, p) => sum + (p.precio || 0), 0);
-    }
-    return remitos
-      .filter((r) => r.estado !== "Obra propia")
-      .reduce((total, remito) => {
-        return total + remito.items.reduce((sum, item) => sum + item.cantidad * item.precioUnitario, 0);
+    return remitos.reduce((total, remito) => {
+      const subtotalRemito = remito.items.reduce((sum, item) => {
+        return sum + item.cantidad * item.precioUnitario;
       }, 0);
+      return total + subtotalRemito;
+    }, 0);
   };
 
   const totalObra = calcularTotalObra();
