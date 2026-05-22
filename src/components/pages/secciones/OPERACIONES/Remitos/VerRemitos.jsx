@@ -424,6 +424,13 @@ const VerRemitos = () => {
                     <td>
                       <div className="d-flex justify-content-center gap-1">
                         <Button
+                          variant="outline-warning"
+                          size="sm"
+                          onClick={() => handleEditarItem(remito, item0)}
+                        >
+                          Editar
+                        </Button>
+                        <Button
                           variant="outline-success"
                           size="sm"
                           onClick={() => setRemitoVer(remito)}
@@ -436,13 +443,6 @@ const VerRemitos = () => {
                           onClick={() => handleEliminarRemito(remito._id)}
                         >
                           Borrar
-                        </Button>
-                        <Button
-                          variant="outline-warning"
-                          size="sm"
-                          onClick={() => handleEditarItem(remito, item0)}
-                        >
-                          Editar
                         </Button>
                       </div>
                     </td>
