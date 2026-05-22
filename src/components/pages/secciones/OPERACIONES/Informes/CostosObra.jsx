@@ -38,7 +38,7 @@ const CostosObra = () => {
 
   const [busquedaCliente, setBusquedaCliente] = useState("");
   const [razonSocialSeleccionada, setRazonSocialSeleccionada] = useState(null);
-  const [filtroEstado, setFiltroEstado] = useState("En curso");
+  const [filtroEstado, setFiltroEstado] = useState("Terminada, para análisis");
   const [obraSeleccionada, setObraSeleccionada] = useState(null);
   const [datosAnalisis, setDatosAnalisis] = useState(null);
   const [loadingAnalisis, setLoadingAnalisis] = useState(false);
@@ -241,7 +241,7 @@ const CostosObra = () => {
 
   const handleVolverAClientes = () => {
     setRazonSocialSeleccionada(null);
-    setFiltroEstado("En curso");
+    setFiltroEstado("Terminada, para análisis");
   };
 
  
@@ -338,6 +338,7 @@ const CostosObra = () => {
               <Form.Select size="sm" value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} style={filtroEstado ? selectActivo : {}}>
                 <option value="">Todos los estados</option>
                 <option value="En curso">En curso</option>
+                <option value="Terminada, para análisis">Terminada, para análisis</option>
                 <option value="Terminada">Terminada</option>
               </Form.Select>
               {filtroEstado && <span onClick={() => setFiltroEstado("")} style={estiloX}>✕</span>}
