@@ -78,10 +78,9 @@ const RemitosXClientesFinal = () => {
     return `${d}-${m}-${y}`;
   };
 
-  // Cálculo del total solo de lo que se ve en esta tabla (Sin facturar, excluyendo "Precio de la obra")
+  // Cálculo del total solo de lo que se ve en esta tabla (Sin facturar)
   const totalNoFacturado = remitos.reduce((total, remito) => {
     const subtotalRemito = remito.items.reduce((sum, item) => {
-      if (item.servicio === "Precio de la obra") return sum;
       return sum + item.cantidad * item.precioUnitario;
     }, 0);
     return total + subtotalRemito;

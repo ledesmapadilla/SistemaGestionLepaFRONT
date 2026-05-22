@@ -158,7 +158,6 @@ const VerRemitos = () => {
       .filter((remito) => remito.estado === "Sin facturar")
       .reduce((total, remito) => {
         const subtotalRemito = remito.items.reduce((sum, item) => {
-          if (item.servicio === "Precio de la obra") return sum;
           return sum + item.cantidad * item.precioUnitario;
         }, 0);
         return total + subtotalRemito;
