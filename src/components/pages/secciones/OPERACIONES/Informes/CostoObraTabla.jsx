@@ -58,7 +58,7 @@ const CostoObraTabla = ({ obra, costos, onVolver, onVerGastos, onAnalizada }) =>
   return (
     <div className="w-50 mx-auto my-2">
       {/* CABECERA */}
-      <h6 className="text-center mb-2">Análisis de la obra</h6>
+      <h6 className="text-center my-2">Análisis de la obra</h6>
       <div className="d-flex justify-content-between align-items-center mb-2">
         <div>
           <h6 className="mb-1">Razón social: <span className="nombreTitulos">{obra?.razonsocial || "-"}</span></h6>
