@@ -243,7 +243,6 @@ const CostosObra = () => {
     if (!obraSeleccionada) return;
     try {
       const resp = await editarObra(obraSeleccionada._id, {
-        estado: "Terminada",
         comentariosAnalisis: comentario,
         saldoAnalisis: saldoFinal,
       });
@@ -251,7 +250,7 @@ const CostosObra = () => {
         setObras((prev) =>
           prev.map((o) =>
             o._id === obraSeleccionada._id
-              ? { ...o, estado: "Terminada", comentariosAnalisis: comentario, saldoAnalisis: saldoFinal }
+              ? { ...o, comentariosAnalisis: comentario, saldoAnalisis: saldoFinal }
               : o
           )
         );
