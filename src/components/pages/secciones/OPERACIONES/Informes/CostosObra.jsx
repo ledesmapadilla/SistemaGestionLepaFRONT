@@ -387,7 +387,7 @@ const CostosObra = () => {
                 obrasFiltradas.map((obra) => (
                   <tr key={obra._id}>
                     <td>{obra.nombreobra}</td>
-                    <td>{obra.estado}</td>
+                    <td className={obra.estado === "Terminada +" ? "text-success" : obra.estado === "Terminada -" ? "text-danger" : ""}>{obra.estado}</td>
                     <td>
                       <Button
                         size="sm"

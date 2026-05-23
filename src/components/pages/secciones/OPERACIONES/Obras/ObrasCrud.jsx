@@ -135,7 +135,7 @@ const CrudObras = ({
                   <td>{obra.razonsocial}</td>
                   <td>{obra.nombreobra}</td>
                   <td>{obra.contacto}</td>
-                  <td style={{ whiteSpace: "nowrap" }} className={obra.estado === "Terminada (-)" ? "text-danger" : ""}>{obra.estado}</td>
+                  <td style={{ whiteSpace: "nowrap" }} className={obra.estado === "Terminada +" ? "text-success" : (obra.estado === "Terminada -" || obra.estado === "Terminada (-)") ? "text-danger" : ""}>{obra.estado}</td>
                   <td className="d-flex gap-1 justify-content-center align-items-center">
                     <Button
                       size="sm"
