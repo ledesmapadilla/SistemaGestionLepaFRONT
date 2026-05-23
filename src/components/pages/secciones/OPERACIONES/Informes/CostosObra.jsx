@@ -323,7 +323,7 @@ const CostosObra = () => {
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0 }}>
         <div style={{ width: "50%", marginLeft: "auto", marginRight: "auto", display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
           <div className="pt-2 pb-1">
-            <h6 className="text-center mb-2">Temas de interés</h6>
+            <h6 className="text-center mb-2">Análisis y resultado de cada obra</h6>
             <div className="d-flex justify-content-between align-items-center gap-2 mb-2">
               <Form.Control size="sm" type="search" placeholder="Buscar razón social..." value={busquedaCliente} onChange={(e) => setBusquedaCliente(e.target.value)} style={{ flex: 1 }} />
               <div style={{ position: "relative", width: "210px", flexShrink: 0 }}>
@@ -377,7 +377,7 @@ const CostosObra = () => {
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0 }}>
       <div style={{ width: "50%", marginLeft: "auto", marginRight: "auto", display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
         <div className="pt-2 pb-1">
-          <h6 className="text-center mb-1">Temas de interés</h6>
+          <h6 className="text-center mb-1">Análisis y resultado de cada obra</h6>
           <h6 className="text-center mb-2">Razón social: <span className="nombreTitulos">{razonSocialSeleccionada}</span></h6>
           <div className="d-flex justify-content-between align-items-center mb-2">
             <div style={{ position: "relative", width: "200px" }}>

@@ -66,7 +66,7 @@ function Menu() {
 
               <NavDropdown title="Informes" id="nav-dropdown" className="mx-3">
                 <NavDropdown.Item as={Link} to="/costos-obra">
-                  Temas de interés
+                  Análisis de costos
                 </NavDropdown.Item>
               </NavDropdown>
 
