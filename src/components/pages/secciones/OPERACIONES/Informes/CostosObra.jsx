@@ -364,9 +364,7 @@ const CostosObra = () => {
                 <option value="">Todos los estados</option>
                 <option value="En curso">En curso</option>
                 <option value="Terminada, para análisis">Terminada, para análisis</option>
-                <option value="Terminada +">Terminada +</option>
-                <option value="Terminada -">Terminada -</option>
-                <option value="Terminada">Todas las terminadas</option>
+                <option value="Terminada">Terminada</option>
               </Form.Select>
               {filtroEstado && <span onClick={() => setFiltroEstado("")} style={estiloX}>✕</span>}
             </div>
