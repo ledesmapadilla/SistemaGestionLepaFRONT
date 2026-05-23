@@ -103,6 +103,8 @@ const CrudObras = ({
               <option value="">Todos los estados</option>
               <option value="En curso">En curso</option>
               <option value="Terminada, para análisis">Terminada, para análisis</option>
+              <option value="Terminada +">Terminada +</option>
+              <option value="Terminada -">Terminada -</option>
               <option value="Terminada">Terminadas</option>
             </Form.Select>
           </div>
