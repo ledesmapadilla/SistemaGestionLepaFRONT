@@ -105,7 +105,6 @@ const CrudObras = ({
               <option value="Terminada, para análisis">Terminada, para análisis</option>
               <option value="Terminada +">Terminada +</option>
               <option value="Terminada -">Terminada -</option>
-              <option value="Terminada">Terminadas</option>
             </Form.Select>
           </div>
           <div className="d-flex gap-2 ms-2">
