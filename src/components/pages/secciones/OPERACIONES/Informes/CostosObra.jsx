@@ -239,18 +239,19 @@ const CostosObra = () => {
     setDatosAnalisis(null);
   };
 
-  const handleAnalizada = async (comentario) => {
+  const handleAnalizada = async (comentario, saldoFinal) => {
     if (!obraSeleccionada) return;
     try {
       const resp = await editarObra(obraSeleccionada._id, {
         estado: "Terminada",
         comentariosAnalisis: comentario,
+        saldoAnalisis: saldoFinal,
       });
       if (resp?.ok) {
         setObras((prev) =>
           prev.map((o) =>
             o._id === obraSeleccionada._id
-              ? { ...o, estado: "Terminada", comentariosAnalisis: comentario }
+              ? { ...o, estado: "Terminada", comentariosAnalisis: comentario, saldoAnalisis: saldoFinal }
               : o
           )
         );
@@ -387,7 +388,17 @@ const CostosObra = () => {
                     <td>{obra.nombreobra}</td>
                     <td>{obra.estado}</td>
                     <td>
-                      <Button size="sm" variant="outline-primary" onClick={() => handleAnalisis(obra)}>Análisis</Button>
+                      <Button
+                        size="sm"
+                        variant={obra.saldoAnalisis != null ? (obra.saldoAnalisis >= 0 ? "outline-success" : "outline-danger") : "outline-primary"}
+                        onClick={() => handleAnalisis(obra)}
+                      >
+                        {obra.saldoAnalisis != null
+                          ? obra.saldoAnalisis >= 0
+                            ? "Analizada +"
+                            : "Analizada -"
+                          : "Análisis"}
+                      </Button>
                     </td>
                   </tr>
                 ))

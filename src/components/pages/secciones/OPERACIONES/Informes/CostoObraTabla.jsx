@@ -139,7 +139,7 @@ const CostoObraTabla = ({ obra, costos, onVolver, onVerGastos, onAnalizada }) =>
           placeholder="Escribí un comentario sobre el análisis..."
         />
         <div className="d-flex justify-content-end mt-2">
-          <Button variant="outline-success" onClick={() => onAnalizada?.(comentario)}>
+          <Button variant="outline-success" onClick={() => onAnalizada?.(comentario, saldoFinal)}>
             Analizada
           </Button>
         </div>
