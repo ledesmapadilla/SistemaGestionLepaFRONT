@@ -241,8 +241,10 @@ const CostosObra = () => {
 
   const handleAnalizada = async (comentario, saldoFinal) => {
     if (!obraSeleccionada) return;
+    const nuevoEstado = saldoFinal >= 0 ? "Terminada +" : "Terminada -";
     try {
       const resp = await editarObra(obraSeleccionada._id, {
+        estado: nuevoEstado,
         comentariosAnalisis: comentario,
         saldoAnalisis: saldoFinal,
       });
@@ -250,7 +252,7 @@ const CostosObra = () => {
         setObras((prev) =>
           prev.map((o) =>
             o._id === obraSeleccionada._id
-              ? { ...o, comentariosAnalisis: comentario, saldoAnalisis: saldoFinal }
+              ? { ...o, estado: nuevoEstado, comentariosAnalisis: comentario, saldoAnalisis: saldoFinal }
               : o
           )
         );
@@ -362,7 +364,9 @@ const CostosObra = () => {
                 <option value="">Todos los estados</option>
                 <option value="En curso">En curso</option>
                 <option value="Terminada, para análisis">Terminada, para análisis</option>
-                <option value="Terminada">Terminada</option>
+                <option value="Terminada +">Terminada +</option>
+                <option value="Terminada -">Terminada -</option>
+                <option value="Terminada">Todas las terminadas</option>
               </Form.Select>
               {filtroEstado && <span onClick={() => setFiltroEstado("")} style={estiloX}>✕</span>}
             </div>
@@ -389,14 +393,10 @@ const CostosObra = () => {
                     <td>
                       <Button
                         size="sm"
-                        variant={obra.saldoAnalisis != null ? (obra.saldoAnalisis >= 0 ? "outline-success" : "outline-danger") : "outline-primary"}
+                        variant={obra.estado === "Terminada +" ? "outline-success" : obra.estado === "Terminada -" ? "outline-danger" : "outline-primary"}
                         onClick={() => handleAnalisis(obra)}
                       >
-                        {obra.saldoAnalisis != null
-                          ? obra.saldoAnalisis >= 0
-                            ? "Analizada +"
-                            : "Analizada -"
-                          : "Análisis"}
+                        {obra.estado === "Terminada +" ? "Analizada +" : obra.estado === "Terminada -" ? "Analizada -" : "Análisis"}
                       </Button>
                     </td>
                   </tr>
