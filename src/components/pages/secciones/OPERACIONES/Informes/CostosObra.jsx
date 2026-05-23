@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Table, Form, Spinner, Button } from "react-bootstrap";
 // Importamos useNavigate para poder redirigir
 import { useNavigate } from "react-router-dom"; 
-import { listarObras } from "../../../../../helpers/queriesObras.js";
+import { listarObras, editarObra } from "../../../../../helpers/queriesObras.js";
 import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos.js";
 import { listarGastosPorObra } from "../../../../../helpers/queriesGastos.js";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
@@ -239,6 +239,28 @@ const CostosObra = () => {
     setDatosAnalisis(null);
   };
 
+  const handleAnalizada = async (comentario) => {
+    if (!obraSeleccionada) return;
+    try {
+      const resp = await editarObra(obraSeleccionada._id, {
+        estado: "Terminada",
+        comentariosAnalisis: comentario,
+      });
+      if (resp?.ok) {
+        setObras((prev) =>
+          prev.map((o) =>
+            o._id === obraSeleccionada._id
+              ? { ...o, estado: "Terminada", comentariosAnalisis: comentario }
+              : o
+          )
+        );
+        handleVolver();
+      }
+    } catch (error) {
+      console.error("Error al marcar obra como analizada:", error);
+    }
+  };
+
   const handleVolverAClientes = () => {
     setRazonSocialSeleccionada(null);
     setFiltroEstado("Terminada, para análisis");
@@ -273,11 +295,12 @@ const CostosObra = () => {
         );
     }
     return (
-        <CostoObraTabla 
+        <CostoObraTabla
             obra={obraSeleccionada}
             costos={datosAnalisis}
             onVolver={handleVolver}
-            onVerGastos={handleVerGastos} // <--- Pasamos la función nueva
+            onVerGastos={handleVerGastos}
+            onAnalizada={handleAnalizada}
         />
     );
   }

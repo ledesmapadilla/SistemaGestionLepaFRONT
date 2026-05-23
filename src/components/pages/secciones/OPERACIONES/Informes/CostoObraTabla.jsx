@@ -1,8 +1,10 @@
-import { Table, Button } from "react-bootstrap";
+import { useState } from "react";
+import { Table, Button, Form } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
 import "../../../../../styles/verRemitos.css";
 
-const CostoObraTabla = ({ obra, costos, onVolver, onVerGastos }) => {
+const CostoObraTabla = ({ obra, costos, onVolver, onVerGastos, onAnalizada }) => {
+  const [comentario, setComentario] = useState(obra?.comentariosAnalisis || "");
   const formatoMiles = (valor) => {
     if (valor === undefined || valor === null || isNaN(valor)) return "-";
     return new Intl.NumberFormat("es-AR").format(valor);
@@ -125,6 +127,22 @@ const CostoObraTabla = ({ obra, costos, onVolver, onVerGastos }) => {
             ${formatoMiles(saldoFinal)}
           </span>
         </h4>
+      </div>
+
+      <div className="mt-4">
+        <Form.Label className="fw-semibold">Comentarios</Form.Label>
+        <Form.Control
+          as="textarea"
+          rows={3}
+          value={comentario}
+          onChange={(e) => setComentario(e.target.value)}
+          placeholder="Escribí un comentario sobre el análisis..."
+        />
+        <div className="d-flex justify-content-end mt-2">
+          <Button variant="outline-success" onClick={() => onAnalizada?.(comentario)}>
+            Analizada
+          </Button>
+        </div>
       </div>
     </div>
   );
