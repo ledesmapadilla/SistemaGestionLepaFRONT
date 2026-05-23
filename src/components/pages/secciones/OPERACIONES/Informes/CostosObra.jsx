@@ -37,6 +37,7 @@ const CostosObra = () => {
   const navigate = useNavigate();
 
   const [busquedaCliente, setBusquedaCliente] = useState("");
+  const [filtroEstadoPaso1, setFiltroEstadoPaso1] = useState("Terminada, para análisis");
   const [razonSocialSeleccionada, setRazonSocialSeleccionada] = useState(null);
   const [filtroEstado, setFiltroEstado] = useState("Terminada, para análisis");
   const [obraSeleccionada, setObraSeleccionada] = useState(null);
@@ -85,8 +86,16 @@ const CostosObra = () => {
     };
   }, []);
 
-  // Razones sociales únicas
-  const razonesUnicas = [...new Set(obras.map((o) => o.razonsocial).filter(Boolean))]
+  // Razones sociales únicas (filtradas por estado si se seleccionó uno)
+  const obrasParaPaso1 = filtroEstadoPaso1
+    ? obras.filter((o) =>
+        filtroEstadoPaso1 === "Terminada"
+          ? o.estado?.startsWith("Terminada")
+          : o.estado === filtroEstadoPaso1
+      )
+    : obras;
+
+  const razonesUnicas = [...new Set(obrasParaPaso1.map((o) => o.razonsocial).filter(Boolean))]
     .filter((r) => r.toLowerCase().includes(busquedaCliente.trim().toLowerCase()))
     .sort();
 
@@ -266,6 +275,7 @@ const CostosObra = () => {
   const handleVolverAClientes = () => {
     setRazonSocialSeleccionada(null);
     setFiltroEstado("Terminada, para análisis");
+    // no reseteamos filtroEstadoPaso1 para mantener el estado elegido al volver
   };
 
  
@@ -314,8 +324,19 @@ const CostosObra = () => {
         <div style={{ width: "50%", marginLeft: "auto", marginRight: "auto", display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
           <div className="pt-2 pb-1">
             <h6 className="text-center mb-2">Análisis y resultado de cada obra</h6>
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <Form.Control size="sm" type="search" placeholder="Buscar razón social..." value={busquedaCliente} onChange={(e) => setBusquedaCliente(e.target.value)} style={{ width: "55%" }} />
+            <div className="d-flex justify-content-between align-items-center gap-2 mb-2">
+              <Form.Control size="sm" type="search" placeholder="Buscar razón social..." value={busquedaCliente} onChange={(e) => setBusquedaCliente(e.target.value)} style={{ flex: 1 }} />
+              <div style={{ position: "relative", width: "210px", flexShrink: 0 }}>
+                <Form.Select size="sm" value={filtroEstadoPaso1} onChange={(e) => setFiltroEstadoPaso1(e.target.value)} style={filtroEstadoPaso1 ? { backgroundImage: "none" } : {}}>
+                  <option value="">Todos los estados</option>
+                  <option value="En curso">En curso</option>
+                  <option value="Terminada, para análisis">Terminada, para análisis</option>
+                  <option value="Terminada">Terminada</option>
+                </Form.Select>
+                {filtroEstadoPaso1 && (
+                  <span onClick={() => setFiltroEstadoPaso1("")} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", cursor: "pointer", color: "#6c757d", fontSize: "14px", fontWeight: "900", zIndex: 5, userSelect: "none" }}>✕</span>
+                )}
+              </div>
               <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
             </div>
           </div>
@@ -329,7 +350,7 @@ const CostosObra = () => {
               </thead>
               <tbody>
                 {razonesUnicas.length === 0 ? (
-                  <tr><td colSpan="2">No hay clientes</td></tr>
+                  <tr><td colSpan="2">{filtroEstadoPaso1 ? `No hay clientes con obras en estado "${filtroEstadoPaso1}"` : "No hay clientes"}</td></tr>
                 ) : (
                   razonesUnicas.map((razon) => (
                     <tr key={razon}>
