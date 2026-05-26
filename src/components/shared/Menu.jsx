@@ -82,15 +82,6 @@ function Menu() {
               <NavDropdown.Item as={Link} to="/departamento-mantenimiento">
                 Departamento de Mantenimiento
               </NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/tablero-control">
-                Tablero de Control
-              </NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/consumo-aceites">
-                Consumo aceites
-              </NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/service-maquinas">
-                Service máquinas
-              </NavDropdown.Item>
             </NavDropdown>
 
             <NavDropdown title="Contable" id="nav-dropdown" className="mx-2">
