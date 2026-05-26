@@ -52,6 +52,12 @@ const Asistencia = lazy(() => import("./components/pages/secciones/PERSONAL/Asis
 const GastosSemanales = lazy(() => import("./components/pages/secciones/PERSONAL/GastosSemanales/GastosSemanales.jsx"));
 const ServiceMaquinas = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/ServiceMaquinas/ServiceMaquinas.jsx"));
 const TableroControl = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/TableroControl/TableroControl.jsx"));
+const MantenimientoDashboard = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/MantenimientoDashboard.jsx"));
+const Baterias = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Baterias/Baterias.jsx"));
+const Cubiertas = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Cubiertas/Cubiertas.jsx"));
+const MantenimientoPreventivo = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Preventivo/MantenimientoPreventivo.jsx"));
+const Reparaciones = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Reparaciones/Reparaciones.jsx"));
+const Otra = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Otra/Otra.jsx"));
 const FacturacionProveedor = lazy(() => import("./components/pages/secciones/PROVEEDORES/Facturacion/FacturacionProveedor.jsx"));
 const NuevaFacturaProveedor = lazy(() => import("./components/pages/secciones/PROVEEDORES/Facturacion/NuevaFacturaProveedor.jsx"));
 const PagosProveedoresTabla = lazy(() => import("./components/pages/secciones/PROVEEDORES/Pagos/PagosProveedoresTabla.jsx"));
@@ -120,6 +126,12 @@ function App() {
                       <Route path="/compras-aceites" element={<AceiteTablaCompra />} />
                       <Route path="/service-maquinas" element={<ServiceMaquinas />} />
                       <Route path="/tablero-control" element={<TableroControl />} />
+                      <Route path="/departamento-mantenimiento" element={<MantenimientoDashboard />} />
+                      <Route path="/mantenimiento/baterias" element={<Baterias />} />
+                      <Route path="/mantenimiento/cubiertas" element={<Cubiertas />} />
+                      <Route path="/mantenimiento/preventivo" element={<MantenimientoPreventivo />} />
+                      <Route path="/mantenimiento/reparaciones" element={<Reparaciones />} />
+                      <Route path="/mantenimiento/otra" element={<Otra />} />
                       <Route path="/usuarios" element={<UsuariosCrud />} />
                       <Route path="/variables" element={<Variables />} />
                       <Route path="/precios" element={<Precios />} />
