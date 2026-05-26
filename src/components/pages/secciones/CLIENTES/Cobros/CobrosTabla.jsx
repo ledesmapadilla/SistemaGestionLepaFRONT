@@ -261,7 +261,7 @@ const CobrosTabla = () => {
         <Table striped bordered hover className="text-center align-middle">
           <thead className="table-dark sticky-top">
             <tr>
-              <th>Fecha</th>
+              <th style={{ whiteSpace: "nowrap" }}>Fecha</th>
               <th>Cliente</th>
               <th>Obra</th>
               <th>Facturas</th>
@@ -278,7 +278,7 @@ const CobrosTabla = () => {
             ) : (
               cobrosFiltrados.map((c) => (
                 <tr key={c._id}>
-                  <td>{formatearFecha(c.fecha)}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{formatearFecha(c.fecha)}</td>
                   <td>{c.cliente}</td>
                   <td className="text-muted">{obrasDelCobro(c)}</td>
                   <td className="text-muted">
