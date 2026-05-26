@@ -66,6 +66,7 @@ export default function MantenimientoDashboard() {
   return (
     <Container className="py-4">
       <h2 className="mb-1 fw-bold text-center">Departamento de Mantenimiento</h2>
+      <hr style={{ borderColor: "#ffc107", borderWidth: 2, opacity: 1 }} className="mb-2" />
       <p className="text-muted mb-4 text-center">Seleccioná una sección para continuar</p>
       <Row xs={1} sm={2} md={3} lg={4} className="g-4">
         {tarjetas.map((t) => (
