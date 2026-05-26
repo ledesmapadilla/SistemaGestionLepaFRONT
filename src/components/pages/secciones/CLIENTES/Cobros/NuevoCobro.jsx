@@ -434,6 +434,7 @@ const NuevoCobro = () => {
                       <option>E-Cheq</option>
                       <option>Retenciones</option>
                       <option>Transferencia</option>
+                      <option>Canje</option>
                     </Form.Select>
                   </td>
                   <td style={{ minWidth: "120px" }}>
