@@ -233,6 +233,7 @@ export default function Baterias() {
             <Form.Group className="mb-3">
               <Form.Label>Nombre batería <span className="text-danger">*</span></Form.Label>
               <Form.Control
+                className="w-50"
                 value={formAlta.nombreBateria}
                 onChange={(e) => setFormAlta((p) => ({ ...p, nombreBateria: e.target.value }))}
                 placeholder="Ej: Batería 12V 100Ah"
@@ -241,6 +242,7 @@ export default function Baterias() {
             <Form.Group className="mb-3">
               <Form.Label>Marca <span className="text-danger">*</span></Form.Label>
               <Form.Control
+                className="w-50"
                 value={formAlta.marca}
                 onChange={(e) => setFormAlta((p) => ({ ...p, marca: e.target.value }))}
                 placeholder="Ej: Bosch, Remy, Moura..."
@@ -250,6 +252,7 @@ export default function Baterias() {
               <Form.Label>Fecha <span className="text-danger">*</span></Form.Label>
               <Form.Control
                 type="date"
+                className="w-50"
                 value={formAlta.fecha}
                 onChange={(e) => setFormAlta((p) => ({ ...p, fecha: e.target.value }))}
               />
@@ -314,6 +317,7 @@ export default function Baterias() {
             <Form.Group className="mb-3">
               <Form.Label>Batería <span className="text-danger">*</span></Form.Label>
               <Form.Select
+                className="w-50"
                 value={formNueva.bateria}
                 onChange={(e) => setFormNueva((p) => ({ ...p, bateria: e.target.value }))}
               >
@@ -329,6 +333,7 @@ export default function Baterias() {
             <Form.Group className="mb-3">
               <Form.Label>Máquina <span className="text-danger">*</span></Form.Label>
               <Form.Select
+                className="w-50"
                 value={formNueva.maquina}
                 onChange={(e) => setFormNueva((p) => ({ ...p, maquina: e.target.value }))}
               >
@@ -343,6 +348,7 @@ export default function Baterias() {
               <Form.Control
                 as="textarea"
                 rows={3}
+                className="w-50"
                 value={formNueva.observaciones}
                 onChange={(e) => setFormNueva((p) => ({ ...p, observaciones: e.target.value }))}
                 placeholder="Observaciones opcionales..."
