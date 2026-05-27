@@ -180,7 +180,7 @@ export default function Baterias() {
       <div className="d-flex justify-content-between mb-2">
         {/* Izquierda */}
         <div className="d-flex gap-2">
-          <Button size="sm" variant="outline-primary" onClick={abrirAlta}>+ Alta de batería</Button>
+          <Button size="sm" variant="outline-success" onClick={abrirAlta}>+ Alta de batería</Button>
           <Button size="sm" variant="outline-secondary" onClick={() => setShowListado(true)}>Listado baterías</Button>
         </div>
         {/* Derecha */}
@@ -256,9 +256,9 @@ export default function Baterias() {
             </Form.Group>
           </Form>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={cerrarAlta}>Cancelar</Button>
-          <Button variant="primary" onClick={guardarAlta} disabled={guardandoAlta}>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={cerrarAlta}>Cancelar</Button>
+          <Button variant="outline-success" onClick={guardarAlta} disabled={guardandoAlta}>
             {guardandoAlta ? <Spinner size="sm" animation="border" /> : "Dar de alta"}
           </Button>
         </Modal.Footer>
@@ -350,9 +350,9 @@ export default function Baterias() {
             </Form.Group>
           </Form>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={cerrarNueva}>Cancelar</Button>
-          <Button variant="primary" onClick={guardarNueva} disabled={guardandoNueva}>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={cerrarNueva}>Cancelar</Button>
+          <Button variant="outline-success" onClick={guardarNueva} disabled={guardandoNueva}>
             {guardandoNueva ? <Spinner size="sm" animation="border" /> : editando ? "Guardar cambios" : "Guardar"}
           </Button>
         </Modal.Footer>
