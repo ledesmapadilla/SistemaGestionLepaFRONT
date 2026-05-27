@@ -38,10 +38,10 @@ export default function Baterias() {
   const [formNueva, setFormNueva]           = useState(VACIO_NUEVA);
   const [guardandoNueva, setGuardandoNueva] = useState(false);
 
-  // Modal Editar
+  // Modal Editar (estilo Variables)
   const [showEditar, setShowEditar]           = useState(false);
   const [registroEditar, setRegistroEditar]   = useState(null);
-  const [formEditar, setFormEditar]           = useState({ maquina: "", fecha: "", observaciones: "" });
+  const [filasEditar, setFilasEditar]         = useState([]);
   const [guardandoEditar, setGuardandoEditar] = useState(false);
 
   const cargar = async () => {
@@ -132,40 +132,59 @@ export default function Baterias() {
         Swal.fire({ icon: "success", title: "Batería registrada", timer: 1500, showConfirmButton: false });
       } else {
         const err = await res.json().catch(() => ({}));
-        Swal.fire("Error", `${err.msg || "No se pudo guardar el registro."}\n${err.error || ""}\n${err.name || ""}`, "error");
+        Swal.fire("Error", err.msg || "No se pudo guardar el registro.", "error");
       }
     } finally {
       setGuardandoNueva(false);
     }
   };
 
-  // ── Editar ───────────────────────────────────────────────────────
+  // ── Editar (estilo Variables) ────────────────────────────────────
   const abrirEditar = (r) => {
     setRegistroEditar(r);
-    setFormEditar({
+    setFilasEditar([{
       maquina:       r.maquina?._id || r.maquina || "",
       fecha:         r.fecha || "",
       observaciones: r.observaciones || "",
-    });
+      disabled:      true,
+    }]);
     setShowEditar(true);
   };
 
-  const cerrarEditar = () => { setShowEditar(false); setRegistroEditar(null); };
+  const cerrarEditar = () => { setShowEditar(false); setRegistroEditar(null); setFilasEditar([]); };
+
+  const agregarFila = () => {
+    setFilasEditar((prev) => [...prev, { maquina: "", fecha: hoy(), observaciones: "", disabled: false }]);
+  };
+
+  const actualizarFila = (idx, campo, valor) => {
+    setFilasEditar((prev) => prev.map((f, i) => i === idx ? { ...f, [campo]: valor } : f));
+  };
+
+  const eliminarFilaNueva = (idx) => {
+    setFilasEditar((prev) => prev.filter((_, i) => i !== idx));
+  };
 
   const guardarEditar = async () => {
-    if (!formEditar.maquina) return Swal.fire("Atención", "Seleccioná una máquina.", "warning");
+    const filasNuevas = filasEditar.filter((f) => !f.disabled);
+    if (filasNuevas.length === 0) return cerrarEditar();
+    for (const f of filasNuevas) {
+      if (!f.maquina) return Swal.fire("Atención", "Seleccioná una máquina en cada fila nueva.", "warning");
+    }
 
     setGuardandoEditar(true);
     try {
-      const res = await editarRegistroBateria(registroEditar._id, formEditar);
-      if (res?.ok) {
-        await cargar();
-        cerrarEditar();
-        Swal.fire({ icon: "success", title: "Registro actualizado", timer: 1500, showConfirmButton: false });
-      } else {
-        const err = await res.json().catch(() => ({}));
-        Swal.fire("Error", err.msg || "No se pudo actualizar el registro.", "error");
-      }
+      const bateriaId = registroEditar.bateria?._id || registroEditar.bateria;
+      const promesas = filasNuevas.map((f) =>
+        crearRegistroBateria({ bateria: bateriaId, maquina: f.maquina, fecha: f.fecha || "", observaciones: f.observaciones || "" })
+      );
+      const resultados = await Promise.all(promesas);
+      const hayError = resultados.some((r) => !r?.ok);
+      if (hayError) return Swal.fire("Error", "Algún registro no se pudo guardar.", "error");
+
+      await cargar();
+      cerrarEditar();
+      Swal.fire({ icon: "success", title: "Registros guardados", timer: 1500, showConfirmButton: false });
     } finally {
       setGuardandoEditar(false);
     }
@@ -397,54 +416,80 @@ export default function Baterias() {
         </Modal.Footer>
       </Modal>
 
-      {/* ── Modal Editar ── */}
-      <Modal show={showEditar} onHide={cerrarEditar} centered size="sm">
+      {/* ── Modal Editar (estilo Variables) ── */}
+      <Modal show={showEditar} onHide={cerrarEditar} centered size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Editar batería</Modal.Title>
+          <Modal.Title>Editar — {registroEditar?.bateria?.nombreBateria || ""}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3 text-center">
-              <Form.Label>Batería</Form.Label>
-              <Form.Control
-                className="w-50 mx-auto"
-                value={registroEditar?.bateria?.nombreBateria || ""}
-                disabled
-              />
-            </Form.Group>
-            <Form.Group className="mb-3 text-center">
-              <Form.Label>Máquina <span className="text-danger">*</span></Form.Label>
-              <Form.Select
-                className="w-50 mx-auto"
-                value={formEditar.maquina}
-                onChange={(e) => setFormEditar((p) => ({ ...p, maquina: e.target.value }))}
-              >
-                <option value="">Seleccionar...</option>
-                {maquinas.map((m) => (
-                  <option key={m._id} value={m._id}>{m.maquina}</option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3 text-center">
-              <Form.Label>Fecha</Form.Label>
-              <Form.Control
-                type="date"
-                className="w-50 mx-auto"
-                value={formEditar.fecha}
-                onChange={(e) => setFormEditar((p) => ({ ...p, fecha: e.target.value }))}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3 text-center">
-              <Form.Label>Observaciones</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                className="w-50 mx-auto"
-                value={formEditar.observaciones}
-                onChange={(e) => setFormEditar((p) => ({ ...p, observaciones: e.target.value }))}
-              />
-            </Form.Group>
-          </Form>
+          <Table bordered size="sm" className="text-center align-middle">
+            <thead className="table-dark">
+              <tr>
+                <th>Nombre batería</th>
+                <th>Máquina</th>
+                <th>Fecha</th>
+                <th>Observaciones</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filasEditar.map((fila, idx) => (
+                <tr key={idx}>
+                  <td className="fw-semibold">
+                    {registroEditar?.bateria?.nombreBateria || "-"}
+                  </td>
+                  <td>
+                    {fila.disabled ? (
+                      registroEditar?.maquina?.maquina || "-"
+                    ) : (
+                      <Form.Select
+                        size="sm"
+                        value={fila.maquina}
+                        onChange={(e) => actualizarFila(idx, "maquina", e.target.value)}
+                      >
+                        <option value="">Seleccionar...</option>
+                        {maquinas.map((m) => (
+                          <option key={m._id} value={m._id}>{m.maquina}</option>
+                        ))}
+                      </Form.Select>
+                    )}
+                  </td>
+                  <td>
+                    {fila.disabled ? (
+                      fila.fecha ? new Date(fila.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"
+                    ) : (
+                      <Form.Control
+                        size="sm"
+                        type="date"
+                        value={fila.fecha}
+                        onChange={(e) => actualizarFila(idx, "fecha", e.target.value)}
+                      />
+                    )}
+                  </td>
+                  <td>
+                    {fila.disabled ? (
+                      fila.observaciones || "-"
+                    ) : (
+                      <Form.Control
+                        size="sm"
+                        type="text"
+                        value={fila.observaciones}
+                        onChange={(e) => actualizarFila(idx, "observaciones", e.target.value)}
+                      />
+                    )}
+                  </td>
+                  <td>
+                    {!fila.disabled && (
+                      <Button size="sm" variant="outline-danger" onClick={() => eliminarFilaNueva(idx)}>✕</Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+          <div className="text-center mt-2">
+            <Button size="sm" variant="outline-primary" onClick={agregarFila}>+ Agregar fila</Button>
+          </div>
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={cerrarEditar}>Cancelar</Button>
