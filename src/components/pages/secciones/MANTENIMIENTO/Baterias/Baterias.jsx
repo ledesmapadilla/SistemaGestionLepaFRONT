@@ -238,7 +238,7 @@ export default function Baterias() {
       </div>
 
       {/* ── Modal Ver ── */}
-      <Modal show={showVer} onHide={() => setShowVer(false)} centered>
+      <Modal show={showVer} onHide={() => setShowVer(false)} centered size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Detalle de batería</Modal.Title>
         </Modal.Header>
@@ -247,6 +247,37 @@ export default function Baterias() {
           <p><strong>Marca:</strong> {registroVer?.bateria?.marca || "-"}</p>
           <p><strong>Máquina:</strong> {registroVer?.maquina?.maquina || "-"}</p>
           <p><strong>Observaciones:</strong> {registroVer?.observaciones || "-"}</p>
+
+          {registroVer?.historial?.length > 0 && (
+            <>
+              <hr />
+              <h6 className="text-center mb-2">Historial de cambios</h6>
+              <div style={{ maxHeight: "30vh", overflowY: "auto" }}>
+                <Table striped bordered size="sm" className="text-center align-middle mb-0">
+                  <thead className="table-dark" style={{ position: "sticky", top: 0 }}>
+                    <tr>
+                      <th>#</th>
+                      <th>Máquina</th>
+                      <th>Fecha</th>
+                      <th>Observaciones</th>
+                      <th>Editado el</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...registroVer.historial].reverse().map((h, i) => (
+                      <tr key={i}>
+                        <td>{registroVer.historial.length - i}</td>
+                        <td>{h.maquina?.maquina || "-"}</td>
+                        <td>{h.fecha ? new Date(h.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
+                        <td>{h.observaciones || "-"}</td>
+                        <td>{h.editadoEn ? new Date(h.editadoEn).toLocaleString("es-AR") : "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
+            </>
+          )}
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={() => setShowVer(false)}>Cerrar</Button>
@@ -403,7 +434,7 @@ export default function Baterias() {
           <Modal.Title>Editar — {registroEditar?.bateria?.nombreBateria || ""}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Table bordered size="sm" className="text-center align-middle">
+          <Table bordered size="sm" className="text-center align-middle mb-3">
             <thead className="table-dark">
               <tr>
                 <th>Nombre batería</th>
@@ -446,6 +477,37 @@ export default function Baterias() {
               </tr>
             </tbody>
           </Table>
+
+          {registroEditar?.historial?.length > 0 && (
+            <>
+              <hr />
+              <h6 className="text-center mb-2">Historial de cambios</h6>
+              <div style={{ maxHeight: "25vh", overflowY: "auto" }}>
+                <Table striped bordered size="sm" className="text-center align-middle mb-0">
+                  <thead className="table-dark" style={{ position: "sticky", top: 0 }}>
+                    <tr>
+                      <th>#</th>
+                      <th>Máquina</th>
+                      <th>Fecha</th>
+                      <th>Observaciones</th>
+                      <th>Editado el</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...registroEditar.historial].reverse().map((h, i) => (
+                      <tr key={i}>
+                        <td>{registroEditar.historial.length - i}</td>
+                        <td>{h.maquina?.maquina || "-"}</td>
+                        <td>{h.fecha ? new Date(h.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
+                        <td>{h.observaciones || "-"}</td>
+                        <td>{h.editadoEn ? new Date(h.editadoEn).toLocaleString("es-AR") : "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
+            </>
+          )}
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={cerrarEditar}>Cancelar</Button>
