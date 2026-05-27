@@ -398,53 +398,54 @@ export default function Baterias() {
       </Modal>
 
       {/* ── Modal Editar ── */}
-      <Modal show={showEditar} onHide={cerrarEditar} centered size="sm">
+      <Modal show={showEditar} onHide={cerrarEditar} centered size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Editar batería</Modal.Title>
+          <Modal.Title>Editar — {registroEditar?.bateria?.nombreBateria || ""}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3 text-center">
-              <Form.Label>Batería</Form.Label>
-              <Form.Control
-                className="w-50 mx-auto"
-                value={registroEditar?.bateria?.nombreBateria || ""}
-                disabled
-              />
-            </Form.Group>
-            <Form.Group className="mb-3 text-center">
-              <Form.Label>Máquina <span className="text-danger">*</span></Form.Label>
-              <Form.Select
-                className="w-50 mx-auto"
-                value={formEditar.maquina}
-                onChange={(e) => setFormEditar((p) => ({ ...p, maquina: e.target.value }))}
-              >
-                <option value="">Seleccionar...</option>
-                {maquinas.map((m) => (
-                  <option key={m._id} value={m._id}>{m.maquina}</option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3 text-center">
-              <Form.Label>Fecha</Form.Label>
-              <Form.Control
-                type="date"
-                className="w-50 mx-auto"
-                value={formEditar.fecha}
-                onChange={(e) => setFormEditar((p) => ({ ...p, fecha: e.target.value }))}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3 text-center">
-              <Form.Label>Observaciones</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={2}
-                className="w-50 mx-auto"
-                value={formEditar.observaciones}
-                onChange={(e) => setFormEditar((p) => ({ ...p, observaciones: e.target.value }))}
-              />
-            </Form.Group>
-          </Form>
+          <Table bordered size="sm" className="text-center align-middle">
+            <thead className="table-dark">
+              <tr>
+                <th>Nombre batería</th>
+                <th>Máquina</th>
+                <th>Fecha</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="fw-semibold">{registroEditar?.bateria?.nombreBateria || "-"}</td>
+                <td>
+                  <Form.Select
+                    size="sm"
+                    value={formEditar.maquina}
+                    onChange={(e) => setFormEditar((p) => ({ ...p, maquina: e.target.value }))}
+                  >
+                    <option value="">Seleccionar...</option>
+                    {maquinas.map((m) => (
+                      <option key={m._id} value={m._id}>{m.maquina}</option>
+                    ))}
+                  </Form.Select>
+                </td>
+                <td>
+                  <Form.Control
+                    size="sm"
+                    type="date"
+                    value={formEditar.fecha}
+                    onChange={(e) => setFormEditar((p) => ({ ...p, fecha: e.target.value }))}
+                  />
+                </td>
+                <td>
+                  <Form.Control
+                    size="sm"
+                    type="text"
+                    value={formEditar.observaciones}
+                    onChange={(e) => setFormEditar((p) => ({ ...p, observaciones: e.target.value }))}
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </Table>
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={cerrarEditar}>Cancelar</Button>
