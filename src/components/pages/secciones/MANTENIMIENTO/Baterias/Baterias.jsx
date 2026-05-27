@@ -485,7 +485,7 @@ export default function Baterias() {
                       <td>{h.maquina?.maquina || "-"}</td>
                       <td>{h.fecha ? new Date(h.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
                       <td>{h.observaciones || "-"}</td>
-                      <td>{h.editadoEn ? new Date(h.editadoEn).toLocaleString("es-AR") : "-"}</td>
+                      <td>{h.editadoEn ? new Date(h.editadoEn).toLocaleDateString("es-AR") : "-"}</td>
                     </tr>
                   ))}
                 </tbody>
