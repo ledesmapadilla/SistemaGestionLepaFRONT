@@ -21,19 +21,28 @@ export default function Baterias() {
   const [maquinas, setMaquinas]   = useState([]);
   const [cargando, setCargando]   = useState(true);
 
+  // Modal Alta
   const [showAlta, setShowAlta]           = useState(false);
   const [formAlta, setFormAlta]           = useState(VACIO_ALTA);
   const [guardandoAlta, setGuardandoAlta] = useState(false);
 
+  // Modal Listado
   const [showListado, setShowListado] = useState(false);
 
-  const [showVer, setShowVer]     = useState(false);
+  // Modal Ver
+  const [showVer, setShowVer]         = useState(false);
   const [registroVer, setRegistroVer] = useState(null);
 
+  // Modal Nueva
   const [showNueva, setShowNueva]           = useState(false);
-  const [editando, setEditando]             = useState(null);
   const [formNueva, setFormNueva]           = useState(VACIO_NUEVA);
   const [guardandoNueva, setGuardandoNueva] = useState(false);
+
+  // Modal Editar (estilo Variables)
+  const [showEditar, setShowEditar]         = useState(false);
+  const [registroEditar, setRegistroEditar] = useState(null);  // registro base
+  const [filasEditar, setFilasEditar]       = useState([]);    // filas: {maquina, observaciones, disabled}
+  const [guardandoEditar, setGuardandoEditar] = useState(false);
 
   const cargar = async () => {
     setCargando(true);
@@ -106,26 +115,8 @@ export default function Baterias() {
   };
 
   // ── Nueva batería ───────────────────────────────────────────────
-  const bateriasDisponibles = catalogo.filter((b) => {
-    const usada = registros.some((r) => (r.bateria?._id || r.bateria) === b._id);
-    if (!usada) return true;
-    if (editando && (editando.bateria?._id || editando.bateria) === b._id) return true;
-    return false;
-  });
-
-  const abrirNueva = () => { setEditando(null); setFormNueva(VACIO_NUEVA); setShowNueva(true); };
-
-  const abrirEditar = (r) => {
-    setEditando(r);
-    setFormNueva({
-      bateria:       r.bateria?._id || r.bateria || "",
-      maquina:       r.maquina?._id || r.maquina || "",
-      observaciones: r.observaciones || "",
-    });
-    setShowNueva(true);
-  };
-
-  const cerrarNueva = () => { setShowNueva(false); setEditando(null); setFormNueva(VACIO_NUEVA); };
+  const abrirNueva  = () => { setFormNueva(VACIO_NUEVA); setShowNueva(true); };
+  const cerrarNueva = () => { setShowNueva(false); setFormNueva(VACIO_NUEVA); };
 
   const guardarNueva = async () => {
     if (!formNueva.bateria) return Swal.fire("Atención", "Seleccioná una batería.", "warning");
@@ -133,14 +124,11 @@ export default function Baterias() {
 
     setGuardandoNueva(true);
     try {
-      const res = editando
-        ? await editarRegistroBateria(editando._id, formNueva)
-        : await crearRegistroBateria(formNueva);
-
+      const res = await crearRegistroBateria(formNueva);
       if (res?.ok) {
         await cargar();
         cerrarNueva();
-        Swal.fire({ icon: "success", title: editando ? "Registro actualizado" : "Batería registrada", timer: 1500, showConfirmButton: false });
+        Swal.fire({ icon: "success", title: "Batería registrada", timer: 1500, showConfirmButton: false });
       } else {
         const err = await res.json().catch(() => ({}));
         Swal.fire("Error", err.msg || "No se pudo guardar el registro.", "error");
@@ -150,6 +138,53 @@ export default function Baterias() {
     }
   };
 
+  // ── Editar (estilo Variables) ────────────────────────────────────
+  const abrirEditar = (r) => {
+    setRegistroEditar(r);
+    setFilasEditar([{ maquina: r.maquina?._id || r.maquina || "", observaciones: r.observaciones || "", disabled: true }]);
+    setShowEditar(true);
+  };
+
+  const cerrarEditar = () => { setShowEditar(false); setRegistroEditar(null); setFilasEditar([]); };
+
+  const agregarFila = () => {
+    setFilasEditar((prev) => [...prev, { maquina: "", observaciones: "", disabled: false }]);
+  };
+
+  const actualizarFila = (idx, campo, valor) => {
+    setFilasEditar((prev) => prev.map((f, i) => i === idx ? { ...f, [campo]: valor } : f));
+  };
+
+  const eliminarFilaNueva = (idx) => {
+    setFilasEditar((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const guardarEditar = async () => {
+    const filasNuevas = filasEditar.filter((f) => !f.disabled);
+    for (const f of filasNuevas) {
+      if (!f.maquina) return Swal.fire("Atención", "Seleccioná una máquina en cada fila nueva.", "warning");
+    }
+
+    setGuardandoEditar(true);
+    try {
+      const bateriaId = registroEditar.bateria?._id || registroEditar.bateria;
+      // Crear un nuevo registro por cada fila nueva
+      const promesas = filasNuevas.map((f) =>
+        crearRegistroBateria({ bateria: bateriaId, maquina: f.maquina, observaciones: f.observaciones || "" })
+      );
+      const resultados = await Promise.all(promesas);
+      const hayError = resultados.some((r) => !r?.ok);
+      if (hayError) return Swal.fire("Error", "Algún registro no se pudo guardar.", "error");
+
+      await cargar();
+      cerrarEditar();
+      Swal.fire({ icon: "success", title: "Registros guardados", timer: 1500, showConfirmButton: false });
+    } finally {
+      setGuardandoEditar(false);
+    }
+  };
+
+  // ── Eliminar registro ───────────────────────────────────────────
   const eliminar = async (id) => {
     const { isConfirmed } = await Swal.fire({
       title: "¿Eliminar registro?",
@@ -194,9 +229,7 @@ export default function Baterias() {
           </thead>
           <tbody>
             {registros.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="text-muted py-3">Sin baterías registradas</td>
-              </tr>
+              <tr><td colSpan={4} className="text-muted py-3">Sin baterías registradas</td></tr>
             ) : (
               registros.map((r) => (
                 <tr key={r._id}>
@@ -240,27 +273,27 @@ export default function Baterias() {
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-3 text-center">
               <Form.Label>Nombre batería <span className="text-danger">*</span></Form.Label>
               <Form.Control
-                className="w-50"
+                className="w-50 mx-auto"
                 value={formAlta.nombreBateria}
                 onChange={(e) => setFormAlta((p) => ({ ...p, nombreBateria: e.target.value }))}
               />
             </Form.Group>
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-3 text-center">
               <Form.Label>Marca <span className="text-danger">*</span></Form.Label>
               <Form.Control
-                className="w-50"
+                className="w-50 mx-auto"
                 value={formAlta.marca}
                 onChange={(e) => setFormAlta((p) => ({ ...p, marca: e.target.value }))}
               />
             </Form.Group>
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-3 text-center">
               <Form.Label>Fecha <span className="text-danger">*</span></Form.Label>
               <Form.Control
                 type="date"
-                className="w-50"
+                className="w-50 mx-auto"
                 value={formAlta.fecha}
                 onChange={(e) => setFormAlta((p) => ({ ...p, fecha: e.target.value }))}
               />
@@ -315,33 +348,30 @@ export default function Baterias() {
         </Modal.Footer>
       </Modal>
 
-      {/* ── Modal Nueva / Editar batería ── */}
+      {/* ── Modal Nueva batería ── */}
       <Modal show={showNueva} onHide={cerrarNueva} centered>
         <Modal.Header closeButton>
-          <Modal.Title>{editando ? "Editar batería" : "Nueva batería"}</Modal.Title>
+          <Modal.Title>Nueva batería</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-3 text-center">
               <Form.Label>Batería <span className="text-danger">*</span></Form.Label>
               <Form.Select
-                className="w-50"
+                className="w-50 mx-auto"
                 value={formNueva.bateria}
                 onChange={(e) => setFormNueva((p) => ({ ...p, bateria: e.target.value }))}
               >
                 <option value="">Seleccionar...</option>
-                {bateriasDisponibles.map((b) => (
+                {catalogo.map((b) => (
                   <option key={b._id} value={b._id}>{b.nombreBateria} — {b.marca}</option>
                 ))}
               </Form.Select>
-              {catalogo.length > 0 && bateriasDisponibles.length === 0 && (
-                <Form.Text className="text-muted">Todas las baterías ya están asignadas.</Form.Text>
-              )}
             </Form.Group>
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-3 text-center">
               <Form.Label>Máquina <span className="text-danger">*</span></Form.Label>
               <Form.Select
-                className="w-50"
+                className="w-50 mx-auto"
                 value={formNueva.maquina}
                 onChange={(e) => setFormNueva((p) => ({ ...p, maquina: e.target.value }))}
               >
@@ -351,12 +381,12 @@ export default function Baterias() {
                 ))}
               </Form.Select>
             </Form.Group>
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-3 text-center">
               <Form.Label>Observaciones</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
-                className="w-50"
+                className="w-50 mx-auto"
                 value={formNueva.observaciones}
                 onChange={(e) => setFormNueva((p) => ({ ...p, observaciones: e.target.value }))}
               />
@@ -366,7 +396,79 @@ export default function Baterias() {
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={cerrarNueva}>Cancelar</Button>
           <Button variant="outline-success" onClick={guardarNueva} disabled={guardandoNueva}>
-            {guardandoNueva ? <Spinner size="sm" animation="border" /> : editando ? "Guardar cambios" : "Guardar"}
+            {guardandoNueva ? <Spinner size="sm" animation="border" /> : "Guardar"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ── Modal Editar (estilo Variables) ── */}
+      <Modal show={showEditar} onHide={cerrarEditar} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Editar — {registroEditar?.bateria?.nombreBateria || ""}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Table bordered size="sm" className="text-center align-middle">
+            <thead className="table-dark">
+              <tr>
+                <th>Nombre batería</th>
+                <th>Máquina</th>
+                <th>Observaciones</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filasEditar.map((fila, idx) => (
+                <tr key={idx}>
+                  <td className="fw-semibold">
+                    {registroEditar?.bateria?.nombreBateria || "-"}
+                  </td>
+                  <td>
+                    {fila.disabled ? (
+                      registroEditar?.maquina?.maquina || "-"
+                    ) : (
+                      <Form.Select
+                        size="sm"
+                        value={fila.maquina}
+                        onChange={(e) => actualizarFila(idx, "maquina", e.target.value)}
+                      >
+                        <option value="">Seleccionar...</option>
+                        {maquinas.map((m) => (
+                          <option key={m._id} value={m._id}>{m.maquina}</option>
+                        ))}
+                      </Form.Select>
+                    )}
+                  </td>
+                  <td>
+                    {fila.disabled ? (
+                      fila.observaciones || "-"
+                    ) : (
+                      <Form.Control
+                        size="sm"
+                        type="text"
+                        value={fila.observaciones}
+                        onChange={(e) => actualizarFila(idx, "observaciones", e.target.value)}
+                      />
+                    )}
+                  </td>
+                  <td>
+                    {!fila.disabled && (
+                      <Button size="sm" variant="outline-danger" onClick={() => eliminarFilaNueva(idx)}>✕</Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+          <div className="text-center mt-2">
+            <Button size="sm" variant="outline-primary" onClick={agregarFila}>+ Agregar fila</Button>
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={cerrarEditar}>Cancelar</Button>
+          <Button variant="outline-success" onClick={guardarEditar} disabled={guardandoEditar}>
+            {guardandoEditar ? <Spinner size="sm" animation="border" /> : "Guardar"}
           </Button>
         </Modal.Footer>
       </Modal>
