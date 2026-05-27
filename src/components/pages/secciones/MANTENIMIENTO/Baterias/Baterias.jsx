@@ -21,19 +21,19 @@ export default function Baterias() {
   const [maquinas, setMaquinas]   = useState([]);
   const [cargando, setCargando]   = useState(true);
 
-  // Modal Alta
   const [showAlta, setShowAlta]           = useState(false);
   const [formAlta, setFormAlta]           = useState(VACIO_ALTA);
   const [guardandoAlta, setGuardandoAlta] = useState(false);
 
-  // Modal Listado
   const [showListado, setShowListado] = useState(false);
 
-  // Modal Nueva / Editar
-  const [showNueva, setShowNueva]             = useState(false);
-  const [editando, setEditando]               = useState(null);
-  const [formNueva, setFormNueva]             = useState(VACIO_NUEVA);
-  const [guardandoNueva, setGuardandoNueva]   = useState(false);
+  const [showVer, setShowVer]     = useState(false);
+  const [registroVer, setRegistroVer] = useState(null);
+
+  const [showNueva, setShowNueva]           = useState(false);
+  const [editando, setEditando]             = useState(null);
+  const [formNueva, setFormNueva]           = useState(VACIO_NUEVA);
+  const [guardandoNueva, setGuardandoNueva] = useState(false);
 
   const cargar = async () => {
     setCargando(true);
@@ -64,7 +64,6 @@ export default function Baterias() {
     if (!formAlta.marca.trim())         return Swal.fire("Atención", "La marca es obligatoria.", "warning");
     if (!formAlta.fecha)                return Swal.fire("Atención", "La fecha es obligatoria.", "warning");
 
-    // Validación local de duplicado
     const yaExiste = catalogo.some(
       (b) => b.nombreBateria.toLowerCase().trim() === formAlta.nombreBateria.toLowerCase().trim()
     );
@@ -106,12 +105,10 @@ export default function Baterias() {
     }
   };
 
-  // ── Nueva batería (registro tabla) ──────────────────────────────
-  // Baterías disponibles: las del catálogo que aún no tienen registro (excepto la del registro que se edita)
+  // ── Nueva batería ───────────────────────────────────────────────
   const bateriasDisponibles = catalogo.filter((b) => {
     const usada = registros.some((r) => (r.bateria?._id || r.bateria) === b._id);
     if (!usada) return true;
-    // Si estoy editando, permitir la que ya tiene este registro
     if (editando && (editando.bateria?._id || editando.bateria) === b._id) return true;
     return false;
   });
@@ -178,12 +175,10 @@ export default function Baterias() {
       <h6 className="text-center mb-3">Baterías</h6>
 
       <div className="d-flex justify-content-between mb-2">
-        {/* Izquierda */}
         <div className="d-flex gap-2">
           <Button size="sm" variant="outline-success" onClick={abrirAlta}>+ Alta de batería</Button>
           <Button size="sm" variant="outline-secondary" onClick={() => setShowListado(true)}>Listado baterías</Button>
         </div>
-        {/* Derecha */}
         <Button size="sm" variant="outline-primary" onClick={abrirNueva}>+ Nueva batería</Button>
       </div>
 
@@ -191,7 +186,6 @@ export default function Baterias() {
         <Table striped bordered hover className="text-center align-middle mb-0">
           <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
             <tr>
-              <th>#</th>
               <th>Nombre batería</th>
               <th>Máquina</th>
               <th>Observaciones</th>
@@ -201,17 +195,17 @@ export default function Baterias() {
           <tbody>
             {registros.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-muted py-3">Sin baterías registradas</td>
+                <td colSpan={4} className="text-muted py-3">Sin baterías registradas</td>
               </tr>
             ) : (
-              registros.map((r, i) => (
+              registros.map((r) => (
                 <tr key={r._id}>
-                  <td>{i + 1}</td>
                   <td>{r.bateria?.nombreBateria || "-"}</td>
                   <td>{r.maquina?.maquina || "-"}</td>
                   <td>{r.observaciones || "-"}</td>
                   <td>
                     <div className="d-flex gap-1 justify-content-center">
+                      <Button size="sm" variant="outline-success" onClick={() => { setRegistroVer(r); setShowVer(true); }}>Ver</Button>
                       <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(r)}>Editar</Button>
                       <Button size="sm" variant="outline-danger" onClick={() => eliminar(r._id)}>Borrar</Button>
                     </div>
@@ -222,6 +216,22 @@ export default function Baterias() {
           </tbody>
         </Table>
       </div>
+
+      {/* ── Modal Ver ── */}
+      <Modal show={showVer} onHide={() => setShowVer(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Detalle de batería</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p><strong>Nombre batería:</strong> {registroVer?.bateria?.nombreBateria || "-"}</p>
+          <p><strong>Marca:</strong> {registroVer?.bateria?.marca || "-"}</p>
+          <p><strong>Máquina:</strong> {registroVer?.maquina?.maquina || "-"}</p>
+          <p><strong>Observaciones:</strong> {registroVer?.observaciones || "-"}</p>
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setShowVer(false)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* ── Modal Alta de batería ── */}
       <Modal show={showAlta} onHide={cerrarAlta} centered>
@@ -236,7 +246,6 @@ export default function Baterias() {
                 className="w-50"
                 value={formAlta.nombreBateria}
                 onChange={(e) => setFormAlta((p) => ({ ...p, nombreBateria: e.target.value }))}
-                placeholder="Ej: Batería 12V 100Ah"
               />
             </Form.Group>
             <Form.Group className="mb-3">
@@ -245,7 +254,6 @@ export default function Baterias() {
                 className="w-50"
                 value={formAlta.marca}
                 onChange={(e) => setFormAlta((p) => ({ ...p, marca: e.target.value }))}
-                placeholder="Ej: Bosch, Remy, Moura..."
               />
             </Form.Group>
             <Form.Group className="mb-3">
@@ -268,7 +276,7 @@ export default function Baterias() {
       </Modal>
 
       {/* ── Modal Listado baterías ── */}
-      <Modal show={showListado} onHide={() => setShowListado(false)} centered size="lg">
+      <Modal show={showListado} onHide={() => setShowListado(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Listado de baterías</Modal.Title>
         </Modal.Header>
@@ -302,8 +310,8 @@ export default function Baterias() {
             </div>
           )}
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowListado(false)}>Cerrar</Button>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setShowListado(false)}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
 
@@ -321,13 +329,13 @@ export default function Baterias() {
                 value={formNueva.bateria}
                 onChange={(e) => setFormNueva((p) => ({ ...p, bateria: e.target.value }))}
               >
-                <option value="">Seleccionar batería...</option>
+                <option value="">Seleccionar...</option>
                 {bateriasDisponibles.map((b) => (
                   <option key={b._id} value={b._id}>{b.nombreBateria} — {b.marca}</option>
                 ))}
               </Form.Select>
               {catalogo.length > 0 && bateriasDisponibles.length === 0 && (
-                <Form.Text className="text-muted">Todas las baterías del catálogo ya están asignadas.</Form.Text>
+                <Form.Text className="text-muted">Todas las baterías ya están asignadas.</Form.Text>
               )}
             </Form.Group>
             <Form.Group className="mb-3">
@@ -337,7 +345,7 @@ export default function Baterias() {
                 value={formNueva.maquina}
                 onChange={(e) => setFormNueva((p) => ({ ...p, maquina: e.target.value }))}
               >
-                <option value="">Seleccionar máquina...</option>
+                <option value="">Seleccionar...</option>
                 {maquinas.map((m) => (
                   <option key={m._id} value={m._id}>{m.maquina}</option>
                 ))}
@@ -351,7 +359,6 @@ export default function Baterias() {
                 className="w-50"
                 value={formNueva.observaciones}
                 onChange={(e) => setFormNueva((p) => ({ ...p, observaciones: e.target.value }))}
-                placeholder="Observaciones opcionales..."
               />
             </Form.Group>
           </Form>
