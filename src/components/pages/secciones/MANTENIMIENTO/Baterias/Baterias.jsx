@@ -44,6 +44,10 @@ export default function Baterias() {
   const [formEditar, setFormEditar]           = useState({ maquina: "", fecha: "", observaciones: "" });
   const [guardandoEditar, setGuardandoEditar] = useState(false);
 
+  // Modal Historial
+  const [showHistorial, setShowHistorial]       = useState(false);
+  const [registroHistorial, setRegistroHistorial] = useState(null);
+
   const cargar = async () => {
     setCargando(true);
     try {
@@ -227,6 +231,7 @@ export default function Baterias() {
                     <div className="d-flex gap-1 justify-content-center">
                       <Button size="sm" variant="outline-success" onClick={() => { setRegistroVer(r); setShowVer(true); }}>Ver</Button>
                       <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(r)}>Editar</Button>
+                      <Button size="sm" variant="outline-info" onClick={() => { setRegistroHistorial(r); setShowHistorial(true); }}>Historial</Button>
                       <Button size="sm" variant="outline-danger" onClick={() => eliminar(r._id)}>Borrar</Button>
                     </div>
                   </td>
@@ -238,7 +243,7 @@ export default function Baterias() {
       </div>
 
       {/* ── Modal Ver ── */}
-      <Modal show={showVer} onHide={() => setShowVer(false)} centered size="lg">
+      <Modal show={showVer} onHide={() => setShowVer(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Detalle de batería</Modal.Title>
         </Modal.Header>
@@ -247,37 +252,6 @@ export default function Baterias() {
           <p><strong>Marca:</strong> {registroVer?.bateria?.marca || "-"}</p>
           <p><strong>Máquina:</strong> {registroVer?.maquina?.maquina || "-"}</p>
           <p><strong>Observaciones:</strong> {registroVer?.observaciones || "-"}</p>
-
-          {registroVer?.historial?.length > 0 && (
-            <>
-              <hr />
-              <h6 className="text-center mb-2">Historial de cambios</h6>
-              <div style={{ maxHeight: "30vh", overflowY: "auto" }}>
-                <Table striped bordered size="sm" className="text-center align-middle mb-0">
-                  <thead className="table-dark" style={{ position: "sticky", top: 0 }}>
-                    <tr>
-                      <th>#</th>
-                      <th>Máquina</th>
-                      <th>Fecha</th>
-                      <th>Observaciones</th>
-                      <th>Editado el</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...registroVer.historial].reverse().map((h, i) => (
-                      <tr key={i}>
-                        <td>{registroVer.historial.length - i}</td>
-                        <td>{h.maquina?.maquina || "-"}</td>
-                        <td>{h.fecha ? new Date(h.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
-                        <td>{h.observaciones || "-"}</td>
-                        <td>{h.editadoEn ? new Date(h.editadoEn).toLocaleString("es-AR") : "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </div>
-            </>
-          )}
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={() => setShowVer(false)}>Cerrar</Button>
@@ -434,7 +408,7 @@ export default function Baterias() {
           <Modal.Title>Editar — {registroEditar?.bateria?.nombreBateria || ""}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Table bordered size="sm" className="text-center align-middle mb-3">
+          <Table bordered size="sm" className="text-center align-middle">
             <thead className="table-dark">
               <tr>
                 <th>Nombre batería</th>
@@ -478,42 +452,51 @@ export default function Baterias() {
             </tbody>
           </Table>
 
-          {registroEditar?.historial?.length > 0 && (
-            <>
-              <hr />
-              <h6 className="text-center mb-2">Historial de cambios</h6>
-              <div style={{ maxHeight: "25vh", overflowY: "auto" }}>
-                <Table striped bordered size="sm" className="text-center align-middle mb-0">
-                  <thead className="table-dark" style={{ position: "sticky", top: 0 }}>
-                    <tr>
-                      <th>#</th>
-                      <th>Máquina</th>
-                      <th>Fecha</th>
-                      <th>Observaciones</th>
-                      <th>Editado el</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...registroEditar.historial].reverse().map((h, i) => (
-                      <tr key={i}>
-                        <td>{registroEditar.historial.length - i}</td>
-                        <td>{h.maquina?.maquina || "-"}</td>
-                        <td>{h.fecha ? new Date(h.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
-                        <td>{h.observaciones || "-"}</td>
-                        <td>{h.editadoEn ? new Date(h.editadoEn).toLocaleString("es-AR") : "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </div>
-            </>
-          )}
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={cerrarEditar}>Cancelar</Button>
           <Button variant="outline-success" onClick={guardarEditar} disabled={guardandoEditar}>
             {guardandoEditar ? <Spinner size="sm" animation="border" /> : "Guardar"}
           </Button>
+        </Modal.Footer>
+      </Modal>
+      {/* ── Modal Historial ── */}
+      <Modal show={showHistorial} onHide={() => setShowHistorial(false)} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Historial — {registroHistorial?.bateria?.nombreBateria || ""}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {!registroHistorial?.historial?.length ? (
+            <p className="text-muted text-center">Sin cambios registrados todavía.</p>
+          ) : (
+            <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
+              <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
+                <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
+                  <tr>
+                    <th>#</th>
+                    <th>Máquina</th>
+                    <th>Fecha</th>
+                    <th>Observaciones</th>
+                    <th>Editado el</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...registroHistorial.historial].reverse().map((h, i) => (
+                    <tr key={i}>
+                      <td>{registroHistorial.historial.length - i}</td>
+                      <td>{h.maquina?.maquina || "-"}</td>
+                      <td>{h.fecha ? new Date(h.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
+                      <td>{h.observaciones || "-"}</td>
+                      <td>{h.editadoEn ? new Date(h.editadoEn).toLocaleString("es-AR") : "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setShowHistorial(false)}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
     </div>
