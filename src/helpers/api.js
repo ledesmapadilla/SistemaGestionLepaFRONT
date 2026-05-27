@@ -24,4 +24,5 @@ export const API = {
   pagosProveedores: `${BASE}/api/pagos-proveedores`,
   cuentaCorrienteProveedores: `${BASE}/api/cuenta-corriente-proveedores`,
   baterias: `${BASE}/api/baterias`,
+  registroBaterias: `${BASE}/api/registro-baterias`,
 };
