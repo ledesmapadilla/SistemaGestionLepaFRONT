@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Container, Form, Modal, Spinner, Table } from "react-bootstrap";
+import { Button, Form, Modal, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { listarBaterias, crearBateria, editarBateria, borrarBateria } from "../../../../../helpers/queriesBaterias";
 import { API } from "../../../../../helpers/api";
@@ -12,7 +12,7 @@ export default function Baterias() {
   const [maquinas, setMaquinas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editando, setEditando] = useState(null); // null = crear, objeto = editar
+  const [editando, setEditando] = useState(null);
   const [form, setForm] = useState(VACIO);
   const [guardando, setGuardando] = useState(false);
 
@@ -35,11 +35,7 @@ export default function Baterias() {
 
   useEffect(() => { cargar(); }, []);
 
-  const abrirCrear = () => {
-    setEditando(null);
-    setForm(VACIO);
-    setShowModal(true);
-  };
+  const abrirCrear = () => { setEditando(null); setForm(VACIO); setShowModal(true); };
 
   const abrirEditar = (b) => {
     setEditando(b);
@@ -97,21 +93,19 @@ export default function Baterias() {
     }
   };
 
-  return (
-    <Container className="py-4">
-      <div className="d-flex justify-content-between align-items-center mb-1">
-        <h2 className="fw-bold mb-0">Baterías</h2>
-        <Button variant="warning" onClick={abrirCrear}>+ Nueva batería</Button>
-      </div>
-      <hr style={{ borderColor: "#ffc107", borderWidth: 2, opacity: 1 }} className="mb-4" />
+  if (cargando) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
-      {cargando ? (
-        <div className="d-flex justify-content-center mt-5">
-          <Spinner animation="border" />
-        </div>
-      ) : (
-        <Table striped bordered hover className="text-center align-middle">
-          <thead className="table-dark">
+  return (
+    <div className="w-75 mx-auto my-2">
+      <h6 className="text-center mb-3">Baterías</h6>
+
+      <div className="d-flex justify-content-end mb-2">
+        <Button size="sm" variant="outline-warning" onClick={abrirCrear}>+ Nueva batería</Button>
+      </div>
+
+      <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+        <Table striped bordered hover className="text-center align-middle mb-0">
+          <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
             <tr>
               <th>#</th>
               <th>Nombre batería</th>
@@ -132,16 +126,18 @@ export default function Baterias() {
                   <td>{b.nombreBateria}</td>
                   <td>{b.maquina?.maquina || "-"}</td>
                   <td>{b.observaciones || "-"}</td>
-                  <td className="d-flex gap-1 justify-content-center">
-                    <Button variant="outline-warning" size="sm" onClick={() => abrirEditar(b)}>Editar</Button>
-                    <Button variant="outline-danger" size="sm" onClick={() => eliminar(b._id)}>Borrar</Button>
+                  <td>
+                    <div className="d-flex gap-1 justify-content-center">
+                      <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(b)}>Editar</Button>
+                      <Button size="sm" variant="outline-danger" onClick={() => eliminar(b._id)}>Borrar</Button>
+                    </div>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </Table>
-      )}
+      </div>
 
       {/* Modal crear / editar */}
       <Modal show={showModal} onHide={cerrar} centered>
@@ -188,6 +184,6 @@ export default function Baterias() {
           </Button>
         </Modal.Footer>
       </Modal>
-    </Container>
+    </div>
   );
 }
