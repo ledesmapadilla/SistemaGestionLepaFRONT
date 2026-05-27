@@ -341,7 +341,7 @@ export default function Baterias() {
       </Modal>
 
       {/* ── Modal Nueva batería ── */}
-      <Modal show={showNueva} onHide={cerrarNueva} centered size="sm">
+      <Modal show={showNueva} onHide={cerrarNueva} centered>
         <Modal.Header closeButton>
           <Modal.Title>Nueva batería</Modal.Title>
         </Modal.Header>
