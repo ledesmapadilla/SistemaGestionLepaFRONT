@@ -473,7 +473,6 @@ export default function Baterias() {
               <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
                 <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                   <tr>
-                    <th>#</th>
                     <th>Máquina</th>
                     <th>Fecha</th>
                     <th>Observaciones</th>
@@ -483,7 +482,6 @@ export default function Baterias() {
                 <tbody>
                   {[...registroHistorial.historial].reverse().map((h, i) => (
                     <tr key={i}>
-                      <td>{registroHistorial.historial.length - i}</td>
                       <td>{h.maquina?.maquina || "-"}</td>
                       <td>{h.fecha ? new Date(h.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
                       <td>{h.observaciones || "-"}</td>
