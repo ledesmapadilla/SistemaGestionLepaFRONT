@@ -13,7 +13,7 @@ import authFetch from "../../../../../helpers/authFetch";
 
 const hoy = () => new Date().toLocaleDateString("en-CA");
 const VACIO_ALTA  = { nombreBateria: "", marca: "", fecha: hoy() };
-const VACIO_NUEVA = { bateria: "", maquina: "", observaciones: "" };
+const VACIO_NUEVA = { bateria: "", maquina: "", fecha: hoy(), observaciones: "" };
 
 export default function Baterias() {
   const [registros, setRegistros] = useState([]);
@@ -121,6 +121,7 @@ export default function Baterias() {
   const guardarNueva = async () => {
     if (!formNueva.bateria) return Swal.fire("Atención", "Seleccioná una batería.", "warning");
     if (!formNueva.maquina) return Swal.fire("Atención", "Seleccioná una máquina.", "warning");
+    if (!formNueva.fecha)   return Swal.fire("Atención", "La fecha es obligatoria.", "warning");
 
     setGuardandoNueva(true);
     try {
@@ -141,14 +142,14 @@ export default function Baterias() {
   // ── Editar (estilo Variables) ────────────────────────────────────
   const abrirEditar = (r) => {
     setRegistroEditar(r);
-    setFilasEditar([{ maquina: r.maquina?._id || r.maquina || "", observaciones: r.observaciones || "", disabled: true }]);
+    setFilasEditar([{ maquina: r.maquina?._id || r.maquina || "", fecha: r.fecha || "", observaciones: r.observaciones || "", disabled: true }]);
     setShowEditar(true);
   };
 
   const cerrarEditar = () => { setShowEditar(false); setRegistroEditar(null); setFilasEditar([]); };
 
   const agregarFila = () => {
-    setFilasEditar((prev) => [...prev, { maquina: "", observaciones: "", disabled: false }]);
+    setFilasEditar((prev) => [...prev, { maquina: "", fecha: hoy(), observaciones: "", disabled: false }]);
   };
 
   const actualizarFila = (idx, campo, valor) => {
@@ -170,7 +171,7 @@ export default function Baterias() {
       const bateriaId = registroEditar.bateria?._id || registroEditar.bateria;
       // Crear un nuevo registro por cada fila nueva
       const promesas = filasNuevas.map((f) =>
-        crearRegistroBateria({ bateria: bateriaId, maquina: f.maquina, observaciones: f.observaciones || "" })
+        crearRegistroBateria({ bateria: bateriaId, maquina: f.maquina, fecha: f.fecha || "", observaciones: f.observaciones || "" })
       );
       const resultados = await Promise.all(promesas);
       const hayError = resultados.some((r) => !r?.ok);
@@ -267,7 +268,7 @@ export default function Baterias() {
       </Modal>
 
       {/* ── Modal Alta de batería ── */}
-      <Modal show={showAlta} onHide={cerrarAlta} centered>
+      <Modal show={showAlta} onHide={cerrarAlta} centered size="sm">
         <Modal.Header closeButton>
           <Modal.Title>Alta de batería</Modal.Title>
         </Modal.Header>
@@ -349,7 +350,7 @@ export default function Baterias() {
       </Modal>
 
       {/* ── Modal Nueva batería ── */}
-      <Modal show={showNueva} onHide={cerrarNueva} centered>
+      <Modal show={showNueva} onHide={cerrarNueva} centered size="sm">
         <Modal.Header closeButton>
           <Modal.Title>Nueva batería</Modal.Title>
         </Modal.Header>
@@ -380,6 +381,15 @@ export default function Baterias() {
                   <option key={m._id} value={m._id}>{m.maquina}</option>
                 ))}
               </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3 text-center">
+              <Form.Label>Fecha <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                type="date"
+                className="w-50 mx-auto"
+                value={formNueva.fecha}
+                onChange={(e) => setFormNueva((p) => ({ ...p, fecha: e.target.value }))}
+              />
             </Form.Group>
             <Form.Group className="mb-3 text-center">
               <Form.Label>Observaciones</Form.Label>
@@ -414,6 +424,7 @@ export default function Baterias() {
               <tr>
                 <th>Nombre batería</th>
                 <th>Máquina</th>
+                <th>Fecha</th>
                 <th>Observaciones</th>
                 <th></th>
               </tr>
@@ -438,6 +449,18 @@ export default function Baterias() {
                           <option key={m._id} value={m._id}>{m.maquina}</option>
                         ))}
                       </Form.Select>
+                    )}
+                  </td>
+                  <td>
+                    {fila.disabled ? (
+                      fila.fecha ? new Date(fila.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"
+                    ) : (
+                      <Form.Control
+                        size="sm"
+                        type="date"
+                        value={fila.fecha}
+                        onChange={(e) => actualizarFila(idx, "fecha", e.target.value)}
+                      />
                     )}
                   </td>
                   <td>
