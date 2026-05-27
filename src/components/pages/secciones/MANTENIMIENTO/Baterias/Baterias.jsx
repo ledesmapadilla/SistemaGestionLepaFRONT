@@ -91,11 +91,9 @@ export default function Baterias() {
   const eliminarDelCatalogo = async (id) => {
     const { isConfirmed } = await Swal.fire({
       title: "¿Eliminar batería del catálogo?",
-      text: "Esta acción no se puede deshacer.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#dc3545",
-      cancelButtonText: "Cancelar",
+      customClass: { confirmButton: "swal-btn-danger" },
       confirmButtonText: "Sí, borrar",
     });
     if (!isConfirmed) return;
@@ -158,11 +156,9 @@ export default function Baterias() {
   const eliminar = async (id) => {
     const { isConfirmed } = await Swal.fire({
       title: "¿Eliminar registro?",
-      text: "Esta acción no se puede deshacer.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#dc3545",
-      cancelButtonText: "Cancelar",
+      customClass: { confirmButton: "swal-btn-danger" },
       confirmButtonText: "Sí, borrar",
     });
     if (!isConfirmed) return;
