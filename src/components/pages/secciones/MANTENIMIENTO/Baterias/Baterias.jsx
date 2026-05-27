@@ -2,14 +2,13 @@ import { useEffect, useState } from "react";
 import { Button, Form, Modal, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { listarBaterias, crearBateria, editarBateria, borrarBateria } from "../../../../../helpers/queriesBaterias";
-import { API } from "../../../../../helpers/api";
-import authFetch from "../../../../../helpers/authFetch";
 
-const VACIO = { nombreBateria: "", maquina: "", observaciones: "" };
+const hoy = () => new Date().toLocaleDateString("en-CA");
+
+const VACIO = { nombreBateria: "", marca: "", fecha: hoy() };
 
 export default function Baterias() {
   const [baterias, setBaterias] = useState([]);
-  const [maquinas, setMaquinas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editando, setEditando] = useState(null);
@@ -19,13 +18,8 @@ export default function Baterias() {
   const cargar = async () => {
     setCargando(true);
     try {
-      const [bats, maqRes] = await Promise.all([
-        listarBaterias(),
-        authFetch(API.maquinas),
-      ]);
-      setBaterias(bats);
-      const maqData = maqRes?.ok ? await maqRes.json() : [];
-      setMaquinas(maqData);
+      const data = await listarBaterias();
+      setBaterias(data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -35,15 +29,11 @@ export default function Baterias() {
 
   useEffect(() => { cargar(); }, []);
 
-  const abrirCrear = () => { setEditando(null); setForm(VACIO); setShowModal(true); };
+  const abrirAlta = () => { setEditando(null); setForm(VACIO); setShowModal(true); };
 
   const abrirEditar = (b) => {
     setEditando(b);
-    setForm({
-      nombreBateria: b.nombreBateria,
-      maquina: b.maquina?._id || b.maquina || "",
-      observaciones: b.observaciones || "",
-    });
+    setForm({ nombreBateria: b.nombreBateria, marca: b.marca, fecha: b.fecha });
     setShowModal(true);
   };
 
@@ -53,7 +43,8 @@ export default function Baterias() {
 
   const guardar = async () => {
     if (!form.nombreBateria.trim()) return Swal.fire("Atención", "El nombre de la batería es obligatorio.", "warning");
-    if (!form.maquina) return Swal.fire("Atención", "Seleccioná una máquina.", "warning");
+    if (!form.marca.trim())         return Swal.fire("Atención", "La marca es obligatoria.", "warning");
+    if (!form.fecha)                return Swal.fire("Atención", "La fecha es obligatoria.", "warning");
 
     setGuardando(true);
     try {
@@ -64,7 +55,7 @@ export default function Baterias() {
       if (res?.ok) {
         await cargar();
         cerrar();
-        Swal.fire({ icon: "success", title: editando ? "Batería actualizada" : "Batería creada", timer: 1500, showConfirmButton: false });
+        Swal.fire({ icon: "success", title: editando ? "Batería actualizada" : "Batería dada de alta", timer: 1500, showConfirmButton: false });
       } else {
         Swal.fire("Error", "No se pudo guardar la batería.", "error");
       }
@@ -100,7 +91,7 @@ export default function Baterias() {
       <h6 className="text-center mb-3">Baterías</h6>
 
       <div className="d-flex justify-content-end mb-2">
-        <Button size="sm" variant="outline-warning" onClick={abrirCrear}>+ Nueva batería</Button>
+        <Button size="sm" variant="outline-success" onClick={abrirAlta}>+ Alta de batería</Button>
       </div>
 
       <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
@@ -109,8 +100,8 @@ export default function Baterias() {
             <tr>
               <th>#</th>
               <th>Nombre batería</th>
-              <th>Máquina</th>
-              <th>Observaciones</th>
+              <th>Marca</th>
+              <th>Fecha</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -124,8 +115,8 @@ export default function Baterias() {
                 <tr key={b._id}>
                   <td>{i + 1}</td>
                   <td>{b.nombreBateria}</td>
-                  <td>{b.maquina?.maquina || "-"}</td>
-                  <td>{b.observaciones || "-"}</td>
+                  <td>{b.marca}</td>
+                  <td>{b.fecha ? new Date(b.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
                   <td>
                     <div className="d-flex gap-1 justify-content-center">
                       <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(b)}>Editar</Button>
@@ -139,10 +130,10 @@ export default function Baterias() {
         </Table>
       </div>
 
-      {/* Modal crear / editar */}
+      {/* Modal alta / editar */}
       <Modal show={showModal} onHide={cerrar} centered>
         <Modal.Header closeButton>
-          <Modal.Title>{editando ? "Editar batería" : "Nueva batería"}</Modal.Title>
+          <Modal.Title>{editando ? "Editar batería" : "Alta de batería"}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -156,31 +147,29 @@ export default function Baterias() {
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Máquina <span className="text-danger">*</span></Form.Label>
-              <Form.Select name="maquina" value={form.maquina} onChange={handleChange}>
-                <option value="">Seleccionar máquina...</option>
-                {maquinas.map((m) => (
-                  <option key={m._id} value={m._id}>{m.maquina}</option>
-                ))}
-              </Form.Select>
+              <Form.Label>Marca <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                name="marca"
+                value={form.marca}
+                onChange={handleChange}
+                placeholder="Ej: Bosch, Remy, Moura..."
+              />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Observaciones</Form.Label>
+              <Form.Label>Fecha <span className="text-danger">*</span></Form.Label>
               <Form.Control
-                as="textarea"
-                rows={3}
-                name="observaciones"
-                value={form.observaciones}
+                type="date"
+                name="fecha"
+                value={form.fecha}
                 onChange={handleChange}
-                placeholder="Observaciones opcionales..."
               />
             </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={cerrar}>Cancelar</Button>
-          <Button variant="warning" onClick={guardar} disabled={guardando}>
-            {guardando ? <Spinner size="sm" animation="border" /> : editando ? "Guardar cambios" : "Crear"}
+          <Button variant="success" onClick={guardar} disabled={guardando}>
+            {guardando ? <Spinner size="sm" animation="border" /> : editando ? "Guardar cambios" : "Dar de alta"}
           </Button>
         </Modal.Footer>
       </Modal>
