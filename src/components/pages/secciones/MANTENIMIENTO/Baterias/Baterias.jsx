@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button, Form, Modal, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
-import { listarBaterias, crearBateria } from "../../../../../helpers/queriesBaterias";
+import { listarBaterias, crearBateria, borrarBateria } from "../../../../../helpers/queriesBaterias";
 import {
   listarRegistrosBaterias,
   crearRegistroBateria,
@@ -87,6 +87,27 @@ export default function Baterias() {
     }
   };
 
+  // ── Borrar del catálogo ─────────────────────────────────────────
+  const eliminarDelCatalogo = async (id) => {
+    const { isConfirmed } = await Swal.fire({
+      title: "¿Eliminar batería del catálogo?",
+      text: "Esta acción no se puede deshacer.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc3545",
+      cancelButtonText: "Cancelar",
+      confirmButtonText: "Sí, borrar",
+    });
+    if (!isConfirmed) return;
+    const res = await borrarBateria(id);
+    if (res?.ok) {
+      setCatalogo((prev) => prev.filter((b) => b._id !== id));
+      Swal.fire({ icon: "success", title: "Batería eliminada del catálogo", timer: 1500, showConfirmButton: false });
+    } else {
+      Swal.fire("Error", "No se pudo eliminar la batería.", "error");
+    }
+  };
+
   // ── Nueva batería (registro tabla) ──────────────────────────────
   // Baterías disponibles: las del catálogo que aún no tienen registro (excepto la del registro que se edita)
   const bateriasDisponibles = catalogo.filter((b) => {
@@ -167,7 +188,7 @@ export default function Baterias() {
           <Button size="sm" variant="outline-secondary" onClick={() => setShowListado(true)}>Listado baterías</Button>
         </div>
         {/* Derecha */}
-        <Button size="sm" variant="outline-warning" onClick={abrirNueva}>+ Nueva batería</Button>
+        <Button size="sm" variant="outline-primary" onClick={abrirNueva}>+ Nueva batería</Button>
       </div>
 
       <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
@@ -260,19 +281,21 @@ export default function Baterias() {
               <Table striped bordered hover className="text-center align-middle mb-0" size="sm">
                 <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                   <tr>
-                    <th>#</th>
                     <th>Nombre batería</th>
                     <th>Marca</th>
                     <th>Fecha</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {catalogo.map((b, i) => (
+                  {catalogo.map((b) => (
                     <tr key={b._id}>
-                      <td>{i + 1}</td>
                       <td>{b.nombreBateria}</td>
                       <td>{b.marca}</td>
                       <td>{b.fecha ? new Date(b.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
+                      <td>
+                        <Button size="sm" variant="outline-danger" onClick={() => eliminarDelCatalogo(b._id)}>Borrar</Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -333,7 +356,7 @@ export default function Baterias() {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={cerrarNueva}>Cancelar</Button>
-          <Button variant="warning" onClick={guardarNueva} disabled={guardandoNueva}>
+          <Button variant="primary" onClick={guardarNueva} disabled={guardandoNueva}>
             {guardandoNueva ? <Spinner size="sm" animation="border" /> : editando ? "Guardar cambios" : "Guardar"}
           </Button>
         </Modal.Footer>
