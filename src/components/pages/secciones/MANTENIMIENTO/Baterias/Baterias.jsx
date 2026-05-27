@@ -132,7 +132,7 @@ export default function Baterias() {
         Swal.fire({ icon: "success", title: "Batería registrada", timer: 1500, showConfirmButton: false });
       } else {
         const err = await res.json().catch(() => ({}));
-        Swal.fire("Error", err.msg || "No se pudo guardar el registro.", "error");
+        Swal.fire("Error", `${err.msg || "No se pudo guardar el registro."}\n${err.error || ""}\n${err.name || ""}`, "error");
       }
     } finally {
       setGuardandoNueva(false);
@@ -175,7 +175,11 @@ export default function Baterias() {
       );
       const resultados = await Promise.all(promesas);
       const hayError = resultados.some((r) => !r?.ok);
-      if (hayError) return Swal.fire("Error", "Algún registro no se pudo guardar.", "error");
+      if (hayError) {
+        const errRes = resultados.find((r) => !r?.ok);
+        const errData = errRes ? await errRes.json().catch(() => ({})) : {};
+        return Swal.fire("Error", `${errData.msg || "Algún registro no se pudo guardar."}\n${errData.error || ""}\n${errData.name || ""}`, "error");
+      }
 
       await cargar();
       cerrarEditar();
