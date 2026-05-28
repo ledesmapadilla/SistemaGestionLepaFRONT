@@ -80,6 +80,20 @@ const ResumenMes = () => {
     return [...set].sort();
   }, [registros]);
 
+  // Handlers mutuamente excluyentes
+  const handlePersonal = (val) => {
+    setFiltroPersonal(val);
+    if (val) { setFiltroObra(""); setFiltroMaquina(""); }
+  };
+  const handleObra = (val) => {
+    setFiltroObra(val);
+    if (val) { setFiltroPersonal(""); setFiltroMaquina(""); }
+  };
+  const handleMaquina = (val) => {
+    setFiltroMaquina(val);
+    if (val) { setFiltroPersonal(""); setFiltroObra(""); }
+  };
+
   const filtrarRegs = (regs = []) =>
     regs.filter((r) => {
       if (filtroPersonal && r.personal !== filtroPersonal) return false;
@@ -87,6 +101,16 @@ const ResumenMes = () => {
       if (filtroMaquina && r.maquina !== filtroMaquina) return false;
       return true;
     });
+
+  // Qué campo activo hay y qué dos mostrar en la tarjeta
+  const filtroActivo = filtroPersonal ? "personal" : filtroObra ? "obra" : filtroMaquina ? "maquina" : null;
+
+  const camposEnTarjeta = (r) => {
+    if (filtroActivo === "personal") return [r.obra || "-", r.maquina || "-"];
+    if (filtroActivo === "obra")     return [r.personal || "-", r.maquina || "-"];
+    if (filtroActivo === "maquina")  return [r.personal || "-", r.obra || "-"];
+    return null;
+  };
 
   const estiloX = {
     position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)",
@@ -117,24 +141,24 @@ const ResumenMes = () => {
         </Form.Select>
       </div>
 
-      {/* Filtros */}
+      {/* Filtros mutuamente excluyentes */}
       <div className="d-flex gap-2 mb-4">
         <div style={{ position: "relative", width: 200 }}>
-          <Form.Select size="sm" value={filtroPersonal} onChange={(e) => setFiltroPersonal(e.target.value)} style={filtroPersonal ? selectActivo : {}}>
+          <Form.Select size="sm" value={filtroPersonal} onChange={(e) => handlePersonal(e.target.value)} style={filtroPersonal ? selectActivo : {}}>
             <option value="">Personal</option>
             {personalOptions.map((p) => <option key={p} value={p}>{p}</option>)}
           </Form.Select>
           {filtroPersonal && <span onClick={() => setFiltroPersonal("")} style={estiloX}>✕</span>}
         </div>
         <div style={{ position: "relative", width: 200 }}>
-          <Form.Select size="sm" value={filtroObra} onChange={(e) => setFiltroObra(e.target.value)} style={filtroObra ? selectActivo : {}}>
+          <Form.Select size="sm" value={filtroObra} onChange={(e) => handleObra(e.target.value)} style={filtroObra ? selectActivo : {}}>
             <option value="">Obras</option>
             {obraOptions.map((o) => <option key={o} value={o}>{o}</option>)}
           </Form.Select>
           {filtroObra && <span onClick={() => setFiltroObra("")} style={estiloX}>✕</span>}
         </div>
         <div style={{ position: "relative", width: 200 }}>
-          <Form.Select size="sm" value={filtroMaquina} onChange={(e) => setFiltroMaquina(e.target.value)} style={filtroMaquina ? selectActivo : {}}>
+          <Form.Select size="sm" value={filtroMaquina} onChange={(e) => handleMaquina(e.target.value)} style={filtroMaquina ? selectActivo : {}}>
             <option value="">Máquina</option>
             {maquinaOptions.map((m) => <option key={m} value={m}>{m}</option>)}
           </Form.Select>
@@ -143,7 +167,7 @@ const ResumenMes = () => {
       </div>
 
       {/* Grilla calendario */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, alignItems: "start" }}>
         {DIAS_SEMANA.map((d) => (
           <div key={d} className="text-center fw-semibold" style={{ fontSize: "0.82rem", paddingBottom: 4, color: "white" }}>
             {d}
@@ -167,15 +191,15 @@ const ResumenMes = () => {
             <div
               key={dia}
               onClick={() => tieneRegistros && !esFuturo && setDiaModal(dia)}
-              className="rounded text-center"
+              className="rounded"
               style={{
                 cursor: tieneRegistros && !esFuturo ? "pointer" : esFuturo ? "not-allowed" : "default",
-                padding: "4px",
-                height: 56,
+                padding: "6px 4px",
+                minHeight: 56,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                justifyContent: "center",
+                justifyContent: "flex-start",
                 background: bgBase,
                 border: "2px solid #ffc107",
                 transition: "background 0.15s",
@@ -186,11 +210,24 @@ const ResumenMes = () => {
               onMouseLeave={(e) => { e.currentTarget.style.background = bgBase; }}
             >
               <span style={{ fontSize: "1rem", fontWeight: 600, color: "#000" }}>{dia}</span>
-              {tieneRegistros && (
+
+              {/* Sin filtro: mostrar conteo */}
+              {!filtroActivo && tieneRegistros && (
                 <div style={{ fontSize: "0.65rem", color: "#333", marginTop: 2 }}>
                   {regsFiltradas.length} reg{regsFiltradas.length !== 1 ? "s" : ""}
                 </div>
               )}
+
+              {/* Con filtro: mostrar los 2 campos no filtrados por registro */}
+              {filtroActivo && regsFiltradas.map((r, idx) => {
+                const [campo1, campo2] = camposEnTarjeta(r);
+                return (
+                  <div key={idx} style={{ fontSize: "0.6rem", color: "#111", marginTop: idx === 0 ? 3 : 2, textAlign: "center", lineHeight: 1.3, width: "100%" }}>
+                    <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{campo1}</div>
+                    <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{campo2}</div>
+                  </div>
+                );
+              })}
             </div>
           );
         })}
