@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal, Button, Form, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import {
@@ -124,6 +124,7 @@ const RemitosModal = ({
   const [personalDisponible, setPersonalDisponible] = useState([]);
   const [errorFecha, setErrorFecha] = useState("");
   const [errorNumeroRemito, setErrorNumeroRemito] = useState("");
+  const remitoValidandoRef = useRef("");
 
   const [remito, setRemito] = useState("");
   const [estado, setEstado] = useState("Sin facturar");
@@ -199,15 +200,16 @@ const RemitosModal = ({
   // HANDLERS
   // ===============================
   const handleRemitoChange = async (valor) => {
+    remitoValidandoRef.current = valor;
     setRemito(valor);
     setErrorNumeroRemito("");
 
-    if (!valor) return; 
+    if (!valor) return;
 
     try {
       const remitosExistentes = await listarRemitos();
+      if (remitoValidandoRef.current !== valor) return;
       const existe = remitosExistentes.some((r) => r.remito === Number(valor));
-
       if (existe) {
         setErrorNumeroRemito("El remito ya existe");
       }
