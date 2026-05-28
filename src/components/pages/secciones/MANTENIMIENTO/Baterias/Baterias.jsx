@@ -426,7 +426,7 @@ export default function Baterias() {
                 <option value="">Seleccionar...</option>
                 <option value="vendida">Vendida</option>
                 <option value="en galpon">En Galpón</option>
-                {maquinas.map((m) => (
+                {maquinas.filter(m => !["Batea 1", "Batea 2", "Carretón grande", "Carretón chico"].includes(m.maquina)).map((m) => (
                   <option key={m._id} value={m._id}>{m.maquina}</option>
                 ))}
               </Form.Select>
