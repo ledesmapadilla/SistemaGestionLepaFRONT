@@ -127,6 +127,11 @@ export default function Baterias() {
     if (!formNueva.maquina) return Swal.fire("Atención", "Seleccioná una máquina.", "warning");
     if (!formNueva.fecha)   return Swal.fire("Atención", "La fecha es obligatoria.", "warning");
 
+    const yaRegistrada = registros.some(
+      (r) => String(r.bateria?._id || r.bateria) === String(formNueva.bateria)
+    );
+    if (yaRegistrada) return Swal.fire("Atención", "Esta batería ya está registrada.", "warning");
+
     setGuardandoNueva(true);
     const esEspecial = formNueva.maquina === "vendida" || formNueva.maquina === "en galpon";
     const payload = {
