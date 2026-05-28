@@ -139,17 +139,13 @@ const RemitosModal = ({
     if (!show) return;
 
     if (itemEditando && remitoEditando) {
-      // MODO EDITAR ITEM
-      const fechaItem = itemEditando.fecha
-        ? formatearFechaInput(itemEditando.fecha)
-        : "";
-
-      setFilas([
-        {
-          ...itemEditando,
-          fecha: fechaItem,
-        },
-      ]);
+      // MODO EDITAR REMITO — cargar TODOS los ítems
+      setFilas(
+        (remitoEditando.items?.length ? remitoEditando.items : [itemEditando]).map((item) => ({
+          ...item,
+          fecha: item.fecha ? formatearFechaInput(item.fecha) : "",
+        }))
+      );
 
       setRemito(remitoEditando.remito);
       setEstado(remitoEditando.estado);
@@ -345,31 +341,28 @@ const RemitosModal = ({
         return;
       }
 
-      // EDITAR ÍTEM
+      // EDITAR REMITO — guardar TODOS los ítems
       if (remitoEditando && itemEditando) {
-        const itemActualizado = {
-          fecha: filas[0].fecha,
-          maquina: filas[0].maquina || "",
-          servicio: filas[0].servicio || "",
-          personal: filas[0].personal || "",
-          cantidad: Number(filas[0].cantidad),
-          precioUnitario: Number(filas[0].precioUnitario),
-          costoHoraPersonal: Number(filas[0].costoHoraPersonal || 0),
-          unidad: filas[0].unidad || "",
-          gasoil: Number(filas[0].gasoil || 0),
-          estado: estado,
-          observaciones: filas[0].observaciones || "",
-        };
-
-        const respuesta = await editarItemRemito(
-          remitoEditando._id,
-          itemEditando._id,
-          itemActualizado
-        );
+        const respuesta = await editarRemito(remitoEditando._id, {
+          estado,
+          items: itemsValidos.map((f) => ({
+            _id: f._id,
+            fecha: f.fecha,
+            maquina: f.maquina || "",
+            servicio: f.servicio || "",
+            personal: f.personal || "",
+            cantidad: Number(f.cantidad),
+            precioUnitario: Number(f.precioUnitario),
+            costoHoraPersonal: Number(f.costoHoraPersonal || 0),
+            unidad: f.unidad || "",
+            gasoil: Number(f.gasoil || 0),
+            observaciones: f.observaciones || "",
+          })),
+        });
 
         Swal.fire({
           icon: "success",
-          title: "Ítem actualizado",
+          title: "Remito actualizado",
           timer: 1200,
           showConfirmButton: false,
         });
