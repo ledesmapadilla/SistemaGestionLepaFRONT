@@ -463,7 +463,7 @@ export default function Baterias() {
       {/* ── Modal Historial ── */}
       <Modal show={showHistorial} onHide={() => setShowHistorial(false)} centered size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Historial — {registroHistorial?.bateria?.nombreBateria || ""}</Modal.Title>
+          <Modal.Title>Historial - Bateria {registroHistorial?.bateria?.nombreBateria || ""}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {!registroHistorial?.historial?.length ? (
