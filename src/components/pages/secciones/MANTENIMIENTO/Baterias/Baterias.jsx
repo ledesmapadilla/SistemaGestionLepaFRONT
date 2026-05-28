@@ -48,6 +48,10 @@ export default function Baterias() {
   const [showHistorial, setShowHistorial]       = useState(false);
   const [registroHistorial, setRegistroHistorial] = useState(null);
 
+  // Filtros
+  const [filtroBateria, setFiltroBateria] = useState("");
+  const [filtroMaquina, setFiltroMaquina] = useState("");
+
   const cargar = async () => {
     setCargando(true);
     try {
@@ -229,7 +233,22 @@ export default function Baterias() {
         <Button size="sm" variant="outline-primary" onClick={abrirNueva}>+ Nueva batería</Button>
       </div>
 
-      <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+      <div className="d-flex gap-2 mb-2">
+        <Form.Select size="sm" style={{ width: "220px" }} value={filtroBateria} onChange={(e) => setFiltroBateria(e.target.value)}>
+          <option value="">Todas las baterías</option>
+          {[...new Set(registros.map(r => r.bateria?.nombreBateria).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map(nombre => (
+            <option key={nombre} value={nombre}>{nombre}</option>
+          ))}
+        </Form.Select>
+        <Form.Select size="sm" style={{ width: "220px" }} value={filtroMaquina} onChange={(e) => setFiltroMaquina(e.target.value)}>
+          <option value="">Todas las máquinas</option>
+          {[...new Set(registros.map(r => r.maquinaLabel || r.maquina?.maquina).filter(Boolean))].sort().map(nombre => (
+            <option key={nombre} value={nombre}>{nombre}</option>
+          ))}
+        </Form.Select>
+      </div>
+
+      <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
         <Table striped bordered hover className="text-center align-middle mb-0">
           <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
             <tr>
@@ -243,7 +262,11 @@ export default function Baterias() {
             {registros.length === 0 ? (
               <tr><td colSpan={4} className="text-muted py-3">Sin baterías registradas</td></tr>
             ) : (
-              registros.map((r) => (
+              registros.filter(r => {
+                const nb = r.bateria?.nombreBateria || "";
+                const nm = r.maquinaLabel || r.maquina?.maquina || "";
+                return (!filtroBateria || nb === filtroBateria) && (!filtroMaquina || nm === filtroMaquina);
+              }).map((r) => (
                 <tr key={r._id}>
                   <td>{r.bateria?.nombreBateria || "-"}</td>
                   <td>{r.maquinaLabel || r.maquina?.maquina || "-"}</td>
