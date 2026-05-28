@@ -139,7 +139,8 @@ export default function Baterias() {
     try {
       const res = await crearRegistroBateria(payload);
       if (res?.ok) {
-        await cargar();
+        const data = await res.json();
+        setRegistros((prev) => [data.registro, ...prev]);
         cerrarNueva();
         Swal.fire({ icon: "success", title: "Batería registrada", timer: 1500, showConfirmButton: false });
       } else {
