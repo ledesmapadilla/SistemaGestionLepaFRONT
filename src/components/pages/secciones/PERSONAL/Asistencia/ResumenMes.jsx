@@ -265,13 +265,6 @@ const ResumenMes = () => {
             >
               <span style={{ fontSize: "1rem", fontWeight: 600, color: "#000" }}>{dia}</span>
 
-              {/* Sin filtro: mostrar conteo */}
-              {!filtroActivo && tieneRegistros && (
-                <div style={{ fontSize: "0.65rem", color: "#333", marginTop: 2 }}>
-                  {regsFiltradas.length} reg{regsFiltradas.length !== 1 ? "s" : ""}
-                </div>
-              )}
-
               {/* Con filtro: mostrar los 2 campos no filtrados por registro */}
               {filtroActivo && regsFiltradas.map((r, idx) => {
                 const [campo1, campo2] = camposEnTarjeta(r);
