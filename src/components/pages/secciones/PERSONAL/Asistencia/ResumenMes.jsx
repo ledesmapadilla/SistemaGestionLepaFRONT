@@ -107,9 +107,9 @@ const ResumenMes = () => {
   const filtroActivo = filtroPersonal ? "personal" : filtroObra ? "obra" : filtroMaquina ? "maquina" : null;
 
   const camposEnTarjeta = (r) => {
-    if (filtroActivo === "personal") return [r.obra || "-", r.maquina || "-"];
-    if (filtroActivo === "obra")     return [r.personal || "-", r.maquina || "-"];
-    if (filtroActivo === "maquina")  return [r.personal || "-", r.obra || "-"];
+    if (filtroActivo === "personal") return [{ label: "Obra", val: r.obra || "-" }, { label: "Máquina", val: r.maquina || "-" }];
+    if (filtroActivo === "obra")     return [{ label: "Personal", val: r.personal || "-" }, { label: "Máquina", val: r.maquina || "-" }];
+    if (filtroActivo === "maquina")  return [{ label: "Personal", val: r.personal || "-" }, { label: "Obra", val: r.obra || "-" }];
     return null;
   };
 
@@ -267,11 +267,14 @@ const ResumenMes = () => {
 
               {/* Con filtro: mostrar los 2 campos no filtrados por registro */}
               {filtroActivo && regsFiltradas.map((r, idx) => {
-                const [campo1, campo2] = camposEnTarjeta(r);
+                const campos = camposEnTarjeta(r);
                 return (
-                  <div key={idx} style={{ fontSize: "0.6rem", color: "#111", marginTop: idx === 0 ? 3 : 2, textAlign: "center", lineHeight: 1.3, width: "100%" }}>
-                    <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{campo1}</div>
-                    <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{campo2}</div>
+                  <div key={idx} style={{ fontSize: "0.6rem", color: "#111", marginTop: idx === 0 ? 3 : 2, textAlign: "left", lineHeight: 1.3, width: "100%", padding: "0 2px" }}>
+                    {campos.map(({ label, val }) => (
+                      <div key={label} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <b>{label}:</b> {val}
+                      </div>
+                    ))}
                   </div>
                 );
               })}
