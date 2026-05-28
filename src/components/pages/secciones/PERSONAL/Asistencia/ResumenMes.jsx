@@ -144,10 +144,11 @@ const ResumenMes = () => {
       const key = diaKey(anio, mes, dia);
       const regs = filtrarRegs(registros[key] || []);
       regs.forEach((r) => {
-        const fechaStr = `${String(dia).padStart(2, "0")}/${String(mes + 1).padStart(2, "0")}/${anio}`;
-        const vals = [fechaStr, r.personal, r.ausente ? "Sí" : "No", r.mediaFalta ? "Sí" : "No", r.remito ? "Sí" : "No", r.entra, r.sale, r.maquina, r.horometro, r.obra, r.observaciones];
+        const fechaSerial = Math.floor((new Date(anio, mes, dia) - new Date(1899, 11, 30)) / 86400000);
+        ws[`A${row}`] = { v: fechaSerial, t: "n", s: { ...estCentro, numFmt: "DD/MM/YYYY" } };
+        const vals = [r.personal, r.ausente ? "Sí" : "No", r.mediaFalta ? "Sí" : "No", r.remito ? "Sí" : "No", r.entra, r.sale, r.maquina, r.horometro, r.obra, r.observaciones];
         vals.forEach((v, i) => {
-          ws[`${cols[i]}${row}`] = { v: v ?? "", t: "s", s: estCentro };
+          ws[`${cols[i + 1]}${row}`] = { v: v ?? "", t: "s", s: estCentro };
         });
         row++;
       });
