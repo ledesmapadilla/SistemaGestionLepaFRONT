@@ -6,7 +6,7 @@ const URL_ACEITES = API.aceites;
 export const listarAceites = async () => {
   try {
     return await authFetch(URL_ACEITES);
-  } catch (error) { console.log(error); }
+  } catch (error) { return null; }
 };
 
 export const crearAceite = async (datos) => {
@@ -15,7 +15,7 @@ export const crearAceite = async (datos) => {
       method: "POST",
       body: JSON.stringify(datos),
     });
-  } catch (error) { console.log(error); }
+  } catch (error) { return null; }
 };
 
 export const recargarStockAPI = async (id, datos) => {
@@ -24,7 +24,7 @@ export const recargarStockAPI = async (id, datos) => {
       method: "POST",
       body: JSON.stringify(datos),
     });
-  } catch (error) { console.log(error); }
+  } catch (error) { return null; }
 };
 
 export const registrarConsumoAPI = async (id, datos) => {
@@ -33,7 +33,7 @@ export const registrarConsumoAPI = async (id, datos) => {
       method: "POST",
       body: JSON.stringify(datos),
     });
-  } catch (error) { console.log(error); }
+  } catch (error) { return null; }
 };
 
 export const registrarCompraAPI = async (id, datos) => {
@@ -42,7 +42,7 @@ export const registrarCompraAPI = async (id, datos) => {
       method: "POST",
       body: JSON.stringify(datos),
     });
-  } catch (error) { console.log(error); }
+  } catch (error) { return null; }
 };
 
 export const editarAceite = async (id, datos) => {
@@ -51,13 +51,13 @@ export const editarAceite = async (id, datos) => {
       method: "PUT",
       body: JSON.stringify(datos),
     });
-  } catch (error) { console.log(error); }
+  } catch (error) { return null; }
 };
 
 export const borrarAceite = async (id) => {
   try {
     return await authFetch(`${URL_ACEITES}/${id}`, { method: "DELETE" });
-  } catch (error) { console.log(error); }
+  } catch (error) { return null; }
 };
 
 export const editarCompraAPI = async (aceiteId, movId, datos) => {
@@ -66,11 +66,11 @@ export const editarCompraAPI = async (aceiteId, movId, datos) => {
       method: "PUT",
       body: JSON.stringify(datos),
     });
-  } catch (error) { console.log(error); }
+  } catch (error) { return null; }
 };
 
 export const borrarCompraAPI = async (aceiteId, movId) => {
   try {
     return await authFetch(`${URL_ACEITES}/${aceiteId}/movimiento/${movId}`, { method: "DELETE" });
-  } catch (error) { console.log(error); }
+  } catch (error) { return null; }
 };

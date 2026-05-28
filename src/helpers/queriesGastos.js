@@ -7,7 +7,7 @@ export const listarGastosPorObra = async (idObra) => {
   try {
     return await authFetch(`${URI_GASTOS}?obra=${idObra}`);
   } catch (error) {
-    console.log(error);
+    return null;
   }
 };
 
@@ -18,7 +18,7 @@ export const crearGastoAPI = async (gasto) => {
       body: JSON.stringify(gasto),
     });
   } catch (error) {
-    console.log(error);
+    return null;
   }
 };
 
@@ -26,7 +26,7 @@ export const borrarGastoAPI = async (id) => {
   try {
     return await authFetch(`${URI_GASTOS}/${id}`, { method: "DELETE" });
   } catch (error) {
-    console.log(error);
+    return null;
   }
 };
 

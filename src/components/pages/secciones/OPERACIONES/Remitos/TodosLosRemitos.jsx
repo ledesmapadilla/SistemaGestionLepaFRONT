@@ -113,8 +113,7 @@ const TodosLosRemitos = () => {
       });
 
       cargarRemitos();
-    } catch (error) {
-      console.log(error);
+    } catch {
       Swal.fire("Error", "No se pudo eliminar", "error");
     }
   };
