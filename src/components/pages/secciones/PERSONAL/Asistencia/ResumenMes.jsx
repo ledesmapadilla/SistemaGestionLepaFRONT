@@ -114,15 +114,7 @@ const ResumenMes = () => {
   };
 
   const exportarExcel = () => {
-    const filtroLabel = filtroPersonal
-      ? `Personal: ${filtroPersonal}`
-      : filtroObra
-      ? `Obra: ${filtroObra}`
-      : filtroMaquina
-      ? `Máquina: ${filtroMaquina}`
-      : "Todos";
-
-    const titulo = `Resumen ${MESES[mes]} ${anio} — ${filtroLabel}`;
+    const titulo = `Resumen - ${MESES[mes]} ${anio}`;
     const headers = ["Fecha", "Personal", "Ausente", "Media Falta", "Remito", "Entra", "Sale", "Máquina", "Horómetro", "Obra", "Observaciones"];
     const cols = "ABCDEFGHIJK";
 
@@ -264,12 +256,14 @@ const ResumenMes = () => {
             >
               <span style={{ fontSize: "1rem", fontWeight: 600, color: "#000" }}>{dia}</span>
 
-              {/* Sin filtro: mostrar conteo */}
-              {!filtroActivo && tieneRegistros && (
-                <div style={{ fontSize: "0.65rem", color: "#333", marginTop: 2 }}>
-                  {regsFiltradas.length} reg{regsFiltradas.length !== 1 ? "s" : ""}
+              {/* Sin filtro: mostrar Personal, Máquina y Obra por registro */}
+              {!filtroActivo && regsFiltradas.map((r, idx) => (
+                <div key={idx} style={{ fontSize: "0.6rem", color: "#111", marginTop: idx === 0 ? 3 : 2, textAlign: "left", lineHeight: 1.3, width: "100%", padding: "0 2px" }}>
+                  {r.personal && <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><b>P:</b> {r.personal}</div>}
+                  {r.maquina  && <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><b>M:</b> {r.maquina}</div>}
+                  {r.obra     && <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><b>O:</b> {r.obra}</div>}
                 </div>
-              )}
+              ))}
 
               {/* Con filtro: mostrar los 2 campos no filtrados por registro */}
               {filtroActivo && regsFiltradas.map((r, idx) => {
