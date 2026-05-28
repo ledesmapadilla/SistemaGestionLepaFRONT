@@ -219,6 +219,12 @@ export default function Baterias() {
     }
   };
 
+  const estiloX = {
+    position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)",
+    cursor: "pointer", color: "#fff", fontSize: "14px", fontWeight: "900", zIndex: 5, userSelect: "none",
+  };
+  const selectActivo = { backgroundImage: "none" };
+
   if (cargando) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
@@ -234,18 +240,24 @@ export default function Baterias() {
       </div>
 
       <div className="d-flex gap-2 mb-2">
-        <Form.Select size="sm" style={{ width: "220px" }} value={filtroBateria} onChange={(e) => setFiltroBateria(e.target.value)}>
-          <option value="">Todas las baterías</option>
-          {[...new Set(registros.map(r => r.bateria?.nombreBateria).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map(nombre => (
-            <option key={nombre} value={nombre}>{nombre}</option>
-          ))}
-        </Form.Select>
-        <Form.Select size="sm" style={{ width: "220px" }} value={filtroMaquina} onChange={(e) => setFiltroMaquina(e.target.value)}>
-          <option value="">Todas las máquinas</option>
-          {[...new Set(registros.map(r => r.maquinaLabel || r.maquina?.maquina).filter(Boolean))].sort().map(nombre => (
-            <option key={nombre} value={nombre}>{nombre}</option>
-          ))}
-        </Form.Select>
+        <div style={{ position: "relative", width: "220px" }}>
+          <Form.Select size="sm" value={filtroBateria} onChange={(e) => setFiltroBateria(e.target.value)} style={filtroBateria ? selectActivo : {}}>
+            <option value="">Nombre batería</option>
+            {[...new Set(registros.map(r => r.bateria?.nombreBateria).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map(nombre => (
+              <option key={nombre} value={nombre}>{nombre}</option>
+            ))}
+          </Form.Select>
+          {filtroBateria && <span onClick={() => setFiltroBateria("")} style={estiloX}>✕</span>}
+        </div>
+        <div style={{ position: "relative", width: "220px" }}>
+          <Form.Select size="sm" value={filtroMaquina} onChange={(e) => setFiltroMaquina(e.target.value)} style={filtroMaquina ? selectActivo : {}}>
+            <option value="">Máquina</option>
+            {[...new Set(registros.map(r => r.maquinaLabel || r.maquina?.maquina).filter(Boolean))].sort().map(nombre => (
+              <option key={nombre} value={nombre}>{nombre}</option>
+            ))}
+          </Form.Select>
+          {filtroMaquina && <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>}
+        </div>
       </div>
 
       <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
