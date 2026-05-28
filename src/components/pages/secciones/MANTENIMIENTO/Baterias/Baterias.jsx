@@ -280,8 +280,8 @@ export default function Baterias() {
                 return (!filtroBateria || nb === filtroBateria) && (!filtroMaquina || nm === filtroMaquina);
               }).map((r) => (
                 <tr key={r._id}>
-                  <td>{r.bateria?.nombreBateria || "-"}</td>
-                  <td>{r.maquinaLabel || r.maquina?.maquina || "-"}</td>
+                  <td style={r.maquinaLabel === "vendida" ? { textDecoration: "line-through" } : {}}>{r.bateria?.nombreBateria || "-"}</td>
+                  <td style={r.maquinaLabel === "vendida" ? { textDecoration: "line-through" } : {}}>{r.maquinaLabel || r.maquina?.maquina || "-"}</td>
                   <td>{r.observaciones || "-"}</td>
                   <td>
                     <div className="d-flex gap-1 justify-content-center">
