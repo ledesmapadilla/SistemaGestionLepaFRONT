@@ -463,7 +463,7 @@ export default function Baterias() {
       {/* ── Modal Editar ── */}
       <Modal show={showEditar} onHide={cerrarEditar} centered size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Editar — {registroEditar?.bateria?.nombreBateria || ""}</Modal.Title>
+          <Modal.Title>Editar - {registroEditar?.bateria?.nombreBateria || ""}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Table bordered size="sm" className="text-center align-middle">
