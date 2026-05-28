@@ -22,8 +22,7 @@ const valoresIniciales = {
   chasis: "",
   motor: "",
   descripcion: "",
-  vendida: false,
-  enGalpon: false,
+  estado: "activa",
 };
 
 const MaquinaTabla = () => {
@@ -40,6 +39,7 @@ const MaquinaTabla = () => {
 
   const [maquinas, setMaquinas] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("todas");
   const [editando, setEditando] = useState(false);
   const [maquinaId, setMaquinaId] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -85,8 +85,7 @@ const MaquinaTabla = () => {
         chasis: data.chasis,
         motor: data.motor,
         descripcion: data.descripcion,
-        vendida: !!data.vendida,
-        enGalpon: !!data.enGalpon,
+        estado: data.estado || "activa",
       };
 
       if (editando) {
@@ -157,8 +156,7 @@ const MaquinaTabla = () => {
       chasis: item.chasis || "",
       motor: item.motor || "",
       descripcion: item.descripcion || "",
-      vendida: !!item.vendida,
-      enGalpon: !!item.enGalpon,
+      estado: item.estado || "activa",
     });
     setShowModal(true);
   };
@@ -170,11 +168,17 @@ const MaquinaTabla = () => {
     setShowModal(true);
   };
 
-  const maquinasFiltradas = maquinas.filter((m) =>
-    m.maquina?.toLowerCase().includes(busqueda.toLowerCase().trim()) ||
-    m.marca?.toLowerCase().includes(busqueda.toLowerCase().trim()) || // Agregué búsqueda por marca
-    m.patente?.toLowerCase().includes(busqueda.toLowerCase().trim())  // Agregué búsqueda por patente
-  );
+  const maquinasFiltradas = maquinas.filter((m) => {
+    const coincideBusqueda =
+      m.maquina?.toLowerCase().includes(busqueda.toLowerCase().trim()) ||
+      m.marca?.toLowerCase().includes(busqueda.toLowerCase().trim()) ||
+      m.patente?.toLowerCase().includes(busqueda.toLowerCase().trim());
+    const coincideEstado =
+      filtroEstado === "todas" ||
+      (filtroEstado === "vendida" && m.estado === "vendida") ||
+      (filtroEstado === "en galpon" && m.estado === "en galpon");
+    return coincideBusqueda && coincideEstado;
+  });
 
   const formatoMiles = (valor) => {
     if (valor === undefined || valor === null || valor === "" || Number(valor) === 0) return "-";
@@ -188,7 +192,7 @@ const MaquinaTabla = () => {
     <>
     <div className="w-75 mx-auto my-2">
         <h6 className="text-center mb-3">Administración de Máquinas</h6>
-        <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="d-flex justify-content-between align-items-center mb-2">
           <Form.Control
             size="sm"
             type="search"
@@ -201,6 +205,11 @@ const MaquinaTabla = () => {
             <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
             <Button size="sm" variant="outline-primary" onClick={abrirCrear}>Nueva Máquina</Button>
           </div>
+        </div>
+        <div className="d-flex gap-2 mb-3">
+          <Button size="sm" variant={filtroEstado === "todas" ? "secondary" : "outline-secondary"} onClick={() => setFiltroEstado("todas")}>Todas</Button>
+          <Button size="sm" variant={filtroEstado === "vendida" ? "danger" : "outline-danger"} onClick={() => setFiltroEstado("vendida")}>Vendidas</Button>
+          <Button size="sm" variant={filtroEstado === "en galpon" ? "warning" : "outline-warning"} onClick={() => setFiltroEstado("en galpon")}>En Galpón</Button>
         </div>
 
       <div>
@@ -216,14 +225,12 @@ const MaquinaTabla = () => {
                   <th>Motor</th>
                   <th>Valor ($)</th>
                   <th>Observaciones</th>
-                  <th>Vendida</th>
-                  <th>En Galpón</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {maquinasFiltradas.length === 0 ? (
-                  <tr><td colSpan="12" className="py-3">No hay máquinas registradas</td></tr>
+                  <tr><td colSpan="10" className="py-3">No hay máquinas registradas</td></tr>
                 ) : (
                   maquinasFiltradas.map((m) => (
                     <tr key={m._id}>
@@ -240,9 +247,6 @@ const MaquinaTabla = () => {
                       <td style={{ maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.descripcion}>
                         {m.descripcion || "-"}
                       </td>
-                      <td>{m.vendida ? "Sí" : "-"}</td>
-                      <td>{m.enGalpon ? "Sí" : "-"}</td>
-
                       <td>
                         <div className="d-flex gap-1 justify-content-center">
                           <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(m)}>
