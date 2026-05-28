@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Form, Modal, Table, Spinner } from "react-bootstrap";
 import { listarAsistencia } from "../../../../../helpers/queriesAsistencia.js";
+import XLSXStyle from "xlsx-js-style";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -112,6 +113,52 @@ const ResumenMes = () => {
     return null;
   };
 
+  const exportarExcel = () => {
+    const filtroLabel = filtroPersonal
+      ? `Personal: ${filtroPersonal}`
+      : filtroObra
+      ? `Obra: ${filtroObra}`
+      : filtroMaquina
+      ? `Máquina: ${filtroMaquina}`
+      : "Todos";
+
+    const titulo = `Resumen ${MESES[mes]} ${anio} — ${filtroLabel}`;
+    const headers = ["Fecha", "Personal", "Ausente", "Media Falta", "Remito", "Entra", "Sale", "Máquina", "Horómetro", "Obra", "Observaciones"];
+    const cols = "ABCDEFGHIJK";
+
+    const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
+    const estHeader = { font: { bold: true }, alignment: { horizontal: "center", vertical: "center" }, fill: { fgColor: { rgb: "222222" } }, font: { bold: true, color: { rgb: "FFFFFF" } } };
+    const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
+
+    const wb = XLSXStyle.utils.book_new();
+    const ws = {};
+
+    ws["A1"] = { v: titulo, t: "s", s: estTitulo };
+    ws["A2"] = { v: "", t: "s" };
+    headers.forEach((h, i) => {
+      ws[`${cols[i]}3`] = { v: h, t: "s", s: estHeader };
+    });
+
+    let row = 4;
+    Array.from({ length: diasEnMes }, (_, i) => i + 1).forEach((dia) => {
+      const key = diaKey(anio, mes, dia);
+      const regs = filtrarRegs(registros[key] || []);
+      regs.forEach((r) => {
+        const fechaStr = `${String(dia).padStart(2, "0")}/${String(mes + 1).padStart(2, "0")}/${anio}`;
+        const vals = [fechaStr, r.personal, r.ausente ? "Sí" : "No", r.mediaFalta ? "Sí" : "No", r.remito ? "Sí" : "No", r.entra, r.sale, r.maquina, r.horometro, r.obra, r.observaciones];
+        vals.forEach((v, i) => {
+          ws[`${cols[i]}${row}`] = { v: v ?? "", t: "s", s: estCentro };
+        });
+        row++;
+      });
+    });
+
+    ws["!ref"] = `A1:K${Math.max(row - 1, 3)}`;
+    ws["!cols"] = [{ wch: 12 }, { wch: 22 }, { wch: 9 }, { wch: 12 }, { wch: 9 }, { wch: 8 }, { wch: 8 }, { wch: 18 }, { wch: 12 }, { wch: 22 }, { wch: 24 }];
+    XLSXStyle.utils.book_append_sheet(wb, ws, "Resumen");
+    XLSXStyle.writeFile(wb, `Resumen_${MESES[mes]}_${anio}.xlsx`);
+  };
+
   const estiloX = {
     position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)",
     cursor: "pointer", color: "#fff", fontSize: "14px", fontWeight: "900", zIndex: 5, userSelect: "none",
@@ -128,7 +175,10 @@ const ResumenMes = () => {
     <div className="container mt-4">
       <div className="d-flex align-items-center justify-content-between mb-4">
         <h2 className="mb-0">Resumen — {MESES[mes]} {anio}</h2>
-        <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+        <div className="d-flex gap-2">
+          <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
+          <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+        </div>
       </div>
 
       {/* Selectores año/mes */}
