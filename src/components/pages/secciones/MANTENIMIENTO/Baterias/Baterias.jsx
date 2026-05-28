@@ -128,8 +128,16 @@ export default function Baterias() {
     if (!formNueva.fecha)   return Swal.fire("Atención", "La fecha es obligatoria.", "warning");
 
     setGuardandoNueva(true);
+    const esEspecial = formNueva.maquina === "vendida" || formNueva.maquina === "en galpon";
+    const payload = {
+      bateria: formNueva.bateria,
+      maquina: esEspecial ? null : formNueva.maquina,
+      maquinaLabel: esEspecial ? formNueva.maquina : "",
+      fecha: formNueva.fecha,
+      observaciones: formNueva.observaciones,
+    };
     try {
-      const res = await crearRegistroBateria(formNueva);
+      const res = await crearRegistroBateria(payload);
       if (res?.ok) {
         await cargar();
         cerrarNueva();
@@ -147,7 +155,7 @@ export default function Baterias() {
   const abrirEditar = (r) => {
     setRegistroEditar(r);
     setFormEditar({
-      maquina:       r.maquina?._id || r.maquina || "",
+      maquina:       r.maquinaLabel || r.maquina?._id || r.maquina || "",
       fecha:         r.fecha || "",
       observaciones: r.observaciones || "",
     });
@@ -160,8 +168,15 @@ export default function Baterias() {
     if (!formEditar.maquina) return Swal.fire("Atención", "Seleccioná una máquina.", "warning");
 
     setGuardandoEditar(true);
+    const esEspecialEdit = formEditar.maquina === "vendida" || formEditar.maquina === "en galpon";
+    const payloadEdit = {
+      maquina: esEspecialEdit ? null : formEditar.maquina,
+      maquinaLabel: esEspecialEdit ? formEditar.maquina : "",
+      fecha: formEditar.fecha,
+      observaciones: formEditar.observaciones,
+    };
     try {
-      const res = await editarRegistroBateria(registroEditar._id, formEditar);
+      const res = await editarRegistroBateria(registroEditar._id, payloadEdit);
       if (res?.ok) {
         await cargar();
         cerrarEditar();
@@ -225,7 +240,7 @@ export default function Baterias() {
               registros.map((r) => (
                 <tr key={r._id}>
                   <td>{r.bateria?.nombreBateria || "-"}</td>
-                  <td>{r.maquina?.maquina || "-"}</td>
+                  <td>{r.maquinaLabel || r.maquina?.maquina || "-"}</td>
                   <td>{r.observaciones || "-"}</td>
                   <td>
                     <div className="d-flex gap-1 justify-content-center">
@@ -250,7 +265,7 @@ export default function Baterias() {
         <Modal.Body>
           <p><strong>Nombre batería:</strong> {registroVer?.bateria?.nombreBateria || "-"}</p>
           <p><strong>Marca:</strong> {registroVer?.bateria?.marca || "-"}</p>
-          <p><strong>Máquina:</strong> {registroVer?.maquina?.maquina || "-"}</p>
+          <p><strong>Máquina:</strong> {registroVer?.maquinaLabel || registroVer?.maquina?.maquina || "-"}</p>
           <p><strong>Observaciones:</strong> {registroVer?.observaciones || "-"}</p>
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
@@ -368,6 +383,8 @@ export default function Baterias() {
                 onChange={(e) => setFormNueva((p) => ({ ...p, maquina: e.target.value }))}
               >
                 <option value="">Seleccionar...</option>
+                <option value="vendida">Vendida</option>
+                <option value="en galpon">En Galpón</option>
                 {maquinas.map((m) => (
                   <option key={m._id} value={m._id}>{m.maquina}</option>
                 ))}
@@ -427,6 +444,8 @@ export default function Baterias() {
                     onChange={(e) => setFormEditar((p) => ({ ...p, maquina: e.target.value }))}
                   >
                     <option value="">Seleccionar...</option>
+                    <option value="vendida">Vendida</option>
+                    <option value="en galpon">En Galpón</option>
                     {maquinas.map((m) => (
                       <option key={m._id} value={m._id}>{m.maquina}</option>
                     ))}
@@ -481,7 +500,7 @@ export default function Baterias() {
                 <tbody>
                   {[...registroHistorial.historial].reverse().map((h, i) => (
                     <tr key={i}>
-                      <td>{h.maquina?.maquina || "-"}</td>
+                      <td>{h.maquinaLabel || h.maquina?.maquina || "-"}</td>
                       <td>{h.observaciones || "-"}</td>
                       <td>{h.editadoEn ? new Date(h.editadoEn).toLocaleDateString("es-AR") : "-"}</td>
                     </tr>
