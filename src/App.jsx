@@ -49,6 +49,7 @@ const EditarCobro = lazy(() => import("./components/pages/secciones/CLIENTES/Cob
 const CuentaCorriente = lazy(() => import("./components/pages/secciones/CLIENTES/CuentaCorriente/CuentaCorriente.jsx"));
 const Cheques = lazy(() => import("./components/pages/secciones/CONTABLE/Cheques/Cheques.jsx"));
 const Asistencia = lazy(() => import("./components/pages/secciones/PERSONAL/Asistencia/Asistencia.jsx"));
+const ResumenMes = lazy(() => import("./components/pages/secciones/PERSONAL/Asistencia/ResumenMes.jsx"));
 const GastosSemanales = lazy(() => import("./components/pages/secciones/PERSONAL/GastosSemanales/GastosSemanales.jsx"));
 const ServiceMaquinas = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/ServiceMaquinas/ServiceMaquinas.jsx"));
 const TableroControl = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/TableroControl/TableroControl.jsx"));
@@ -143,6 +144,7 @@ function App() {
                       <Route path="/cuenta-corriente" element={<CuentaCorriente />} />
                       <Route path="/cheques" element={<Cheques />} />
                       <Route path="/personal/asistencia" element={<Asistencia />} />
+                      <Route path="/personal/resumen-mes" element={<ResumenMes />} />
                       <Route path="/personal/gastos-semanales" element={<GastosSemanales />} />
                       <Route path="/facturacion-proveedores" element={<FacturacionProveedor />} />
                       <Route path="/facturacion-proveedores/nueva" element={<NuevaFacturaProveedor />} />

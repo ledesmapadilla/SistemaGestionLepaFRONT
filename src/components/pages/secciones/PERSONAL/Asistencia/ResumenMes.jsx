@@ -1,0 +1,248 @@
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button, Form, Modal, Table, Spinner } from "react-bootstrap";
+import { listarAsistencia } from "../../../../../helpers/queriesAsistencia.js";
+
+const MESES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
+const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+const diaKey = (anio, mes, dia) =>
+  `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+
+const ResumenMes = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const hoy = new Date();
+
+  const [anio, setAnio] = useState(location.state?.anio ?? hoy.getFullYear());
+  const [mes, setMes] = useState(location.state?.mes ?? hoy.getMonth());
+  const [registros, setRegistros] = useState({});
+  const [cargando, setCargando] = useState(true);
+
+  const [filtroPersonal, setFiltroPersonal] = useState("");
+  const [filtroObra, setFiltroObra] = useState("");
+  const [filtroMaquina, setFiltroMaquina] = useState("");
+
+  const [diaModal, setDiaModal] = useState(null);
+
+  const anios = Array.from({ length: 10 }, (_, i) => 2026 + i);
+
+  useEffect(() => {
+    const cargar = async () => {
+      setCargando(true);
+      setRegistros({});
+      setFiltroPersonal("");
+      setFiltroObra("");
+      setFiltroMaquina("");
+      const res = await listarAsistencia(anio, mes);
+      if (res?.ok) {
+        const docs = await res.json();
+        const mapa = {};
+        docs.forEach((doc) => { mapa[doc.fecha] = doc.registros; });
+        setRegistros(mapa);
+      }
+      setCargando(false);
+    };
+    cargar();
+  }, [anio, mes]);
+
+  const diasEnMes = new Date(anio, mes + 1, 0).getDate();
+  const primerDiaSemana = (new Date(anio, mes, 1).getDay() + 6) % 7;
+  const celdas = [
+    ...Array(primerDiaSemana).fill(null),
+    ...Array.from({ length: diasEnMes }, (_, i) => i + 1),
+  ];
+
+  const personalOptions = useMemo(() => {
+    const set = new Set();
+    Object.values(registros).forEach((regs) =>
+      regs.forEach((r) => { if (r.personal) set.add(r.personal); })
+    );
+    return [...set].sort();
+  }, [registros]);
+
+  const obraOptions = useMemo(() => {
+    const set = new Set();
+    Object.values(registros).forEach((regs) =>
+      regs.forEach((r) => { if (r.obra) set.add(r.obra); })
+    );
+    return [...set].sort();
+  }, [registros]);
+
+  const maquinaOptions = useMemo(() => {
+    const set = new Set();
+    Object.values(registros).forEach((regs) =>
+      regs.forEach((r) => { if (r.maquina) set.add(r.maquina); })
+    );
+    return [...set].sort();
+  }, [registros]);
+
+  const filtrarRegs = (regs = []) =>
+    regs.filter((r) => {
+      if (filtroPersonal && r.personal !== filtroPersonal) return false;
+      if (filtroObra && r.obra !== filtroObra) return false;
+      if (filtroMaquina && r.maquina !== filtroMaquina) return false;
+      return true;
+    });
+
+  const estiloX = {
+    position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)",
+    cursor: "pointer", color: "#fff", fontSize: "14px", fontWeight: "900", zIndex: 5, userSelect: "none",
+  };
+  const selectActivo = { backgroundImage: "none" };
+
+  const regsDiaModal = diaModal
+    ? filtrarRegs(registros[diaKey(anio, mes, diaModal)] || [])
+    : [];
+
+  if (cargando) return <Spinner animation="border" className="d-block mx-auto my-5" />;
+
+  return (
+    <div className="container mt-4">
+      <div className="d-flex align-items-center justify-content-between mb-4">
+        <h2 className="mb-0">Resumen — {MESES[mes]} {anio}</h2>
+        <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+      </div>
+
+      {/* Selectores año/mes */}
+      <div className="d-flex align-items-center gap-3 mb-3">
+        <Form.Select value={anio} onChange={(e) => setAnio(Number(e.target.value))} style={{ width: 100 }}>
+          {anios.map((a) => <option key={a} value={a}>{a}</option>)}
+        </Form.Select>
+        <Form.Select value={mes} onChange={(e) => setMes(Number(e.target.value))} style={{ width: 140 }}>
+          {MESES.map((nombre, i) => <option key={i} value={i}>{nombre}</option>)}
+        </Form.Select>
+      </div>
+
+      {/* Filtros */}
+      <div className="d-flex gap-2 mb-4">
+        <div style={{ position: "relative", width: 200 }}>
+          <Form.Select size="sm" value={filtroPersonal} onChange={(e) => setFiltroPersonal(e.target.value)} style={filtroPersonal ? selectActivo : {}}>
+            <option value="">Personal</option>
+            {personalOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+          </Form.Select>
+          {filtroPersonal && <span onClick={() => setFiltroPersonal("")} style={estiloX}>✕</span>}
+        </div>
+        <div style={{ position: "relative", width: 200 }}>
+          <Form.Select size="sm" value={filtroObra} onChange={(e) => setFiltroObra(e.target.value)} style={filtroObra ? selectActivo : {}}>
+            <option value="">Obras</option>
+            {obraOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+          </Form.Select>
+          {filtroObra && <span onClick={() => setFiltroObra("")} style={estiloX}>✕</span>}
+        </div>
+        <div style={{ position: "relative", width: 200 }}>
+          <Form.Select size="sm" value={filtroMaquina} onChange={(e) => setFiltroMaquina(e.target.value)} style={filtroMaquina ? selectActivo : {}}>
+            <option value="">Máquina</option>
+            {maquinaOptions.map((m) => <option key={m} value={m}>{m}</option>)}
+          </Form.Select>
+          {filtroMaquina && <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>}
+        </div>
+      </div>
+
+      {/* Grilla calendario */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
+        {DIAS_SEMANA.map((d) => (
+          <div key={d} className="text-center fw-semibold" style={{ fontSize: "0.82rem", paddingBottom: 4, color: "white" }}>
+            {d}
+          </div>
+        ))}
+
+        {celdas.map((dia, i) => {
+          if (dia === null) return <div key={`vacio-${i}`} />;
+
+          const key = diaKey(anio, mes, dia);
+          const regsFiltradas = filtrarRegs(registros[key] || []);
+          const esDomingo = (primerDiaSemana + dia - 1) % 7 === 6;
+          const esFuturo = new Date(anio, mes, dia) > new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+          const esHoyDia = dia === hoy.getDate() && mes === hoy.getMonth() && anio === hoy.getFullYear();
+          const tieneRegistros = regsFiltradas.length > 0;
+
+          const bgBase = esFuturo ? "#3a3a3a" : esHoyDia ? "#fff3cd" : esDomingo ? "#666" : "#c0c0c0";
+          const bgHover = esFuturo ? "#3a3a3a" : esHoyDia ? "#ffe69c" : esDomingo ? "#555" : "#a8a8a8";
+
+          return (
+            <div
+              key={dia}
+              onClick={() => tieneRegistros && !esFuturo && setDiaModal(dia)}
+              className="rounded text-center"
+              style={{
+                cursor: tieneRegistros && !esFuturo ? "pointer" : esFuturo ? "not-allowed" : "default",
+                padding: "4px",
+                height: 56,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                background: bgBase,
+                border: "2px solid #ffc107",
+                transition: "background 0.15s",
+                userSelect: "none",
+                opacity: esFuturo ? 0.4 : 1,
+              }}
+              onMouseEnter={(e) => { if (!esFuturo) e.currentTarget.style.background = bgHover; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = bgBase; }}
+            >
+              <span style={{ fontSize: "1rem", fontWeight: 600, color: "#000" }}>{dia}</span>
+              {tieneRegistros && (
+                <div style={{ fontSize: "0.65rem", color: "#333", marginTop: 2 }}>
+                  {regsFiltradas.length} reg{regsFiltradas.length !== 1 ? "s" : ""}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Modal detalle del día */}
+      <Modal show={!!diaModal} onHide={() => setDiaModal(null)} centered size="xl">
+        <Modal.Header closeButton>
+          <Modal.Title>{diaModal} de {MESES[mes]} {anio}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div style={{ overflowX: "auto" }}>
+            <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
+              <thead className="table-dark">
+                <tr>
+                  <th>Personal</th>
+                  <th>Ausente</th>
+                  <th>Media Falta</th>
+                  <th>Remito</th>
+                  <th>Entra</th>
+                  <th>Sale</th>
+                  <th>Máquina</th>
+                  <th>Horómetro</th>
+                  <th>Obra</th>
+                  <th>Observaciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {regsDiaModal.map((r, i) => (
+                  <tr key={i}>
+                    <td>{r.personal || "-"}</td>
+                    <td>{r.ausente ? "Sí" : "-"}</td>
+                    <td>{r.mediaFalta ? "Sí" : "-"}</td>
+                    <td>{r.remito ? "Sí" : "No"}</td>
+                    <td>{r.entra || "-"}</td>
+                    <td>{r.sale || "-"}</td>
+                    <td>{r.maquina || "-"}</td>
+                    <td>{r.horometro || "-"}</td>
+                    <td>{r.obra || "-"}</td>
+                    <td>{r.observaciones || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setDiaModal(null)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
+    </div>
+  );
+};
+
+export default ResumenMes;

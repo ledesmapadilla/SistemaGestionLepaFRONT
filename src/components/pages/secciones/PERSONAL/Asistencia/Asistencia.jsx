@@ -331,7 +331,10 @@ const Asistencia = () => {
     <div className="container mt-4">
       <div className="d-flex align-items-center justify-content-between mb-4">
         <h2 className="mb-0">Asistencia</h2>
-        <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+        <div className="d-flex gap-2">
+          <Button variant="outline-info" onClick={() => navigate("/personal/resumen-mes", { state: { anio, mes } })}>Resumen Mes</Button>
+          <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+        </div>
       </div>
 
       {/* Selectores */}
