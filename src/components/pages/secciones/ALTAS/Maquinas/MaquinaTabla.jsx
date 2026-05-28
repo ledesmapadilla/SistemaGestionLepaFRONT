@@ -22,6 +22,8 @@ const valoresIniciales = {
   chasis: "",
   motor: "",
   descripcion: "",
+  vendida: false,
+  enGalpon: false,
 };
 
 const MaquinaTabla = () => {
@@ -83,6 +85,8 @@ const MaquinaTabla = () => {
         chasis: data.chasis,
         motor: data.motor,
         descripcion: data.descripcion,
+        vendida: !!data.vendida,
+        enGalpon: !!data.enGalpon,
       };
 
       if (editando) {
@@ -153,6 +157,8 @@ const MaquinaTabla = () => {
       chasis: item.chasis || "",
       motor: item.motor || "",
       descripcion: item.descripcion || "",
+      vendida: !!item.vendida,
+      enGalpon: !!item.enGalpon,
     });
     setShowModal(true);
   };
@@ -210,12 +216,14 @@ const MaquinaTabla = () => {
                   <th>Motor</th>
                   <th>Valor ($)</th>
                   <th>Observaciones</th>
+                  <th>Vendida</th>
+                  <th>En Galpón</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {maquinasFiltradas.length === 0 ? (
-                  <tr><td colSpan="10" className="py-3">No hay máquinas registradas</td></tr>
+                  <tr><td colSpan="12" className="py-3">No hay máquinas registradas</td></tr>
                 ) : (
                   maquinasFiltradas.map((m) => (
                     <tr key={m._id}>
@@ -232,7 +240,9 @@ const MaquinaTabla = () => {
                       <td style={{ maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.descripcion}>
                         {m.descripcion || "-"}
                       </td>
-                      
+                      <td>{m.vendida ? "Sí" : "-"}</td>
+                      <td>{m.enGalpon ? "Sí" : "-"}</td>
+
                       <td>
                         <div className="d-flex gap-1 justify-content-center">
                           <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(m)}>

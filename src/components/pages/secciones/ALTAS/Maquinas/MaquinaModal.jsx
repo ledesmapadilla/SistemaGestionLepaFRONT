@@ -125,7 +125,27 @@ const MaquinaModal = ({
                   rows={2}
                   className="text-center"
                   {...register("descripcion")}
-                  
+
+                />
+              </Form.Group>
+            </Col>
+
+            {/* Séptima Fila: Vendida / En Galpón */}
+            <Col md={6} className="d-flex justify-content-center">
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="switch"
+                  label="Vendida"
+                  {...register("vendida")}
+                />
+              </Form.Group>
+            </Col>
+            <Col md={6} className="d-flex justify-content-center">
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="switch"
+                  label="En Galpón"
+                  {...register("enGalpon")}
                 />
               </Form.Group>
             </Col>
