@@ -9,7 +9,7 @@ import {
   editarMaquina,
   borrarMaquina as borrarMaquinaAPI,
 } from "../../../../../helpers/queriesMaquinas.js";
-import MaquinaModal from "./MaquinaModal"; 
+import MaquinaModal from "./MaquinaModal";
 import "../../../../../styles/verRemitos.css";
 
 const valoresIniciales = {
@@ -22,7 +22,6 @@ const valoresIniciales = {
   chasis: "",
   motor: "",
   descripcion: "",
-  estado: "activa",
 };
 
 const MaquinaTabla = () => {
@@ -39,7 +38,6 @@ const MaquinaTabla = () => {
 
   const [maquinas, setMaquinas] = useState([]);
   const [busqueda, setBusqueda] = useState("");
-  const [filtroEstado, setFiltroEstado] = useState("todas");
   const [editando, setEditando] = useState(false);
   const [maquinaId, setMaquinaId] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -85,7 +83,6 @@ const MaquinaTabla = () => {
         chasis: data.chasis,
         motor: data.motor,
         descripcion: data.descripcion,
-        estado: data.estado || "activa",
       };
 
       if (editando) {
@@ -156,7 +153,6 @@ const MaquinaTabla = () => {
       chasis: item.chasis || "",
       motor: item.motor || "",
       descripcion: item.descripcion || "",
-      estado: item.estado || "activa",
     });
     setShowModal(true);
   };
@@ -168,17 +164,11 @@ const MaquinaTabla = () => {
     setShowModal(true);
   };
 
-  const maquinasFiltradas = maquinas.filter((m) => {
-    const coincideBusqueda =
-      m.maquina?.toLowerCase().includes(busqueda.toLowerCase().trim()) ||
-      m.marca?.toLowerCase().includes(busqueda.toLowerCase().trim()) ||
-      m.patente?.toLowerCase().includes(busqueda.toLowerCase().trim());
-    const coincideEstado =
-      filtroEstado === "todas" ||
-      (filtroEstado === "vendida" && m.estado === "vendida") ||
-      (filtroEstado === "en galpon" && m.estado === "en galpon");
-    return coincideBusqueda && coincideEstado;
-  });
+  const maquinasFiltradas = maquinas.filter((m) =>
+    m.maquina?.toLowerCase().includes(busqueda.toLowerCase().trim()) ||
+    m.marca?.toLowerCase().includes(busqueda.toLowerCase().trim()) ||
+    m.patente?.toLowerCase().includes(busqueda.toLowerCase().trim())
+  );
 
   const formatoMiles = (valor) => {
     if (valor === undefined || valor === null || valor === "" || Number(valor) === 0) return "-";
@@ -192,7 +182,7 @@ const MaquinaTabla = () => {
     <>
     <div className="w-75 mx-auto my-2">
         <h6 className="text-center mb-3">Administración de Máquinas</h6>
-        <div className="d-flex justify-content-between align-items-center mb-2">
+        <div className="d-flex justify-content-between align-items-center mb-3">
           <Form.Control
             size="sm"
             type="search"
@@ -205,11 +195,6 @@ const MaquinaTabla = () => {
             <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
             <Button size="sm" variant="outline-primary" onClick={abrirCrear}>Nueva Máquina</Button>
           </div>
-        </div>
-        <div className="d-flex gap-2 mb-3">
-          <Button size="sm" variant={filtroEstado === "todas" ? "secondary" : "outline-secondary"} onClick={() => setFiltroEstado("todas")}>Todas</Button>
-          <Button size="sm" variant={filtroEstado === "vendida" ? "danger" : "outline-danger"} onClick={() => setFiltroEstado("vendida")}>Vendidas</Button>
-          <Button size="sm" variant={filtroEstado === "en galpon" ? "warning" : "outline-warning"} onClick={() => setFiltroEstado("en galpon")}>En Galpón</Button>
         </div>
 
       <div>
@@ -242,11 +227,12 @@ const MaquinaTabla = () => {
                       <td className="small">{m.chasis || "-"}</td>
                       <td className="small">{m.motor || "-"}</td>
                       <td className="text-nowrap">{formatoMiles(m.costo)}</td>
-                      
+
                       {/* Observaciones con un tope de ancho para que no rompa la tabla */}
                       <td style={{ maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.descripcion}>
                         {m.descripcion || "-"}
                       </td>
+
                       <td>
                         <div className="d-flex gap-1 justify-content-center">
                           <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(m)}>
@@ -265,7 +251,7 @@ const MaquinaTabla = () => {
       </div>
     </div>
 
-      <MaquinaModal 
+      <MaquinaModal
         show={showModal}
         onHide={cerrarModal}
         onSubmit={onSubmit}

@@ -37,7 +37,7 @@ const MaquinaModal = ({
                             value.toLowerCase().trim() && m._id !== maquinaId
                       ) || "Este nombre de máquina ya existe",
                   })}
-                  
+
                 />
                 <Form.Text className="text-danger d-block text-center">
                   {errors.maquina?.message}
@@ -70,7 +70,7 @@ const MaquinaModal = ({
                     min: { value: 1900, message: "Año no válido" },
                     max: { value: 2100, message: "Año no válido" },
                   })}
-                  
+
                 />
                 <Form.Text className="text-danger d-block text-center">
                   {errors.anio?.message}
@@ -127,18 +127,6 @@ const MaquinaModal = ({
                   {...register("descripcion")}
 
                 />
-              </Form.Group>
-            </Col>
-
-            {/* Séptima Fila: Estado */}
-            <Col md={6} className="mx-auto">
-              <Form.Group className="mb-3">
-                <Form.Label className="d-block text-center fw-bold">Estado</Form.Label>
-                <Form.Select className="text-center" {...register("estado")}>
-                  <option value="activa">Activa</option>
-                  <option value="vendida">Vendida</option>
-                  <option value="en galpon">En Galpón</option>
-                </Form.Select>
               </Form.Group>
             </Col>
           </Row>
