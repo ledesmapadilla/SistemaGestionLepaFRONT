@@ -133,13 +133,15 @@ const ResumenMes = () => {
     const wb = XLSXStyle.utils.book_new();
     const ws = {};
 
+    const fechaHoySerial = Math.floor((new Date() - new Date(1899, 11, 30)) / 86400000);
     ws["A1"] = { v: titulo, t: "s", s: estTitulo };
-    ws["A2"] = { v: "", t: "s" };
+    ws["A2"] = { v: fechaHoySerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
+    ws["A3"] = { v: "", t: "s" };
     headers.forEach((h, i) => {
-      ws[`${cols[i]}3`] = { v: h, t: "s", s: estHeader };
+      ws[`${cols[i]}4`] = { v: h, t: "s", s: estHeader };
     });
 
-    let row = 4;
+    let row = 5;
     Array.from({ length: diasEnMes }, (_, i) => i + 1).forEach((dia) => {
       const key = diaKey(anio, mes, dia);
       const regs = filtrarRegs(registros[key] || []);
@@ -154,7 +156,7 @@ const ResumenMes = () => {
       });
     });
 
-    ws["!ref"] = `A1:K${Math.max(row - 1, 3)}`;
+    ws["!ref"] = `A1:K${Math.max(row - 1, 4)}`;
     ws["!cols"] = [{ wch: 12 }, { wch: 22 }, { wch: 9 }, { wch: 12 }, { wch: 9 }, { wch: 8 }, { wch: 8 }, { wch: 18 }, { wch: 12 }, { wch: 22 }, { wch: 24 }];
     XLSXStyle.utils.book_append_sheet(wb, ws, "Resumen");
     XLSXStyle.writeFile(wb, `Resumen_${MESES[mes]}_${anio}.xlsx`);
