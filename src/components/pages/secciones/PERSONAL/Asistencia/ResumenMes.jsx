@@ -220,7 +220,7 @@ const ResumenMes = () => {
       </div>
 
       {/* Grilla calendario */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gridAutoRows: "110px", gap: 8 }}>
         {DIAS_SEMANA.map((d) => (
           <div key={d} className="text-center fw-semibold" style={{ fontSize: "0.82rem", paddingBottom: 4, color: "white" }}>
             {d}
@@ -248,7 +248,8 @@ const ResumenMes = () => {
               style={{
                 cursor: tieneRegistros && !esFuturo ? "pointer" : esFuturo ? "not-allowed" : "default",
                 padding: "6px 4px",
-                minHeight: 56,
+                height: "100%",
+                overflowY: "hidden",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
