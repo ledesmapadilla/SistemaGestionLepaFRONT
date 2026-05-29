@@ -16,6 +16,7 @@ const diaKey = (anio, mes, dia) =>
 const ResumenMes = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const locationKey = location.key;
   const hoy = new Date();
 
   const [anio, setAnio] = useState(location.state?.anio ?? hoy.getFullYear());
@@ -48,7 +49,7 @@ const ResumenMes = () => {
       setCargando(false);
     };
     cargar();
-  }, [anio, mes]);
+  }, [anio, mes, locationKey]);
 
   const diasEnMes = new Date(anio, mes + 1, 0).getDate();
   const primerDiaSemana = (new Date(anio, mes, 1).getDay() + 6) % 7;
