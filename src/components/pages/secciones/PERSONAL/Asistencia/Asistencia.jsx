@@ -488,19 +488,21 @@ const Asistencia = () => {
       {/* Modal */}
       <Modal show={!!diaSeleccionado} onHide={cerrarModal} centered size="xl">
         <Modal.Header closeButton>
-          <div className="d-flex align-items-center w-100 gap-3" style={{ marginRight: 32 }}>
+          <div className="d-flex align-items-center w-100" style={{ marginRight: 32 }}>
             <Modal.Title className="flex-shrink-0">
               {diaSeleccionado} de {MESES[mes]} {anio}
             </Modal.Title>
-            <Form.Control
-              size="sm"
-              type="text"
-              placeholder="Buscar persona..."
-              value={busquedaPersona}
-              onChange={(e) => setBusquedaPersona(e.target.value)}
-              style={{ maxWidth: 200 }}
-            />
-            <Button variant="outline-light" size="sm" onClick={exportarExcel} className="ms-auto">
+            <div className="flex-grow-1 d-flex justify-content-center">
+              <Form.Control
+                size="sm"
+                type="text"
+                placeholder="Buscar persona..."
+                value={busquedaPersona}
+                onChange={(e) => setBusquedaPersona(e.target.value)}
+                style={{ maxWidth: 200 }}
+              />
+            </div>
+            <Button variant="outline-light" size="sm" onClick={exportarExcel}>
               Excel
             </Button>
           </div>
