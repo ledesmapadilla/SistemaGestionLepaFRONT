@@ -22,12 +22,24 @@ const formatFecha = (date) =>
 const toKey = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
+const netoExtras = (extras) =>
+  (extras || []).reduce((s, e) => s + (e.descuentaAumenta === "aumenta" ? 1 : -1) * (Number(e.monto) || 0), 0);
+
 const calcularPagar = (r) =>
-  (Number(r.semanal) || 0) - (Number(r.ausentismo) || 0);
+  (Number(r.semanal) || 0) - (Number(r.ausentismo) || 0) + netoExtras(r.extras);
 
 const pesos = (n) =>
   Number(n).toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 
+const TIPOS_EXTRAS = ["Horas extra", "Feriado", "Bono", "Adelanto", "Descuento", "Otro"];
+
+const formVacio = () => ({
+  fecha: toKey(new Date()),
+  tipo: TIPOS_EXTRAS[0],
+  descuentaAumenta: "aumenta",
+  monto: "",
+  detalle: "",
+});
 
 const CeldaMoneda = ({ value, onChange, textStyle = {} }) => {
   const [editando, setEditando] = useState(false);
@@ -56,6 +68,135 @@ const CeldaMoneda = ({ value, onChange, textStyle = {} }) => {
   );
 };
 
+const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, onGuardar }) => {
+  const [extras, setExtras] = useState([]);
+  const [editandoIdx, setEditandoIdx] = useState(null);
+  const [form, setForm] = useState(formVacio());
+
+  useEffect(() => {
+    if (show) {
+      setExtras(extrasInicial || []);
+      setEditandoIdx(null);
+    }
+  }, [show]);
+
+  const iniciarAgregar = () => {
+    setForm(formVacio());
+    setEditandoIdx("nuevo");
+  };
+
+  const iniciarEditar = (idx) => {
+    setForm({ ...extras[idx], monto: extras[idx].monto ?? "" });
+    setEditandoIdx(idx);
+  };
+
+  const cancelar = () => setEditandoIdx(null);
+
+  const confirmar = () => {
+    if (!form.monto) return;
+    const entrada = { ...form, monto: Number(form.monto) };
+    if (editandoIdx === "nuevo") {
+      setExtras((prev) => [...prev, entrada]);
+    } else {
+      setExtras((prev) => prev.map((e, i) => (i === editandoIdx ? entrada : e)));
+    }
+    setEditandoIdx(null);
+  };
+
+  const borrar = (idx) => setExtras((prev) => prev.filter((_, i) => i !== idx));
+
+  const handleGuardar = () => {
+    onGuardar(extras);
+    onHide();
+  };
+
+  const neto = netoExtras(extras);
+
+  const celdasForm = [
+    <td key="fecha">
+      <Form.Control size="sm" type="date" value={form.fecha} onChange={(e) => setForm((f) => ({ ...f, fecha: e.target.value }))} />
+    </td>,
+    <td key="tipo">
+      <Form.Select size="sm" value={form.tipo} onChange={(e) => setForm((f) => ({ ...f, tipo: e.target.value }))}>
+        {TIPOS_EXTRAS.map((t) => <option key={t}>{t}</option>)}
+      </Form.Select>
+    </td>,
+    <td key="efecto">
+      <Form.Select size="sm" value={form.descuentaAumenta} onChange={(e) => setForm((f) => ({ ...f, descuentaAumenta: e.target.value }))}>
+        <option value="aumenta">Aumenta</option>
+        <option value="descuenta">Descuenta</option>
+      </Form.Select>
+    </td>,
+    <td key="monto">
+      <Form.Control size="sm" type="number" min="0" value={form.monto} onChange={(e) => setForm((f) => ({ ...f, monto: e.target.value }))} />
+    </td>,
+    <td key="detalle">
+      <Form.Control size="sm" type="text" value={form.detalle} onChange={(e) => setForm((f) => ({ ...f, detalle: e.target.value }))} />
+    </td>,
+    <td key="acciones">
+      <Button size="sm" variant="success" onClick={confirmar} className="me-1">✓</Button>
+      <Button size="sm" variant="outline-secondary" onClick={cancelar}>✕</Button>
+    </td>,
+  ];
+
+  return (
+    <Modal show={show} onHide={onHide} centered size="xl">
+      <Modal.Header closeButton>
+        <Modal.Title>Extras — {personalNombre}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Table striped bordered hover className="text-center align-middle">
+          <thead className="table-dark">
+            <tr>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Efecto</th>
+              <th>Monto</th>
+              <th>Detalle</th>
+              <th style={{ width: 130 }}>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {extras.map((e, idx) =>
+              editandoIdx === idx ? (
+                <tr key={idx}>{celdasForm}</tr>
+              ) : (
+                <tr key={idx}>
+                  <td>{e.fecha}</td>
+                  <td>{e.tipo}</td>
+                  <td style={{ color: e.descuentaAumenta === "aumenta" ? "#198754" : "#dc3545", fontWeight: 600 }}>
+                    {e.descuentaAumenta === "aumenta" ? "Aumenta" : "Descuenta"}
+                  </td>
+                  <td>{pesos(e.monto)}</td>
+                  <td>{e.detalle || "-"}</td>
+                  <td>
+                    <Button size="sm" variant="warning" onClick={() => iniciarEditar(idx)} className="me-1" disabled={editandoIdx !== null}>Editar</Button>
+                    <Button size="sm" variant="danger" onClick={() => borrar(idx)} disabled={editandoIdx !== null}>Borrar</Button>
+                  </td>
+                </tr>
+              )
+            )}
+            {editandoIdx === "nuevo" && <tr>{celdasForm}</tr>}
+          </tbody>
+        </Table>
+        <div className="d-flex justify-content-between align-items-center mt-2">
+          <Button variant="outline-secondary" size="sm" onClick={iniciarAgregar} disabled={editandoIdx !== null}>
+            + Agregar
+          </Button>
+          <span>
+            Neto extras:{" "}
+            <strong style={{ color: neto >= 0 ? "#198754" : "#dc3545" }}>{pesos(neto)}</strong>
+          </span>
+        </div>
+      </Modal.Body>
+      <Modal.Footer className="justify-content-center">
+        <Button variant="outline-secondary" onClick={onHide}>Cancelar</Button>
+        <Button variant="primary" onClick={handleGuardar}>Guardar</Button>
+      </Modal.Footer>
+    </Modal>
+  );
+};
+
 const GastosSemanales = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -72,6 +213,7 @@ const GastosSemanales = () => {
   const [nombresPersonal, setNombresPersonal] = useState(new Set());
   const [asistenciaSemana, setAsistenciaSemana] = useState([]);
   const [verPersonal, setVerPersonal] = useState(null);
+  const [verExtras, setVerExtras] = useState(null);
   const modificado = useRef(false);
   const autoSaveTimer = useRef(null);
 
@@ -84,7 +226,6 @@ const GastosSemanales = () => {
     setLoading(true);
     const key = toKey(fechaLunes);
 
-    // Días Lun–Sáb de la semana
     const diasSemana = Array.from({ length: 6 }, (_, i) => {
       const d = new Date(fechaLunes);
       d.setDate(d.getDate() + i);
@@ -111,7 +252,6 @@ const GastosSemanales = () => {
     );
     const nombresPersonalDB = new Set(personalVisible.map((p) => p.nombre.trim().toLowerCase()));
 
-    // Contar ausencias por persona: ausente hábil=1, ausente sáb=0.5, mediaFalta=0.5
     const ausenciasMap = {};
     diasSemana.forEach((d, idx) => {
       const esSabado = d.getDay() === 6;
@@ -134,7 +274,6 @@ const GastosSemanales = () => {
       jornalMap[p.nombre.trim().toLowerCase()] = cant > 0 ? semanal / cant : 0;
     });
 
-    // Zamorano: sumar desvíos de horometro de la semana
     let zamoranoMins = 0;
     diasSemana.forEach((d, idx) => {
       const doc = asistenciaDocs[idx];
@@ -143,7 +282,6 @@ const GastosSemanales = () => {
       if (reg) zamoranoMins += horometroStrAMins(calcularHorometroZamorano(reg.entra, reg.sale));
     });
 
-    // Nombres únicos de asistencia que no están en personal DB
     const nombresEnAsistencia = new Set();
     asistenciaDocs.forEach((doc) => {
       if (!doc?.registros) return;
@@ -169,13 +307,12 @@ const GastosSemanales = () => {
 
     const filaDePersonal = (p) => {
       const semanal = p.semanal?.length ? p.semanal[p.semanal.length - 1].valor : 0;
-      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), observaciones: "" };
+      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "" };
     };
     const filaSoloAsistencia = (nombre) => ({
-      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), observaciones: "",
+      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "",
     });
 
-    // Mapa de semanal actual por nombre (desde Personal DB)
     const semanalActualMap = {};
     personalVisible.forEach((p) => {
       const ultimo = p.semanal?.length ? p.semanal[p.semanal.length - 1] : null;
@@ -187,6 +324,7 @@ const GastosSemanales = () => {
         const semanalActual = semanalActualMap[r.personal?.trim().toLowerCase()];
         return {
           ...r,
+          extras: r.extras || [],
           semanal: semanalActual !== null && semanalActual !== undefined ? semanalActual : r.semanal,
           ausentismo: calcAusentismo(r.personal),
         };
@@ -230,9 +368,9 @@ const GastosSemanales = () => {
     return () => clearTimeout(autoSaveTimer.current);
   }, [registros, loading, semanaKey]);
 
-
   const totalSemanal = registros.reduce((s, r) => s + (Number(r.semanal) || 0), 0);
   const totalAusentismo = registros.reduce((s, r) => s + (Number(r.ausentismo) || 0), 0);
+  const totalExtrasNeto = registros.reduce((s, r) => s + netoExtras(r.extras), 0);
   const totalPagar = registros.reduce((s, r) => s + calcularPagar(r), 0);
 
   return (
@@ -249,7 +387,7 @@ const GastosSemanales = () => {
           <div className="d-flex justify-content-end mb-2">
             <Button variant="outline-secondary" size="sm" onClick={() => {
               modificado.current = true;
-              setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, observaciones: "", nuevo: true }]);
+              setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", nuevo: true }]);
             }}>+ Agregar personal</Button>
           </div>
           <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "65vh" }}>
@@ -259,6 +397,7 @@ const GastosSemanales = () => {
                   <th style={{ minWidth: 160 }}>Personal</th>
                   <th style={{ minWidth: 110 }}>Semanal Teórico</th>
                   <th style={{ minWidth: 110 }}>Ausentismo</th>
+                  <th style={{ minWidth: 140 }}>Extras</th>
                   <th style={{ minWidth: 110 }}>Pagar</th>
                   <th style={{ minWidth: 180 }}>Observaciones</th>
                   <th style={{ width: 60 }}></th>
@@ -275,6 +414,18 @@ const GastosSemanales = () => {
                     </td>
                     <td><CeldaMoneda value={r.semanal} onChange={(v) => actualizar(idx, "semanal", v)} textStyle={{ fontSize: "0.7rem", color: "#9ca3af" }} /></td>
                     <td><CeldaMoneda value={r.ausentismo} onChange={(v) => actualizar(idx, "ausentismo", v)} /></td>
+                    <td>
+                      <div className="d-flex flex-column align-items-center gap-1">
+                        {(r.extras?.length > 0) && (
+                          <span style={{ color: netoExtras(r.extras) >= 0 ? "#198754" : "#dc3545", fontSize: "0.85rem" }}>
+                            {pesos(netoExtras(r.extras))}
+                          </span>
+                        )}
+                        <Button variant="outline-secondary" size="sm" onClick={() => setVerExtras({ idx, nombre: r.personal })}>
+                          Agregar
+                        </Button>
+                      </div>
+                    </td>
                     <td style={{ color: calcularPagar(r) < 0 ? "#dc3545" : "#198754", fontSize: "1.1rem" }}>
                       {pesos(calcularPagar(r))}
                     </td>
@@ -310,6 +461,7 @@ const GastosSemanales = () => {
                   <td className="text-start">Total</td>
                   <td className="text-center">{pesos(totalSemanal)}</td>
                   <td className="text-center">{pesos(totalAusentismo)}</td>
+                  <td className="text-center" style={{ color: totalExtrasNeto >= 0 ? "#198754" : "#dc3545" }}>{pesos(totalExtrasNeto)}</td>
                   <td style={{ color: totalPagar < 0 ? "#dc3545" : "#ffc107" }}>{pesos(totalPagar)}</td>
                   <td />
                   <td />
@@ -318,9 +470,17 @@ const GastosSemanales = () => {
               </tfoot>
             </Table>
           </div>
-
         </>
       )}
+
+      <ExtrasModal
+        show={!!verExtras}
+        onHide={() => setVerExtras(null)}
+        personalNombre={verExtras?.nombre}
+        extras={verExtras !== null ? (registros[verExtras.idx]?.extras || []) : []}
+        onGuardar={(nuevosExtras) => actualizar(verExtras.idx, "extras", nuevosExtras)}
+      />
+
       <Modal show={!!verPersonal} onHide={() => setVerPersonal(null)} centered size="xl">
         <Modal.Header closeButton>
           <Modal.Title>Asistencia — {verPersonal} — {labelSemana}</Modal.Title>
