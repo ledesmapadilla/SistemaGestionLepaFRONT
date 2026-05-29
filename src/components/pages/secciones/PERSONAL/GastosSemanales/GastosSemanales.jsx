@@ -273,10 +273,18 @@ const GastosSemanales = () => {
 
     let zamoranoMins = 0;
     diasSemana.forEach((d, idx) => {
+      const esSabado = d.getDay() === 6;
       const doc = asistenciaDocs[idx];
       if (!doc?.registros) return;
       const reg = doc.registros.find((r) => r.personal?.toLowerCase().includes("zamorano"));
-      if (reg) zamoranoMins += horometroStrAMins(calcularHorometroZamorano(reg.entra, reg.sale));
+      if (!reg) return;
+      if (reg.ausente) {
+        zamoranoMins += esSabado ? 240 : 480;
+      } else if (reg.mediaFalta) {
+        zamoranoMins += 240;
+      } else {
+        zamoranoMins += horometroStrAMins(calcularHorometroZamorano(reg.entra, reg.sale));
+      }
     });
 
     const nombresEnAsistencia = new Set();
