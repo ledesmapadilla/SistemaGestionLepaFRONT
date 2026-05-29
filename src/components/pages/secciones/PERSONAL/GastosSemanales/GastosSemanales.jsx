@@ -427,7 +427,7 @@ const GastosSemanales = () => {
                       {r.extras?.length > 0 ? (
                         <span
                           onClick={() => setVerExtras({ idx, nombre: r.personal })}
-                          style={{ cursor: "pointer", color: netoExtras(r.extras) >= 0 ? "#198754" : "#dc3545", fontSize: "0.85rem", textDecoration: "underline dotted" }}
+                          style={{ cursor: "pointer", color: "#ffc107", fontSize: "0.85rem", textDecoration: "underline", textUnderlineOffset: "4px" }}
                         >
                           {pesos(netoExtras(r.extras))}
                         </span>
