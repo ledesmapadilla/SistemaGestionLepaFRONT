@@ -264,11 +264,13 @@ const GastosSemanales = () => {
     });
 
     const jornalMap = {};
+    const semanalMap = {};
     personalVisible.forEach((p) => {
       const ultimo = p.semanal?.length ? p.semanal[p.semanal.length - 1] : null;
       const semanal = ultimo ? ultimo.valor : 0;
       const cant = ultimo ? Number(ultimo.cantJornales || 0) : 0;
       jornalMap[p.nombre.trim().toLowerCase()] = cant > 0 ? semanal / cant : 0;
+      semanalMap[p.nombre.trim().toLowerCase()] = semanal;
     });
 
     let zamoranoMins = 0;
@@ -301,12 +303,14 @@ const GastosSemanales = () => {
     ]));
 
     const calcAusentismo = (nombre) => {
-      const jornal = jornalMap[nombre.trim().toLowerCase()] || 0;
+      const key = nombre.trim().toLowerCase();
       if (nombre.toLowerCase().includes("zamorano")) {
+        const semanal = semanalMap[key] || 0;
         const horas = zamoranoMins / 60;
-        return Math.round(Math.max(0, horas) * (jornal / 8));
+        return Math.round(Math.max(0, horas) * (semanal / 44));
       }
-      const ausencias = ausenciasMap[nombre.trim().toLowerCase()] || 0;
+      const jornal = jornalMap[key] || 0;
+      const ausencias = ausenciasMap[key] || 0;
       return Math.round(ausencias * jornal);
     };
 
