@@ -34,6 +34,15 @@ export const guardarAsistencia = async (fecha, registros) => {
   }
 };
 
+export const eliminarAsistenciaPorFecha = async (fecha) => {
+  try {
+    return await authFetch(`${URL}/fecha/${fecha}`, { method: "DELETE" });
+  } catch (error) {
+    console.error("Error al eliminar asistencia por fecha:", error);
+    return null;
+  }
+};
+
 export const eliminarPersonalDeAsistencias = async (nombre, desde) => {
   try {
     const params = new URLSearchParams({ nombre });
