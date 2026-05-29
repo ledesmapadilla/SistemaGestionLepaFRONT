@@ -425,12 +425,12 @@ const GastosSemanales = () => {
                     <td><CeldaMoneda value={r.ausentismo} onChange={(v) => actualizar(idx, "ausentismo", v)} /></td>
                     <td>
                       {r.extras?.length > 0 ? (
-                        <div className="d-flex align-items-center justify-content-end gap-1">
-                          <span style={{ color: netoExtras(r.extras) >= 0 ? "#198754" : "#dc3545", fontSize: "0.85rem" }}>
-                            {pesos(netoExtras(r.extras))}
-                          </span>
-                          <Button variant="outline-primary" size="sm" style={{ padding: "1px 6px", fontSize: "1rem", lineHeight: 1 }} onClick={() => setVerExtras({ idx, nombre: r.personal })}>+</Button>
-                        </div>
+                        <span
+                          onClick={() => setVerExtras({ idx, nombre: r.personal })}
+                          style={{ cursor: "pointer", color: netoExtras(r.extras) >= 0 ? "#198754" : "#dc3545", fontSize: "0.85rem", textDecoration: "underline dotted" }}
+                        >
+                          {pesos(netoExtras(r.extras))}
+                        </span>
                       ) : (
                         <div className="d-flex justify-content-center">
                           <Button variant="outline-primary" size="sm" onClick={() => setVerExtras({ idx, nombre: r.personal })}>Agregar</Button>
