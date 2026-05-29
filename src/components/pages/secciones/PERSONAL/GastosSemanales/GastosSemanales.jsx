@@ -297,10 +297,7 @@ const GastosSemanales = () => {
     const soloEnAsistencia = Array.from(nombresEnAsistencia)
       .filter((n) => !nombresPersonalDB.has(n.trim().toLowerCase()));
 
-    setNombresPersonal(new Set([
-      ...nombresPersonalDB,
-      ...soloEnAsistencia.map((n) => n.trim().toLowerCase()),
-    ]));
+    setNombresPersonal(nombresPersonalDB);
 
     const calcAusentismo = (nombre) => {
       const key = nombre.trim().toLowerCase();
@@ -452,7 +449,7 @@ const GastosSemanales = () => {
                         {r.personal && (
                           <Button variant="outline-success" size="sm" onClick={() => setVerPersonal(r.personal)}>Ver</Button>
                         )}
-                        {r.personal && !nombresPersonal.has(r.personal.trim().toLowerCase()) && (
+                        {!nombresPersonal.has((r.personal || "").trim().toLowerCase()) && (
                           <span
                             onClick={() => {
                               modificado.current = true;
