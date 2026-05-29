@@ -137,7 +137,7 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, onGu
   return (
     <Modal show={show} onHide={onHide} centered size="lg">
       <Modal.Header closeButton>
-        <Modal.Title>Extras — {personalNombre}</Modal.Title>
+        <Modal.Title>Extras - {personalNombre}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <div style={{ maxHeight: "55vh", overflowY: "auto" }}>
