@@ -452,7 +452,7 @@ const GastosSemanales = () => {
                         {r.personal && (
                           <Button variant="outline-success" size="sm" onClick={() => setVerPersonal(r.personal)}>Ver</Button>
                         )}
-                        {!nombresPersonal.has(r.personal.trim().toLowerCase()) && r.personal && (
+                        {r.personal && !nombresPersonal.has(r.personal.trim().toLowerCase()) && (
                           <span
                             onClick={() => {
                               modificado.current = true;
