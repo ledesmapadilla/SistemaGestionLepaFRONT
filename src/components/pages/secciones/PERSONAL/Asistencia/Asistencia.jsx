@@ -36,6 +36,7 @@ const Asistencia = () => {
   const [borrador, setBorrador] = useState([]);
   const [listaServices, setListaServices] = useState([]);
   const [semanaResumen, setSemanaResumen] = useState(null);
+  const [busquedaPersona, setBusquedaPersona] = useState("");
 
   const navigate = useNavigate();
   const anios = Array.from({ length: 10 }, (_, i) => 2026 + i);
@@ -155,6 +156,7 @@ const Asistencia = () => {
   const cerrarModal = () => {
     setBorrador([]);
     setDiaSeleccionado(null);
+    setBusquedaPersona("");
   };
 
   const maxPorMaquina = useMemo(() => {
@@ -486,10 +488,18 @@ const Asistencia = () => {
       {/* Modal */}
       <Modal show={!!diaSeleccionado} onHide={cerrarModal} centered size="xl">
         <Modal.Header closeButton>
-          <div className="d-flex align-items-center w-100" style={{ marginRight: 32 }}>
-            <Modal.Title>
+          <div className="d-flex align-items-center w-100 gap-3" style={{ marginRight: 32 }}>
+            <Modal.Title className="flex-shrink-0">
               {diaSeleccionado} de {MESES[mes]} {anio}
             </Modal.Title>
+            <Form.Control
+              size="sm"
+              type="text"
+              placeholder="Buscar persona..."
+              value={busquedaPersona}
+              onChange={(e) => setBusquedaPersona(e.target.value)}
+              style={{ maxWidth: 200 }}
+            />
             <Button variant="outline-light" size="sm" onClick={exportarExcel} className="ms-auto">
               Excel
             </Button>
@@ -513,7 +523,9 @@ const Asistencia = () => {
                 </tr>
               </thead>
               <tbody>
-                {borrador.map((fila) => (
+                {borrador.filter((fila) =>
+                  !busquedaPersona || (fila.personal || "").toLowerCase().includes(busquedaPersona.toLowerCase())
+                ).map((fila) => (
                   <tr key={fila.id}>
                     <td>
                       {fila.personalLibre ? (
