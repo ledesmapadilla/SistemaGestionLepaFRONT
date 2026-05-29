@@ -5,7 +5,6 @@ import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { obtenerAsistenciaPorFecha } from "../../../../../helpers/queriesAsistencia.js";
 import { obtenerGastoSemanalPorSemana, guardarGastoSemanal } from "../../../../../helpers/queriesGastoSemanal.js";
 import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
-import XLSXStyle from "xlsx-js-style";
 import "../../../../../styles/clientes.css";
 
 const getMonday = (date) => {
@@ -380,55 +379,18 @@ const GastosSemanales = () => {
   const totalExtrasNeto = registros.reduce((s, r) => s + netoExtras(r.extras), 0);
   const totalPagar = registros.reduce((s, r) => s + calcularPagar(r), 0);
 
-  const exportarExcel = () => {
-    const titulo = `Gastos Semanales - ${labelSemana}`;
-    const headers = ["Personal", "Semanal Teórico", "Ausentismo", "Extras", "Pagar", "Observaciones"];
-    const cols = "ABCDEF";
-    const estC = { alignment: { horizontal: "center", vertical: "center" } };
-    const estH = { font: { bold: true }, alignment: { horizontal: "center", vertical: "center" } };
-    const estT = { font: { bold: true, sz: 14 }, alignment: { horizontal: "left", vertical: "center" } };
-    const moneda = { numFmt: '"$"#,##0', alignment: { horizontal: "center", vertical: "center" } };
-    const wb = XLSXStyle.utils.book_new();
-    const ws = {};
-    ws["A1"] = { v: titulo, t: "s", s: estT };
-    ws["A2"] = { v: "", t: "s" };
-    headers.forEach((h, i) => { ws[`${cols[i]}3`] = { v: h, t: "s", s: estH }; });
-    registros.forEach((r, rowIdx) => {
-      const row = rowIdx + 4;
-      const neto = netoExtras(r.extras);
-      const pagar = calcularPagar(r);
-      [
-        { v: r.personal || "", t: "s", s: estC },
-        { v: Number(r.semanal) || 0, t: "n", s: moneda },
-        { v: Number(r.ausentismo) || 0, t: "n", s: moneda },
-        { v: neto, t: "n", s: moneda },
-        { v: pagar, t: "n", s: moneda },
-        { v: r.observaciones || "", t: "s", s: estC },
-      ].forEach((cell, i) => { ws[`${cols[i]}${row}`] = cell; });
-    });
-    const lastRow = registros.length + 3;
-    ws["!ref"] = `A1:F${lastRow}`;
-    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
-    ws["!cols"] = [{ wch: 24 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 24 }];
-    XLSXStyle.utils.book_append_sheet(wb, ws, "Gastos Semanales");
-    XLSXStyle.writeFile(wb, `GastosSemanales_${semanaKey}.xlsx`);
-  };
-
   return (
     <div className="container mt-4 w-75">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2>Gastos Semanales <small className="text-muted" style={{ fontSize: "1rem", fontWeight: 400 }}>{labelSemana}</small></h2>
-        <div className="d-flex gap-2">
-          <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
-          <Button variant="outline-success" onClick={() => navigate("/personal/asistencia")}>Asistencia</Button>
-        </div>
+        <Button variant="outline-primary" onClick={() => navigate("/personal/asistencia")}>Asistencia</Button>
       </div>
 
       {loading ? (
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
         <>
-          <div className="d-flex justify-content-start mb-2">
+          <div className="d-flex justify-content-end mb-2">
             <Button variant="outline-primary" size="sm" onClick={() => {
               modificado.current = true;
               setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", nuevo: true }]);
