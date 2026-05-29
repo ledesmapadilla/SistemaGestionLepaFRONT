@@ -409,8 +409,7 @@ const GastosSemanales = () => {
                   <th style={{ minWidth: 140 }}>Extras</th>
                   <th style={{ minWidth: 110 }}>Pagar</th>
                   <th style={{ minWidth: 180 }}>Observaciones</th>
-                  <th style={{ width: 60 }}></th>
-                  <th style={{ width: 40 }}></th>
+                  <th style={{ width: 90 }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -448,21 +447,21 @@ const GastosSemanales = () => {
                         onChange={(e) => actualizar(idx, "observaciones", e.target.value)}
                       />
                     </td>
-                    <td className="text-center">
-                      {r.personal && (
-                        <Button variant="outline-success" size="sm" onClick={() => setVerPersonal(r.personal)}>Ver</Button>
-                      )}
-                    </td>
-                    <td className="text-center">
-                      {!nombresPersonal.has(r.personal.trim().toLowerCase()) && r.personal && (
-                        <span
-                          onClick={() => {
-                            modificado.current = true;
-                            setRegistros((prev) => prev.filter((_, i) => i !== idx));
-                          }}
-                          style={{ cursor: "pointer", color: "#dc3545", fontWeight: 900, fontSize: 16, userSelect: "none" }}
-                        >✕</span>
-                      )}
+                    <td>
+                      <div className="d-flex gap-1 justify-content-center align-items-center">
+                        {r.personal && (
+                          <Button variant="outline-success" size="sm" onClick={() => setVerPersonal(r.personal)}>Ver</Button>
+                        )}
+                        {!nombresPersonal.has(r.personal.trim().toLowerCase()) && r.personal && (
+                          <span
+                            onClick={() => {
+                              modificado.current = true;
+                              setRegistros((prev) => prev.filter((_, i) => i !== idx));
+                            }}
+                            style={{ cursor: "pointer", color: "#dc3545", fontWeight: 900, fontSize: 16, userSelect: "none" }}
+                          >✕</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -474,7 +473,6 @@ const GastosSemanales = () => {
                   <td className="text-center">{pesos(totalAusentismo)}</td>
                   <td className="text-center" style={{ color: totalExtrasNeto >= 0 ? "#198754" : "#dc3545" }}>{pesos(totalExtrasNeto)}</td>
                   <td style={{ color: totalPagar < 0 ? "#dc3545" : "#ffc107" }}>{pesos(totalPagar)}</td>
-                  <td />
                   <td />
                   <td />
                 </tr>
