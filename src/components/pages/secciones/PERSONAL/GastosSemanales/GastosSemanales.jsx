@@ -147,7 +147,7 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, onGu
                 <th>Fecha</th>
                 <th>Efecto</th>
                 <th>Monto</th>
-                <th>Detalle</th>
+                <th style={{ minWidth: 220 }}>Detalle</th>
                 <th style={{ width: 130 }}>Acciones</th>
               </tr>
             </thead>
@@ -157,7 +157,7 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, onGu
                   <tr key={idx}>{celdasForm}</tr>
                 ) : (
                   <tr key={idx}>
-                    <td>{e.fecha}</td>
+                    <td>{e.fecha ? e.fecha.split("-").reverse().join("/") : "-"}</td>
                     <td style={{ color: e.descuentaAumenta === "aumenta" ? "#198754" : "#dc3545", fontWeight: 600 }}>
                       {e.descuentaAumenta === "aumenta" ? "Aumenta" : "Descuenta"}
                     </td>
