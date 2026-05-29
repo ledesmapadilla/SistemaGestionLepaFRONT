@@ -31,13 +31,10 @@ const calcularPagar = (r) =>
 const pesos = (n) =>
   Number(n).toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 
-const TIPOS_EXTRAS = ["Horas extra", "Feriado", "Bono", "Adelanto", "Descuento", "Otro"];
-
 const formVacio = () => ({
-  fecha: toKey(new Date()),
-  tipo: TIPOS_EXTRAS[0],
+  fecha: new Date().toLocaleDateString("en-CA"),
   descuentaAumenta: "aumenta",
-  monto: "",
+  monto: 0,
   detalle: "",
 });
 
@@ -86,7 +83,8 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, onGu
   };
 
   const iniciarEditar = (idx) => {
-    setForm({ ...extras[idx], monto: extras[idx].monto ?? "" });
+    const e = extras[idx];
+    setForm({ fecha: e.fecha || new Date().toLocaleDateString("en-CA"), descuentaAumenta: e.descuentaAumenta || "aumenta", monto: e.monto ?? 0, detalle: e.detalle || "" });
     setEditandoIdx(idx);
   };
 
@@ -116,11 +114,6 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, onGu
     <td key="fecha">
       <Form.Control size="sm" type="date" value={form.fecha} onChange={(e) => setForm((f) => ({ ...f, fecha: e.target.value }))} />
     </td>,
-    <td key="tipo">
-      <Form.Select size="sm" value={form.tipo} onChange={(e) => setForm((f) => ({ ...f, tipo: e.target.value }))}>
-        {TIPOS_EXTRAS.map((t) => <option key={t}>{t}</option>)}
-      </Form.Select>
-    </td>,
     <td key="efecto">
       <Form.Select size="sm" value={form.descuentaAumenta} onChange={(e) => setForm((f) => ({ ...f, descuentaAumenta: e.target.value }))}>
         <option value="aumenta">Aumenta</option>
@@ -128,59 +121,63 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, onGu
       </Form.Select>
     </td>,
     <td key="monto">
-      <Form.Control size="sm" type="number" min="0" value={form.monto} onChange={(e) => setForm((f) => ({ ...f, monto: e.target.value }))} />
+      <CeldaMoneda value={form.monto} onChange={(v) => setForm((f) => ({ ...f, monto: v }))} />
     </td>,
     <td key="detalle">
       <Form.Control size="sm" type="text" value={form.detalle} onChange={(e) => setForm((f) => ({ ...f, detalle: e.target.value }))} />
     </td>,
     <td key="acciones">
-      <Button size="sm" variant="success" onClick={confirmar} className="me-1">✓</Button>
-      <Button size="sm" variant="outline-secondary" onClick={cancelar}>✕</Button>
+      <div className="d-flex gap-1 justify-content-center align-items-center">
+        <Button size="sm" variant="outline-success" onClick={confirmar}>✓</Button>
+        <Button size="sm" variant="outline-secondary" onClick={cancelar}>✕</Button>
+      </div>
     </td>,
   ];
 
   return (
-    <Modal show={show} onHide={onHide} centered size="xl">
+    <Modal show={show} onHide={onHide} centered size="lg">
       <Modal.Header closeButton>
         <Modal.Title>Extras — {personalNombre}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Table striped bordered hover className="text-center align-middle">
-          <thead className="table-dark">
-            <tr>
-              <th>Fecha</th>
-              <th>Tipo</th>
-              <th>Efecto</th>
-              <th>Monto</th>
-              <th>Detalle</th>
-              <th style={{ width: 130 }}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {extras.map((e, idx) =>
-              editandoIdx === idx ? (
-                <tr key={idx}>{celdasForm}</tr>
-              ) : (
-                <tr key={idx}>
-                  <td>{e.fecha}</td>
-                  <td>{e.tipo}</td>
-                  <td style={{ color: e.descuentaAumenta === "aumenta" ? "#198754" : "#dc3545", fontWeight: 600 }}>
-                    {e.descuentaAumenta === "aumenta" ? "Aumenta" : "Descuenta"}
-                  </td>
-                  <td>{pesos(e.monto)}</td>
-                  <td>{e.detalle || "-"}</td>
-                  <td>
-                    <Button size="sm" variant="warning" onClick={() => iniciarEditar(idx)} className="me-1" disabled={editandoIdx !== null}>Editar</Button>
-                    <Button size="sm" variant="danger" onClick={() => borrar(idx)} disabled={editandoIdx !== null}>Borrar</Button>
-                  </td>
-                </tr>
-              )
-            )}
-            {editandoIdx === "nuevo" && <tr>{celdasForm}</tr>}
-          </tbody>
-        </Table>
-        <div className="d-flex justify-content-between align-items-center mt-2">
-          <Button variant="outline-secondary" size="sm" onClick={iniciarAgregar} disabled={editandoIdx !== null}>
+        <div style={{ maxHeight: "55vh", overflowY: "auto" }}>
+          <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
+            <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
+              <tr>
+                <th>Fecha</th>
+                <th>Efecto</th>
+                <th>Monto</th>
+                <th>Detalle</th>
+                <th style={{ width: 130 }}>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {extras.map((e, idx) =>
+                editandoIdx === idx ? (
+                  <tr key={idx}>{celdasForm}</tr>
+                ) : (
+                  <tr key={idx}>
+                    <td>{e.fecha}</td>
+                    <td style={{ color: e.descuentaAumenta === "aumenta" ? "#198754" : "#dc3545", fontWeight: 600 }}>
+                      {e.descuentaAumenta === "aumenta" ? "Aumenta" : "Descuenta"}
+                    </td>
+                    <td>{pesos(e.monto)}</td>
+                    <td>{e.detalle || "-"}</td>
+                    <td>
+                      <div className="d-flex gap-1 justify-content-center align-items-center">
+                        <Button size="sm" variant="outline-warning" onClick={() => iniciarEditar(idx)} disabled={editandoIdx !== null}>Editar</Button>
+                        <Button size="sm" variant="outline-danger" onClick={() => borrar(idx)} disabled={editandoIdx !== null}>Borrar</Button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              )}
+              {editandoIdx === "nuevo" && <tr>{celdasForm}</tr>}
+            </tbody>
+          </Table>
+        </div>
+        <div className="d-flex justify-content-between align-items-center mt-3">
+          <Button variant="outline-primary" size="sm" onClick={iniciarAgregar} disabled={editandoIdx !== null}>
             + Agregar
           </Button>
           <span>
@@ -189,9 +186,9 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, onGu
           </span>
         </div>
       </Modal.Body>
-      <Modal.Footer className="justify-content-center">
+      <Modal.Footer>
         <Button variant="outline-secondary" onClick={onHide}>Cancelar</Button>
-        <Button variant="primary" onClick={handleGuardar}>Guardar</Button>
+        <Button variant="outline-success" onClick={handleGuardar}>Guardar</Button>
       </Modal.Footer>
     </Modal>
   );
@@ -385,14 +382,14 @@ const GastosSemanales = () => {
       ) : (
         <>
           <div className="d-flex justify-content-end mb-2">
-            <Button variant="outline-secondary" size="sm" onClick={() => {
+            <Button variant="outline-primary" size="sm" onClick={() => {
               modificado.current = true;
               setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", nuevo: true }]);
             }}>+ Agregar personal</Button>
           </div>
           <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "65vh" }}>
-            <Table striped bordered hover className="text-center align-middle">
-              <thead className="table-dark">
+            <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
+              <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                 <tr>
                   <th style={{ minWidth: 160 }}>Personal</th>
                   <th style={{ minWidth: 110 }}>Semanal Teórico</th>
@@ -421,7 +418,7 @@ const GastosSemanales = () => {
                             {pesos(netoExtras(r.extras))}
                           </span>
                         )}
-                        <Button variant="outline-secondary" size="sm" onClick={() => setVerExtras({ idx, nombre: r.personal })}>
+                        <Button variant="outline-primary" size="sm" onClick={() => setVerExtras({ idx, nombre: r.personal })}>
                           Agregar
                         </Button>
                       </div>
@@ -494,8 +491,8 @@ const GastosSemanales = () => {
               return d;
             });
             return (
-              <Table striped bordered hover className="text-center align-middle">
-                <thead className="table-dark">
+              <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
+                <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                   <tr>
                     <th>Día</th>
                     <th>Estado</th>
@@ -540,7 +537,7 @@ const GastosSemanales = () => {
             );
           })()}
         </Modal.Body>
-        <Modal.Footer className="justify-content-center">
+        <Modal.Footer>
           <Button variant="outline-secondary" onClick={() => setVerPersonal(null)}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
