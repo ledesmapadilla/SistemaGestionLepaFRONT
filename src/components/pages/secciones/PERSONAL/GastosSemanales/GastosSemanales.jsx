@@ -23,7 +23,7 @@ const toKey = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
 const calcularPagar = (r) =>
-  (Number(r.semanal) || 0) - (Number(r.ausentismo) || 0) - (Number(r.adelanto) || 0) + (Number(r.extras) || 0) + (Number(r.otros) || 0);
+  (Number(r.semanal) || 0) - (Number(r.ausentismo) || 0);
 
 const pesos = (n) =>
   Number(n).toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
@@ -169,10 +169,10 @@ const GastosSemanales = () => {
 
     const filaDePersonal = (p) => {
       const semanal = p.semanal?.length ? p.semanal[p.semanal.length - 1].valor : 0;
-      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), adelanto: 0, extras: 0, otros: 0, observaciones: "" };
+      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), observaciones: "" };
     };
     const filaSoloAsistencia = (nombre) => ({
-      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), adelanto: 0, extras: 0, otros: 0, observaciones: "",
+      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), observaciones: "",
     });
 
     // Mapa de semanal actual por nombre (desde Personal DB)
@@ -233,9 +233,6 @@ const GastosSemanales = () => {
 
   const totalSemanal = registros.reduce((s, r) => s + (Number(r.semanal) || 0), 0);
   const totalAusentismo = registros.reduce((s, r) => s + (Number(r.ausentismo) || 0), 0);
-  const totalAdelanto = registros.reduce((s, r) => s + (Number(r.adelanto) || 0), 0);
-  const totalExtras = registros.reduce((s, r) => s + (Number(r.extras) || 0), 0);
-  const totalOtros = registros.reduce((s, r) => s + (Number(r.otros) || 0), 0);
   const totalPagar = registros.reduce((s, r) => s + calcularPagar(r), 0);
 
   return (
@@ -252,7 +249,7 @@ const GastosSemanales = () => {
           <div className="d-flex justify-content-end mb-2">
             <Button variant="outline-secondary" size="sm" onClick={() => {
               modificado.current = true;
-              setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, adelanto: 0, extras: 0, otros: 0, observaciones: "", nuevo: true }]);
+              setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, observaciones: "", nuevo: true }]);
             }}>+ Agregar personal</Button>
           </div>
           <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "65vh" }}>
@@ -262,9 +259,6 @@ const GastosSemanales = () => {
                   <th style={{ minWidth: 160 }}>Personal</th>
                   <th style={{ minWidth: 110 }}>Semanal Teórico</th>
                   <th style={{ minWidth: 110 }}>Ausentismo</th>
-                  <th style={{ minWidth: 110 }}>Adelanto</th>
-                  <th style={{ minWidth: 110 }}>Extras, favor pers.(+)</th>
-                  <th style={{ minWidth: 110 }}>Otros, favor pers.(+)</th>
                   <th style={{ minWidth: 110 }}>Pagar</th>
                   <th style={{ minWidth: 180 }}>Observaciones</th>
                   <th style={{ width: 60 }}></th>
@@ -281,9 +275,6 @@ const GastosSemanales = () => {
                     </td>
                     <td><CeldaMoneda value={r.semanal} onChange={(v) => actualizar(idx, "semanal", v)} textStyle={{ fontSize: "0.7rem", color: "#9ca3af" }} /></td>
                     <td><CeldaMoneda value={r.ausentismo} onChange={(v) => actualizar(idx, "ausentismo", v)} /></td>
-                    <td><CeldaMoneda value={r.adelanto} onChange={(v) => actualizar(idx, "adelanto", v)} /></td>
-                    <td><CeldaMoneda value={r.extras} onChange={(v) => actualizar(idx, "extras", v)} /></td>
-                    <td><CeldaMoneda value={r.otros} onChange={(v) => actualizar(idx, "otros", v)} /></td>
                     <td style={{ color: calcularPagar(r) < 0 ? "#dc3545" : "#198754", fontSize: "1.1rem" }}>
                       {pesos(calcularPagar(r))}
                     </td>
@@ -319,9 +310,6 @@ const GastosSemanales = () => {
                   <td className="text-start">Total</td>
                   <td className="text-center">{pesos(totalSemanal)}</td>
                   <td className="text-center">{pesos(totalAusentismo)}</td>
-                  <td className="text-center">{pesos(totalAdelanto)}</td>
-                  <td className="text-center">{pesos(totalExtras)}</td>
-                  <td className="text-center">{pesos(totalOtros)}</td>
                   <td style={{ color: totalPagar < 0 ? "#dc3545" : "#ffc107" }}>{pesos(totalPagar)}</td>
                   <td />
                   <td />
