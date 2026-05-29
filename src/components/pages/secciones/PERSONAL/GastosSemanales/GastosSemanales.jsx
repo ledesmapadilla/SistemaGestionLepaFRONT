@@ -433,7 +433,7 @@ const GastosSemanales = () => {
                         </div>
                       ) : (
                         <div className="d-flex justify-content-center">
-                          <Button variant="outline-primary" size="sm" onClick={() => setVerExtras({ idx, nombre: r.personal })}>+</Button>
+                          <Button variant="outline-primary" size="sm" onClick={() => setVerExtras({ idx, nombre: r.personal })}>Agregar</Button>
                         </div>
                       )}
                     </td>
