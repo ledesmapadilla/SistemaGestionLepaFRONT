@@ -307,7 +307,7 @@ const GastosSemanales = () => {
       if (nombre.toLowerCase().includes("zamorano")) {
         const semanal = semanalMap[key] || 0;
         const horas = zamoranoMins / 60;
-        return Math.round(Math.max(0, horas) * (semanal / 44));
+        return Math.round(horas * (semanal / 44));
       }
       const jornal = jornalMap[key] || 0;
       const ausencias = ausenciasMap[key] || 0;
