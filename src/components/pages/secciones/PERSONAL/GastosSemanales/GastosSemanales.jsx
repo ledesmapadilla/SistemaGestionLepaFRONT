@@ -502,6 +502,31 @@ const GastosSemanales = () => {
               d.setDate(d.getDate() + i);
               return d;
             });
+            const esZamoranoPerson = verPersonal?.toLowerCase().includes("zamorano");
+            const regsModal = diasModal.map((_, idx) =>
+              asistenciaSemana[idx]?.registros?.find(
+                (r) => r.personal?.trim().toLowerCase() === verPersonal?.trim().toLowerCase()
+              )
+            );
+            let totalHorometroStr = null;
+            if (esZamoranoPerson) {
+              const totalMins = regsModal.reduce((s, reg) => {
+                if (!reg) return s;
+                return s + horometroStrAMins(calcularHorometroZamorano(reg.entra, reg.sale));
+              }, 0);
+              const neg = totalMins < 0;
+              const abs = Math.abs(totalMins);
+              const h = Math.floor(abs / 60);
+              const m = abs % 60;
+              const str = m === 0 ? `${h}` : `${h}:${String(m).padStart(2, "0")}`;
+              totalHorometroStr = neg ? `-${str}` : `+${str}`;
+            } else {
+              const regsConHorometro = regsModal.filter((r) => r && r.horometro !== "" && r.horometro != null);
+              if (regsConHorometro.length > 0) {
+                const total = regsConHorometro.reduce((s, r) => s + Number(r.horometro || 0), 0);
+                totalHorometroStr = total.toLocaleString("es-AR");
+              }
+            }
             return (
               <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
                 <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
@@ -519,9 +544,7 @@ const GastosSemanales = () => {
                 <tbody>
                   {diasModal.map((d, idx) => {
                     const label = `${DIAS[d.getDay()]} ${formatFecha(d)}`;
-                    const reg = asistenciaSemana[idx]?.registros?.find(
-                      (r) => r.personal?.trim().toLowerCase() === verPersonal?.trim().toLowerCase()
-                    );
+                    const reg = regsModal[idx];
                     if (!reg) return (
                       <tr key={idx}>
                         <td>{label}</td>
@@ -545,6 +568,17 @@ const GastosSemanales = () => {
                     );
                   })}
                 </tbody>
+                {totalHorometroStr !== null && (
+                  <tfoot>
+                    <tr className="table-dark fw-bold">
+                      <td colSpan={5} className="text-end">Total horómetro</td>
+                      <td style={{ color: esZamoranoPerson && totalHorometroStr.startsWith("-") ? "#198754" : esZamoranoPerson ? "#dc3545" : undefined }}>
+                        {totalHorometroStr}
+                      </td>
+                      <td colSpan={2} />
+                    </tr>
+                  </tfoot>
+                )}
               </Table>
             );
           })()}
