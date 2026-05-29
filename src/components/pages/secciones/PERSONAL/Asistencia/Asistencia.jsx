@@ -493,14 +493,17 @@ const Asistencia = () => {
               {diaSeleccionado} de {MESES[mes]} {anio}
             </Modal.Title>
             <div className="flex-grow-1 d-flex justify-content-center">
-              <Form.Control
+              <Form.Select
                 size="sm"
-                type="text"
-                placeholder="Buscar persona..."
                 value={busquedaPersona}
                 onChange={(e) => setBusquedaPersona(e.target.value)}
-                style={{ maxWidth: 200 }}
-              />
+                style={{ maxWidth: 220 }}
+              >
+                <option value="">Todos</option>
+                {personalDelDia.map((p) => (
+                  <option key={p._id} value={p.nombre}>{p.nombre}</option>
+                ))}
+              </Form.Select>
             </div>
             <Button variant="outline-light" size="sm" onClick={exportarExcel}>
               Excel
