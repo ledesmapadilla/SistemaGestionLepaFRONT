@@ -134,7 +134,7 @@ const ResumenMes = () => {
     const wb = XLSXStyle.utils.book_new();
     const ws = {};
 
-    const fechaHoySerial = Math.floor((new Date() - new Date(1899, 11, 31)) / 86400000);
+    const fechaHoySerial = Math.floor((new Date() - new Date(1899, 11, 30)) / 86400000);
     ws["A1"] = { v: titulo, t: "s", s: estTitulo };
     ws["A2"] = { v: fechaHoySerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
     ws["A3"] = { v: "", t: "s" };
@@ -147,7 +147,7 @@ const ResumenMes = () => {
       const key = diaKey(anio, mes, dia);
       const regs = filtrarRegs(registros[key] || []);
       regs.forEach((r) => {
-        const fechaSerial = Math.floor((new Date(anio, mes, dia) - new Date(1899, 11, 31)) / 86400000);
+        const fechaSerial = Math.floor((new Date(anio, mes, dia) - new Date(1899, 11, 30)) / 86400000);
         ws[`A${row}`] = { v: fechaSerial, t: "n", s: { ...estCentro, numFmt: "DD/MM/YYYY" } };
         const vals = [r.personal, r.ausente ? "Sí" : "No", r.mediaFalta ? "Sí" : "No", r.remito ? "Sí" : "No", r.entra, r.sale, r.maquina, r.horometro, r.obra, r.observaciones];
         vals.forEach((v, i) => {
