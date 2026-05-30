@@ -40,6 +40,7 @@ const NuevoPagoProveedor = () => {
   const [altaChequemedioId, setAltaChequeMedioId] = useState(null);
   const [formAltaCheque, setFormAltaCheque] = useState({ numeroCheque: "", monto: "", fechaCobro: "", proveedor: "", tipo: "" });
   const [guardandoAltaCheque, setGuardandoAltaCheque] = useState(false);
+  const [editandoMontoAltaCheque, setEditandoMontoAltaCheque] = useState(false);
 
   const proveedorSeleccionado = watch("proveedor");
   const { onChange: onChangeProveedor, ...proveedorReg } = register("proveedor", { required: "El proveedor es obligatorio" });
@@ -649,9 +650,13 @@ const NuevoPagoProveedor = () => {
             <Form.Group className="mb-3">
               <Form.Label>Monto <span className="text-danger">*</span></Form.Label>
               <Form.Control
-                type="number"
-                value={formAltaCheque.monto}
+                type="text"
+                value={editandoMontoAltaCheque ? formAltaCheque.monto : (formAltaCheque.monto ? formatoMoneda(formAltaCheque.monto) : "")}
+                placeholder="$0,00"
+                onFocus={() => { setEditandoMontoAltaCheque(true); setFormAltaCheque((p) => ({ ...p, monto: "" })); }}
                 onChange={(e) => setFormAltaCheque((p) => ({ ...p, monto: e.target.value }))}
+                onBlur={() => setEditandoMontoAltaCheque(false)}
+                onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
               />
             </Form.Group>
             <Form.Group className="mb-3">
