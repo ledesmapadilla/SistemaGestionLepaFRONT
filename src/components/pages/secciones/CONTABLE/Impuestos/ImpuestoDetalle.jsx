@@ -6,46 +6,50 @@ const MESES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
-const IMPUESTOS = [
-  { nombre: "931",                    slug: "931" },
-  { nombre: "Autónomos",              slug: "autonomos" },
-  { nombre: "Convenio Multilateral",  slug: "convenio-multilateral" },
-  { nombre: "IVA",                    slug: "iva" },
-  { nombre: "Salud Pública",          slug: "salud-publica" },
-  { nombre: "Anticipo ganancias",     slug: "anticipo-ganancias" },
-  { nombre: "Planes de pago AFIP",    slug: "planes-pago-afip" },
-];
+const NOMBRES = {
+  "931": "931",
+  "autonomos": "Autónomos",
+  "convenio-multilateral": "Convenio Multilateral",
+  "iva": "IVA",
+  "salud-publica": "Salud Pública",
+  "anticipo-ganancias": "Anticipo ganancias",
+  "planes-pago-afip": "Planes de pago AFIP",
+};
 
-export default function ImpuestosMes() {
+const OPCIONES = ["Cargar", "Pagar", "Resumen"];
+
+export default function ImpuestoDetalle() {
   const navigate = useNavigate();
-  const { anio, mes } = useParams();
+  const { anio, mes, impuesto } = useParams();
   const mesNombre = MESES[Number(mes)];
+  const nombre = NOMBRES[impuesto] || impuesto;
 
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div style={{ width: 70 }} />
-        <h2 className="mb-0 text-center">💀 Impuestos - {mesNombre} {anio}</h2>
+        <h2 className="mb-0 text-center">💀 {nombre} - {mesNombre} {anio}</h2>
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-        {IMPUESTOS.map(({ nombre, slug }) => (
+      <div className="d-flex justify-content-center align-items-center gap-4" style={{ minHeight: "50vh" }}>
+        {OPCIONES.map((opcion) => (
           <Card
-            key={slug}
-            onClick={() => navigate(`/impuestos/${anio}/${mes}/${slug}`)}
+            key={opcion}
             style={{
               cursor: "pointer",
-              border: "1px solid #444",
+              border: "1px solid #ffc107",
               background: "#1e1e1e",
               transition: "background 0.15s",
+              width: 220,
+              height: 220,
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = "#2a2a2a"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "#1e1e1e"; }}
           >
-            <Card.Body className="text-center py-5">
-              <Card.Title className="mb-0" style={{ fontSize: "1.1rem", color: "#dee2e6" }}>
-                {nombre}
+            <Card.Body className="d-flex align-items-center justify-content-center">
+              <Card.Title className="mb-0 text-center" style={{ fontSize: "1.2rem", color: "#dee2e6" }}>
+                {opcion}
               </Card.Title>
             </Card.Body>
           </Card>
