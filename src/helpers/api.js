@@ -25,4 +25,6 @@ export const API = {
   cuentaCorrienteProveedores: `${BASE}/api/cuenta-corriente-proveedores`,
   baterias: `${BASE}/api/baterias`,
   registroBaterias: `${BASE}/api/registro-baterias`,
+  cubiertas: `${BASE}/api/cubiertas`,
+  registroCubiertas: `${BASE}/api/registro-cubiertas`,
 };
