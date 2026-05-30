@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, Form, Modal, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { listarBaterias, crearBateria, borrarBateria } from "../../../../../helpers/queriesBaterias";
@@ -17,6 +18,7 @@ const VACIO_ALTA  = { nombreBateria: "", marca: "", fecha: hoy() };
 const VACIO_NUEVA = { bateria: "", maquina: "", fecha: hoy(), observaciones: "" };
 
 export default function Baterias() {
+  const navigate = useNavigate();
   const [registros, setRegistros] = useState([]);
   const [catalogo, setCatalogo]   = useState([]);
   const [maquinas, setMaquinas]   = useState([]);
@@ -270,7 +272,10 @@ export default function Baterias() {
 
   return (
     <div className="w-75 mx-auto my-2">
-      <h6 className="text-center mb-3">Baterías</h6>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h6 className="mb-0">Baterías</h6>
+        <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+      </div>
 
       <div className="d-flex justify-content-between mb-2">
         <div className="d-flex gap-2">
