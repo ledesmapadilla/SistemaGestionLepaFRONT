@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button, Card } from "react-bootstrap";
+import { Button, Card, Form } from "react-bootstrap";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -18,9 +19,37 @@ const NOMBRES = {
 
 const OPCIONES = ["Cargar", "Pagar", "Resumen"];
 
+const PROVINCIAS = [
+  "Buenos Aires",
+  "Catamarca",
+  "Chaco",
+  "Chubut",
+  "Ciudad Autónoma de Buenos Aires",
+  "Córdoba",
+  "Corrientes",
+  "Entre Ríos",
+  "Formosa",
+  "Jujuy",
+  "La Pampa",
+  "La Rioja",
+  "Mendoza",
+  "Misiones",
+  "Neuquén",
+  "Río Negro",
+  "Salta",
+  "San Juan",
+  "San Luis",
+  "Santa Cruz",
+  "Santa Fe",
+  "Santiago del Estero",
+  "Tierra del Fuego",
+  "Tucumán",
+];
+
 export default function ImpuestoDetalle() {
   const navigate = useNavigate();
   const { anio, mes, impuesto } = useParams();
+  const [provincia, setProvincia] = useState("");
   const mesNombre = MESES[Number(mes)];
   const nombre = NOMBRES[impuesto] || impuesto;
 
@@ -32,7 +61,25 @@ export default function ImpuestoDetalle() {
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div className="d-flex justify-content-center align-items-center gap-4" style={{ minHeight: "50vh" }}>
+      {impuesto === "convenio-multilateral" && (
+        <div className="d-flex justify-content-center mb-4">
+          <div>
+            <Form.Label className="text-center d-block mb-1">Provincia</Form.Label>
+            <Form.Select
+              value={provincia}
+              onChange={(e) => setProvincia(e.target.value)}
+              style={{ width: 280 }}
+            >
+              <option value="">Seleccionar provincia...</option>
+              {PROVINCIAS.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </Form.Select>
+          </div>
+        </div>
+      )}
+
+      <div className="d-flex justify-content-center align-items-center gap-4" style={{ minHeight: "40vh" }}>
         {OPCIONES.map((opcion) => (
           <Card
             key={opcion}
