@@ -21,17 +21,17 @@ export default function Impuesto931() {
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div className="d-flex justify-content-center gap-4" style={{ marginTop: 32 }}>
+      <div className="d-flex justify-content-center align-items-center gap-4" style={{ marginTop: 32, minHeight: "50vh" }}>
         {OPCIONES.map((opcion) => (
           <Card
             key={opcion}
             style={{
               cursor: "pointer",
-              border: "1px solid #444",
+              border: "1px solid #ffc107",
               background: "#1e1e1e",
               transition: "background 0.15s",
-              width: 180,
-              height: 180,
+              width: 220,
+              height: 220,
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = "#2a2a2a"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "#1e1e1e"; }}
