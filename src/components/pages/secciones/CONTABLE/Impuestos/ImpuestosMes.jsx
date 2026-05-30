@@ -24,7 +24,8 @@ export default function ImpuestosMes() {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="mb-0">💀 Impuestos — {mesNombre} {anio}</h2>
+        <div style={{ width: 70 }} />
+        <h2 className="mb-0 text-center">💀 Impuestos - {mesNombre} {anio}</h2>
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
