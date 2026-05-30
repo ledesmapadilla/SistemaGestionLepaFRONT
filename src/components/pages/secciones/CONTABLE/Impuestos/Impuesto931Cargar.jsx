@@ -179,13 +179,14 @@ export default function Impuesto931Cargar() {
         </div>
       </div>
 
-      <Table striped bordered hover className="text-center align-middle w-100">
+      <Table striped bordered hover className="text-center align-middle w-100 mt-4">
         <thead className="table-dark">
           <tr>
             <th className="text-start">Concepto</th>
             <th style={{ width: 140 }}>Valor</th>
             <th style={{ minWidth: 260 }}>Observaciones</th>
-            <th style={{ width: 160 }}>Acciones</th>
+            <th style={{ width: 160 }}>Carga</th>
+            <th style={{ width: 160 }}>Pago</th>
           </tr>
         </thead>
         <tbody>
@@ -219,6 +220,12 @@ export default function Impuesto931Cargar() {
                       <Button size="sm" variant="outline-danger" onClick={() => borrar(fila.tipo)} disabled={!dato}>Borrar</Button>
                     </div>
                   )}
+                </td>
+                <td>
+                  <div className="d-flex gap-1 justify-content-center">
+                    <Button size="sm" variant="outline-primary">Pagar</Button>
+                    <Button size="sm" variant="outline-secondary">Resumen</Button>
+                  </div>
                 </td>
               </tr>
             );
