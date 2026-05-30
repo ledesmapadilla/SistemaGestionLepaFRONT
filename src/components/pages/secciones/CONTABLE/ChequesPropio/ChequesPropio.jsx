@@ -214,11 +214,11 @@ export default function ChequesPropio() {
           <Modal.Title>Cheque N° {chequeVer?.numeroCheque}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p className="mb-1"><strong>Tipo:</strong> {chequeVer?.tipo}</p>
-          <p className="mb-1"><strong>Proveedor:</strong> {chequeVer?.proveedor}</p>
-          <p className="mb-1"><strong>Monto:</strong> {chequeVer ? formatoMoneda(chequeVer.monto) : ""}</p>
-          <p className="mb-1"><strong>Fecha de cobro:</strong> {formatearFecha(chequeVer?.fechaCobro)}</p>
-          <p className="mb-3"><strong>Estado:</strong>{" "}
+          <p className="mb-1">Tipo: {chequeVer?.tipo}</p>
+          <p className="mb-1">Proveedor: {chequeVer?.proveedor}</p>
+          <p className="mb-1">Monto: {chequeVer ? formatoMoneda(chequeVer.monto) : ""}</p>
+          <p className="mb-1">Fecha de cobro: {formatearFecha(chequeVer?.fechaCobro)}</p>
+          <p className="mb-3">Estado:{" "}
             <span style={{ color: chequeVer?.estado === "Cobrado" ? "#198754" : "#ffc107", fontWeight: 600 }}>
               {chequeVer?.estado}
             </span>
