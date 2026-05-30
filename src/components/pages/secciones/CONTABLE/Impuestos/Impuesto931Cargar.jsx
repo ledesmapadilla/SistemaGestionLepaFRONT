@@ -210,16 +210,18 @@ export default function Impuesto931Cargar() {
                 </td>
                 <td className="text-start">{dato?.observaciones || "-"}</td>
                 <td>
-                  <div className="d-flex gap-1 justify-content-center">
-                    {!SIN_VER.includes(fila.tipo) && (
-                      <Button size="sm" variant="outline-success" onClick={() => setShowVer(fila)} disabled={!dato}>Ver</Button>
-                    )}
-                    {TIPOS_HISTORIAL.includes(fila.tipo)
-                      ? <Button size="sm" variant="outline-warning" onClick={() => abrirHistorial(fila)}>Editar</Button>
-                      : <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(fila)} disabled={fila.tipo === "montoPromedio"}>Editar</Button>
-                    }
-                    <Button size="sm" variant="outline-danger" onClick={() => borrar(fila.tipo)} disabled={!dato || fila.tipo === "montoPromedio"}>Borrar</Button>
-                  </div>
+                  {fila.tipo !== "montoPromedio" && (
+                    <div className="d-flex gap-1 justify-content-center">
+                      {!SIN_VER.includes(fila.tipo) && (
+                        <Button size="sm" variant="outline-success" onClick={() => setShowVer(fila)} disabled={!dato}>Ver</Button>
+                      )}
+                      {TIPOS_HISTORIAL.includes(fila.tipo)
+                        ? <Button size="sm" variant="outline-warning" onClick={() => abrirHistorial(fila)}>Editar</Button>
+                        : <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(fila)}>Editar</Button>
+                      }
+                      <Button size="sm" variant="outline-danger" onClick={() => borrar(fila.tipo)} disabled={!dato}>Borrar</Button>
+                    </div>
+                  )}
                 </td>
               </tr>
             );
