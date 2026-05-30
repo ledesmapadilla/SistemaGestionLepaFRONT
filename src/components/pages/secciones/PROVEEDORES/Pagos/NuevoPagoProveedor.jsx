@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 import { crearPagoProveedor, listarPagosProveedores } from "../../../../../helpers/queriesPagosProveedores";
 import { listarFacturasProveedores } from "../../../../../helpers/queriesFacturasProveedores";
 import { listarCobros, actualizarEstadoCheque } from "../../../../../helpers/queriesCobros";
-import { crearChequePropio } from "../../../../../helpers/queriesChequesPropio";
+import { crearChequePropio, listarChequesPropio } from "../../../../../helpers/queriesChequesPropio";
 
 const hoy = new Date().toLocaleDateString("en-CA");
 
@@ -41,6 +41,7 @@ const NuevoPagoProveedor = () => {
   const [formAltaCheque, setFormAltaCheque] = useState({ numeroCheque: "", monto: "", fechaCobro: "", proveedor: "", tipo: "" });
   const [guardandoAltaCheque, setGuardandoAltaCheque] = useState(false);
   const [editandoMontoAltaCheque, setEditandoMontoAltaCheque] = useState(false);
+  const [chequesPropioCargados, setChequesPropioCargados] = useState([]);
 
   const proveedorSeleccionado = watch("proveedor");
   const { onChange: onChangeProveedor, ...proveedorReg } = register("proveedor", { required: "El proveedor es obligatorio" });
@@ -51,10 +52,11 @@ const NuevoPagoProveedor = () => {
   useEffect(() => {
     const cargar = async () => {
       try {
-        const [facturasResult, pagosResult, cobrosResult] = await Promise.allSettled([
+        const [facturasResult, pagosResult, cobrosResult, chequesProResult] = await Promise.allSettled([
           listarFacturasProveedores(),
           listarPagosProveedores(),
           listarCobros(),
+          listarChequesPropio(),
         ]);
 
         const mapa = {};
@@ -75,6 +77,10 @@ const NuevoPagoProveedor = () => {
               return saldo > 0.01;
             })
           );
+        }
+
+        if (chequesProResult.status === "fulfilled") {
+          setChequesPropioCargados(chequesProResult.value);
         }
 
         if (cobrosResult.status === "fulfilled") {
@@ -330,6 +336,10 @@ const NuevoPagoProveedor = () => {
     if (!formAltaCheque.proveedor.trim()) return Swal.fire("Atención", "El proveedor es obligatorio.", "warning");
     if (!formAltaCheque.tipo) return Swal.fire("Atención", "El tipo es obligatorio.", "warning");
     if (!formAltaCheque.numeroCheque.trim()) return Swal.fire("Atención", "El número de cheque es obligatorio.", "warning");
+    const duplicado = chequesPropioCargados.some(
+      (c) => c.numeroCheque.trim().toLowerCase() === formAltaCheque.numeroCheque.trim().toLowerCase()
+    );
+    if (duplicado) return Swal.fire("Atención", "Ya existe un cheque propio con ese número.", "warning");
     if (!formAltaCheque.monto || isNaN(parseFloat(formAltaCheque.monto)) || parseFloat(formAltaCheque.monto) <= 0)
       return Swal.fire("Atención", "El monto es obligatorio.", "warning");
     if (!formAltaCheque.fechaCobro) return Swal.fire("Atención", "La fecha de cobro es obligatoria.", "warning");
@@ -344,6 +354,8 @@ const NuevoPagoProveedor = () => {
         tipo: formAltaCheque.tipo,
       });
       if (res?.ok) {
+        const data = await res.json();
+        setChequesPropioCargados((prev) => [...prev, data.cheque]);
         setMediosPago((prev) => prev.map((m) =>
           m.id !== altaChequemedioId ? m : {
             ...m,
