@@ -389,7 +389,7 @@ const GastosSemanales = () => {
     const estIzq = { alignment: { horizontal: "left", vertical: "center" } };
     const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
     const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
-    const estTotal = { font: { bold: true }, fill: { fgColor: { rgb: "222222" } }, font: { bold: true, color: { rgb: "FFFFFF" } }, alignment: { horizontal: "center", vertical: "center" }, numFmt: "#,##0" };
+    const estTotal = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" }, numFmt: "#,##0" };
 
     const wb = XLSXStyle.utils.book_new();
     const ws = {};
