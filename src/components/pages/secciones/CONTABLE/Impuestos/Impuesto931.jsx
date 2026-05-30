@@ -6,17 +6,9 @@ const MESES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
-const IMPUESTOS = [
-  "931",
-  "Autónomos",
-  "Convenio Multilateral",
-  "IVA",
-  "Salud Pública",
-  "Anticipo ganancias",
-  "Planes de pago AFIP",
-];
+const OPCIONES = ["Cargar", "Pagar", "Resumen"];
 
-export default function ImpuestosMes() {
+export default function Impuesto931() {
   const navigate = useNavigate();
   const { anio, mes } = useParams();
   const mesNombre = MESES[Number(mes)];
@@ -25,17 +17,14 @@ export default function ImpuestosMes() {
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div style={{ width: 70 }} />
-        <h2 className="mb-0 text-center">💀 Impuestos - {mesNombre} {anio}</h2>
+        <h2 className="mb-0 text-center">💀 931 - {mesNombre} {anio}</h2>
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-        {IMPUESTOS.map((impuesto) => (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginTop: 32 }}>
+        {OPCIONES.map((opcion) => (
           <Card
-            key={impuesto}
-            onClick={() => {
-              if (impuesto === "931") navigate(`/impuestos/${anio}/${mes}/931`);
-            }}
+            key={opcion}
             style={{
               cursor: "pointer",
               border: "1px solid #444",
@@ -46,8 +35,8 @@ export default function ImpuestosMes() {
             onMouseLeave={(e) => { e.currentTarget.style.background = "#1e1e1e"; }}
           >
             <Card.Body className="text-center py-5">
-              <Card.Title className="mb-0" style={{ fontSize: "1.1rem", color: "#dee2e6" }}>
-                {impuesto}
+              <Card.Title className="mb-0" style={{ fontSize: "1.2rem", color: "#dee2e6" }}>
+                {opcion}
               </Card.Title>
             </Card.Body>
           </Card>
