@@ -143,13 +143,13 @@ export default function Impuesto931Cargar() {
         </Button>
       </div>
 
-      <Table striped bordered hover className="text-center align-middle w-50 mx-auto">
+      <Table striped bordered hover className="text-center align-middle w-75 mx-auto">
         <thead className="table-dark">
           <tr>
             <th className="text-start">Concepto</th>
-            <th>Valor</th>
-            <th>Observaciones</th>
-            <th>Acciones</th>
+            <th style={{ width: 140 }}>Valor</th>
+            <th style={{ minWidth: 260 }}>Observaciones</th>
+            <th style={{ width: 160 }}>Acciones</th>
           </tr>
         </thead>
         <tbody>
