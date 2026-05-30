@@ -394,12 +394,16 @@ const GastosSemanales = () => {
     const wb = XLSXStyle.utils.book_new();
     const ws = {};
 
+    const hoy = new Date();
+    const fechaSerial = Math.round((Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
+
     ws["A1"] = { v: titulo, t: "s", s: estTitulo };
-    ws["A2"] = { v: "", t: "s" };
-    headers.forEach((h, i) => { ws[`${cols[i]}3`] = { v: h, t: "s", s: estHeader }; });
+    ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
+    ws["A3"] = { v: "", t: "s" };
+    headers.forEach((h, i) => { ws[`${cols[i]}4`] = { v: h, t: "s", s: estHeader }; });
 
     registros.forEach((r, rowIdx) => {
-      const row = rowIdx + 4;
+      const row = rowIdx + 5;
       ws[`A${row}`] = { v: r.personal || "", t: "s", s: estIzq };
       ws[`B${row}`] = { v: Number(r.semanal) || 0, t: "n", s: { ...estCentro, ...moneda } };
       ws[`C${row}`] = { v: Number(r.ausentismo) || 0, t: "n", s: { ...estCentro, ...moneda } };
@@ -408,7 +412,7 @@ const GastosSemanales = () => {
       ws[`F${row}`] = { v: r.observaciones || "", t: "s", s: estCentro };
     });
 
-    const totalRow = registros.length + 4;
+    const totalRow = registros.length + 5;
     ws[`A${totalRow}`] = { v: "Total", t: "s", s: estTotal };
     ws[`B${totalRow}`] = { v: totalSemanal, t: "n", s: { ...estTotal, ...moneda } };
     ws[`C${totalRow}`] = { v: totalAusentismo, t: "n", s: { ...estTotal, ...moneda } };
@@ -416,7 +420,7 @@ const GastosSemanales = () => {
     ws[`E${totalRow}`] = { v: totalPagar, t: "n", s: { ...estTotal, ...moneda } };
     ws[`F${totalRow}`] = { v: "", t: "s", s: estTotal };
 
-    ws["!ref"] = `A1:F${totalRow}`;
+    ws["!ref"] = `A1:F${Math.max(totalRow, 4)}`;
     ws["!cols"] = [{ wch: 24 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 28 }];
 
     XLSXStyle.utils.book_append_sheet(wb, ws, "Gastos Semanales");
