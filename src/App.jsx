@@ -48,6 +48,7 @@ const NuevoCobro = lazy(() => import("./components/pages/secciones/CLIENTES/Cobr
 const EditarCobro = lazy(() => import("./components/pages/secciones/CLIENTES/Cobros/EditarCobro.jsx"));
 const CuentaCorriente = lazy(() => import("./components/pages/secciones/CLIENTES/CuentaCorriente/CuentaCorriente.jsx"));
 const Cheques = lazy(() => import("./components/pages/secciones/CONTABLE/Cheques/Cheques.jsx"));
+const ChequesPropio = lazy(() => import("./components/pages/secciones/CONTABLE/ChequesPropio/ChequesPropio.jsx"));
 const Asistencia = lazy(() => import("./components/pages/secciones/PERSONAL/Asistencia/Asistencia.jsx"));
 const ResumenMes = lazy(() => import("./components/pages/secciones/PERSONAL/Asistencia/ResumenMes.jsx"));
 const GastosSemanales = lazy(() => import("./components/pages/secciones/PERSONAL/GastosSemanales/GastosSemanales.jsx"));
@@ -143,6 +144,7 @@ function App() {
                       <Route path="/cobro-factura/editar/:id" element={<EditarCobro />} />
                       <Route path="/cuenta-corriente" element={<CuentaCorriente />} />
                       <Route path="/cheques" element={<Cheques />} />
+                      <Route path="/cheques-propios" element={<ChequesPropio />} />
                       <Route path="/personal/asistencia" element={<Asistencia />} />
                       <Route path="/personal/resumen-mes" element={<ResumenMes />} />
                       <Route path="/personal/gastos-semanales" element={<GastosSemanales />} />
