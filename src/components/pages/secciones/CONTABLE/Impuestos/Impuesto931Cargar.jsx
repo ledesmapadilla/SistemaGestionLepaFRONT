@@ -173,13 +173,10 @@ export default function Impuesto931Cargar() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">💀 931</h2>
         <h2 className="mb-0 text-center" style={{ fontSize: "1.4rem" }}>Cargar - {mesNombre} {anio}</h2>
-        <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
-      </div>
-
-      <div className="d-flex justify-content-end mb-2">
-        <Button variant="outline-primary" size="sm" onClick={() => { setFormCargar({ montoFormulario: "", cantPersonas: "", intereses: "", otrasDeudas: "" }); setShowCargar(true); }}>
-          Cargar mes
-        </Button>
+        <div className="d-flex gap-2">
+          <Button variant="outline-primary" size="sm" onClick={() => { setFormCargar({ montoFormulario: "", cantPersonas: "", intereses: "", otrasDeudas: "" }); setShowCargar(true); }}>Cargar mes</Button>
+          <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
+        </div>
       </div>
 
       <Table striped bordered hover className="text-center align-middle w-100">
