@@ -159,6 +159,7 @@ export default function ChequesPropio() {
             <option value="">Estado</option>
             <option value="Emitido">Emitido</option>
             <option value="Cobrado">Cobrado</option>
+            <option value="Rechazado">Rechazado</option>
           </Form.Select>
           {filtroEstado && <span onClick={() => setFiltroEstado("")} style={estiloX}>✕</span>}
         </div>
@@ -191,7 +192,7 @@ export default function ChequesPropio() {
                   </td>
                   <td>{formatearFecha(c.fechaCobro)}</td>
                   <td>
-                    <span style={{ color: c.estado === "Cobrado" ? "#198754" : "#ffc107", fontWeight: 600 }}>
+                    <span style={{ color: c.estado === "Cobrado" ? "#198754" : c.estado === "Rechazado" ? "#dc3545" : "#ffc107", fontWeight: 600 }}>
                       {c.estado}
                     </span>
                   </td>
@@ -225,11 +226,16 @@ export default function ChequesPropio() {
           </p>
           <div className="d-flex justify-content-center gap-2">
             {chequeVer?.estado === "Emitido" && (
-              <Button variant="outline-success" size="sm" onClick={() => cambiarEstado(chequeVer, "Cobrado")}>
-                Marcar como Cobrado
-              </Button>
+              <>
+                <Button variant="outline-success" size="sm" onClick={() => cambiarEstado(chequeVer, "Cobrado")}>
+                  Marcar como Cobrado
+                </Button>
+                <Button variant="outline-danger" size="sm" onClick={() => cambiarEstado(chequeVer, "Rechazado")}>
+                  Marcar como Rechazado
+                </Button>
+              </>
             )}
-            {chequeVer?.estado === "Cobrado" && (
+            {(chequeVer?.estado === "Cobrado" || chequeVer?.estado === "Rechazado") && (
               <Button variant="outline-warning" size="sm" onClick={() => cambiarEstado(chequeVer, "Emitido")}>
                 Volver a Emitido
               </Button>
