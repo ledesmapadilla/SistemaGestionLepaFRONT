@@ -29,9 +29,10 @@ export default function Impuesto931Cargar() {
   const [cargando, setCargando] = useState(true);
 
   const [showVer, setShowVer]         = useState(null);
-  const [showEditar, setShowEditar]   = useState(null);
-  const [valorEditar, setValorEditar] = useState("");
-  const [editandoValor, setEditandoValor] = useState(false);
+  const [showEditar, setShowEditar]         = useState(null);
+  const [valorEditar, setValorEditar]       = useState("");
+  const [obsEditar, setObsEditar]           = useState("");
+  const [editandoValor, setEditandoValor]   = useState(false);
   const [guardando, setGuardando]     = useState(false);
 
   const [showCargar, setShowCargar]   = useState(false);
@@ -57,10 +58,10 @@ export default function Impuesto931Cargar() {
       .finally(() => setCargando(false));
   }, [anio, mes]);
 
-  const guardar = async (tipo, valor) => {
+  const guardar = async (tipo, valor, observaciones = "") => {
     setGuardando(true);
     try {
-      const res = await guardarDato931({ anio: Number(anio), mes: Number(mes), tipo, valor: parseFloat(valor) });
+      const res = await guardarDato931({ anio: Number(anio), mes: Number(mes), tipo, valor: parseFloat(valor), observaciones });
       if (res?.ok) {
         const data = await res.json();
         setDatos((prev) => ({ ...prev, [tipo]: data.dato }));
@@ -94,6 +95,7 @@ export default function Impuesto931Cargar() {
   const abrirEditar = (fila) => {
     const dato = datos[fila.tipo];
     setValorEditar(dato?.valor != null ? String(dato.valor) : "");
+    setObsEditar(dato?.observaciones || "");
     setShowEditar(fila);
   };
 
@@ -146,6 +148,7 @@ export default function Impuesto931Cargar() {
           <tr>
             <th className="text-start">Concepto</th>
             <th>Valor</th>
+            <th>Observaciones</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -156,11 +159,12 @@ export default function Impuesto931Cargar() {
               <tr key={fila.tipo}>
                 <td className="text-start">{fila.label}</td>
                 <td>{dato?.valor != null ? formatoMoneda(dato.valor) : "-"}</td>
+                <td className="text-start">{dato?.observaciones || "-"}</td>
                 <td>
                   <div className="d-flex gap-1 justify-content-center">
                     <Button size="sm" variant="outline-success" onClick={() => setShowVer(fila)} disabled={!dato}>Ver</Button>
-                    <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(fila)}>Editar</Button>
-                    <Button size="sm" variant="outline-danger" onClick={() => borrar(fila.tipo)} disabled={!dato}>Borrar</Button>
+                    <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(fila)} disabled={fila.tipo === "montoPromedio"}>Editar</Button>
+                    <Button size="sm" variant="outline-danger" onClick={() => borrar(fila.tipo)} disabled={!dato || fila.tipo === "montoPromedio"}>Borrar</Button>
                   </div>
                 </td>
               </tr>
@@ -232,7 +236,7 @@ export default function Impuesto931Cargar() {
           <Modal.Title>{showEditar?.label}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form.Group>
+          <Form.Group className="mb-3">
             <Form.Label>Valor</Form.Label>
             <Form.Control
               type="text"
@@ -244,10 +248,18 @@ export default function Impuesto931Cargar() {
               onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
             />
           </Form.Group>
+          <Form.Group>
+            <Form.Label>Observaciones</Form.Label>
+            <Form.Control
+              type="text"
+              value={obsEditar}
+              onChange={(e) => setObsEditar(e.target.value)}
+            />
+          </Form.Group>
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={() => setShowEditar(null)}>Cancelar</Button>
-          <Button variant="outline-success" onClick={() => guardar(showEditar.tipo, valorEditar)} disabled={guardando}>
+          <Button variant="outline-success" onClick={() => guardar(showEditar.tipo, valorEditar, obsEditar)} disabled={guardando}>
             {guardando ? <Spinner size="sm" animation="border" /> : "Guardar"}
           </Button>
         </Modal.Footer>
