@@ -38,7 +38,7 @@ const NuevoPagoProveedor = () => {
   const [chequesEnCartera, setChequesEnCartera] = useState([]);
   const [showAltaCheque, setShowAltaCheque] = useState(false);
   const [altaChequemedioId, setAltaChequeMedioId] = useState(null);
-  const [formAltaCheque, setFormAltaCheque] = useState({ numeroCheque: "", monto: "", fechaCobro: "" });
+  const [formAltaCheque, setFormAltaCheque] = useState({ numeroCheque: "", monto: "", fechaCobro: "", proveedor: "", tipo: "" });
   const [guardandoAltaCheque, setGuardandoAltaCheque] = useState(false);
 
   const proveedorSeleccionado = watch("proveedor");
@@ -321,11 +321,13 @@ const NuevoPagoProveedor = () => {
 
   const abrirAltaCheque = (medioId, montoActual) => {
     setAltaChequeMedioId(medioId);
-    setFormAltaCheque({ numeroCheque: "", monto: montoActual || "", fechaCobro: "" });
+    setFormAltaCheque({ numeroCheque: "", monto: montoActual || "", fechaCobro: "", proveedor: proveedorSeleccionado || "", tipo: "" });
     setShowAltaCheque(true);
   };
 
   const guardarAltaCheque = async () => {
+    if (!formAltaCheque.proveedor.trim()) return Swal.fire("Atención", "El proveedor es obligatorio.", "warning");
+    if (!formAltaCheque.tipo) return Swal.fire("Atención", "El tipo es obligatorio.", "warning");
     if (!formAltaCheque.numeroCheque.trim()) return Swal.fire("Atención", "El número de cheque es obligatorio.", "warning");
     if (!formAltaCheque.monto || isNaN(parseFloat(formAltaCheque.monto)) || parseFloat(formAltaCheque.monto) <= 0)
       return Swal.fire("Atención", "El monto es obligatorio.", "warning");
@@ -337,7 +339,8 @@ const NuevoPagoProveedor = () => {
         numeroCheque: formAltaCheque.numeroCheque.trim(),
         monto: parseFloat(formAltaCheque.monto),
         fechaCobro: formAltaCheque.fechaCobro,
-        proveedor: proveedorSeleccionado || "-",
+        proveedor: formAltaCheque.proveedor.trim(),
+        tipo: formAltaCheque.tipo,
       });
       if (res?.ok) {
         setMediosPago((prev) => prev.map((m) =>
@@ -617,8 +620,23 @@ const NuevoPagoProveedor = () => {
         <Modal.Body>
           <Form>
             <Form.Group className="mb-3">
-              <Form.Label>Proveedor</Form.Label>
-              <Form.Control value={proveedorSeleccionado || "-"} disabled />
+              <Form.Label>Proveedor <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                type="text"
+                value={formAltaCheque.proveedor}
+                onChange={(e) => setFormAltaCheque((p) => ({ ...p, proveedor: e.target.value }))}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Tipo <span className="text-danger">*</span></Form.Label>
+              <Form.Select
+                value={formAltaCheque.tipo}
+                onChange={(e) => setFormAltaCheque((p) => ({ ...p, tipo: e.target.value }))}
+              >
+                <option value="">Seleccionar...</option>
+                <option value="Físico">Físico</option>
+                <option value="E-Cheq">E-Cheq</option>
+              </Form.Select>
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>N° de cheque <span className="text-danger">*</span></Form.Label>
