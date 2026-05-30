@@ -338,12 +338,41 @@ export default function Impuesto931Cargar() {
       </Modal>
 
       {/* Modal Ver */}
-      <Modal show={!!showVer} onHide={() => setShowVer(null)} centered size="sm">
+      <Modal show={!!showVer} onHide={() => setShowVer(null)} centered size={TIPOS_HISTORIAL.includes(showVer?.tipo) ? "lg" : "sm"}>
         <Modal.Header closeButton>
           <Modal.Title>{showVer?.label}</Modal.Title>
         </Modal.Header>
-        <Modal.Body className="text-center">
-          <p className="mb-1">Valor: <strong>{datos[showVer?.tipo]?.valor != null ? formatoMoneda(datos[showVer?.tipo]?.valor) : "-"}</strong></p>
+        <Modal.Body>
+          {TIPOS_HISTORIAL.includes(showVer?.tipo) ? (() => {
+            const historial = datos[showVer?.tipo]?.historial || [];
+            const total = historial.reduce((s, h) => s + (h.valor || 0), 0);
+            if (!historial.length) return <p className="text-muted text-center">Sin entradas registradas.</p>;
+            return (
+              <Table striped bordered size="sm" className="text-center align-middle mb-0">
+                <thead className="table-dark">
+                  <tr><th>Fecha</th><th>Valor</th><th>Observaciones</th></tr>
+                </thead>
+                <tbody>
+                  {[...historial].reverse().map((h, i) => (
+                    <tr key={i}>
+                      <td>{h.fecha ? h.fecha.split("-").reverse().join("/") : "-"}</td>
+                      <td>{formatoMoneda(h.valor)}</td>
+                      <td>{h.observaciones || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot style={{ borderTop: "2px solid #ffc107" }}>
+                  <tr>
+                    <td className="text-end fw-bold">Total:</td>
+                    <td className="fw-bold" style={{ color: "#ffc107" }}>{formatoMoneda(total)}</td>
+                    <td />
+                  </tr>
+                </tfoot>
+              </Table>
+            );
+          })() : (
+            <p className="text-center mb-1">Valor: <strong>{datos[showVer?.tipo]?.valor != null ? formatoMoneda(datos[showVer?.tipo]?.valor) : "-"}</strong></p>
+          )}
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={() => setShowVer(null)}>Cerrar</Button>
