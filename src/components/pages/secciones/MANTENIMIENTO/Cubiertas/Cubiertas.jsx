@@ -237,9 +237,13 @@ export default function Cubiertas() {
     const wb = XLSXStyle.utils.book_new();
     const ws = {};
 
+    const hoy = new Date();
+    const fechaSerial = Math.round((Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
+
     ws["A1"] = { v: "Cubiertas", t: "s", s: estTitulo };
-    ws["A2"] = { v: "", t: "s" };
-    headers.forEach((h, i) => { ws[`${cols[i]}3`] = { v: h, t: "s", s: estHeader }; });
+    ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
+    ws["A3"] = { v: "", t: "s" };
+    headers.forEach((h, i) => { ws[`${cols[i]}4`] = { v: h, t: "s", s: estHeader }; });
 
     const registrosFiltrados = registros.filter(r => {
       const nc = r.cubierta?.nombreCubierta || "";
@@ -248,13 +252,13 @@ export default function Cubiertas() {
     });
 
     registrosFiltrados.forEach((r, idx) => {
-      const row = idx + 4;
+      const row = idx + 5;
       ws[`A${row}`] = { v: r.cubierta?.nombreCubierta || "-", t: "s", s: estCentro };
       ws[`B${row}`] = { v: r.maquinaLabel || r.maquina?.maquina || "-", t: "s", s: estCentro };
       ws[`C${row}`] = { v: r.observaciones || "-", t: "s", s: estCentro };
     });
 
-    const lastRow = Math.max(registrosFiltrados.length + 3, 3);
+    const lastRow = Math.max(registrosFiltrados.length + 4, 4);
     ws["!ref"] = `A1:C${lastRow}`;
     ws["!cols"] = [{ wch: 22 }, { wch: 22 }, { wch: 28 }];
 
