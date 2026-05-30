@@ -56,8 +56,8 @@ export default function ImpuestoDetalle() {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <div style={{ width: 70 }} />
-        <h2 className="mb-0 text-center">💀 {nombre} - {mesNombre} {anio}</h2>
+        <h2 className="mb-0">💀 {nombre}</h2>
+        <h2 className="mb-0 text-center" style={{ fontSize: "1.4rem" }}>- {mesNombre} {anio}</h2>
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
