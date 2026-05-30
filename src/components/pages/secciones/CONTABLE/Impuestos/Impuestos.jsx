@@ -17,6 +17,12 @@ export default function Impuestos() {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
+        <div style={{ width: 70 }} />
+        <h2 className="mb-0 text-center">💀 Impuestos</h2>
+        <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
+      </div>
+
+      <div className="d-flex align-items-center gap-3 mb-4">
         <Form.Select
           value={anio}
           onChange={(e) => setAnio(Number(e.target.value))}
@@ -26,11 +32,9 @@ export default function Impuestos() {
             <option key={a} value={a}>{a}</option>
           ))}
         </Form.Select>
-        <h2 className="mb-0 text-center">💀 Impuestos</h2>
-        <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginTop: 32 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
         {MESES.map((mes, i) => {
           const esActual = i === mesActual && anio === hoy.getFullYear();
           return (
