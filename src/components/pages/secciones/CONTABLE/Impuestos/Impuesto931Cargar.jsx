@@ -41,6 +41,9 @@ export default function Impuesto931Cargar() {
   const [formHistorial, setFormHistorial]   = useState({ valor: "", fecha: new Date().toLocaleDateString("en-CA"), observaciones: "" });
   const [editandoValorH, setEditandoValorH] = useState(false);
   const [guardandoH, setGuardandoH]         = useState(false);
+  const [showPagarModal, setShowPagarModal] = useState(null);
+  const [valorPagar, setValorPagar]         = useState("");
+  const [editandoPagar, setEditandoPagar]   = useState(false);
   const [showCargar, setShowCargar]         = useState(false);
   const [formCargar, setFormCargar]   = useState({ montoFormulario: "", cantPersonas: "", intereses: "", otrasDeudas: "" });
   const [editandoCampo, setEditandoCampo] = useState(null);
@@ -165,6 +168,34 @@ export default function Impuesto931Cargar() {
     }
   };
 
+  const abrirPagar = (fila) => {
+    const dato = datos[fila.tipo];
+    let valor = "";
+    if (dato) {
+      if (TIPOS_HISTORIAL.includes(fila.tipo)) {
+        const suma = (dato.historial || []).reduce((s, h) => s + (h.valor || 0), 0);
+        valor = suma > 0 ? String(suma) : String(dato.valor || "");
+      } else {
+        valor = dato.valor != null ? String(dato.valor) : "";
+      }
+    }
+    setValorPagar(valor);
+    setShowPagarModal(fila);
+  };
+
+  const guardarPago = async () => {
+    if (!valorPagar || isNaN(parseFloat(valorPagar)))
+      return Swal.fire("Atención", "El monto es obligatorio.", "warning");
+    const tipoPago = `pago_${showPagarModal.tipo}`;
+    const res = await guardarDato931({ anio: Number(anio), mes: Number(mes), tipo: tipoPago, valor: parseFloat(valorPagar) });
+    if (res?.ok) {
+      const data = await res.json();
+      setDatos((prev) => ({ ...prev, [tipoPago]: data.dato }));
+      setShowPagarModal(null);
+      Swal.fire({ icon: "success", title: "Pago registrado", timer: 1500, showConfirmButton: false });
+    }
+  };
+
   if (cargando) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
@@ -179,7 +210,7 @@ export default function Impuesto931Cargar() {
         </div>
       </div>
 
-      <Table striped bordered hover className="text-center align-middle w-100 mt-4">
+      <Table striped bordered hover className="text-center align-middle w-100 mt-5">
         <thead className="table-dark">
           <tr>
             <th className="text-start">Concepto</th>
@@ -223,7 +254,7 @@ export default function Impuesto931Cargar() {
                 </td>
                 <td>
                   <div className="d-flex gap-1 justify-content-center">
-                    <Button size="sm" variant="outline-primary">Pagar</Button>
+                    <Button size="sm" variant="outline-primary" onClick={() => abrirPagar(fila)}>Pagar</Button>
                     <Button size="sm" variant="outline-secondary">Resumen</Button>
                   </div>
                 </td>
@@ -232,6 +263,43 @@ export default function Impuesto931Cargar() {
           })}
         </tbody>
       </Table>
+
+      {/* Modal Pagar */}
+      <Modal show={!!showPagarModal} onHide={() => setShowPagarModal(null)} centered size="sm">
+        <Modal.Header closeButton>
+          <Modal.Title>Pagar - {showPagarModal?.label}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="mb-3 small text-muted">
+            Valor cargado: <strong>{(() => {
+              const fila = showPagarModal;
+              const dato = fila ? datos[fila.tipo] : null;
+              if (!dato) return "-";
+              if (TIPOS_HISTORIAL.includes(fila.tipo)) {
+                const suma = (dato.historial || []).reduce((s, h) => s + (h.valor || 0), 0);
+                return formatoMoneda(suma > 0 ? suma : dato.valor);
+              }
+              return formatoMoneda(dato.valor);
+            })()}</strong>
+          </p>
+          <Form.Group>
+            <Form.Label>Monto a pagar</Form.Label>
+            <Form.Control
+              type="text"
+              value={editandoPagar ? valorPagar : (valorPagar ? formatoMoneda(valorPagar) : "")}
+              placeholder="$0"
+              onFocus={() => { setEditandoPagar(true); setValorPagar(""); }}
+              onChange={(e) => setValorPagar(e.target.value)}
+              onBlur={() => setEditandoPagar(false)}
+              onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setShowPagarModal(null)}>Cancelar</Button>
+          <Button variant="outline-success" onClick={guardarPago}>Guardar</Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Modal Cargar mes */}
       <Modal show={showCargar} onHide={() => setShowCargar(false)} centered size="sm">
