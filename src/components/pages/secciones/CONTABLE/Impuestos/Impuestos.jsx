@@ -45,6 +45,7 @@ export default function Impuestos() {
                 background: esActual ? "#2b2b00" : "#1e1e1e",
                 transition: "background 0.15s",
               }}
+              onClick={() => navigate(`/impuestos/${anio}/${i}`)}
               onMouseEnter={(e) => { e.currentTarget.style.background = esActual ? "#3a3a00" : "#2a2a2a"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = esActual ? "#2b2b00" : "#1e1e1e"; }}
             >
