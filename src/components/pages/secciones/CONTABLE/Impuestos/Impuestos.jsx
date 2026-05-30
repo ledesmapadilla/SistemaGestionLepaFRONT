@@ -30,7 +30,7 @@ export default function Impuestos() {
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginTop: 32 }}>
         {MESES.map((mes, i) => {
           const esActual = i === mesActual && anio === hoy.getFullYear();
           return (
