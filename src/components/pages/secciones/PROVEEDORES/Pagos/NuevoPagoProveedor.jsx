@@ -551,7 +551,7 @@ const NuevoPagoProveedor = () => {
                       value={editandoMontoId === m.id ? m.monto : (m.monto ? formatoMoneda(m.monto) : "")}
                       placeholder="0.00"
                       readOnly={!!m.chequeId}
-                      onFocus={() => { if (!m.chequeId) setEditandoMontoId(m.id); }}
+                      onFocus={() => { if (!m.chequeId) { setEditandoMontoId(m.id); actualizarMedioPago(m.id, "monto", ""); } }}
                       onChange={(e) => { if (!m.chequeId) actualizarMedioPago(m.id, "monto", e.target.value); }}
                       onBlur={() => setEditandoMontoId(null)}
                     />
