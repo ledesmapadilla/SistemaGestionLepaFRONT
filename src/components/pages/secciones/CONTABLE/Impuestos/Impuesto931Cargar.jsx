@@ -169,6 +169,7 @@ export default function Impuesto931Cargar() {
 
   return (
     <div className="container mt-4">
+      <div className="w-75 mx-auto">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">💀 931</h2>
         <h2 className="mb-0 text-center" style={{ fontSize: "1.4rem" }}>Cargar - {mesNombre} {anio}</h2>
@@ -181,7 +182,7 @@ export default function Impuesto931Cargar() {
         </Button>
       </div>
 
-      <Table striped bordered hover className="text-center align-middle w-75 mx-auto">
+      <Table striped bordered hover className="text-center align-middle w-100">
         <thead className="table-dark">
           <tr>
             <th className="text-start">Concepto</th>
@@ -417,6 +418,7 @@ export default function Impuesto931Cargar() {
           </Button>
         </Modal.Footer>
       </Modal>
+      </div>
     </div>
   );
 }
