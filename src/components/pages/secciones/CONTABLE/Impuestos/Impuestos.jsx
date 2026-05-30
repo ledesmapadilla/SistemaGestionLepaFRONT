@@ -30,24 +30,26 @@ export default function Impuestos() {
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginTop: 32 }}>
+      <div className="d-flex flex-wrap justify-content-center align-items-center gap-4" style={{ marginTop: 32, minHeight: "50vh" }}>
         {MESES.map((mes, i) => {
           const esActual = i === mesActual && anio === hoy.getFullYear();
           return (
             <Card
               key={mes}
+              onClick={() => navigate(`/impuestos/${anio}/${i}`)}
               style={{
                 cursor: "pointer",
-                border: esActual ? "2px solid #ffc107" : "1px solid #444",
+                border: "1px solid #ffc107",
                 background: esActual ? "#2b2b00" : "#1e1e1e",
                 transition: "background 0.15s",
+                width: 220,
+                height: 220,
               }}
-              onClick={() => navigate(`/impuestos/${anio}/${i}`)}
               onMouseEnter={(e) => { e.currentTarget.style.background = esActual ? "#3a3a00" : "#2a2a2a"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = esActual ? "#2b2b00" : "#1e1e1e"; }}
             >
-              <Card.Body className="text-center py-5">
-                <Card.Title className="mb-0" style={{ fontSize: "1.3rem", color: esActual ? "#ffc107" : "#dee2e6" }}>
+              <Card.Body className="d-flex align-items-center justify-content-center">
+                <Card.Title className="mb-0 text-center" style={{ fontSize: "1.3rem", color: esActual ? "#ffc107" : "#dee2e6" }}>
                   {mes}
                 </Card.Title>
               </Card.Body>

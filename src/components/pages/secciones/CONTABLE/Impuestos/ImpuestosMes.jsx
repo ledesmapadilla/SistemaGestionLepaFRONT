@@ -29,7 +29,7 @@ export default function ImpuestosMes() {
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+      <div className="d-flex flex-wrap justify-content-center align-items-center gap-4" style={{ marginTop: 32, minHeight: "50vh" }}>
         {IMPUESTOS.map((impuesto) => (
           <Card
             key={impuesto}
@@ -38,15 +38,17 @@ export default function ImpuestosMes() {
             }}
             style={{
               cursor: "pointer",
-              border: "1px solid #444",
+              border: "1px solid #ffc107",
               background: "#1e1e1e",
               transition: "background 0.15s",
+              width: 220,
+              height: 220,
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = "#2a2a2a"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "#1e1e1e"; }}
           >
-            <Card.Body className="text-center py-5">
-              <Card.Title className="mb-0" style={{ fontSize: "1.1rem", color: "#dee2e6" }}>
+            <Card.Body className="d-flex align-items-center justify-content-center">
+              <Card.Title className="mb-0 text-center" style={{ fontSize: "1.1rem", color: "#dee2e6" }}>
                 {impuesto}
               </Card.Title>
             </Card.Body>
