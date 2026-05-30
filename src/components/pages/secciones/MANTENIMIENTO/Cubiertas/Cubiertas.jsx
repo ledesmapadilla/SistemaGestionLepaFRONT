@@ -12,7 +12,7 @@ import { API } from "../../../../../helpers/api";
 import authFetch from "../../../../../helpers/authFetch";
 
 const hoy = () => new Date().toLocaleDateString("en-CA");
-const VACIO_ALTA  = { nombreCubierta: "", marca: "", fecha: hoy() };
+const VACIO_ALTA  = { nombreCubierta: "", fecha: hoy() };
 const VACIO_NUEVA = { cubierta: "", maquina: "", fecha: hoy(), observaciones: "" };
 
 export default function Cubiertas() {
@@ -78,7 +78,6 @@ export default function Cubiertas() {
 
   const guardarAlta = async () => {
     if (!formAlta.nombreCubierta.trim()) return Swal.fire("Atención", "El nombre es obligatorio.", "warning");
-    if (!formAlta.marca.trim())          return Swal.fire("Atención", "La marca es obligatoria.", "warning");
     if (!formAlta.fecha)                 return Swal.fire("Atención", "La fecha es obligatoria.", "warning");
 
     const yaExiste = catalogo.some(
@@ -305,7 +304,6 @@ export default function Cubiertas() {
         </Modal.Header>
         <Modal.Body>
           <p><strong>Nombre cubierta:</strong> {registroVer?.cubierta?.nombreCubierta || "-"}</p>
-          <p><strong>Marca:</strong> {registroVer?.cubierta?.marca || "-"}</p>
           <p><strong>Máquina:</strong> {registroVer?.maquinaLabel || registroVer?.maquina?.maquina || "-"}</p>
           <p><strong>Observaciones:</strong> {registroVer?.observaciones || "-"}</p>
         </Modal.Body>
@@ -327,14 +325,6 @@ export default function Cubiertas() {
                 className="w-50 mx-auto"
                 value={formAlta.nombreCubierta}
                 onChange={(e) => setFormAlta((p) => ({ ...p, nombreCubierta: e.target.value }))}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3 text-center">
-              <Form.Label>Marca <span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                className="w-50 mx-auto"
-                value={formAlta.marca}
-                onChange={(e) => setFormAlta((p) => ({ ...p, marca: e.target.value }))}
               />
             </Form.Group>
             <Form.Group className="mb-3 text-center">
@@ -370,7 +360,6 @@ export default function Cubiertas() {
                 <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                   <tr>
                     <th>Nombre cubierta</th>
-                    <th>Marca</th>
                     <th>Fecha</th>
                     <th>Acciones</th>
                   </tr>
@@ -379,7 +368,6 @@ export default function Cubiertas() {
                   {catalogo.map((c) => (
                     <tr key={c._id}>
                       <td>{c.nombreCubierta}</td>
-                      <td>{c.marca}</td>
                       <td>{c.fecha ? new Date(c.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
                       <td>
                         <Button size="sm" variant="outline-danger" onClick={() => eliminarDelCatalogo(c._id)}>Borrar</Button>
@@ -412,7 +400,7 @@ export default function Cubiertas() {
               >
                 <option value="">Seleccionar...</option>
                 {catalogo.map((c) => (
-                  <option key={c._id} value={c._id}>{c.nombreCubierta} — {c.marca}</option>
+                  <option key={c._id} value={c._id}>{c.nombreCubierta}</option>
                 ))}
               </Form.Select>
             </Form.Group>
