@@ -476,8 +476,9 @@ export default function Cubiertas() {
                     onChange={(e) => setFormEditar((p) => ({ ...p, maquina: e.target.value }))}
                   >
                     <option value="">Seleccionar...</option>
-                    <option value="vendida">Vendida</option>
-                    <option value="en galpon">En Galpón</option>
+                    <option value="Desechada">Desechada</option>
+                    <option value="Auxilio - Galpón">Auxilio - Galpón</option>
+                    <option value="Perdida">Perdida</option>
                     {maquinas.filter(m => !["pc1","pc2","pc3","pc4","pc5","wa200","xcmg","nisan","nissan","ranger","fiat","jd1","jd2","motoniveladora","carretón grande","carreton grande"].includes((m.maquina||"").toLowerCase().trim())).map((m) => (
                       <option key={m._id} value={m._id}>{m.maquina}</option>
                     ))}
