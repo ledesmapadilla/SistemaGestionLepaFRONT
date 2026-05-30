@@ -32,10 +32,32 @@ export default function ChequesPropio() {
   const [filtroTipo, setFiltroTipo] = useState("");
 
   useEffect(() => {
-    listarChequesPropio()
-      .then((data) => setCheques(data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    const cargar = async () => {
+      try {
+        const data = await listarChequesPropio();
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        const actualizaciones = data
+          .filter((c) => {
+            if (c.estado !== "Emitido" || !c.fechaCobro) return false;
+            const fechaCobro = new Date(c.fechaCobro + "T00:00:00");
+            const diffDias = (hoy - fechaCobro) / 86400000;
+            return diffDias >= 3;
+          })
+          .map((c) => editarChequePropio(c._id, { estado: "Cobrado" }));
+
+        await Promise.all(actualizaciones);
+
+        const dataActualizada = actualizaciones.length > 0 ? await listarChequesPropio() : data;
+        setCheques(dataActualizada);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    cargar();
   }, []);
 
   const proveedoresUnicos = useMemo(
