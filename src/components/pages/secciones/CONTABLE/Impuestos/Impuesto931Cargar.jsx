@@ -10,12 +10,14 @@ const MESES = [
 ];
 
 const FILAS = [
-  { tipo: "montoFormulario",  label: "Monto formulario mes:" },
-  { tipo: "cantPersonas",     label: "Cantidad de personas mes:" },
-  { tipo: "montoPromedio",    label: "Monto promedio por persona:" },
-  { tipo: "intereses",        label: "Intereses mes:" },
-  { tipo: "otrasDeudas",      label: "Otras deudas mes:" },
+  { tipo: "montoFormulario",  label: "Monto formulario mes" },
+  { tipo: "cantPersonas",     label: "Cantidad de personas mes" },
+  { tipo: "montoPromedio",    label: "Monto promedio por persona" },
+  { tipo: "intereses",        label: "Intereses mes" },
+  { tipo: "otrasDeudas",      label: "Otras deudas mes" },
 ];
+
+const SIN_VER = ["montoFormulario", "cantPersonas", "montoPromedio"];
 
 const formatoMoneda = (valor) =>
   valor == null ? "-" : Number(valor).toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
@@ -208,7 +210,9 @@ export default function Impuesto931Cargar() {
                 <td className="text-start">{dato?.observaciones || "-"}</td>
                 <td>
                   <div className="d-flex gap-1 justify-content-center">
-                    <Button size="sm" variant="outline-success" onClick={() => setShowVer(fila)} disabled={!dato}>Ver</Button>
+                    {!SIN_VER.includes(fila.tipo) && (
+                      <Button size="sm" variant="outline-success" onClick={() => setShowVer(fila)} disabled={!dato}>Ver</Button>
+                    )}
                     {TIPOS_HISTORIAL.includes(fila.tipo)
                       ? <Button size="sm" variant="outline-warning" onClick={() => abrirHistorial(fila)}>Editar</Button>
                       : <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(fila)} disabled={fila.tipo === "montoPromedio"}>Editar</Button>
