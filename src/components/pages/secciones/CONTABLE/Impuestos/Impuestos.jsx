@@ -39,17 +39,15 @@ export default function Impuestos() {
               onClick={() => navigate(`/impuestos/${anio}/${i}`)}
               style={{
                 cursor: "pointer",
-                border: "1px solid #ffc107",
+                border: esActual ? "2px solid #ffc107" : "1px solid #444",
                 background: esActual ? "#2b2b00" : "#1e1e1e",
                 transition: "background 0.15s",
-                width: 220,
-                height: 220,
               }}
               onMouseEnter={(e) => { e.currentTarget.style.background = esActual ? "#3a3a00" : "#2a2a2a"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = esActual ? "#2b2b00" : "#1e1e1e"; }}
             >
-              <Card.Body className="d-flex align-items-center justify-content-center">
-                <Card.Title className="mb-0 text-center" style={{ fontSize: "1.3rem", color: esActual ? "#ffc107" : "#dee2e6" }}>
+              <Card.Body className="text-center py-5">
+                <Card.Title className="mb-0" style={{ fontSize: "1.3rem", color: esActual ? "#ffc107" : "#dee2e6" }}>
                   {mes}
                 </Card.Title>
               </Card.Body>
