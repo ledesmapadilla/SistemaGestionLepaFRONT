@@ -29,7 +29,7 @@ export default function ImpuestosMes() {
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div className="d-flex flex-wrap justify-content-center align-items-center gap-4" style={{ marginTop: 32, minHeight: "50vh" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginTop: 32 }}>
         {IMPUESTOS.map((impuesto) => (
           <Card
             key={impuesto}
