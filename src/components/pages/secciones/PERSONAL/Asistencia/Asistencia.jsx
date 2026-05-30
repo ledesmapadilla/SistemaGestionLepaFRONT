@@ -6,7 +6,7 @@ import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
 import { listarObras } from "../../../../../helpers/queriesObras.js";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
-import { listarAsistencia, guardarAsistencia as guardarAsistenciaAPI, eliminarAsistenciaPorFecha } from "../../../../../helpers/queriesAsistencia.js";
+import { listarAsistencia, guardarAsistencia as guardarAsistenciaAPI } from "../../../../../helpers/queriesAsistencia.js";
 import { listarServices } from "../../../../../helpers/queriesServiceMaquinas.js";
 import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
 
@@ -222,30 +222,6 @@ const Asistencia = () => {
     await Swal.fire({ icon: "success", title: "Guardado", text: "Asistencia guardada correctamente", timer: 1500, showConfirmButton: false });
     setBorrador([]);
     setDiaSeleccionado(null);
-  };
-
-  const borrarDia = async () => {
-    const confirm = await Swal.fire({
-      icon: "warning",
-      title: "¿Borrar este día?",
-      text: `Se eliminarán todos los registros del ${diaSeleccionado} de ${MESES[mes]} ${anio}.`,
-      showCancelButton: true,
-      confirmButtonText: "Sí, borrar",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#dc3545",
-    });
-    if (!confirm.isConfirmed) return;
-    const respuesta = await eliminarAsistenciaPorFecha(keyDia);
-    if (!respuesta?.ok) {
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudo borrar el día" });
-      return;
-    }
-    setRegistros((prev) => {
-      const copia = { ...prev };
-      delete copia[keyDia];
-      return copia;
-    });
-    cerrarModal();
   };
 
   const actualizarCelda = (id, campo, valor) => {
@@ -736,8 +712,7 @@ const Asistencia = () => {
             </Table>
           </div>
         </Modal.Body>
-        <Modal.Footer className="justify-content-between">
-          <Button variant="outline-danger" size="sm" onClick={borrarDia}>Borrar día</Button>
+        <Modal.Footer className="justify-content-end">
           <div className="d-flex gap-2">
             <Button variant="outline-secondary" onClick={cerrarModal}>Cerrar</Button>
             <Button variant="outline-success" onClick={guardarModal}>Guardar</Button>
