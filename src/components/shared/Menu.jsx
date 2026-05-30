@@ -87,6 +87,9 @@ function Menu() {
               <NavDropdown.Item as={Link} to="/cheques-propios">
                 Cheques Propios
               </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/impuestos">
+                💀 Impuestos
+              </NavDropdown.Item>
             </NavDropdown>
 
             <NavDropdown title="Clientes" id="nav-dropdown-clientes" className="mx-2">
