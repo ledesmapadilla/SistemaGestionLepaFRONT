@@ -129,7 +129,6 @@ export default function Impuesto931Cargar() {
         const data = await res.json();
         setDatos((prev) => ({ ...prev, [showHistorial.tipo]: data.dato }));
         setFormHistorial({ valor: "", fecha: new Date().toLocaleDateString("en-CA"), observaciones: "" });
-        Swal.fire({ icon: "success", title: "Entrada agregada", timer: 1200, showConfirmButton: false });
       }
     } finally {
       setGuardandoH(false);
@@ -196,11 +195,15 @@ export default function Impuesto931Cargar() {
               <tr key={fila.tipo}>
                 <td className="text-start">{fila.label}</td>
                 <td>
-                  {dato?.valor != null
-                    ? fila.tipo === "cantPersonas"
-                      ? Number(dato.valor).toLocaleString("es-AR")
-                      : formatoMoneda(dato.valor)
-                    : "-"}
+                  {(() => {
+                    if (!dato) return "-";
+                    if (fila.tipo === "cantPersonas") return Number(dato.valor).toLocaleString("es-AR");
+                    if (TIPOS_HISTORIAL.includes(fila.tipo)) {
+                      const suma = (dato.historial || []).reduce((s, h) => s + (h.valor || 0), 0);
+                      return suma > 0 ? formatoMoneda(suma) : (dato.valor != null ? formatoMoneda(dato.valor) : "-");
+                    }
+                    return dato.valor != null ? formatoMoneda(dato.valor) : "-";
+                  })()}
                 </td>
                 <td className="text-start">{dato?.observaciones || "-"}</td>
                 <td>
@@ -269,26 +272,38 @@ export default function Impuesto931Cargar() {
           <Modal.Title>{showHistorial?.label}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {datos[showHistorial?.tipo]?.historial?.length > 0 && (
-            <Table striped bordered size="sm" className="text-center align-middle mb-3">
-              <thead className="table-dark">
-                <tr>
-                  <th>Fecha</th>
-                  <th>Valor</th>
-                  <th>Observaciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...( datos[showHistorial?.tipo]?.historial || [])].reverse().map((h, i) => (
-                  <tr key={i}>
-                    <td>{h.fecha ? h.fecha.split("-").reverse().join("/") : "-"}</td>
-                    <td>{formatoMoneda(h.valor)}</td>
-                    <td>{h.observaciones || "-"}</td>
+          {(() => {
+            const historial = datos[showHistorial?.tipo]?.historial || [];
+            const total = historial.reduce((s, h) => s + (h.valor || 0), 0);
+            if (!historial.length) return null;
+            return (
+              <Table striped bordered size="sm" className="text-center align-middle mb-3">
+                <thead className="table-dark">
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Valor</th>
+                    <th>Observaciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
-          )}
+                </thead>
+                <tbody>
+                  {[...historial].reverse().map((h, i) => (
+                    <tr key={i}>
+                      <td>{h.fecha ? h.fecha.split("-").reverse().join("/") : "-"}</td>
+                      <td>{formatoMoneda(h.valor)}</td>
+                      <td>{h.observaciones || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot style={{ borderTop: "2px solid #ffc107" }}>
+                  <tr>
+                    <td className="text-end fw-bold">Total:</td>
+                    <td className="fw-bold" style={{ color: "#ffc107" }}>{formatoMoneda(total)}</td>
+                    <td />
+                  </tr>
+                </tfoot>
+              </Table>
+            );
+          })()}
           <div className="border rounded p-3">
             <p className="mb-2 fw-semibold">Agregar entrada</p>
             <div className="d-flex gap-2 align-items-end">
