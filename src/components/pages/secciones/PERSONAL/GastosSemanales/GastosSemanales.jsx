@@ -390,7 +390,7 @@ const GastosSemanales = () => {
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
         <>
-          <div className="d-flex justify-content-end mb-2">
+          <div className="d-flex justify-content-start mb-2">
             <Button variant="outline-primary" size="sm" onClick={() => {
               modificado.current = true;
               setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", nuevo: true }]);
