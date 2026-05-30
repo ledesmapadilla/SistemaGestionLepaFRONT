@@ -83,6 +83,10 @@ export default function ImpuestoDetalle() {
         {OPCIONES.map((opcion) => (
           <Card
             key={opcion}
+            onClick={() => {
+              if (impuesto === "931" && opcion === "Cargar")
+                navigate(`/impuestos/${anio}/${mes}/931/cargar`);
+            }}
             style={{
               cursor: "pointer",
               border: "1px solid #ffc107",

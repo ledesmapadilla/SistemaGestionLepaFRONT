@@ -28,4 +28,5 @@ export const API = {
   cubiertas: `${BASE}/api/cubiertas`,
   registroCubiertas: `${BASE}/api/registro-cubiertas`,
   chequesPropio: `${BASE}/api/cheques-propio`,
+  dato931: `${BASE}/api/dato931`,
 };
