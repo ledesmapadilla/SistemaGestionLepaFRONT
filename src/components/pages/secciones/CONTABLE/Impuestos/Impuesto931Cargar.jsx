@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button, Table, Modal, Form, Spinner } from "react-bootstrap";
 import Swal from "sweetalert2";
-import { obtenerDatos931, guardarDato931, eliminarDato931 } from "../../../../../helpers/queriesDato931";
+import { obtenerDatos931, guardarDato931, agregarHistorial931, eliminarDato931 } from "../../../../../helpers/queriesDato931";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -35,7 +35,11 @@ export default function Impuesto931Cargar() {
   const [editandoValor, setEditandoValor]   = useState(false);
   const [guardando, setGuardando]     = useState(false);
 
-  const [showCargar, setShowCargar]   = useState(false);
+  const [showHistorial, setShowHistorial]   = useState(null);
+  const [formHistorial, setFormHistorial]   = useState({ valor: "", fecha: new Date().toLocaleDateString("en-CA"), observaciones: "" });
+  const [editandoValorH, setEditandoValorH] = useState(false);
+  const [guardandoH, setGuardandoH]         = useState(false);
+  const [showCargar, setShowCargar]         = useState(false);
   const [formCargar, setFormCargar]   = useState({ montoFormulario: "", cantPersonas: "", intereses: "", otrasDeudas: "" });
   const [editandoCampo, setEditandoCampo] = useState(null);
   const [guardandoCargar, setGuardandoCargar] = useState(false);
@@ -99,6 +103,39 @@ export default function Impuesto931Cargar() {
     setShowEditar(fila);
   };
 
+  const TIPOS_HISTORIAL = ["intereses", "otrasDeudas"];
+
+  const abrirHistorial = (fila) => {
+    setFormHistorial({ valor: "", fecha: new Date().toLocaleDateString("en-CA"), observaciones: "" });
+    setShowHistorial(fila);
+  };
+
+  const agregarEntrada = async () => {
+    if (!formHistorial.valor || isNaN(parseFloat(formHistorial.valor)))
+      return Swal.fire("Atención", "El valor es obligatorio.", "warning");
+    if (!formHistorial.fecha)
+      return Swal.fire("Atención", "La fecha es obligatoria.", "warning");
+
+    setGuardandoH(true);
+    try {
+      const res = await agregarHistorial931({
+        anio: Number(anio), mes: Number(mes),
+        tipo: showHistorial.tipo,
+        valor: parseFloat(formHistorial.valor),
+        fecha: formHistorial.fecha,
+        observaciones: formHistorial.observaciones,
+      });
+      if (res?.ok) {
+        const data = await res.json();
+        setDatos((prev) => ({ ...prev, [showHistorial.tipo]: data.dato }));
+        setFormHistorial({ valor: "", fecha: new Date().toLocaleDateString("en-CA"), observaciones: "" });
+        Swal.fire({ icon: "success", title: "Entrada agregada", timer: 1200, showConfirmButton: false });
+      }
+    } finally {
+      setGuardandoH(false);
+    }
+  };
+
   const guardarCargarMes = async () => {
     if (!formCargar.montoFormulario) return Swal.fire("Atención", "El monto formulario es obligatorio.", "warning");
     if (!formCargar.cantPersonas)    return Swal.fire("Atención", "La cantidad de personas es obligatoria.", "warning");
@@ -158,12 +195,21 @@ export default function Impuesto931Cargar() {
             return (
               <tr key={fila.tipo}>
                 <td className="text-start">{fila.label}</td>
-                <td>{dato?.valor != null ? formatoMoneda(dato.valor) : "-"}</td>
+                <td>
+                  {dato?.valor != null
+                    ? fila.tipo === "cantPersonas"
+                      ? Number(dato.valor).toLocaleString("es-AR")
+                      : formatoMoneda(dato.valor)
+                    : "-"}
+                </td>
                 <td className="text-start">{dato?.observaciones || "-"}</td>
                 <td>
                   <div className="d-flex gap-1 justify-content-center">
                     <Button size="sm" variant="outline-success" onClick={() => setShowVer(fila)} disabled={!dato}>Ver</Button>
-                    <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(fila)} disabled={fila.tipo === "montoPromedio"}>Editar</Button>
+                    {TIPOS_HISTORIAL.includes(fila.tipo)
+                      ? <Button size="sm" variant="outline-warning" onClick={() => abrirHistorial(fila)}>Editar</Button>
+                      : <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(fila)} disabled={fila.tipo === "montoPromedio"}>Editar</Button>
+                    }
                     <Button size="sm" variant="outline-danger" onClick={() => borrar(fila.tipo)} disabled={!dato || fila.tipo === "montoPromedio"}>Borrar</Button>
                   </div>
                 </td>
@@ -214,6 +260,65 @@ export default function Impuesto931Cargar() {
           <Button variant="outline-success" onClick={guardarCargarMes} disabled={guardandoCargar}>
             {guardandoCargar ? <Spinner size="sm" animation="border" /> : "Guardar"}
           </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal Historial */}
+      <Modal show={!!showHistorial} onHide={() => setShowHistorial(null)} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>{showHistorial?.label}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {datos[showHistorial?.tipo]?.historial?.length > 0 && (
+            <Table striped bordered size="sm" className="text-center align-middle mb-3">
+              <thead className="table-dark">
+                <tr>
+                  <th>Fecha</th>
+                  <th>Valor</th>
+                  <th>Observaciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...( datos[showHistorial?.tipo]?.historial || [])].reverse().map((h, i) => (
+                  <tr key={i}>
+                    <td>{h.fecha ? h.fecha.split("-").reverse().join("/") : "-"}</td>
+                    <td>{formatoMoneda(h.valor)}</td>
+                    <td>{h.observaciones || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+          <div className="border rounded p-3">
+            <p className="mb-2 fw-semibold">Agregar entrada</p>
+            <div className="d-flex gap-2 align-items-end">
+              <Form.Group style={{ flex: 1 }}>
+                <Form.Label className="small mb-1">Fecha</Form.Label>
+                <Form.Control size="sm" type="date" value={formHistorial.fecha} onChange={(e) => setFormHistorial((p) => ({ ...p, fecha: e.target.value }))} />
+              </Form.Group>
+              <Form.Group style={{ flex: 1 }}>
+                <Form.Label className="small mb-1">Valor</Form.Label>
+                <Form.Control
+                  size="sm" type="text"
+                  value={editandoValorH ? formHistorial.valor : (formHistorial.valor ? formatoMoneda(formHistorial.valor) : "")}
+                  placeholder="$0"
+                  onFocus={() => { setEditandoValorH(true); setFormHistorial((p) => ({ ...p, valor: "" })); }}
+                  onChange={(e) => setFormHistorial((p) => ({ ...p, valor: e.target.value }))}
+                  onBlur={() => setEditandoValorH(false)}
+                />
+              </Form.Group>
+              <Form.Group style={{ flex: 2 }}>
+                <Form.Label className="small mb-1">Observaciones</Form.Label>
+                <Form.Control size="sm" type="text" value={formHistorial.observaciones} onChange={(e) => setFormHistorial((p) => ({ ...p, observaciones: e.target.value }))} />
+              </Form.Group>
+              <Button variant="outline-primary" size="sm" onClick={agregarEntrada} disabled={guardandoH}>
+                {guardandoH ? <Spinner size="sm" animation="border" /> : "Agregar"}
+              </Button>
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setShowHistorial(null)}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
 

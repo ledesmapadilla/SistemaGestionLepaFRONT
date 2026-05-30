@@ -13,6 +13,10 @@ export const guardarDato931 = async (data) => {
   return authFetch(base, { method: "POST", body: JSON.stringify(data) });
 };
 
+export const agregarHistorial931 = async (data) => {
+  return authFetch(`${base}/historial`, { method: "POST", body: JSON.stringify(data) });
+};
+
 export const eliminarDato931 = async (id) => {
   return authFetch(`${base}/${id}`, { method: "DELETE" });
 };
