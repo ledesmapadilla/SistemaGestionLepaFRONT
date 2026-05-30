@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 import { crearPagoProveedor, listarPagosProveedores } from "../../../../../helpers/queriesPagosProveedores";
 import { listarFacturasProveedores } from "../../../../../helpers/queriesFacturasProveedores";
 import { listarCobros, actualizarEstadoCheque } from "../../../../../helpers/queriesCobros";
+import { crearChequePropio } from "../../../../../helpers/queriesChequesPropio";
 
 const hoy = new Date().toLocaleDateString("en-CA");
 
@@ -35,6 +36,10 @@ const NuevoPagoProveedor = () => {
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [editandoMontoId, setEditandoMontoId] = useState(null);
   const [chequesEnCartera, setChequesEnCartera] = useState([]);
+  const [showAltaCheque, setShowAltaCheque] = useState(false);
+  const [altaChequemedioId, setAltaChequeMedioId] = useState(null);
+  const [formAltaCheque, setFormAltaCheque] = useState({ numeroCheque: "", monto: "", fechaCobro: "" });
+  const [guardandoAltaCheque, setGuardandoAltaCheque] = useState(false);
 
   const proveedorSeleccionado = watch("proveedor");
   const { onChange: onChangeProveedor, ...proveedorReg } = register("proveedor", { required: "El proveedor es obligatorio" });
@@ -314,6 +319,46 @@ const NuevoPagoProveedor = () => {
     }
   };
 
+  const abrirAltaCheque = (medioId, montoActual) => {
+    setAltaChequeMedioId(medioId);
+    setFormAltaCheque({ numeroCheque: "", monto: montoActual || "", fechaCobro: "" });
+    setShowAltaCheque(true);
+  };
+
+  const guardarAltaCheque = async () => {
+    if (!formAltaCheque.numeroCheque.trim()) return Swal.fire("Atención", "El número de cheque es obligatorio.", "warning");
+    if (!formAltaCheque.monto || isNaN(parseFloat(formAltaCheque.monto)) || parseFloat(formAltaCheque.monto) <= 0)
+      return Swal.fire("Atención", "El monto es obligatorio.", "warning");
+    if (!formAltaCheque.fechaCobro) return Swal.fire("Atención", "La fecha de cobro es obligatoria.", "warning");
+
+    setGuardandoAltaCheque(true);
+    try {
+      const res = await crearChequePropio({
+        numeroCheque: formAltaCheque.numeroCheque.trim(),
+        monto: parseFloat(formAltaCheque.monto),
+        fechaCobro: formAltaCheque.fechaCobro,
+        proveedor: proveedorSeleccionado || "-",
+      });
+      if (res?.ok) {
+        setMediosPago((prev) => prev.map((m) =>
+          m.id !== altaChequemedioId ? m : {
+            ...m,
+            numeroCheque: formAltaCheque.numeroCheque.trim(),
+            monto: formAltaCheque.monto,
+            fechaCobro: formAltaCheque.fechaCobro,
+          }
+        ));
+        setShowAltaCheque(false);
+        Swal.fire({ icon: "success", title: "Cheque dado de alta", timer: 1500, showConfirmButton: false });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        Swal.fire("Error", err.msg || "No se pudo dar de alta el cheque.", "error");
+      }
+    } finally {
+      setGuardandoAltaCheque(false);
+    }
+  };
+
   if (loadingDatos) {
     return (
       <Container className="py-5 text-center">
@@ -514,7 +559,10 @@ const NuevoPagoProveedor = () => {
                           </Form.Select>
                         )
                       ) : (
-                        <Form.Control type="text" size="sm" placeholder="N° cheque" value={m.numeroCheque} onChange={(e) => actualizarMedioPago(m.id, "numeroCheque", e.target.value)} />
+                        <div className="d-flex align-items-center gap-1">
+                          <Form.Control type="text" size="sm" placeholder="N° cheque" value={m.numeroCheque} onChange={(e) => actualizarMedioPago(m.id, "numeroCheque", e.target.value)} />
+                          <Button size="sm" variant="outline-warning" style={{ whiteSpace: "nowrap", fontSize: "0.7rem" }} onClick={() => abrirAltaCheque(m.id, m.monto)}>Alta</Button>
+                        </div>
                       )
                     ) : (
                       <span className="text-muted">—</span>
@@ -559,6 +607,50 @@ const NuevoPagoProveedor = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="outline-primary" onClick={cerrarModalPago}>OK</Button>
+        </Modal.Footer>
+      </Modal>
+      {/* Modal Alta cheque propio */}
+      <Modal show={showAltaCheque} onHide={() => setShowAltaCheque(false)} centered size="sm">
+        <Modal.Header closeButton>
+          <Modal.Title>Alta de cheque propio</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Proveedor</Form.Label>
+              <Form.Control value={proveedorSeleccionado || "-"} disabled />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>N° de cheque <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                type="text"
+                value={formAltaCheque.numeroCheque}
+                onChange={(e) => setFormAltaCheque((p) => ({ ...p, numeroCheque: e.target.value }))}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Monto <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                type="number"
+                value={formAltaCheque.monto}
+                onChange={(e) => setFormAltaCheque((p) => ({ ...p, monto: e.target.value }))}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Fecha de cobro <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                type="date"
+                value={formAltaCheque.fechaCobro}
+                onChange={(e) => setFormAltaCheque((p) => ({ ...p, fechaCobro: e.target.value }))}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setShowAltaCheque(false)}>Cancelar</Button>
+          <Button variant="outline-success" onClick={guardarAltaCheque} disabled={guardandoAltaCheque}>
+            {guardandoAltaCheque ? <Spinner size="sm" animation="border" /> : "Dar de alta"}
+          </Button>
         </Modal.Footer>
       </Modal>
     </Container>
