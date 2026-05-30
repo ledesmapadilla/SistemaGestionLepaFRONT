@@ -3,7 +3,7 @@ import { Button, Table, Form, Spinner, Modal } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
-import { listarChequesPropio, editarChequePropio, borrarChequePropio } from "../../../../../helpers/queriesChequesPropio";
+import { listarChequesPropio, crearChequePropio, editarChequePropio, borrarChequePropio } from "../../../../../helpers/queriesChequesPropio";
 
 const formatoMoneda = (valor) =>
   Number(valor).toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
@@ -30,6 +30,10 @@ export default function ChequesPropio() {
   const [filtroProveedor, setFiltroProveedor] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroTipo, setFiltroTipo] = useState("");
+  const [showAlta, setShowAlta] = useState(false);
+  const [formAlta, setFormAlta] = useState({ numeroCheque: "", monto: "", fechaCobro: "", proveedor: "", tipo: "" });
+  const [editandoMonto, setEditandoMonto] = useState(false);
+  const [guardandoAlta, setGuardandoAlta] = useState(false);
 
   useEffect(() => {
     const cargar = async () => {
@@ -142,6 +146,47 @@ export default function ChequesPropio() {
     XLSXStyle.writeFile(wb, "ChequesPropios.xlsx");
   };
 
+  const abrirAlta = () => {
+    setFormAlta({ numeroCheque: "", monto: "", fechaCobro: "", proveedor: "", tipo: "" });
+    setShowAlta(true);
+  };
+
+  const guardarAlta = async () => {
+    if (!formAlta.proveedor.trim()) return Swal.fire("Atención", "El proveedor es obligatorio.", "warning");
+    if (!formAlta.tipo) return Swal.fire("Atención", "El tipo es obligatorio.", "warning");
+    if (!formAlta.numeroCheque.trim()) return Swal.fire("Atención", "El número de cheque es obligatorio.", "warning");
+    if (!formAlta.monto || isNaN(parseFloat(formAlta.monto)) || parseFloat(formAlta.monto) <= 0)
+      return Swal.fire("Atención", "El monto es obligatorio.", "warning");
+    if (!formAlta.fechaCobro) return Swal.fire("Atención", "La fecha de cobro es obligatoria.", "warning");
+
+    const duplicado = cheques.some(
+      (c) => c.numeroCheque.trim().toLowerCase() === formAlta.numeroCheque.trim().toLowerCase()
+    );
+    if (duplicado) return Swal.fire("Atención", "Ya existe un cheque con ese número.", "warning");
+
+    setGuardandoAlta(true);
+    try {
+      const res = await crearChequePropio({
+        numeroCheque: formAlta.numeroCheque.trim(),
+        monto: parseFloat(formAlta.monto),
+        fechaCobro: formAlta.fechaCobro,
+        proveedor: formAlta.proveedor.trim(),
+        tipo: formAlta.tipo,
+      });
+      if (res?.ok) {
+        const data = await res.json();
+        setCheques((prev) => [data.cheque, ...prev]);
+        setShowAlta(false);
+        Swal.fire({ icon: "success", title: "Cheque dado de alta", timer: 1500, showConfirmButton: false });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        Swal.fire("Error", err.msg || "No se pudo dar de alta el cheque.", "error");
+      }
+    } finally {
+      setGuardandoAlta(false);
+    }
+  };
+
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
@@ -155,6 +200,7 @@ export default function ChequesPropio() {
         </div>
         <div className="d-flex gap-2">
           <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
+          <Button size="sm" variant="outline-primary" onClick={abrirAlta}>+ Alta cheque</Button>
           <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
         </div>
       </div>
@@ -230,6 +276,67 @@ export default function ChequesPropio() {
           </tbody>
         </Table>
       </div>
+
+      {/* Modal Alta */}
+      <Modal show={showAlta} onHide={() => setShowAlta(false)} centered size="sm">
+        <Modal.Header closeButton>
+          <Modal.Title>Alta de cheque propio</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Proveedor <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                type="text"
+                value={formAlta.proveedor}
+                onChange={(e) => setFormAlta((p) => ({ ...p, proveedor: e.target.value }))}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Tipo <span className="text-danger">*</span></Form.Label>
+              <Form.Select value={formAlta.tipo} onChange={(e) => setFormAlta((p) => ({ ...p, tipo: e.target.value }))}>
+                <option value="">Seleccionar...</option>
+                <option value="Físico">Físico</option>
+                <option value="E-Cheq">E-Cheq</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>N° de cheque <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                type="text"
+                value={formAlta.numeroCheque}
+                onChange={(e) => setFormAlta((p) => ({ ...p, numeroCheque: e.target.value }))}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Monto <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                type="text"
+                value={editandoMonto ? formAlta.monto : (formAlta.monto ? formatoMoneda(formAlta.monto) : "")}
+                placeholder="$0"
+                onFocus={() => { setEditandoMonto(true); setFormAlta((p) => ({ ...p, monto: "" })); }}
+                onChange={(e) => setFormAlta((p) => ({ ...p, monto: e.target.value }))}
+                onBlur={() => setEditandoMonto(false)}
+                onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Fecha de cobro <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                type="date"
+                value={formAlta.fechaCobro}
+                onChange={(e) => setFormAlta((p) => ({ ...p, fechaCobro: e.target.value }))}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setShowAlta(false)}>Cancelar</Button>
+          <Button variant="outline-success" onClick={guardarAlta} disabled={guardandoAlta}>
+            {guardandoAlta ? <Spinner size="sm" animation="border" /> : "Dar de alta"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Modal Ver */}
       <Modal show={!!chequeVer} onHide={() => setChequeVer(null)} centered>
