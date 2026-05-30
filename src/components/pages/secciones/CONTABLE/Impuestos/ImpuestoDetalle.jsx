@@ -98,9 +98,10 @@ export default function ImpuestoDetalle() {
             onMouseEnter={(e) => { e.currentTarget.style.background = "#2a2a2a"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "#1e1e1e"; }}
           >
-            <Card.Body className="d-flex flex-column justify-content-end p-3">
-              <div style={{ fontSize: "1.3rem", fontWeight: 600, color: "#dee2e6" }}>{opcion}</div>
-              <div style={{ fontSize: "0.8rem", color: "#adb5bd", marginTop: 4 }}>- {mesNombre}</div>
+            <Card.Body className="d-flex align-items-center justify-content-center">
+              <Card.Title className="mb-0 text-center" style={{ fontSize: "1.2rem", color: "#dee2e6" }}>
+                {opcion}
+              </Card.Title>
             </Card.Body>
           </Card>
         ))}
