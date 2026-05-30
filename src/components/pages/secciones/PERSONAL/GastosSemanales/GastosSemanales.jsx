@@ -489,7 +489,7 @@ const GastosSemanales = () => {
 
       <Modal show={!!verPersonal} onHide={() => setVerPersonal(null)} centered size="xl">
         <Modal.Header closeButton>
-          <Modal.Title>Asistencia — {verPersonal} — {labelSemana}</Modal.Title>
+          <Modal.Title>Asistencia - {verPersonal} - {labelSemana}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {(() => {
