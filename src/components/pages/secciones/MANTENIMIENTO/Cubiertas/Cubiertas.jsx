@@ -136,7 +136,8 @@ export default function Cubiertas() {
     if (yaRegistrada) return Swal.fire("Atención", "Esta cubierta ya está registrada.", "warning");
 
     setGuardandoNueva(true);
-    const esEspecial = formNueva.maquina === "vendida" || formNueva.maquina === "en galpon";
+    const ESPECIALES = ["Desechada", "Auxilio - Galpón", "Perdida"];
+    const esEspecial = ESPECIALES.includes(formNueva.maquina);
     const payload = {
       cubierta:     formNueva.cubierta,
       maquina:      esEspecial ? null : formNueva.maquina,
@@ -177,7 +178,8 @@ export default function Cubiertas() {
     if (!formEditar.maquina) return Swal.fire("Atención", "Seleccioná una máquina.", "warning");
 
     setGuardandoEditar(true);
-    const esEspecialEdit = formEditar.maquina === "vendida" || formEditar.maquina === "en galpon";
+    const ESPECIALES_EDIT = ["Desechada", "Auxilio - Galpón", "Perdida"];
+    const esEspecialEdit = ESPECIALES_EDIT.includes(formEditar.maquina);
     const payloadEdit = {
       maquina:      esEspecialEdit ? null : formEditar.maquina,
       maquinaLabel: esEspecialEdit ? formEditar.maquina : "",
@@ -279,8 +281,8 @@ export default function Cubiertas() {
                 return (!filtroCubierta || nc === filtroCubierta) && (!filtroMaquina || nm === filtroMaquina);
               }).map((r) => (
                 <tr key={r._id}>
-                  <td style={r.maquinaLabel === "vendida" ? { textDecoration: "line-through", textDecorationColor: "red", textDecorationThickness: "2px", color: "white" } : {}}>{r.cubierta?.nombreCubierta || "-"}</td>
-                  <td style={r.maquinaLabel === "vendida" ? { textDecoration: "line-through", textDecorationColor: "red", textDecorationThickness: "2px", color: "white" } : {}}>{r.maquinaLabel || r.maquina?.maquina || "-"}</td>
+                  <td style={r.maquinaLabel === "Desechada" || r.maquinaLabel === "Perdida" ? { textDecoration: "line-through", textDecorationColor: "red", textDecorationThickness: "2px", color: "white" } : {}}>{r.cubierta?.nombreCubierta || "-"}</td>
+                  <td style={r.maquinaLabel === "Desechada" || r.maquinaLabel === "Perdida" ? { textDecoration: "line-through", textDecorationColor: "red", textDecorationThickness: "2px", color: "white" } : {}}>{r.maquinaLabel || r.maquina?.maquina || "-"}</td>
                   <td>{r.observaciones || "-"}</td>
                   <td>
                     <div className="d-flex gap-1 justify-content-center">
@@ -412,8 +414,9 @@ export default function Cubiertas() {
                 onChange={(e) => setFormNueva((p) => ({ ...p, maquina: e.target.value }))}
               >
                 <option value="">Seleccionar...</option>
-                <option value="vendida">Vendida</option>
-                <option value="en galpon">En Galpón</option>
+                <option value="Desechada">Desechada</option>
+                <option value="Auxilio - Galpón">Auxilio - Galpón</option>
+                <option value="Perdida">Perdida</option>
                 {maquinas.filter(m => !["Batea 1", "Batea 2", "Carretón grande", "Carretón chico"].includes(m.maquina)).map((m) => (
                   <option key={m._id} value={m._id}>{m.maquina}</option>
                 ))}
