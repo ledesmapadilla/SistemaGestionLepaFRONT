@@ -10,6 +10,7 @@ import {
 } from "../../../../../helpers/queriesRegistroBaterias";
 import { API } from "../../../../../helpers/api";
 import authFetch from "../../../../../helpers/authFetch";
+import XLSXStyle from "xlsx-js-style";
 
 const hoy = () => new Date().toLocaleDateString("en-CA");
 const VACIO_ALTA  = { nombreBateria: "", marca: "", fecha: hoy() };
@@ -225,6 +226,42 @@ export default function Baterias() {
   };
   const selectActivo = { backgroundImage: "none" };
 
+  const exportarExcel = () => {
+    const headers = ["Nombre batería", "Marca", "Máquina", "Observaciones"];
+    const cols = "ABCD";
+    const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
+    const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
+    const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
+
+    const wb = XLSXStyle.utils.book_new();
+    const ws = {};
+
+    ws["A1"] = { v: "Baterías", t: "s", s: estTitulo };
+    ws["A2"] = { v: "", t: "s" };
+    headers.forEach((h, i) => { ws[`${cols[i]}3`] = { v: h, t: "s", s: estHeader }; });
+
+    const registrosFiltrados = registros.filter(r => {
+      const nb = r.bateria?.nombreBateria || "";
+      const nm = r.maquinaLabel || r.maquina?.maquina || "";
+      return (!filtroBateria || nb === filtroBateria) && (!filtroMaquina || nm === filtroMaquina);
+    });
+
+    registrosFiltrados.forEach((r, idx) => {
+      const row = idx + 4;
+      ws[`A${row}`] = { v: r.bateria?.nombreBateria || "-", t: "s", s: estCentro };
+      ws[`B${row}`] = { v: r.bateria?.marca || "-", t: "s", s: estCentro };
+      ws[`C${row}`] = { v: r.maquinaLabel || r.maquina?.maquina || "-", t: "s", s: estCentro };
+      ws[`D${row}`] = { v: r.observaciones || "-", t: "s", s: estCentro };
+    });
+
+    const lastRow = Math.max(registrosFiltrados.length + 3, 3);
+    ws["!ref"] = `A1:D${lastRow}`;
+    ws["!cols"] = [{ wch: 22 }, { wch: 16 }, { wch: 22 }, { wch: 28 }];
+
+    XLSXStyle.utils.book_append_sheet(wb, ws, "Baterías");
+    XLSXStyle.writeFile(wb, "Baterias.xlsx");
+  };
+
   if (cargando) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
@@ -236,7 +273,10 @@ export default function Baterias() {
           <Button size="sm" variant="outline-success" onClick={abrirAlta}>+ Alta de batería</Button>
           <Button size="sm" variant="outline-secondary" onClick={() => setShowListado(true)}>Listado baterías</Button>
         </div>
-        <Button size="sm" variant="outline-primary" onClick={abrirNueva}>+ Nueva batería</Button>
+        <div className="d-flex gap-2">
+          <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
+          <Button size="sm" variant="outline-primary" onClick={abrirNueva}>+ Nueva batería</Button>
+        </div>
       </div>
 
       <div className="d-flex gap-2 mb-2">

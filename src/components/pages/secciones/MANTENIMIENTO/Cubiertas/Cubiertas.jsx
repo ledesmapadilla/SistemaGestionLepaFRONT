@@ -10,6 +10,7 @@ import {
 } from "../../../../../helpers/queriesRegistroCubiertas";
 import { API } from "../../../../../helpers/api";
 import authFetch from "../../../../../helpers/authFetch";
+import XLSXStyle from "xlsx-js-style";
 
 const hoy = () => new Date().toLocaleDateString("en-CA");
 const VACIO_ALTA  = { nombreCubierta: "", fecha: hoy() };
@@ -226,6 +227,41 @@ export default function Cubiertas() {
   };
   const selectActivo = { backgroundImage: "none" };
 
+  const exportarExcel = () => {
+    const headers = ["Nombre cubierta", "Máquina", "Observaciones"];
+    const cols = "ABC";
+    const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
+    const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
+    const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
+
+    const wb = XLSXStyle.utils.book_new();
+    const ws = {};
+
+    ws["A1"] = { v: "Cubiertas", t: "s", s: estTitulo };
+    ws["A2"] = { v: "", t: "s" };
+    headers.forEach((h, i) => { ws[`${cols[i]}3`] = { v: h, t: "s", s: estHeader }; });
+
+    const registrosFiltrados = registros.filter(r => {
+      const nc = r.cubierta?.nombreCubierta || "";
+      const nm = r.maquinaLabel || r.maquina?.maquina || "";
+      return (!filtroCubierta || nc === filtroCubierta) && (!filtroMaquina || nm === filtroMaquina);
+    });
+
+    registrosFiltrados.forEach((r, idx) => {
+      const row = idx + 4;
+      ws[`A${row}`] = { v: r.cubierta?.nombreCubierta || "-", t: "s", s: estCentro };
+      ws[`B${row}`] = { v: r.maquinaLabel || r.maquina?.maquina || "-", t: "s", s: estCentro };
+      ws[`C${row}`] = { v: r.observaciones || "-", t: "s", s: estCentro };
+    });
+
+    const lastRow = Math.max(registrosFiltrados.length + 3, 3);
+    ws["!ref"] = `A1:C${lastRow}`;
+    ws["!cols"] = [{ wch: 22 }, { wch: 22 }, { wch: 28 }];
+
+    XLSXStyle.utils.book_append_sheet(wb, ws, "Cubiertas");
+    XLSXStyle.writeFile(wb, "Cubiertas.xlsx");
+  };
+
   if (cargando) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
@@ -237,7 +273,10 @@ export default function Cubiertas() {
           <Button size="sm" variant="outline-success" onClick={abrirAlta}>+ Alta de cubierta</Button>
           <Button size="sm" variant="outline-secondary" onClick={() => setShowListado(true)}>Listado cubiertas</Button>
         </div>
-        <Button size="sm" variant="outline-primary" onClick={abrirNueva}>+ Nueva cubierta</Button>
+        <div className="d-flex gap-2">
+          <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
+          <Button size="sm" variant="outline-primary" onClick={abrirNueva}>+ Nueva cubierta</Button>
+        </div>
       </div>
 
       <div className="d-flex gap-2 mb-2">
