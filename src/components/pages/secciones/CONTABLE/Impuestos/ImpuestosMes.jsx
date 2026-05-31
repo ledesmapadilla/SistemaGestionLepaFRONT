@@ -17,6 +17,7 @@ const IMPUESTOS = [
   { nombre: "Salud Pública",          slug: "salud-publica" },
   { nombre: "Anticipo ganancias",     slug: "anticipo-ganancias" },
   { nombre: "Planes de pago AFIP",    slug: "planes-pago-afip" },
+  { nombre: "Resumen",                slug: "resumen" },
 ];
 
 const FILAS_TOTAL = ["montoFormulario", "intereses", "otrasDeudas"];
@@ -107,6 +108,7 @@ export default function ImpuestosMes() {
               if (slug === "iva")          navigate(`/impuestos/${anio}/${mes}/iva/cargar`);
               if (slug === "autonomos")    navigate(`/impuestos/${anio}/${mes}/autonomos/cargar`);
               if (slug === "salud-publica") navigate(`/impuestos/${anio}/${mes}/salud-publica/cargar`);
+              if (slug === "resumen")      navigate(`/impuestos/${anio}/${mes}/resumen`);
             }}
             style={{
               cursor: "pointer",
