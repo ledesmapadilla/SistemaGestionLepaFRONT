@@ -229,9 +229,9 @@ export default function Impuesto931Cargar() {
           <tr>
             <th className="text-start">Concepto</th>
             <th style={{ width: 130 }}>Valor</th>
-            <th style={{ minWidth: 200 }}>Observaciones</th>
             <th style={{ width: 130 }}>Pagado</th>
             <th style={{ width: 130 }}>Saldo</th>
+            <th style={{ minWidth: 200 }}>Observaciones</th>
             <th style={{ width: 155 }}>Carga</th>
             <th style={{ width: 155 }}>Pago</th>
           </tr>
@@ -253,7 +253,6 @@ export default function Impuesto931Cargar() {
                     return dato.valor != null ? formatoMoneda(dato.valor) : "-";
                   })()}
                 </td>
-                <td className="text-start">{dato?.observaciones || "-"}</td>
                 <td>
                   {fila.tipo !== "cantPersonas" && fila.tipo !== "montoPromedio"
                     ? formatoMoneda(getPagadoNum(fila.tipo)) : "-"}
@@ -262,6 +261,7 @@ export default function Impuesto931Cargar() {
                   {fila.tipo !== "cantPersonas" && fila.tipo !== "montoPromedio"
                     ? formatoMoneda(getValorNum(fila.tipo) - getPagadoNum(fila.tipo)) : "-"}
                 </td>
+                <td className="text-start">{dato?.observaciones || "-"}</td>
                 <td>
                   {fila.tipo !== "montoPromedio" && (
                     <div className="d-flex gap-1 justify-content-center">
@@ -292,10 +292,9 @@ export default function Impuesto931Cargar() {
           <tr className="table-dark fw-bold">
             <td className="text-start">Total</td>
             <td>{formatoMoneda(FILAS_TOTAL.reduce((s, t) => s + getValorNum(t), 0))}</td>
-            <td />
             <td>{formatoMoneda(FILAS_TOTAL.reduce((s, t) => s + getPagadoNum(t), 0))}</td>
             <td>{formatoMoneda(FILAS_TOTAL.reduce((s, t) => s + getValorNum(t) - getPagadoNum(t), 0))}</td>
-            <td /><td />
+            <td /><td /><td />
           </tr>
         </tfoot>
       </Table>
