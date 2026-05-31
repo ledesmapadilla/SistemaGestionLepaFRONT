@@ -67,7 +67,7 @@ export default function Impuestos() {
               onMouseEnter={(e) => { e.currentTarget.style.background = esActual ? "#3a3a00" : "#2a2a2a"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = esActual ? "#2b2b00" : "#1e1e1e"; }}
             >
-              <Card.Body className="text-center py-3">
+              <Card.Body className="text-center py-4">
                 <Card.Title className="mb-0" style={{ fontSize: "1.3rem", color: esActual ? "#ffc107" : "#dee2e6" }}>
                   {mes}
                 </Card.Title>
