@@ -29,24 +29,17 @@ export default function ImpuestosMes() {
   const navigate = useNavigate();
   const { anio, mes } = useParams();
   const mesNombre = MESES[Number(mes)];
-  const [datos931, setDatos931] = useState({});
-  const [datosIVA, setDatosIVA] = useState({});
+  const [datos931, setDatos931]             = useState({});
+  const [datosIVA, setDatosIVA]             = useState({});
+  const [datosAutonomos, setDatosAutonomos] = useState({});
+  const [datosSalud, setDatosSalud]         = useState({});
 
   useEffect(() => {
-    obtenerDatos931(Number(anio), Number(mes))
-      .then((lista) => {
-        const mapa = {};
-        lista.forEach((d) => { mapa[d.tipo] = d; });
-        setDatos931(mapa);
-      })
-      .catch(() => {});
-    obtenerDatosImpuesto("iva", Number(anio), Number(mes))
-      .then((lista) => {
-        const mapa = {};
-        lista.forEach((d) => { mapa[d.tipo] = d; });
-        setDatosIVA(mapa);
-      })
-      .catch(() => {});
+    const toMapa = (lista) => { const m = {}; lista.forEach((d) => { m[d.tipo] = d; }); return m; };
+    obtenerDatos931(Number(anio), Number(mes)).then(toMapa).then(setDatos931).catch(() => {});
+    obtenerDatosImpuesto("iva",          Number(anio), Number(mes)).then(toMapa).then(setDatosIVA).catch(() => {});
+    obtenerDatosImpuesto("autonomos",    Number(anio), Number(mes)).then(toMapa).then(setDatosAutonomos).catch(() => {});
+    obtenerDatosImpuesto("salud-publica", Number(anio), Number(mes)).then(toMapa).then(setDatosSalud).catch(() => {});
   }, [anio, mes]);
 
   const getValorNum = (tipo) => {
@@ -85,9 +78,17 @@ export default function ImpuestosMes() {
     const suma = (dato.historial || []).reduce((s, h) => s + (h.valor || 0), 0);
     return suma > 0 ? suma : (dato.valor || 0);
   };
-  const totalIVAValor  = FILAS_TOTAL.reduce((s, t) => s + getValorNumG(datosIVA, t), 0);
-  const totalIVAPagado = FILAS_TOTAL.reduce((s, t) => s + getPagadoNumG(datosIVA, t), 0);
-  const saldoIVA       = totalIVAValor - totalIVAPagado;
+  const totalIVAValor       = FILAS_TOTAL.reduce((s, t) => s + getValorNumG(datosIVA, t), 0);
+  const totalIVAPagado      = FILAS_TOTAL.reduce((s, t) => s + getPagadoNumG(datosIVA, t), 0);
+  const saldoIVA            = totalIVAValor - totalIVAPagado;
+
+  const totalAutonomosValor  = FILAS_TOTAL.reduce((s, t) => s + getValorNumG(datosAutonomos, t), 0);
+  const totalAutonomosPagado = FILAS_TOTAL.reduce((s, t) => s + getPagadoNumG(datosAutonomos, t), 0);
+  const saldoAutonomos       = totalAutonomosValor - totalAutonomosPagado;
+
+  const totalSaludValor  = FILAS_TOTAL.reduce((s, t) => s + getValorNumG(datosSalud, t), 0);
+  const totalSaludPagado = FILAS_TOTAL.reduce((s, t) => s + getPagadoNumG(datosSalud, t), 0);
+  const saldoSalud       = totalSaludValor - totalSaludPagado;
 
   return (
     <div className="container mt-4">
@@ -127,6 +128,14 @@ export default function ImpuestosMes() {
               ) : slug === "iva" && totalIVAValor > 0 ? (
                 <div className="text-center mt-auto pt-3" style={{ fontSize: "0.85rem", color: saldoIVA <= 0 ? "#198754" : "#ffc107" }}>
                   Saldo: {formatoMoneda(saldoIVA)}
+                </div>
+              ) : slug === "autonomos" && totalAutonomosValor > 0 ? (
+                <div className="text-center mt-auto pt-3" style={{ fontSize: "0.85rem", color: saldoAutonomos <= 0 ? "#198754" : "#ffc107" }}>
+                  Saldo: {formatoMoneda(saldoAutonomos)}
+                </div>
+              ) : slug === "salud-publica" && totalSaludValor > 0 ? (
+                <div className="text-center mt-auto pt-3" style={{ fontSize: "0.85rem", color: saldoSalud <= 0 ? "#198754" : "#ffc107" }}>
+                  Saldo: {formatoMoneda(saldoSalud)}
                 </div>
               ) : <div />}
             </Card.Body>
