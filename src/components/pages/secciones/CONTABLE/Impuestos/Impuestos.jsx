@@ -16,13 +16,7 @@ export default function Impuestos() {
 
   return (
     <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div style={{ width: 70 }} />
-        <h2 className="mb-0 text-center">💀 Impuestos</h2>
-        <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
-      </div>
-
-      <div className="d-flex align-items-center gap-3 mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-3">
         <Form.Select
           value={anio}
           onChange={(e) => setAnio(Number(e.target.value))}
@@ -32,9 +26,11 @@ export default function Impuestos() {
             <option key={a} value={a}>{a}</option>
           ))}
         </Form.Select>
+        <h2 className="mb-0 text-center">💀 Impuestos</h2>
+        <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div className="d-flex justify-content-center mb-4">
+      <div className="d-flex justify-content-center mb-3">
         <Card
           onClick={() => navigate(`/impuestos/${anio}/resumen-anual`)}
           style={{
@@ -47,7 +43,7 @@ export default function Impuestos() {
           onMouseEnter={(e) => { e.currentTarget.style.background = "#112240"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "#0d1a2d"; }}
         >
-          <Card.Body className="text-center py-4">
+          <Card.Body className="text-center py-3">
             <Card.Title className="mb-0" style={{ fontSize: "1.3rem", color: "#6ea8fe" }}>
               Resumen {anio}
             </Card.Title>
@@ -55,7 +51,7 @@ export default function Impuestos() {
         </Card>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
         {MESES.map((mes, i) => {
           const esActual = i === mesActual && anio === hoy.getFullYear();
           return (
@@ -71,7 +67,7 @@ export default function Impuestos() {
               onMouseEnter={(e) => { e.currentTarget.style.background = esActual ? "#3a3a00" : "#2a2a2a"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = esActual ? "#2b2b00" : "#1e1e1e"; }}
             >
-              <Card.Body className="text-center py-5">
+              <Card.Body className="text-center py-3">
                 <Card.Title className="mb-0" style={{ fontSize: "1.3rem", color: esActual ? "#ffc107" : "#dee2e6" }}>
                   {mes}
                 </Card.Title>
