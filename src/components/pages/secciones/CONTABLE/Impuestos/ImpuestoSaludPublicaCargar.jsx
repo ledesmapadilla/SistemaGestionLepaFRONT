@@ -277,14 +277,15 @@ export default function ImpuestoSaludPublicaCargar() {
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h2 className="mb-0">💀 Salud Pública</h2>
           <h2 className="mb-0 text-center" style={{ fontSize: "1.4rem" }}>Cargar - {mesNombre} {anio}</h2>
-          <div className="d-flex gap-2">
-            <Button variant="outline-primary" size="sm" disabled={!!datos["montoFormulario"]} onClick={() => { setFormCargar({ montoFormulario: "", intereses: "", otrasDeudas: "" }); setShowCargar(true); }}>Cargar mes</Button>
-            <Button variant="outline-light" size="sm" onClick={exportarExcel}>Excel</Button>
-            <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
-          </div>
+          <Button variant="outline-primary" size="sm" disabled={!!datos["montoFormulario"]} onClick={() => { setFormCargar({ montoFormulario: "", intereses: "", otrasDeudas: "" }); setShowCargar(true); }}>Cargar mes</Button>
         </div>
 
-        <Table striped bordered hover className="text-center align-middle w-100 mt-5">
+        <div className="d-flex justify-content-end gap-2 mb-2">
+          <Button variant="outline-light" size="sm" onClick={exportarExcel}>Excel</Button>
+          <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
+        </div>
+
+        <Table striped bordered hover className="text-center align-middle w-100">
           <thead className="table-dark">
             <tr>
               <th className="text-start">Concepto</th>

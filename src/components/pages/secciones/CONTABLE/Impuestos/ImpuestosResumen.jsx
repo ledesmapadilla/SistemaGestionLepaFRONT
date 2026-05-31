@@ -126,11 +126,15 @@ export default function ImpuestosResumen() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">💀 Resumen Impuestos</h2>
         <h2 className="mb-0 text-center" style={{ fontSize: "1.4rem" }}>{mesNombre} {anio}</h2>
+        <div style={{ width: 70 }} />
+      </div>
+
+      <div className="d-flex justify-content-end gap-2 mb-2 w-50 mx-auto">
         <Button variant="outline-light" size="sm" onClick={exportarExcel}>Excel</Button>
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <Table striped bordered hover className="text-center align-middle mt-5 w-50 mx-auto">
+      <Table striped bordered hover className="text-center align-middle w-50 mx-auto">
         <thead className="table-dark">
           <tr>
             <th className="text-start">Impuesto</th>
