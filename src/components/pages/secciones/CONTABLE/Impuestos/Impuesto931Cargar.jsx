@@ -422,17 +422,17 @@ export default function Impuesto931Cargar() {
         <Modal.Body>
           <Form>
             {[
-              { campo: "montoFormulario", label: "Monto formulario mes" },
-              { campo: "cantPersonas",    label: "Cantidad de personas mes" },
-              { campo: "intereses",       label: "Intereses mes" },
-              { campo: "otrasDeudas",     label: "Otras deudas mes" },
-            ].map(({ campo, label }) => (
+              { campo: "montoFormulario", label: "Monto formulario mes",     moneda: true },
+              { campo: "cantPersonas",    label: "Cantidad de personas mes",  moneda: false },
+              { campo: "intereses",       label: "Intereses mes",             moneda: true },
+              { campo: "otrasDeudas",     label: "Otras deudas mes",          moneda: true },
+            ].map(({ campo, label, moneda }) => (
               <Form.Group key={campo} className="mb-3">
                 <Form.Label>{label}</Form.Label>
                 <Form.Control
                   type="text"
-                  value={editandoCampo === campo ? formCargar[campo] : (formCargar[campo] ? formatoMoneda(formCargar[campo]) : "")}
-                  placeholder="$0"
+                  value={editandoCampo === campo ? formCargar[campo] : (formCargar[campo] ? (moneda ? formatoMoneda(formCargar[campo]) : Number(formCargar[campo]).toLocaleString("es-AR")) : "")}
+                  placeholder={moneda ? "$0" : "0"}
                   onFocus={() => { setEditandoCampo(campo); setFormCargar((p) => ({ ...p, [campo]: "" })); }}
                   onChange={(e) => setFormCargar((p) => ({ ...p, [campo]: e.target.value }))}
                   onBlur={() => setEditandoCampo(null)}

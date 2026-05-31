@@ -13,15 +13,13 @@ const MESES = [
 
 const FILAS = [
   { tipo: "montoFormulario",  label: "Monto formulario mes" },
-  { tipo: "cantPersonas",     label: "Cantidad de personas mes" },
-  { tipo: "montoPromedio",    label: "Monto promedio por persona" },
   { tipo: "intereses",        label: "Intereses mes" },
   { tipo: "otrasDeudas",      label: "Otras deudas mes" },
 ];
 
 const FILAS_TOTAL    = ["montoFormulario", "intereses", "otrasDeudas"];
 const TIPOS_HISTORIAL = ["intereses", "otrasDeudas"];
-const SIN_VER         = ["montoFormulario", "cantPersonas", "montoPromedio"];
+const SIN_VER         = ["montoFormulario"];
 
 const formatoMoneda = (valor) =>
   valor == null ? "-" : Number(valor).toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
@@ -50,16 +48,9 @@ export default function ImpuestoIVACargar() {
   const [editandoValorP, setEditandoValorP] = useState(false);
   const [guardandoP, setGuardandoP]         = useState(false);
   const [showCargar, setShowCargar]         = useState(false);
-  const [formCargar, setFormCargar]         = useState({ montoFormulario: "", cantPersonas: "", intereses: "", otrasDeudas: "" });
+  const [formCargar, setFormCargar]         = useState({ montoFormulario: "", intereses: "", otrasDeudas: "" });
   const [editandoCampo, setEditandoCampo]   = useState(null);
   const [guardandoCargar, setGuardandoCargar] = useState(false);
-
-  const montoPromedio = (() => {
-    const monto = parseFloat(formCargar.montoFormulario);
-    const cant  = parseFloat(formCargar.cantPersonas);
-    if (!isNaN(monto) && !isNaN(cant) && cant > 0) return monto / cant;
-    return null;
-  })();
 
   useEffect(() => {
     obtenerDatosImpuesto(IMP, Number(anio), Number(mes))
@@ -155,13 +146,10 @@ export default function ImpuestoIVACargar() {
 
   const guardarCargarMes = async () => {
     if (!formCargar.montoFormulario) return Swal.fire("Atención", "El monto formulario es obligatorio.", "warning");
-    if (!formCargar.cantPersonas)    return Swal.fire("Atención", "La cantidad de personas es obligatoria.", "warning");
     setGuardandoCargar(true);
     try {
       const campos = [
         { tipo: "montoFormulario", valor: parseFloat(formCargar.montoFormulario) },
-        { tipo: "cantPersonas",    valor: parseFloat(formCargar.cantPersonas) },
-        { tipo: "montoPromedio",   valor: montoPromedio },
         { tipo: "intereses",       valor: formCargar.intereses ? parseFloat(formCargar.intereses) : 0 },
         { tipo: "otrasDeudas",     valor: formCargar.otrasDeudas ? parseFloat(formCargar.otrasDeudas) : 0 },
       ];
@@ -173,7 +161,7 @@ export default function ImpuestoIVACargar() {
       nuevos.forEach((d) => { mapa[d.dato.tipo] = d.dato; });
       setDatos((prev) => ({ ...prev, ...mapa }));
       setShowCargar(false);
-      setFormCargar({ montoFormulario: "", cantPersonas: "", intereses: "", otrasDeudas: "" });
+      setFormCargar({ montoFormulario: "", intereses: "", otrasDeudas: "" });
       Swal.fire({ icon: "success", title: "Mes cargado", timer: 1500, showConfirmButton: false });
     } finally {
       setGuardandoCargar(false);
@@ -246,7 +234,7 @@ export default function ImpuestoIVACargar() {
           <h2 className="mb-0">💀 IVA</h2>
           <h2 className="mb-0 text-center" style={{ fontSize: "1.4rem" }}>Cargar - {mesNombre} {anio}</h2>
           <div className="d-flex gap-2">
-            <Button variant="outline-primary" size="sm" disabled={!!datos["montoFormulario"]} onClick={() => { setFormCargar({ montoFormulario: "", cantPersonas: "", intereses: "", otrasDeudas: "" }); setShowCargar(true); }}>Cargar mes</Button>
+            <Button variant="outline-primary" size="sm" disabled={!!datos["montoFormulario"]} onClick={() => { setFormCargar({ montoFormulario: "", intereses: "", otrasDeudas: "" }); setShowCargar(true); }}>Cargar mes</Button>
             <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
           </div>
         </div>
@@ -272,7 +260,6 @@ export default function ImpuestoIVACargar() {
                   <td>
                     {(() => {
                       if (!dato) return "-";
-                      if (fila.tipo === "cantPersonas") return Number(dato.valor).toLocaleString("es-AR");
                       if (TIPOS_HISTORIAL.includes(fila.tipo)) {
                         const suma = (dato.historial || []).reduce((s, h) => s + (h.valor || 0), 0);
                         return suma > 0 ? formatoMoneda(suma) : (dato.valor != null ? formatoMoneda(dato.valor) : "-");
@@ -280,30 +267,26 @@ export default function ImpuestoIVACargar() {
                       return dato.valor != null ? formatoMoneda(dato.valor) : "-";
                     })()}
                   </td>
-                  <td>{fila.tipo !== "cantPersonas" && fila.tipo !== "montoPromedio" ? formatoMoneda(getPagadoNum(fila.tipo)) : "-"}</td>
-                  <td>{fila.tipo !== "cantPersonas" && fila.tipo !== "montoPromedio" ? formatoMoneda(getValorNum(fila.tipo) - getPagadoNum(fila.tipo)) : "-"}</td>
+                  <td>{formatoMoneda(getPagadoNum(fila.tipo))}</td>
+                  <td>{formatoMoneda(getValorNum(fila.tipo) - getPagadoNum(fila.tipo))}</td>
                   <td className="text-start">{dato?.observaciones || "-"}</td>
                   <td>
-                    {fila.tipo !== "montoPromedio" && (
-                      <div className="d-flex gap-1 justify-content-center">
-                        {!SIN_VER.includes(fila.tipo) && (
-                          <Button size="sm" variant="outline-success" onClick={() => setShowVer(fila)} disabled={!dato}>Ver</Button>
-                        )}
-                        {TIPOS_HISTORIAL.includes(fila.tipo)
-                          ? <Button size="sm" variant="outline-warning" onClick={() => abrirHistorial(fila)}>Editar</Button>
-                          : <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(fila)}>Editar</Button>
-                        }
-                        <Button size="sm" variant="outline-danger" onClick={() => borrar(fila.tipo)} disabled={!dato}>Borrar</Button>
-                      </div>
-                    )}
+                    <div className="d-flex gap-1 justify-content-center">
+                      {!SIN_VER.includes(fila.tipo) && (
+                        <Button size="sm" variant="outline-success" onClick={() => setShowVer(fila)} disabled={!dato}>Ver</Button>
+                      )}
+                      {TIPOS_HISTORIAL.includes(fila.tipo)
+                        ? <Button size="sm" variant="outline-warning" onClick={() => abrirHistorial(fila)}>Editar</Button>
+                        : <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(fila)}>Editar</Button>
+                      }
+                      <Button size="sm" variant="outline-danger" onClick={() => borrar(fila.tipo)} disabled={!dato}>Borrar</Button>
+                    </div>
                   </td>
                   <td>
-                    {fila.tipo !== "cantPersonas" && (
-                      <div className="d-flex gap-1 justify-content-center">
-                        <Button size="sm" variant="outline-primary" onClick={() => abrirPagar(fila)}>Pagar</Button>
-                        <Button size="sm" variant="outline-secondary" onClick={() => setShowResumen(fila)}>Resumen</Button>
-                      </div>
-                    )}
+                    <div className="d-flex gap-1 justify-content-center">
+                      <Button size="sm" variant="outline-primary" onClick={() => abrirPagar(fila)}>Pagar</Button>
+                      <Button size="sm" variant="outline-secondary" onClick={() => setShowResumen(fila)}>Resumen</Button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -379,7 +362,6 @@ export default function ImpuestoIVACargar() {
             <Form>
               {[
                 { campo: "montoFormulario", label: "Monto formulario mes" },
-                { campo: "cantPersonas",    label: "Cantidad de personas mes" },
                 { campo: "intereses",       label: "Intereses mes" },
                 { campo: "otrasDeudas",     label: "Otras deudas mes" },
               ].map(({ campo, label }) => (
@@ -395,10 +377,6 @@ export default function ImpuestoIVACargar() {
                   />
                 </Form.Group>
               ))}
-              <Form.Group className="mb-1">
-                <Form.Label>Monto promedio por persona</Form.Label>
-                <Form.Control type="text" value={montoPromedio != null ? formatoMoneda(montoPromedio) : "-"} disabled />
-              </Form.Group>
             </Form>
           </Modal.Body>
           <Modal.Footer className="justify-content-center">
