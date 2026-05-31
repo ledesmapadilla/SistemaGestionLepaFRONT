@@ -9,6 +9,12 @@ export const obtenerDatos931 = async (anio, mes) => {
   return res.json();
 };
 
+export const obtenerDatos931Anio = async (anio) => {
+  const res = await authFetch(`${base}?anio=${anio}`);
+  if (!res?.ok) throw new Error("Error al obtener datos 931 anuales");
+  return res.json();
+};
+
 export const guardarDato931 = async (data) => {
   return authFetch(base, { method: "POST", body: JSON.stringify(data) });
 };

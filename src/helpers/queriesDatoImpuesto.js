@@ -9,6 +9,12 @@ export const obtenerDatosImpuesto = async (impuesto, anio, mes) => {
   return res.json();
 };
 
+export const obtenerDatosImpuestoAnio = async (impuesto, anio) => {
+  const res = await authFetch(`${base}?impuesto=${impuesto}&anio=${anio}`);
+  if (!res?.ok) throw new Error("Error al obtener datos anuales");
+  return res.json();
+};
+
 export const guardarDatoImpuesto = async (data) => {
   return authFetch(base, { method: "POST", body: JSON.stringify(data) });
 };

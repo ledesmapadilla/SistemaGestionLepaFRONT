@@ -32,6 +32,24 @@ export default function Impuestos() {
             <option key={a} value={a}>{a}</option>
           ))}
         </Form.Select>
+        <Card
+          onClick={() => navigate(`/impuestos/${anio}/resumen-anual`)}
+          style={{
+            cursor: "pointer",
+            border: "1px solid #6c757d",
+            background: "#252d38",
+            transition: "background 0.15s",
+            minWidth: 140,
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "#2e3a4a"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "#252d38"; }}
+        >
+          <Card.Body className="text-center py-2 px-4">
+            <Card.Title className="mb-0" style={{ fontSize: "1rem", color: "#dee2e6" }}>
+              Resumen {anio}
+            </Card.Title>
+          </Card.Body>
+        </Card>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
