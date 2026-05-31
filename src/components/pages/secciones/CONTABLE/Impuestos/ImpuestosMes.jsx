@@ -33,7 +33,9 @@ export default function ImpuestosMes() {
         {IMPUESTOS.map(({ nombre, slug }) => (
           <Card
             key={slug}
-            onClick={() => navigate(`/impuestos/${anio}/${mes}/${slug}`)}
+            onClick={() => {
+              if (slug === "931") navigate(`/impuestos/${anio}/${mes}/931/cargar`);
+            }}
             style={{
               cursor: "pointer",
               border: "1px solid #444",

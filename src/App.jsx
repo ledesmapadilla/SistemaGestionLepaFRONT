@@ -51,7 +51,6 @@ const Cheques = lazy(() => import("./components/pages/secciones/CONTABLE/Cheques
 const ChequesPropio = lazy(() => import("./components/pages/secciones/CONTABLE/ChequesPropio/ChequesPropio.jsx"));
 const Impuestos = lazy(() => import("./components/pages/secciones/CONTABLE/Impuestos/Impuestos.jsx"));
 const ImpuestosMes = lazy(() => import("./components/pages/secciones/CONTABLE/Impuestos/ImpuestosMes.jsx"));
-const ImpuestoDetalle = lazy(() => import("./components/pages/secciones/CONTABLE/Impuestos/ImpuestoDetalle.jsx"));
 const Impuesto931Cargar = lazy(() => import("./components/pages/secciones/CONTABLE/Impuestos/Impuesto931Cargar.jsx"));
 const Asistencia = lazy(() => import("./components/pages/secciones/PERSONAL/Asistencia/Asistencia.jsx"));
 const ResumenMes = lazy(() => import("./components/pages/secciones/PERSONAL/Asistencia/ResumenMes.jsx"));
@@ -151,7 +150,6 @@ function App() {
                       <Route path="/cheques-propios" element={<ChequesPropio />} />
                       <Route path="/impuestos" element={<Impuestos />} />
                       <Route path="/impuestos/:anio/:mes" element={<ImpuestosMes />} />
-                      <Route path="/impuestos/:anio/:mes/:impuesto" element={<ImpuestoDetalle />} />
                       <Route path="/impuestos/:anio/:mes/931/cargar" element={<Impuesto931Cargar />} />
                       <Route path="/personal/asistencia" element={<Asistencia />} />
                       <Route path="/personal/resumen-mes" element={<ResumenMes />} />
