@@ -42,6 +42,7 @@ export default function Impuesto931Cargar() {
   const [editandoValorH, setEditandoValorH] = useState(false);
   const [guardandoH, setGuardandoH]         = useState(false);
   const [showPagarModal, setShowPagarModal]   = useState(null);
+  const [showResumen, setShowResumen]         = useState(null);
   const [formPagarH, setFormPagarH]           = useState({ valor: "", fecha: new Date().toLocaleDateString("en-CA"), observaciones: "" });
   const [editandoValorP, setEditandoValorP]   = useState(false);
   const [guardandoP, setGuardandoP]           = useState(false);
@@ -288,7 +289,7 @@ export default function Impuesto931Cargar() {
                   {fila.tipo !== "cantPersonas" && (
                     <div className="d-flex gap-1 justify-content-center">
                       <Button size="sm" variant="outline-primary" onClick={() => abrirPagar(fila)}>Pagar</Button>
-                      <Button size="sm" variant="outline-secondary">Resumen</Button>
+                      <Button size="sm" variant="outline-secondary" onClick={() => setShowResumen(fila)}>Resumen</Button>
                     </div>
                   )}
                 </td>
@@ -306,6 +307,46 @@ export default function Impuesto931Cargar() {
           </tr>
         </tfoot>
       </Table>
+
+      {/* Modal Resumen */}
+      <Modal show={!!showResumen} onHide={() => setShowResumen(null)} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Resumen pagos - {showResumen?.label}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {(() => {
+            const historial = datos[`pago_${showResumen?.tipo}`]?.historial || [];
+            const total = historial.reduce((s, h) => s + (h.valor || 0), 0);
+            if (!historial.length) return <p className="text-muted text-center">Sin pagos registrados.</p>;
+            return (
+              <Table striped bordered size="sm" className="text-center align-middle mb-0">
+                <thead className="table-dark">
+                  <tr><th>Fecha</th><th>Valor</th><th>Observaciones</th></tr>
+                </thead>
+                <tbody>
+                  {[...historial].reverse().map((h, i) => (
+                    <tr key={i}>
+                      <td>{h.fecha ? h.fecha.split("-").reverse().join("/") : "-"}</td>
+                      <td>{formatoMoneda(h.valor)}</td>
+                      <td>{h.observaciones || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot style={{ borderTop: "2px solid #ffc107" }}>
+                  <tr>
+                    <td className="text-end fw-bold">Total pagado:</td>
+                    <td className="fw-bold" style={{ color: "#ffc107" }}>{formatoMoneda(total)}</td>
+                    <td />
+                  </tr>
+                </tfoot>
+              </Table>
+            );
+          })()}
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setShowResumen(null)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Modal Pagar */}
       <Modal show={!!showPagarModal} onHide={() => setShowPagarModal(null)} centered size="lg">
