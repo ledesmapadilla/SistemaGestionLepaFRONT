@@ -196,6 +196,20 @@ export default function Impuesto931Cargar() {
     }
   };
 
+  const FILAS_TOTAL = ["montoFormulario", "intereses", "otrasDeudas"];
+
+  const getValorNum = (tipo) => {
+    const dato = datos[tipo];
+    if (!dato) return 0;
+    if (TIPOS_HISTORIAL.includes(tipo)) {
+      const suma = (dato.historial || []).reduce((s, h) => s + (h.valor || 0), 0);
+      return suma > 0 ? suma : (dato.valor || 0);
+    }
+    return dato.valor || 0;
+  };
+
+  const getPagadoNum = (tipo) => datos[`pago_${tipo}`]?.valor || 0;
+
   if (cargando) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
@@ -214,10 +228,12 @@ export default function Impuesto931Cargar() {
         <thead className="table-dark">
           <tr>
             <th className="text-start">Concepto</th>
-            <th style={{ width: 140 }}>Valor</th>
-            <th style={{ minWidth: 260 }}>Observaciones</th>
-            <th style={{ width: 160 }}>Carga</th>
-            <th style={{ width: 160 }}>Pago</th>
+            <th style={{ width: 130 }}>Valor</th>
+            <th style={{ minWidth: 200 }}>Observaciones</th>
+            <th style={{ width: 130 }}>Pagado</th>
+            <th style={{ width: 130 }}>Saldo</th>
+            <th style={{ width: 155 }}>Carga</th>
+            <th style={{ width: 155 }}>Pago</th>
           </tr>
         </thead>
         <tbody>
@@ -239,6 +255,14 @@ export default function Impuesto931Cargar() {
                 </td>
                 <td className="text-start">{dato?.observaciones || "-"}</td>
                 <td>
+                  {fila.tipo !== "cantPersonas" && fila.tipo !== "montoPromedio"
+                    ? formatoMoneda(getPagadoNum(fila.tipo)) : "-"}
+                </td>
+                <td>
+                  {fila.tipo !== "cantPersonas" && fila.tipo !== "montoPromedio"
+                    ? formatoMoneda(getValorNum(fila.tipo) - getPagadoNum(fila.tipo)) : "-"}
+                </td>
+                <td>
                   {fila.tipo !== "montoPromedio" && (
                     <div className="d-flex gap-1 justify-content-center">
                       {!SIN_VER.includes(fila.tipo) && (
@@ -253,15 +277,27 @@ export default function Impuesto931Cargar() {
                   )}
                 </td>
                 <td>
-                  <div className="d-flex gap-1 justify-content-center">
-                    <Button size="sm" variant="outline-primary" onClick={() => abrirPagar(fila)}>Pagar</Button>
-                    <Button size="sm" variant="outline-secondary">Resumen</Button>
-                  </div>
+                  {fila.tipo !== "cantPersonas" && (
+                    <div className="d-flex gap-1 justify-content-center">
+                      <Button size="sm" variant="outline-primary" onClick={() => abrirPagar(fila)}>Pagar</Button>
+                      <Button size="sm" variant="outline-secondary">Resumen</Button>
+                    </div>
+                  )}
                 </td>
               </tr>
             );
           })}
         </tbody>
+        <tfoot style={{ borderTop: "2px solid #ffc107" }}>
+          <tr className="table-dark fw-bold">
+            <td className="text-start">Total</td>
+            <td>{formatoMoneda(FILAS_TOTAL.reduce((s, t) => s + getValorNum(t), 0))}</td>
+            <td />
+            <td>{formatoMoneda(FILAS_TOTAL.reduce((s, t) => s + getPagadoNum(t), 0))}</td>
+            <td>{formatoMoneda(FILAS_TOTAL.reduce((s, t) => s + getValorNum(t) - getPagadoNum(t), 0))}</td>
+            <td /><td />
+          </tr>
+        </tfoot>
       </Table>
 
       {/* Modal Pagar */}
