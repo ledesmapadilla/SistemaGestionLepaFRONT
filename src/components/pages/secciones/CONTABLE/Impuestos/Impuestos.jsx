@@ -22,7 +22,7 @@ export default function Impuestos() {
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div className="d-flex align-items-center gap-3 mb-4">
+      <div className="d-flex align-items-center gap-3 mb-3">
         <Form.Select
           value={anio}
           onChange={(e) => setAnio(Number(e.target.value))}
@@ -32,20 +32,23 @@ export default function Impuestos() {
             <option key={a} value={a}>{a}</option>
           ))}
         </Form.Select>
+      </div>
+
+      <div className="d-flex justify-content-center mb-4">
         <Card
           onClick={() => navigate(`/impuestos/${anio}/resumen-anual`)}
           style={{
             cursor: "pointer",
-            border: "1px solid #6c757d",
-            background: "#252d38",
+            border: "1px solid #0d6efd",
+            background: "#0d1a2d",
             transition: "background 0.15s",
-            minWidth: 140,
+            width: 280,
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "#2e3a4a"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "#252d38"; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "#112240"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "#0d1a2d"; }}
         >
-          <Card.Body className="text-center py-2 px-4">
-            <Card.Title className="mb-0" style={{ fontSize: "1rem", color: "#dee2e6" }}>
+          <Card.Body className="text-center py-4">
+            <Card.Title className="mb-0" style={{ fontSize: "1.3rem", color: "#6ea8fe" }}>
               Resumen {anio}
             </Card.Title>
           </Card.Body>
