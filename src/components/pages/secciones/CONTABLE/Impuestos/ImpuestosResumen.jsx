@@ -82,7 +82,7 @@ export default function ImpuestosResumen() {
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <Table striped bordered hover className="text-center align-middle mt-5">
+      <Table striped bordered hover className="text-center align-middle mt-5 w-50 mx-auto">
         <thead className="table-dark">
           <tr>
             <th className="text-start">Impuesto</th>
