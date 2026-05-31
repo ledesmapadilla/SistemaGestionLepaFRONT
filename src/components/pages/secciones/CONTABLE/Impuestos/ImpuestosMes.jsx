@@ -102,8 +102,10 @@ export default function ImpuestosMes() {
           <Card
             key={slug}
             onClick={() => {
-              if (slug === "931") navigate(`/impuestos/${anio}/${mes}/931/cargar`);
-              if (slug === "iva") navigate(`/impuestos/${anio}/${mes}/iva/cargar`);
+              if (slug === "931")          navigate(`/impuestos/${anio}/${mes}/931/cargar`);
+              if (slug === "iva")          navigate(`/impuestos/${anio}/${mes}/iva/cargar`);
+              if (slug === "autonomos")    navigate(`/impuestos/${anio}/${mes}/autonomos/cargar`);
+              if (slug === "salud-publica") navigate(`/impuestos/${anio}/${mes}/salud-publica/cargar`);
             }}
             style={{
               cursor: "pointer",
