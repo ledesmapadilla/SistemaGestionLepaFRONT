@@ -224,7 +224,7 @@ export default function Impuesto931Cargar() {
         </div>
       </div>
 
-      <Table striped bordered hover className="text-center align-middle w-100 mt-5">
+      <Table striped bordered hover size="sm" className="text-center align-middle w-100 mt-5">
         <thead className="table-dark">
           <tr>
             <th className="text-start">Concepto</th>
