@@ -91,6 +91,9 @@ export default function ImpuestosMes() {
   const totalSaludPagado = FILAS_TOTAL.reduce((s, t) => s + getPagadoNumG(datosSalud, t), 0);
   const saldoSalud       = totalSaludValor - totalSaludPagado;
 
+  const saldoTotal = saldo931 + saldoIVA + saldoAutonomos + saldoSalud;
+  const hayDatos   = totalValor + totalIVAValor + totalAutonomosValor + totalSaludValor > 0;
+
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -104,20 +107,20 @@ export default function ImpuestosMes() {
           <Card
             key={slug}
             onClick={() => {
-              if (slug === "931")          navigate(`/impuestos/${anio}/${mes}/931/cargar`);
-              if (slug === "iva")          navigate(`/impuestos/${anio}/${mes}/iva/cargar`);
-              if (slug === "autonomos")    navigate(`/impuestos/${anio}/${mes}/autonomos/cargar`);
+              if (slug === "931")           navigate(`/impuestos/${anio}/${mes}/931/cargar`);
+              if (slug === "iva")           navigate(`/impuestos/${anio}/${mes}/iva/cargar`);
+              if (slug === "autonomos")     navigate(`/impuestos/${anio}/${mes}/autonomos/cargar`);
               if (slug === "salud-publica") navigate(`/impuestos/${anio}/${mes}/salud-publica/cargar`);
-              if (slug === "resumen")      navigate(`/impuestos/${anio}/${mes}/resumen`);
+              if (slug === "resumen")       navigate(`/impuestos/${anio}/${mes}/resumen`);
             }}
             style={{
               cursor: "pointer",
-              border: "1px solid #444",
-              background: "#1e1e1e",
+              border: slug === "resumen" ? "1px solid #6c757d" : "1px solid #444",
+              background: slug === "resumen" ? "#252d38" : "#1e1e1e",
               transition: "background 0.15s",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#2a2a2a"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "#1e1e1e"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = slug === "resumen" ? "#2e3a4a" : "#2a2a2a"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = slug === "resumen" ? "#252d38" : "#1e1e1e"; }}
           >
             <Card.Body className="d-flex flex-column justify-content-between py-4" style={{ minHeight: 120 }}>
               <Card.Title className="mb-0 text-center" style={{ fontSize: "1.1rem", color: "#dee2e6" }}>
@@ -138,6 +141,10 @@ export default function ImpuestosMes() {
               ) : slug === "salud-publica" && totalSaludValor > 0 ? (
                 <div className="text-center mt-auto pt-3" style={{ fontSize: "0.85rem", color: saldoSalud <= 0 ? "#198754" : "#ffc107" }}>
                   Saldo: {formatoMoneda(saldoSalud)}
+                </div>
+              ) : slug === "resumen" && hayDatos ? (
+                <div className="text-center mt-auto pt-3" style={{ fontSize: "0.85rem", color: saldoTotal <= 0 ? "#198754" : "#ffc107" }}>
+                  Saldo total: {formatoMoneda(saldoTotal)}
                 </div>
               ) : <div />}
             </Card.Body>
