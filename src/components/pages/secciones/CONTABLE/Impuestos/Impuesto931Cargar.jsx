@@ -228,7 +228,7 @@ export default function Impuesto931Cargar() {
         <h2 className="mb-0">💀 931</h2>
         <h2 className="mb-0 text-center" style={{ fontSize: "1.4rem" }}>Cargar - {mesNombre} {anio}</h2>
         <div className="d-flex gap-2">
-          <Button variant="outline-primary" size="sm" onClick={() => { setFormCargar({ montoFormulario: "", cantPersonas: "", intereses: "", otrasDeudas: "" }); setShowCargar(true); }}>Cargar mes</Button>
+          <Button variant="outline-primary" size="sm" disabled={!!datos["montoFormulario"]} onClick={() => { setFormCargar({ montoFormulario: "", cantPersonas: "", intereses: "", otrasDeudas: "" }); setShowCargar(true); }}>Cargar mes</Button>
           <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
         </div>
       </div>
