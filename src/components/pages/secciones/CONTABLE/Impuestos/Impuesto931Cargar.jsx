@@ -41,10 +41,11 @@ export default function Impuesto931Cargar() {
   const [formHistorial, setFormHistorial]   = useState({ valor: "", fecha: new Date().toLocaleDateString("en-CA"), observaciones: "" });
   const [editandoValorH, setEditandoValorH] = useState(false);
   const [guardandoH, setGuardandoH]         = useState(false);
-  const [showPagarModal, setShowPagarModal] = useState(null);
-  const [valorPagar, setValorPagar]         = useState("");
-  const [editandoPagar, setEditandoPagar]   = useState(false);
-  const [showCargar, setShowCargar]         = useState(false);
+  const [showPagarModal, setShowPagarModal]   = useState(null);
+  const [formPagarH, setFormPagarH]           = useState({ valor: "", fecha: new Date().toLocaleDateString("en-CA"), observaciones: "" });
+  const [editandoValorP, setEditandoValorP]   = useState(false);
+  const [guardandoP, setGuardandoP]           = useState(false);
+  const [showCargar, setShowCargar]           = useState(false);
   const [formCargar, setFormCargar]   = useState({ montoFormulario: "", cantPersonas: "", intereses: "", otrasDeudas: "" });
   const [editandoCampo, setEditandoCampo] = useState(null);
   const [guardandoCargar, setGuardandoCargar] = useState(false);
@@ -169,30 +170,31 @@ export default function Impuesto931Cargar() {
   };
 
   const abrirPagar = (fila) => {
-    const dato = datos[fila.tipo];
-    let valor = "";
-    if (dato) {
-      if (TIPOS_HISTORIAL.includes(fila.tipo)) {
-        const suma = (dato.historial || []).reduce((s, h) => s + (h.valor || 0), 0);
-        valor = suma > 0 ? String(suma) : String(dato.valor || "");
-      } else {
-        valor = dato.valor != null ? String(dato.valor) : "";
-      }
-    }
-    setValorPagar(valor);
+    setFormPagarH({ valor: "", fecha: new Date().toLocaleDateString("en-CA"), observaciones: "" });
     setShowPagarModal(fila);
   };
 
-  const guardarPago = async () => {
-    if (!valorPagar || isNaN(parseFloat(valorPagar)))
-      return Swal.fire("Atención", "El monto es obligatorio.", "warning");
-    const tipoPago = `pago_${showPagarModal.tipo}`;
-    const res = await guardarDato931({ anio: Number(anio), mes: Number(mes), tipo: tipoPago, valor: parseFloat(valorPagar) });
-    if (res?.ok) {
-      const data = await res.json();
-      setDatos((prev) => ({ ...prev, [tipoPago]: data.dato }));
-      setShowPagarModal(null);
-      Swal.fire({ icon: "success", title: "Pago registrado", timer: 1500, showConfirmButton: false });
+  const agregarEntradaPago = async () => {
+    if (!formPagarH.valor || isNaN(parseFloat(formPagarH.valor)))
+      return Swal.fire("Atención", "El valor es obligatorio.", "warning");
+    if (!formPagarH.fecha)
+      return Swal.fire("Atención", "La fecha es obligatoria.", "warning");
+    setGuardandoP(true);
+    try {
+      const res = await agregarHistorial931({
+        anio: Number(anio), mes: Number(mes),
+        tipo: `pago_${showPagarModal.tipo}`,
+        valor: parseFloat(formPagarH.valor),
+        fecha: formPagarH.fecha,
+        observaciones: formPagarH.observaciones,
+      });
+      if (res?.ok) {
+        const data = await res.json();
+        setDatos((prev) => ({ ...prev, [`pago_${showPagarModal.tipo}`]: data.dato }));
+        setFormPagarH({ valor: "", fecha: new Date().toLocaleDateString("en-CA"), observaciones: "" });
+      }
+    } finally {
+      setGuardandoP(false);
     }
   };
 
@@ -208,7 +210,12 @@ export default function Impuesto931Cargar() {
     return dato.valor || 0;
   };
 
-  const getPagadoNum = (tipo) => datos[`pago_${tipo}`]?.valor || 0;
+  const getPagadoNum = (tipo) => {
+    const dato = datos[`pago_${tipo}`];
+    if (!dato) return 0;
+    const suma = (dato.historial || []).reduce((s, h) => s + (h.valor || 0), 0);
+    return suma > 0 ? suma : (dato.valor || 0);
+  };
 
   if (cargando) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
@@ -300,39 +307,68 @@ export default function Impuesto931Cargar() {
       </Table>
 
       {/* Modal Pagar */}
-      <Modal show={!!showPagarModal} onHide={() => setShowPagarModal(null)} centered size="sm">
+      <Modal show={!!showPagarModal} onHide={() => setShowPagarModal(null)} centered size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Pagar - {showPagarModal?.label}</Modal.Title>
+          <Modal.Title>Pago - {showPagarModal?.label}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p className="mb-3 small text-muted">
-            Valor cargado: <strong>{(() => {
-              const fila = showPagarModal;
-              const dato = fila ? datos[fila.tipo] : null;
-              if (!dato) return "-";
-              if (TIPOS_HISTORIAL.includes(fila.tipo)) {
-                const suma = (dato.historial || []).reduce((s, h) => s + (h.valor || 0), 0);
-                return formatoMoneda(suma > 0 ? suma : dato.valor);
-              }
-              return formatoMoneda(dato.valor);
-            })()}</strong>
-          </p>
-          <Form.Group>
-            <Form.Label>Monto a pagar</Form.Label>
-            <Form.Control
-              type="text"
-              value={editandoPagar ? valorPagar : (valorPagar ? formatoMoneda(valorPagar) : "")}
-              placeholder="$0"
-              onFocus={() => { setEditandoPagar(true); setValorPagar(""); }}
-              onChange={(e) => setValorPagar(e.target.value)}
-              onBlur={() => setEditandoPagar(false)}
-              onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
-            />
-          </Form.Group>
+          {(() => {
+            const historial = datos[`pago_${showPagarModal?.tipo}`]?.historial || [];
+            const total = historial.reduce((s, h) => s + (h.valor || 0), 0);
+            if (!historial.length) return null;
+            return (
+              <Table striped bordered size="sm" className="text-center align-middle mb-3">
+                <thead className="table-dark">
+                  <tr><th>Fecha</th><th>Valor</th><th>Observaciones</th></tr>
+                </thead>
+                <tbody>
+                  {[...historial].reverse().map((h, i) => (
+                    <tr key={i}>
+                      <td>{h.fecha ? h.fecha.split("-").reverse().join("/") : "-"}</td>
+                      <td>{formatoMoneda(h.valor)}</td>
+                      <td>{h.observaciones || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot style={{ borderTop: "2px solid #ffc107" }}>
+                  <tr>
+                    <td className="text-end fw-bold">Total:</td>
+                    <td className="fw-bold" style={{ color: "#ffc107" }}>{formatoMoneda(total)}</td>
+                    <td />
+                  </tr>
+                </tfoot>
+              </Table>
+            );
+          })()}
+          <div className="border rounded p-3">
+            <p className="mb-2 fw-semibold">Agregar pago</p>
+            <div className="d-flex gap-2 align-items-end">
+              <Form.Group style={{ flex: 1 }}>
+                <Form.Label className="small mb-1">Fecha</Form.Label>
+                <Form.Control size="sm" type="date" value={formPagarH.fecha} onChange={(e) => setFormPagarH((p) => ({ ...p, fecha: e.target.value }))} />
+              </Form.Group>
+              <Form.Group style={{ flex: 1 }}>
+                <Form.Label className="small mb-1">Valor</Form.Label>
+                <Form.Control size="sm" type="text"
+                  value={editandoValorP ? formPagarH.valor : (formPagarH.valor ? formatoMoneda(formPagarH.valor) : "")}
+                  placeholder="$0"
+                  onFocus={() => { setEditandoValorP(true); setFormPagarH((p) => ({ ...p, valor: "" })); }}
+                  onChange={(e) => setFormPagarH((p) => ({ ...p, valor: e.target.value }))}
+                  onBlur={() => setEditandoValorP(false)}
+                />
+              </Form.Group>
+              <Form.Group style={{ flex: 2 }}>
+                <Form.Label className="small mb-1">Observaciones</Form.Label>
+                <Form.Control size="sm" type="text" value={formPagarH.observaciones} onChange={(e) => setFormPagarH((p) => ({ ...p, observaciones: e.target.value }))} />
+              </Form.Group>
+              <Button variant="outline-primary" size="sm" onClick={agregarEntradaPago} disabled={guardandoP}>
+                {guardandoP ? <Spinner size="sm" animation="border" /> : "Agregar"}
+              </Button>
+            </div>
+          </div>
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
-          <Button variant="outline-secondary" onClick={() => setShowPagarModal(null)}>Cancelar</Button>
-          <Button variant="outline-success" onClick={guardarPago}>Guardar</Button>
+          <Button variant="outline-secondary" onClick={() => setShowPagarModal(null)}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
 
