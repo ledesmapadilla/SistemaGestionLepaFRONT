@@ -353,7 +353,7 @@ export default function Impuesto931Cargar() {
                 <Form.Control size="sm" type="text"
                   value={editandoValorP ? formPagarH.valor : (formPagarH.valor ? formatoMoneda(formPagarH.valor) : "")}
                   placeholder="$0"
-                  onFocus={() => setEditandoValorP(true)}
+                  onFocus={() => { setEditandoValorP(true); setFormPagarH((p) => ({ ...p, valor: "" })); }}
                   onChange={(e) => setFormPagarH((p) => ({ ...p, valor: e.target.value }))}
                   onBlur={() => setEditandoValorP(false)}
                 />
