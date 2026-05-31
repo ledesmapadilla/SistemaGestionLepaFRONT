@@ -85,15 +85,15 @@ export default function ImpuestosMes() {
             onMouseEnter={(e) => { e.currentTarget.style.background = "#2a2a2a"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "#1e1e1e"; }}
           >
-            <Card.Body className="text-center py-5">
-              <Card.Title className="mb-0" style={{ fontSize: "1.1rem", color: "#dee2e6" }}>
+            <Card.Body className="d-flex flex-column justify-content-between py-4" style={{ minHeight: 120 }}>
+              <Card.Title className="mb-0 text-center" style={{ fontSize: "1.1rem", color: "#dee2e6" }}>
                 {nombre}
               </Card.Title>
-              {slug === "931" && totalValor > 0 && (
-                <div className="mt-2" style={{ fontSize: "0.85rem", color: saldo931 <= 0 ? "#198754" : "#ffc107" }}>
+              {slug === "931" && totalValor > 0 ? (
+                <div className="text-center mt-auto pt-3" style={{ fontSize: "0.85rem", color: saldo931 <= 0 ? "#198754" : "#ffc107" }}>
                   Saldo: {formatoMoneda(saldo931)}
                 </div>
-              )}
+              ) : <div />}
             </Card.Body>
           </Card>
         ))}
