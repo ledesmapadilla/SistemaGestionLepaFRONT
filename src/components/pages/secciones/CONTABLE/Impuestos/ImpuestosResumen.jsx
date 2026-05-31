@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button, Table, Spinner } from "react-bootstrap";
+import XLSXStyle from "xlsx-js-style";
 import { obtenerDatos931 } from "../../../../../helpers/queriesDato931";
 import { obtenerDatosImpuesto } from "../../../../../helpers/queriesDatoImpuesto";
 
@@ -72,6 +73,52 @@ export default function ImpuestosResumen() {
     { valor: 0, pagado: 0, saldo: 0 }
   );
 
+  const exportarExcel = () => {
+    const titulo = `Resumen Impuestos - ${mesNombre} ${anio}`;
+    const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
+    const estIzq    = { alignment: { horizontal: "left",   vertical: "center" } };
+    const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
+    const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
+    const moneda    = { numFmt: "#,##0" };
+    const hoy = new Date();
+    const fechaSerial = Math.round((Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
+
+    const filas = [
+      { nombre: "931",          d: datos["931"] },
+      { nombre: "Autónomos",    d: datos["autonomos"] },
+      { nombre: "IVA",          d: datos["iva"] },
+      { nombre: "Salud Pública", d: datos["salud-publica"] },
+    ].filter(({ d }) => d && calcSaldo(d).valor > 0);
+
+    const wb = XLSXStyle.utils.book_new();
+    const ws = {};
+    ws["A1"] = { v: titulo, t: "s", s: estTitulo };
+    ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
+    ws["A3"] = { v: "", t: "s" };
+    ["Impuesto", "Valor", "Pagado", "Saldo"].forEach((h, i) => {
+      ws[`${"ABCD"[i]}4`] = { v: h, t: "s", s: estHeader };
+    });
+    filas.forEach(({ nombre, d }, idx) => {
+      const row = idx + 5;
+      const { valor, pagado, saldo } = calcSaldo(d);
+      ws[`A${row}`] = { v: nombre,  t: "s", s: estIzq };
+      ws[`B${row}`] = { v: valor,   t: "n", s: { ...estCentro, ...moneda } };
+      ws[`C${row}`] = { v: pagado,  t: "n", s: { ...estCentro, ...moneda } };
+      ws[`D${row}`] = { v: saldo,   t: "n", s: { ...estCentro, ...moneda } };
+    });
+    const totalRow = filas.length + 5;
+    const tv = filas.reduce((s, { d }) => s + calcSaldo(d).valor,  0);
+    const tp = filas.reduce((s, { d }) => s + calcSaldo(d).pagado, 0);
+    ws[`A${totalRow}`] = { v: "Total",  t: "s", s: { font: { bold: true }, ...estIzq } };
+    ws[`B${totalRow}`] = { v: tv,       t: "n", s: { font: { bold: true }, ...estCentro, ...moneda } };
+    ws[`C${totalRow}`] = { v: tp,       t: "n", s: { font: { bold: true }, ...estCentro, ...moneda } };
+    ws[`D${totalRow}`] = { v: tv - tp,  t: "n", s: { font: { bold: true }, ...estCentro, ...moneda } };
+    ws["!ref"]  = `A1:D${totalRow}`;
+    ws["!cols"] = [{ wch: 20 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
+    XLSXStyle.utils.book_append_sheet(wb, ws, "Resumen");
+    XLSXStyle.writeFile(wb, `${titulo}.xlsx`);
+  };
+
   if (cargando) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
@@ -79,6 +126,7 @@ export default function ImpuestosResumen() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">💀 Resumen Impuestos</h2>
         <h2 className="mb-0 text-center" style={{ fontSize: "1.4rem" }}>{mesNombre} {anio}</h2>
+        <Button variant="outline-light" size="sm" onClick={exportarExcel}>Excel</Button>
         <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button, Table, Modal, Form, Spinner } from "react-bootstrap";
 import Swal from "sweetalert2";
+import XLSXStyle from "xlsx-js-style";
 import { obtenerDatos931, guardarDato931, agregarHistorial931, eliminarDato931 } from "../../../../../helpers/queriesDato931";
 
 const MESES = [
@@ -219,6 +220,52 @@ export default function Impuesto931Cargar() {
     return suma > 0 ? suma : (dato.valor || 0);
   };
 
+  const exportarExcel = () => {
+    const titulo = `931 - ${mesNombre} ${anio}`;
+    const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
+    const estIzq    = { alignment: { horizontal: "left",   vertical: "center" } };
+    const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
+    const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
+    const moneda    = { numFmt: "#,##0" };
+    const hoy = new Date();
+    const fechaSerial = Math.round((Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
+
+    const wb = XLSXStyle.utils.book_new();
+    const ws = {};
+    ws["A1"] = { v: titulo, t: "s", s: estTitulo };
+    ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
+    ws["A3"] = { v: "", t: "s" };
+    ["Concepto", "Valor", "Pagado", "Saldo", "Observaciones"].forEach((h, i) => {
+      ws[`${"ABCDE"[i]}4`] = { v: h, t: "s", s: estHeader };
+    });
+    const sinPago = ["cantPersonas", "montoPromedio"];
+    FILAS.forEach(({ tipo, label }, idx) => {
+      const row = idx + 5;
+      const dato = datos[tipo];
+      const valor  = getValorNum(tipo);
+      const pagado = getPagadoNum(tipo);
+      ws[`A${row}`] = { v: label, t: "s", s: estIzq };
+      ws[`B${row}`] = tipo === "cantPersonas"
+        ? { v: valor, t: "n", s: estCentro }
+        : { v: valor, t: "n", s: { ...estCentro, ...moneda } };
+      ws[`C${row}`] = sinPago.includes(tipo) ? { v: "-", t: "s", s: estCentro } : { v: pagado,         t: "n", s: { ...estCentro, ...moneda } };
+      ws[`D${row}`] = sinPago.includes(tipo) ? { v: "-", t: "s", s: estCentro } : { v: valor - pagado, t: "n", s: { ...estCentro, ...moneda } };
+      ws[`E${row}`] = { v: dato?.observaciones || "-", t: "s", s: estCentro };
+    });
+    const totalRow = FILAS.length + 5;
+    const tv = FILAS_TOTAL.reduce((s, t) => s + getValorNum(t), 0);
+    const tp = FILAS_TOTAL.reduce((s, t) => s + getPagadoNum(t), 0);
+    ws[`A${totalRow}`] = { v: "Total",  t: "s", s: { font: { bold: true }, ...estIzq } };
+    ws[`B${totalRow}`] = { v: tv,       t: "n", s: { font: { bold: true }, ...estCentro, ...moneda } };
+    ws[`C${totalRow}`] = { v: tp,       t: "n", s: { font: { bold: true }, ...estCentro, ...moneda } };
+    ws[`D${totalRow}`] = { v: tv - tp,  t: "n", s: { font: { bold: true }, ...estCentro, ...moneda } };
+    ws[`E${totalRow}`] = { v: "",       t: "s" };
+    ws["!ref"]  = `A1:E${totalRow}`;
+    ws["!cols"] = [{ wch: 28 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 30 }];
+    XLSXStyle.utils.book_append_sheet(wb, ws, "931");
+    XLSXStyle.writeFile(wb, `${titulo}.xlsx`);
+  };
+
   if (cargando) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
@@ -229,6 +276,7 @@ export default function Impuesto931Cargar() {
         <h2 className="mb-0 text-center" style={{ fontSize: "1.4rem" }}>Cargar - {mesNombre} {anio}</h2>
         <div className="d-flex gap-2">
           <Button variant="outline-primary" size="sm" disabled={!!datos["montoFormulario"]} onClick={() => { setFormCargar({ montoFormulario: "", cantPersonas: "", intereses: "", otrasDeudas: "" }); setShowCargar(true); }}>Cargar mes</Button>
+          <Button variant="outline-light" size="sm" onClick={exportarExcel}>Excel</Button>
           <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>Volver</Button>
         </div>
       </div>
