@@ -29,7 +29,17 @@ const RemitosXClientesObras = () => {
 
           // 3. COMPARAMOS
           if (estado === "sin facturar") {
-            
+            const totalRemito =
+              remito.items?.reduce((sum, item) => {
+                const cant = Number(item.cantidad) || 0;
+                const precio = Number(item.precioUnitario) || 0;
+                return sum + cant * precio;
+              }, 0) || 0;
+
+            const saldoRemito = totalRemito - (remito.montoFacturado || 0);
+
+            if (saldoRemito < 1) return acc;
+
             const nombreObra = remito.obra?.nombreobra || "Obra sin nombre";
 
             if (!acc[nombreObra]) {
@@ -41,14 +51,7 @@ const RemitosXClientesObras = () => {
               };
             }
 
-            const subtotalRemito =
-              remito.items?.reduce((sum, item) => {
-                const cant = Number(item.cantidad) || 0;
-                const precio = Number(item.precioUnitario) || 0;
-                return sum + cant * precio;
-              }, 0) || 0;
-
-            acc[nombreObra].monto += subtotalRemito;
+            acc[nombreObra].monto += saldoRemito;
             acc[nombreObra].cantidadRemitos += 1;
           }
         }
