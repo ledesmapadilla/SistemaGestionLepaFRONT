@@ -36,6 +36,7 @@ const CobrosTabla = () => {
   const [cobros, setCobros] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cobroVerId, setCobroVerId] = useState(null);
+  const [obsVer, setObsVer] = useState(null); // texto de observaciones a mostrar
   const cobroVer = cobros.find((c) => c._id === cobroVerId) || null;
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroMedio, setFiltroMedio] = useState("");
@@ -291,8 +292,13 @@ const CobrosTabla = () => {
                       ? c.mediosPago.map((m) => m.medioPago).join(", ")
                       : c.medioPago || "-"}
                   </td>
-                  <td className="text-start" style={{ maxWidth: 200 }}>
-                    {(c.pagos || []).map((p) => p.observaciones).filter(Boolean).join(" | ") || "-"}
+                  <td>
+                    {(() => {
+                      const obs = (c.pagos || []).map((p) => p.observaciones).filter(Boolean).join("\n");
+                      return obs
+                        ? <Button size="sm" variant="outline-info" onClick={() => setObsVer(obs)}>Ver</Button>
+                        : <span className="text-muted">-</span>;
+                    })()}
                   </td>
                   <td className="d-flex gap-1 justify-content-center align-items-center">
                     <Button variant="outline-success" size="sm" onClick={() => setCobroVerId(c._id)}>Ver</Button>
@@ -306,6 +312,17 @@ const CobrosTabla = () => {
         </Table>
         </div>
       )}
+
+      {/* Modal observaciones */}
+      <Modal show={!!obsVer} onHide={() => setObsVer(null)} centered size="sm">
+        <Modal.Header closeButton><Modal.Title>Observaciones</Modal.Title></Modal.Header>
+        <Modal.Body>
+          <p style={{ whiteSpace: "pre-wrap" }}>{obsVer}</p>
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setObsVer(null)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Modal ver detalle */}
       <Modal show={!!cobroVerId} onHide={() => setCobroVerId(null)} size="lg" centered>
