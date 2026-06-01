@@ -48,8 +48,8 @@ const RemitosXClientes = () => {
         return acc;
       }, {});
 
-      // 4. Convertimos a array
-      const resultadoFinal = Object.values(agrupado);
+      // 4. Convertimos a array, excluyendo clientes sin monto pendiente
+      const resultadoFinal = Object.values(agrupado).filter((c) => c.monto > 0);
 
       setDatosAgrupados(resultadoFinal);
     } catch (error) {
