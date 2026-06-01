@@ -253,6 +253,7 @@ const NuevoCobro = () => {
       pagos: facturasSeleccionadas.map((f) => ({
         factura: f._id,
         montoCobrado: parseFloat(f.montoCobrado),
+        observaciones: f.observaciones || "",
       })),
     };
 
@@ -363,6 +364,7 @@ const NuevoCobro = () => {
                 <th>Total factura</th>
                 <th>Saldo pendiente</th>
                 <th>Monto cobrado</th>
+                <th>Observaciones</th>
                 <th></th>
               </tr>
             </thead>
@@ -386,6 +388,16 @@ const NuevoCobro = () => {
                     />
                   </td>
                   <td>
+                    <Form.Control
+                      type="text"
+                      size="sm"
+                      style={{ width: "180px", margin: "0 auto" }}
+                      placeholder="—"
+                      value={f.observaciones || ""}
+                      onChange={(e) => actualizarCampo(f._id, "observaciones", e.target.value)}
+                    />
+                  </td>
+                  <td>
                     <Button variant="outline-danger" size="sm" onClick={() => quitarFactura(f._id)}>Quitar</Button>
                   </td>
                 </tr>
@@ -393,7 +405,7 @@ const NuevoCobro = () => {
             </tbody>
             <tfoot style={{ borderTop: "2px solid #ffc107" }}>
               <tr>
-                <td colSpan={3} className="text-end">Total facturas:</td>
+                <td colSpan={4} className="text-end">Total facturas:</td>
                 <td>{formatoMoneda(facturasSeleccionadas.reduce((sum, f) => sum + totalConIva(f), 0))}</td>
                 <td>{formatoMoneda(totalSeleccionado)}</td>
                 <td className="fw-bold">{formatoMoneda(totalCobrado)}</td>
