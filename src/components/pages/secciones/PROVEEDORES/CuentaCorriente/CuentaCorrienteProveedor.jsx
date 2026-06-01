@@ -136,8 +136,8 @@ const CuentaCorrienteProveedor = () => {
 
   return (
     <div className="w-75 mx-auto my-2">
-      <h6 className="text-center mb-2">Cuenta Corriente Proveedores</h6>
-      <div className="d-flex justify-content-end align-items-center mb-3">
+      <h6 className="text-center mb-1">Cuenta Corriente Proveedores</h6>
+      <div className="d-flex justify-content-end align-items-center mb-1">
         <div className="d-flex gap-2">
           {(filtroProveedor ? movConSaldo.length : resumenPorProveedor.length) > 0 && (
             <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
@@ -146,7 +146,7 @@ const CuentaCorrienteProveedor = () => {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", marginBottom: "1.5rem", gap: "1rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", marginBottom: "0.5rem", gap: "0.5rem" }}>
         {/* Filtro proveedor — izquierda */}
         <div className="d-flex align-items-center gap-2">
           <Form.Label className="mb-0 text-nowrap" style={{ width: "75px" }}>Proveedor</Form.Label>
@@ -154,7 +154,7 @@ const CuentaCorrienteProveedor = () => {
             <Form.Select
               value={filtroProveedor}
               onChange={(e) => setFiltroProveedor(e.target.value)}
-              style={filtroProveedor ? { backgroundImage: "none", height: "50px" } : { height: "50px" }}
+              style={filtroProveedor ? { backgroundImage: "none", height: "34px" } : { height: "34px" }}
             >
               <option value="">Todos los proveedores</option>
               {proveedores.map((p) => (
@@ -207,7 +207,7 @@ const CuentaCorrienteProveedor = () => {
         resumenPorProveedor.length === 0 ? (
           <p className="text-muted">Sin movimientos.</p>
         ) : (
-          <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+          <div style={{ maxHeight: "calc(100vh - 360px)", overflowY: "auto" }}>
             <Table striped bordered hover className="text-center align-middle">
               <thead className="table-dark sticky-top">
                 <tr>
@@ -240,7 +240,7 @@ const CuentaCorrienteProveedor = () => {
         movConSaldo.length === 0 ? (
           <p className="text-muted">Sin movimientos para este proveedor.</p>
         ) : (
-          <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+          <div style={{ maxHeight: "calc(100vh - 360px)", overflowY: "auto" }}>
           <Table striped bordered hover className="text-center align-middle">
             <thead className="table-dark sticky-top">
               <tr>
