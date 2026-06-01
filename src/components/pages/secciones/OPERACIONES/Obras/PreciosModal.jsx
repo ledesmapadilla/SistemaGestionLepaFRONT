@@ -258,6 +258,7 @@ const PreciosModal = ({
 
                 if (item.clasificacion === "Precio cerrado") {
                   const esNumerico = item.precio !== "" && !isNaN(Number(item.precio));
+                  const sinIva = esNumerico ? Number(item.precio) / 1.21 : null;
                   return (
                     <tr key={index}>
                       <td colSpan={7} style={{ border: "none", padding: "0.25rem 0.75rem" }}>
@@ -276,6 +277,11 @@ const PreciosModal = ({
                               onChange={(e) => cambiarCampo(index, "precio", normalizarPrecio(e.target.value))}
                             />
                           </div>
+                          {sinIva != null && (
+                            <span className="text-muted small text-nowrap">
+                              Sin IVA: <strong className="text-light">${formatearMoneda(sinIva)}</strong>
+                            </span>
+                          )}
                           <div className="d-flex align-items-center gap-2 ms-auto">
                             <span className="text-muted small text-nowrap">Observaciones</span>
                             <Form.Control
