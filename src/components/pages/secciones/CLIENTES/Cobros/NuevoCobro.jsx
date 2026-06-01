@@ -33,6 +33,8 @@ const NuevoCobro = () => {
   const [showModalPago, setShowModalPago] = useState(false);
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [editandoMontoId, setEditandoMontoId] = useState(null);
+  const [obsModal, setObsModal] = useState(null); // { id, texto }
+  const [obsTexto, setObsTexto] = useState("");
 
   const clienteSeleccionado = watch("cliente");
   const { onChange: onChangeCliente, ...clienteReg } = register("cliente", { required: "El cliente es obligatorio" });
@@ -388,14 +390,14 @@ const NuevoCobro = () => {
                     />
                   </td>
                   <td>
-                    <Form.Control
-                      type="text"
+                    <Button
                       size="sm"
-                      style={{ width: "180px", margin: "0 auto" }}
-                      placeholder="—"
-                      value={f.observaciones || ""}
-                      onChange={(e) => actualizarCampo(f._id, "observaciones", e.target.value)}
-                    />
+                      variant={f.observaciones ? "outline-info" : "outline-secondary"}
+                      onClick={() => { setObsModal(f._id); setObsTexto(f.observaciones || ""); }}
+                      title={f.observaciones || "Sin observaciones"}
+                    >
+                      {f.observaciones ? "Ver obs." : "+ Obs."}
+                    </Button>
                   </td>
                   <td>
                     <Button variant="outline-danger" size="sm" onClick={() => quitarFactura(f._id)}>Quitar</Button>
@@ -416,6 +418,27 @@ const NuevoCobro = () => {
         )}
 
       </Form>
+
+      <Modal show={!!obsModal} onHide={() => setObsModal(null)} centered size="sm">
+        <Modal.Header closeButton><Modal.Title>Observaciones</Modal.Title></Modal.Header>
+        <Modal.Body>
+          <Form.Control
+            as="textarea"
+            rows={4}
+            value={obsTexto}
+            onChange={(e) => setObsTexto(e.target.value)}
+            placeholder="Ingresá una observación..."
+            autoFocus
+          />
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setObsModal(null)}>Cancelar</Button>
+          <Button variant="outline-success" onClick={() => {
+            actualizarCampo(obsModal, "observaciones", obsTexto);
+            setObsModal(null);
+          }}>Guardar</Button>
+        </Modal.Footer>
+      </Modal>
 
       <Modal show={showModalPago} onHide={cerrarModalPago} size="lg" centered>
         <Modal.Header closeButton>
