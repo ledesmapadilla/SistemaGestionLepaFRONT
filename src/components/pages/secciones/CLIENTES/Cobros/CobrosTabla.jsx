@@ -267,13 +267,14 @@ const CobrosTabla = () => {
               <th>Facturas</th>
               <th>Total cobrado</th>
               <th>Medio de pago</th>
+              <th>Observaciones</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {cobrosFiltrados.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-muted py-3">Sin cobros registrados</td>
+                <td colSpan={8} className="text-muted py-3">Sin cobros registrados</td>
               </tr>
             ) : (
               cobrosFiltrados.map((c) => (
@@ -289,6 +290,9 @@ const CobrosTabla = () => {
                     {(c.mediosPago?.length > 0)
                       ? c.mediosPago.map((m) => m.medioPago).join(", ")
                       : c.medioPago || "-"}
+                  </td>
+                  <td className="text-start" style={{ maxWidth: 200 }}>
+                    {(c.pagos || []).map((p) => p.observaciones).filter(Boolean).join(" | ") || "-"}
                   </td>
                   <td className="d-flex gap-1 justify-content-center align-items-center">
                     <Button variant="outline-success" size="sm" onClick={() => setCobroVerId(c._id)}>Ver</Button>
@@ -337,6 +341,7 @@ const CobrosTabla = () => {
                 <th>Monto cobrado</th>
                 <th>Saldo</th>
                 <th>Forma de pago</th>
+                <th>Observaciones</th>
               </tr>
             </thead>
             <tbody>
@@ -349,13 +354,14 @@ const CobrosTabla = () => {
                   <td>{formatoMoneda(p.montoCobrado)}</td>
                   <td>{formatoMoneda(saldosPorCobro[cobroVer?._id]?.[p.factura?._id] ?? 0)}</td>
                   <td>{p.medioPago || cobroVer?.medioPago || "-"}</td>
+                  <td className="text-start">{p.observaciones || "-"}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot style={{ borderTop: "2px solid #ffc107" }}>
               <tr>
                 <td colSpan={4} className="text-end">Total facturas:</td>
-                <td colSpan={3}>
+                <td colSpan={4}>
                   {formatoMoneda(
                     (cobroVer?.pagos || []).reduce((sum, p) => sum + totalConIva(p.factura), 0)
                   )}
@@ -363,7 +369,7 @@ const CobrosTabla = () => {
               </tr>
               <tr>
                 <td colSpan={4} className="text-end fw-bold">Total cobrado:</td>
-                <td colSpan={3} className="fw-bold">{formatoMoneda(totalCobro(cobroVer))}</td>
+                <td colSpan={4} className="fw-bold">{formatoMoneda(totalCobro(cobroVer))}</td>
               </tr>
             </tfoot>
           </Table>
