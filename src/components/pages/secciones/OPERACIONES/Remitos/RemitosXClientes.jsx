@@ -28,6 +28,16 @@ const RemitosXClientes = () => {
 
         // 3. COMPARAMOS CONTRA "sin facturar" (en minúsculas)
         if (estado === "sin facturar") {
+          const totalRemito =
+            remito.items?.reduce((sum, item) => {
+              return sum + Number(item.cantidad) * Number(item.precioUnitario);
+            }, 0) || 0;
+
+          const saldoRemito = totalRemito - (remito.montoFacturado || 0);
+
+          // Ignorar remitos cuyo saldo real es menor a $1 (ya facturados con centavos de diferencia)
+          if (saldoRemito < 1) return acc;
+
           if (!acc[razonSocial]) {
             acc[razonSocial] = {
               razonSocial,
@@ -36,12 +46,7 @@ const RemitosXClientes = () => {
             };
           }
 
-          const subtotalRemito =
-            remito.items?.reduce((sum, item) => {
-              return sum + Number(item.cantidad) * Number(item.precioUnitario);
-            }, 0) || 0;
-
-          acc[razonSocial].monto += subtotalRemito;
+          acc[razonSocial].monto += saldoRemito;
           acc[razonSocial].cantidadRemitos += 1;
         }
 
