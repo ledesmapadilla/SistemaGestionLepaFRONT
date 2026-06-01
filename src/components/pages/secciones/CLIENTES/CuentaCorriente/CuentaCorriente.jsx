@@ -240,7 +240,7 @@ const CuentaCorriente = () => {
         resumenPorCliente.length === 0 ? (
           <p className="text-muted">Sin movimientos.</p>
         ) : (
-          <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+          <div style={{ maxHeight: "calc(100vh - 360px)", overflowY: "auto" }}>
             <Table striped bordered hover className="text-center align-middle">
               <thead className="table-dark sticky-top">
                 <tr>
@@ -274,7 +274,7 @@ const CuentaCorriente = () => {
         movConSaldo.length === 0 ? (
           <p className="text-muted">Sin movimientos para este cliente.</p>
         ) : (
-          <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+          <div style={{ maxHeight: "calc(100vh - 360px)", overflowY: "auto" }}>
             <Table striped bordered hover className="text-center align-middle">
               <thead className="table-dark sticky-top">
                 <tr>
