@@ -269,7 +269,7 @@ const Obras = () => {
     setPrecios(
       (obra.precio || []).map((p) =>
         p.clasificacion === "Precio cerrado"
-          ? { ...p, precio: (p.observaciones === "-" || !p.observaciones) ? "" : p.observaciones }
+          ? { ...p, precio: (p.precio && p.precio !== 0) ? String(p.precio) : "", observaciones: (p.observaciones === "-") ? "" : (p.observaciones || "") }
           : p
       )
     );
