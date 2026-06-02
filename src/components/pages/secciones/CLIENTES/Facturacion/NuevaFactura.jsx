@@ -40,6 +40,8 @@ const NuevaFactura = () => {
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [numerosExistentes, setNumerosExistentes] = useState([]);
   const [todasFacturas, setTodasFacturas] = useState([]);
+  const [totalEditado, setTotalEditado] = useState(null);
+  const [totalFocusado, setTotalFocusado] = useState(false);
 
   const clienteSeleccionado = watch("cliente");
   const tipoFactura = watch("tipoFactura");
@@ -49,6 +51,8 @@ const NuevaFactura = () => {
 
   const totalBase =
     Object.values(montosAFacturar).reduce((sum, m) => sum + (Number(m) || 0), 0) * signo;
+
+  const totalEfectivo = totalEditado !== null ? totalEditado * signo : totalBase;
 
   useEffect(() => {
     const cargar = async () => {
@@ -129,6 +133,7 @@ const NuevaFactura = () => {
       : totalRem - (remito.montoFacturado || 0);
     setRemitosSeleccionados((prev) => [...prev, remito]);
     setMontosAFacturar((prev) => ({ ...prev, [remito._id]: saldo }));
+    setTotalEditado(null);
     setRemitoElegido("");
   };
 
@@ -139,6 +144,7 @@ const NuevaFactura = () => {
       delete next[id];
       return next;
     });
+    setTotalEditado(null);
   };
 
   const onSubmit = async (data) => {
@@ -153,7 +159,7 @@ const NuevaFactura = () => {
       numeroFactura: data.numeroFactura,
       cliente: data.cliente,
       remitos: remitosSeleccionados.map((r) => r._id),
-      total: totalBase,
+      total: totalEfectivo,
       montosPorRemito: remitosSeleccionados.map((r) => ({
         remitoId: r._id,
         monto: Number(montosAFacturar[r._id]) || 0,
@@ -377,18 +383,50 @@ const NuevaFactura = () => {
             </tbody>
             <tfoot style={{ borderTop: "2px solid #ffc107" }}>
               <tr>
-                <td colSpan={4} className="text-end">Subtotal (sin IVA):</td>
-                <td>{formatoMoneda(Math.abs(totalBase))}</td>
+                <td colSpan={4} className="text-end">
+                  Subtotal (sin IVA):
+                  {totalEditado !== null && (
+                    <span
+                      className="ms-2 text-warning"
+                      style={{ fontSize: "0.75rem", cursor: "pointer" }}
+                      title="Volver al calculado"
+                      onClick={() => setTotalEditado(null)}
+                    >
+                      ↺ calculado: {formatoMoneda(Math.abs(totalBase))}
+                    </span>
+                  )}
+                </td>
+                <td>
+                  <Form.Control
+                    type="text"
+                    size="sm"
+                    value={
+                      totalFocusado
+                        ? (totalEditado !== null ? totalEditado : Math.abs(totalBase))
+                        : formatoMoneda(Math.abs(totalEfectivo))
+                    }
+                    onFocus={() => {
+                      setTotalFocusado(true);
+                      if (totalEditado === null) setTotalEditado(Math.abs(totalBase));
+                    }}
+                    onBlur={() => setTotalFocusado(false)}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      setTotalEditado(isNaN(val) ? 0 : val);
+                    }}
+                    style={{ width: "140px", textAlign: "right" }}
+                  />
+                </td>
                 <td></td>
               </tr>
               <tr>
                 <td colSpan={4} className="text-end">IVA {ivaRate === 0 ? "0%" : "21%"}:</td>
-                <td>{formatoMoneda(Math.abs(totalBase) * ivaRate)}</td>
+                <td>{formatoMoneda(Math.abs(totalEfectivo) * ivaRate)}</td>
                 <td></td>
               </tr>
               <tr>
                 <td colSpan={4} className="text-end fw-bold">Total + IVA:</td>
-                <td className="fw-bold">{formatoMoneda(Math.abs(totalBase) * (1 + ivaRate))}</td>
+                <td className="fw-bold">{formatoMoneda(Math.abs(totalEfectivo) * (1 + ivaRate))}</td>
                 <td></td>
               </tr>
             </tfoot>
