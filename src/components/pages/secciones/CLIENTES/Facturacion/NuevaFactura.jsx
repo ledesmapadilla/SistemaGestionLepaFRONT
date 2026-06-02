@@ -42,6 +42,7 @@ const NuevaFactura = () => {
   const [todasFacturas, setTodasFacturas] = useState([]);
   const [totalEditado, setTotalEditado] = useState(null);
   const [totalFocusado, setTotalFocusado] = useState(false);
+  const [totalInputStr, setTotalInputStr] = useState("0");
 
   const clienteSeleccionado = watch("cliente");
   const tipoFactura = watch("tipoFactura");
@@ -400,20 +401,17 @@ const NuevaFactura = () => {
                   <Form.Control
                     type="text"
                     size="sm"
-                    value={
-                      totalFocusado
-                        ? (totalEditado !== null ? totalEditado : Math.abs(totalBase))
-                        : formatoMoneda(Math.abs(totalEfectivo))
-                    }
+                    value={totalFocusado ? totalInputStr : formatoMoneda(Math.abs(totalEfectivo))}
                     onFocus={() => {
                       setTotalFocusado(true);
-                      if (totalEditado === null) setTotalEditado(Math.abs(totalBase));
+                      setTotalInputStr("0");
                     }}
-                    onBlur={() => setTotalFocusado(false)}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
+                    onBlur={() => {
+                      setTotalFocusado(false);
+                      const val = parseFloat(totalInputStr);
                       setTotalEditado(isNaN(val) ? 0 : val);
                     }}
+                    onChange={(e) => setTotalInputStr(e.target.value)}
                     style={{ width: "140px", textAlign: "right" }}
                   />
                 </td>
