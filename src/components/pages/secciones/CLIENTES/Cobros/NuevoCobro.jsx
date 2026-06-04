@@ -399,7 +399,7 @@ const NuevoCobro = () => {
                       size="sm"
                       style={{ width: "130px", margin: "0 auto", textAlign: "center" }}
                       value={editandoMontoId === f._id ? f.montoCobrado : formatoMoneda(f.montoCobrado)}
-                      onFocus={() => setEditandoMontoId(f._id)}
+                      onFocus={() => { setEditandoMontoId(f._id); actualizarCampo(f._id, "montoCobrado", ""); }}
                       onChange={(e) => actualizarCampo(f._id, "montoCobrado", e.target.value)}
                       onBlur={() => setEditandoMontoId(null)}
                     />
