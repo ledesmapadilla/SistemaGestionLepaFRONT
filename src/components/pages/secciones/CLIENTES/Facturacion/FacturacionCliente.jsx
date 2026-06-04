@@ -62,7 +62,7 @@ const FacturacionCliente = () => {
 
   const abrirEditar = (f) => {
     setFacturaEditar(f);
-    reset({ fecha: f.fecha, tipoFactura: f.tipoFactura, numeroFactura: f.numeroFactura });
+    reset({ fecha: f.fecha, tipoFactura: f.tipoFactura, numeroFactura: f.numeroFactura, facturaAsociada: f.facturaAsociada || "" });
   };
 
   const guardarEdicion = async (data) => {
@@ -376,6 +376,20 @@ const FacturacionCliente = () => {
                 </Form.Group>
               </Col>
             </Row>
+            {facturaEditar?.tipoFactura === "Nota de Crédito" && (
+              <Row className="mb-3">
+                <Col md={12}>
+                  <Form.Group>
+                    <Form.Label>Factura Asociada</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="N° de factura asociada"
+                      {...register("facturaAsociada")}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+            )}
           </Modal.Body>
           <Modal.Footer>
             <Button variant="outline-secondary" onClick={() => setFacturaEditar(null)}>Cancelar</Button>
