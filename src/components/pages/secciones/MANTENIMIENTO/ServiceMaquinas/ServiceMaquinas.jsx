@@ -377,12 +377,14 @@ const ServiceMaquinas = () => {
     const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
     const estHeader = { font: { bold: true }, alignment: { horizontal: "center", vertical: "center" } };
     const estTitulo = { font: { bold: true, sz: 14 }, alignment: { horizontal: "left", vertical: "center" } };
+    const estFecha = { font: { sz: 11 }, alignment: { horizontal: "left", vertical: "center" } };
 
     const wb = XLSXStyle.utils.book_new();
     const ws = {};
 
+    const hoy = new Date().toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
     ws["A1"] = { v: "Service de Máquinas", t: "s", s: estTitulo };
-    ws["A2"] = { v: "", t: "s" };
+    ws["A2"] = { v: `Fecha: ${hoy}`, t: "s", s: estFecha };
 
     const headers = ["Máquina", "Fecha Últ. Registro", "Horómetro (hs)", "Fecha Últ. Service", "Horómetro Últ. Service", "Estado", "Observaciones"];
     const cols = "ABCDEFG";
@@ -424,7 +426,10 @@ const ServiceMaquinas = () => {
 
     const lastRow = maquinas.length + 3;
     ws["!ref"] = `A1:G${lastRow}`;
-    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
+    ws["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } },
+    ];
     ws["!cols"] = [{ wch: 20 }, { wch: 18 }, { wch: 16 }, { wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 28 }];
 
     XLSXStyle.utils.book_append_sheet(wb, ws, "Service Máquinas");

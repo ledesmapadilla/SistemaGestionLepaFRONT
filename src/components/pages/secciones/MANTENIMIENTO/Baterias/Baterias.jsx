@@ -126,8 +126,8 @@ export default function Baterias() {
   };
 
   // ── Nueva batería ───────────────────────────────────────────────
-  const abrirNueva  = () => { setFormNueva(VACIO_NUEVA); setShowNueva(true); };
-  const cerrarNueva = () => { setShowNueva(false); setFormNueva(VACIO_NUEVA); };
+  const abrirNueva  = () => { setFormNueva({ bateria: "", maquina: "", fecha: hoy(), observaciones: "" }); setShowNueva(true); };
+  const cerrarNueva = () => { setShowNueva(false); setFormNueva({ bateria: "", maquina: "", fecha: hoy(), observaciones: "" }); };
 
   const guardarNueva = async () => {
     if (!formNueva.bateria) return Swal.fire("Atención", "Seleccioná una batería.", "warning");
@@ -170,7 +170,7 @@ export default function Baterias() {
     setFormEditar({
       maquina:       r.maquinaLabel || r.maquina?._id || r.maquina || "",
       fecha:         r.fecha || "",
-      observaciones: r.observaciones || "",
+      observaciones: "",
     });
     setShowEditar(true);
   };

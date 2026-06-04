@@ -165,6 +165,7 @@ const NuevaFactura = () => {
         remitoId: r._id,
         monto: Number(montosAFacturar[r._id]) || 0,
       })),
+      ...(esNotaCredito && { estadoPago: "Pagada" }),
     };
 
     try {
