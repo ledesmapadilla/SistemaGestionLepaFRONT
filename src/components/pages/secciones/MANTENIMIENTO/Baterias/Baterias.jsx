@@ -8,6 +8,7 @@ import {
   crearRegistroBateria,
   editarRegistroBateria,
   borrarRegistroBateria,
+  obtenerHistorialBateria,
 } from "../../../../../helpers/queriesRegistroBaterias";
 import { API } from "../../../../../helpers/api";
 import authFetch from "../../../../../helpers/authFetch";
@@ -48,8 +49,10 @@ export default function Baterias() {
   const [guardandoEditar, setGuardandoEditar] = useState(false);
 
   // Modal Historial
-  const [showHistorial, setShowHistorial]       = useState(false);
+  const [showHistorial, setShowHistorial]         = useState(false);
   const [registroHistorial, setRegistroHistorial] = useState(null);
+  const [historialData, setHistorialData]         = useState([]);
+  const [loadingHistorial, setLoadingHistorial]   = useState(false);
 
   // Filtros
   const [filtroBateria, setFiltroBateria] = useState("");
@@ -229,6 +232,21 @@ export default function Baterias() {
     }
   };
 
+  const abrirHistorial = async (r) => {
+    setRegistroHistorial(r);
+    setHistorialData([]);
+    setShowHistorial(true);
+    setLoadingHistorial(true);
+    try {
+      const data = await obtenerHistorialBateria(r._id);
+      setHistorialData(data.historial || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingHistorial(false);
+    }
+  };
+
   const registrosFiltrados = useMemo(() =>
     registros.filter((r) => {
       const nb = r.bateria?.nombreBateria || "";
@@ -362,7 +380,7 @@ export default function Baterias() {
                     <div className="d-flex gap-1 justify-content-center">
                       <Button size="sm" variant="outline-success" onClick={() => { setRegistroVer(r); setShowVer(true); }}>Ver</Button>
                       <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(r)}>Editar</Button>
-                      <Button size="sm" variant="outline-info" onClick={() => { setRegistroHistorial(r); setShowHistorial(true); }}>Historial</Button>
+                      <Button size="sm" variant="outline-info" onClick={() => abrirHistorial(r)}>Historial</Button>
                       <Button size="sm" variant="outline-danger" onClick={() => eliminar(r._id)}>Borrar</Button>
                     </div>
                   </td>
@@ -604,7 +622,9 @@ export default function Baterias() {
           <Modal.Title>Historial - Bateria {registroHistorial?.bateria?.nombreBateria || ""}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {!registroHistorial?.historial?.length ? (
+          {loadingHistorial ? (
+            <div className="text-center py-3"><Spinner animation="border" size="sm" /></div>
+          ) : historialData.length === 0 ? (
             <p className="text-muted text-center">Sin cambios registrados todavía.</p>
           ) : (
             <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
@@ -617,7 +637,7 @@ export default function Baterias() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[...registroHistorial.historial].reverse().map((h, i) => (
+                  {[...historialData].reverse().map((h, i) => (
                     <tr key={i}>
                       <td>{h.maquinaLabel || h.maquina?.maquina || "-"}</td>
                       <td>{h.observaciones || "-"}</td>

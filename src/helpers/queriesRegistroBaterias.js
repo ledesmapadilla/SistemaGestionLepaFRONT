@@ -20,3 +20,9 @@ export const editarRegistroBateria = async (id, data) => {
 export const borrarRegistroBateria = async (id) => {
   return authFetch(`${base}/${id}`, { method: "DELETE" });
 };
+
+export const obtenerHistorialBateria = async (id) => {
+  const res = await authFetch(`${base}/${id}/historial`);
+  if (!res?.ok) throw new Error("Error al obtener historial");
+  return res.json();
+};
