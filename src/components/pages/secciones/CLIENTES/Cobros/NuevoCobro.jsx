@@ -35,6 +35,7 @@ const NuevoCobro = () => {
   const [editandoMontoId, setEditandoMontoId] = useState(null);
   const [obsModal, setObsModal] = useState(null); // { id, texto }
   const [obsTexto, setObsTexto] = useState("");
+  const [chequesExistentes, setChequesExistentes] = useState(new Set());
 
   const clienteSeleccionado = watch("cliente");
   const { onChange: onChangeCliente, ...clienteReg } = register("cliente", { required: "El cliente es obligatorio" });
@@ -52,12 +53,18 @@ const NuevoCobro = () => {
 
         const mapa = {};
         if (cobrosResult.status === "fulfilled") {
+          const cheques = new Set();
           cobrosResult.value.forEach((cobro) => {
             (cobro.pagos || []).forEach((pago) => {
               const id = pago.factura?._id ?? pago.factura;
               if (id) mapa[id] = (mapa[id] || 0) + (pago.montoCobrado || 0);
             });
+            (cobro.mediosPago || []).forEach((m) => {
+              if ((m.medioPago === "Cheque" || m.medioPago === "E-Cheq") && m.numeroCheque)
+                cheques.add(m.numeroCheque);
+            });
           });
+          setChequesExistentes(cheques);
         }
         setCobradoPorFactura(mapa);
 
@@ -148,6 +155,10 @@ const NuevoCobro = () => {
         Swal.fire({ icon: "warning", title: "Fecha de cobro faltante", text: "Ingresá la fecha de cobro del cheque" });
         return;
       }
+      if (esCheque(m.medioPago) && m.numeroCheque && chequesExistentes.has(m.numeroCheque)) {
+        Swal.fire({ icon: "error", title: "Cheque duplicado", text: `El cheque N° ${m.numeroCheque} ya existe en otro cobro` });
+        return;
+      }
     }
     const totalMediosPago = mediosPago.reduce((sum, m) => sum + (parseFloat(m.monto) || 0), 0);
     if (Math.abs(totalMediosPago - totalCobrado) > 0.01) {
@@ -229,6 +240,10 @@ const NuevoCobro = () => {
       }
       if (esCheque(m.medioPago) && !m.fechaCobro) {
         Swal.fire({ icon: "warning", title: "Fecha de cobro faltante", text: `Ingresá la fecha de cobro del cheque` });
+        return;
+      }
+      if (esCheque(m.medioPago) && m.numeroCheque && chequesExistentes.has(m.numeroCheque)) {
+        Swal.fire({ icon: "error", title: "Cheque duplicado", text: `El cheque N° ${m.numeroCheque} ya existe en otro cobro` });
         return;
       }
     }
