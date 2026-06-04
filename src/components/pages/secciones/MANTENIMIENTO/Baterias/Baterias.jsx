@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Form, Modal, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
@@ -191,7 +191,8 @@ export default function Baterias() {
     try {
       const res = await editarRegistroBateria(registroEditar._id, payloadEdit);
       if (res?.ok) {
-        await cargar();
+        const data = await res.json();
+        setRegistros((prev) => prev.map((r) => r._id === registroEditar._id ? data.registro : r));
         cerrarEditar();
         Swal.fire({ icon: "success", title: "Registro actualizado", timer: 1500, showConfirmButton: false });
       } else {
@@ -222,6 +223,26 @@ export default function Baterias() {
     }
   };
 
+  const registrosFiltrados = useMemo(() =>
+    registros.filter((r) => {
+      const nb = r.bateria?.nombreBateria || "";
+      const nm = r.maquinaLabel || r.maquina?.maquina || "";
+      return (!filtroBateria || nb === filtroBateria) && (!filtroMaquina || nm === filtroMaquina);
+    }),
+    [registros, filtroBateria, filtroMaquina]
+  );
+
+  const bateriasUnicas = useMemo(() =>
+    [...new Set(registros.map((r) => r.bateria?.nombreBateria).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
+    [registros]
+  );
+
+  const maquinasUnicas = useMemo(() =>
+    [...new Set(registros.map((r) => r.maquinaLabel || r.maquina?.maquina).filter(Boolean))].sort(),
+    [registros]
+  );
+
   const estiloX = {
     position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)",
     cursor: "pointer", color: "#fff", fontSize: "14px", fontWeight: "900", zIndex: 5, userSelect: "none",
@@ -245,12 +266,6 @@ export default function Baterias() {
     ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
     ws["A3"] = { v: "", t: "s" };
     headers.forEach((h, i) => { ws[`${cols[i]}4`] = { v: h, t: "s", s: estHeader }; });
-
-    const registrosFiltrados = registros.filter(r => {
-      const nb = r.bateria?.nombreBateria || "";
-      const nm = r.maquinaLabel || r.maquina?.maquina || "";
-      return (!filtroBateria || nb === filtroBateria) && (!filtroMaquina || nm === filtroMaquina);
-    });
 
     registrosFiltrados.forEach((r, idx) => {
       const row = idx + 5;
@@ -292,7 +307,7 @@ export default function Baterias() {
         <div style={{ position: "relative", width: "220px" }}>
           <Form.Select size="sm" value={filtroBateria} onChange={(e) => setFiltroBateria(e.target.value)} style={filtroBateria ? selectActivo : {}}>
             <option value="">Nombre batería</option>
-            {[...new Set(registros.map(r => r.bateria?.nombreBateria).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map(nombre => (
+            {bateriasUnicas.map((nombre) => (
               <option key={nombre} value={nombre}>{nombre}</option>
             ))}
           </Form.Select>
@@ -301,7 +316,7 @@ export default function Baterias() {
         <div style={{ position: "relative", width: "220px" }}>
           <Form.Select size="sm" value={filtroMaquina} onChange={(e) => setFiltroMaquina(e.target.value)} style={filtroMaquina ? selectActivo : {}}>
             <option value="">Máquina</option>
-            {[...new Set(registros.map(r => r.maquinaLabel || r.maquina?.maquina).filter(Boolean))].sort().map(nombre => (
+            {maquinasUnicas.map((nombre) => (
               <option key={nombre} value={nombre}>{nombre}</option>
             ))}
           </Form.Select>
@@ -320,14 +335,10 @@ export default function Baterias() {
             </tr>
           </thead>
           <tbody>
-            {registros.length === 0 ? (
+            {registrosFiltrados.length === 0 ? (
               <tr><td colSpan={4} className="text-muted py-3">Sin baterías registradas</td></tr>
             ) : (
-              registros.filter(r => {
-                const nb = r.bateria?.nombreBateria || "";
-                const nm = r.maquinaLabel || r.maquina?.maquina || "";
-                return (!filtroBateria || nb === filtroBateria) && (!filtroMaquina || nm === filtroMaquina);
-              }).map((r) => (
+              registrosFiltrados.map((r) => (
                 <tr key={r._id}>
                   <td style={r.maquinaLabel === "vendida" ? { textDecoration: "line-through", textDecorationColor: "red", textDecorationThickness: "2px", color: "white" } : {}}>{r.bateria?.nombreBateria || "-"}</td>
                   <td style={r.maquinaLabel === "vendida" ? { textDecoration: "line-through", textDecorationColor: "red", textDecorationThickness: "2px", color: "white" } : {}}>{r.maquinaLabel || r.maquina?.maquina || "-"}</td>
