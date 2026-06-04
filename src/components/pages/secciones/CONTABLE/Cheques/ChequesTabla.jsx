@@ -177,8 +177,9 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
         />
       </div>
 
+      <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
       <Table striped bordered hover className="text-center align-middle">
-        <thead className="table-dark">
+        <thead className="table-dark sticky-top">
           <tr>
             <th>Cliente</th>
             <th>N° de Cheque</th>
@@ -227,6 +228,7 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
           )}
         </tbody>
       </Table>
+      </div>
     </div>
   );
 };
