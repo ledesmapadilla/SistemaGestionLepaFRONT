@@ -184,26 +184,36 @@ const FacturacionCliente = () => {
       </div>
 
       <div className="d-flex gap-3 mb-3">
-        <Form.Select
-          value={filtroNumero}
-          onChange={(e) => setFiltroNumero(e.target.value)}
-          style={{ maxWidth: "180px" }}
-        >
-          <option value="">Todos los N°</option>
-          {[...new Set(facturas.map((f) => f.numeroFactura).filter(Boolean))].sort().map((n) => (
-            <option key={n} value={n}>{n}</option>
-          ))}
-        </Form.Select>
-        <Form.Select
-          value={filtroCliente}
-          onChange={(e) => setFiltroCliente(e.target.value)}
-          style={{ maxWidth: "250px" }}
-        >
-          <option value="">Todos los clientes</option>
-          {clientesUnicos.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </Form.Select>
+        <div style={{ position: "relative", width: "180px" }}>
+          <Form.Select
+            value={filtroNumero}
+            onChange={(e) => setFiltroNumero(e.target.value)}
+            style={filtroNumero ? selectActivo : {}}
+          >
+            <option value="">Todos los N°</option>
+            {[...new Set(facturas.map((f) => f.numeroFactura).filter(Boolean))].sort().map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </Form.Select>
+          {filtroNumero && (
+            <span onClick={() => setFiltroNumero("")} style={estiloX}>✕</span>
+          )}
+        </div>
+        <div style={{ position: "relative", width: "250px" }}>
+          <Form.Select
+            value={filtroCliente}
+            onChange={(e) => setFiltroCliente(e.target.value)}
+            style={filtroCliente ? selectActivo : {}}
+          >
+            <option value="">Todos los clientes</option>
+            {clientesUnicos.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </Form.Select>
+          {filtroCliente && (
+            <span onClick={() => setFiltroCliente("")} style={estiloX}>✕</span>
+          )}
+        </div>
         <div style={{ position: "relative", width: "180px" }}>
           <Form.Select
             value={filtroEstado}
