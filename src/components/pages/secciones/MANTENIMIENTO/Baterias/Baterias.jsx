@@ -399,7 +399,7 @@ export default function Baterias() {
             <Form.Group className="mb-3 text-center">
               <Form.Label>Nombre batería <span className="text-danger">*</span></Form.Label>
               <Form.Control
-                className="w-50 mx-auto"
+                className="w-50 mx-auto text-center"
                 value={formAlta.nombreBateria}
                 onChange={(e) => setFormAlta((p) => ({ ...p, nombreBateria: e.target.value }))}
               />
@@ -407,7 +407,7 @@ export default function Baterias() {
             <Form.Group className="mb-3 text-center">
               <Form.Label>Marca <span className="text-danger">*</span></Form.Label>
               <Form.Control
-                className="w-50 mx-auto"
+                className="w-50 mx-auto text-center"
                 value={formAlta.marca}
                 onChange={(e) => setFormAlta((p) => ({ ...p, marca: e.target.value }))}
               />
@@ -416,7 +416,7 @@ export default function Baterias() {
               <Form.Label>Fecha <span className="text-danger">*</span></Form.Label>
               <Form.Control
                 type="date"
-                className="w-50 mx-auto"
+                className="w-50 mx-auto text-center"
                 value={formAlta.fecha}
                 onChange={(e) => setFormAlta((p) => ({ ...p, fecha: e.target.value }))}
               />
