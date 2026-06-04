@@ -76,7 +76,12 @@ export default function Baterias() {
   useEffect(() => { cargar(); }, []);
 
   // ── Alta de batería ──────────────────────────────────────────────
-  const abrirAlta  = () => { setFormAlta(VACIO_ALTA); setShowAlta(true); };
+  const abrirAlta = () => {
+    const numeros = catalogo.map((b) => parseInt(b.nombreBateria, 10)).filter((n) => !isNaN(n));
+    const siguiente = numeros.length > 0 ? String(Math.max(...numeros) + 1) : "1";
+    setFormAlta({ ...VACIO_ALTA, nombreBateria: siguiente });
+    setShowAlta(true);
+  };
   const cerrarAlta = () => { setShowAlta(false); setFormAlta(VACIO_ALTA); };
 
   const guardarAlta = async () => {
