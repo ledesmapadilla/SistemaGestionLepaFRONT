@@ -68,6 +68,7 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
 
     const ws = {};
     ws["A1"] = { v: "CHEQUES DE TERCEROS", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+    ws["A2"] = { v: `Fecha: ${new Date().toLocaleDateString("es-AR")}`, t: "s", s: { font: { italic: true, sz: 10 }, alignment: leftAlign } };
 
     headers.forEach((h, i) => {
       ws[`${cols[i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
