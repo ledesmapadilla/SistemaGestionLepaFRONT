@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Form, Modal, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
@@ -54,6 +54,7 @@ export default function Cubiertas() {
   // Filtros
   const [filtroCubierta, setFiltroCubierta] = useState("");
   const [filtroMaquina, setFiltroMaquina]   = useState("");
+  const [mostrarDesechadas, setMostrarDesechadas] = useState(false);
 
   const cargar = async () => {
     setCargando(true);
@@ -76,7 +77,12 @@ export default function Cubiertas() {
   useEffect(() => { cargar(); }, []);
 
   // ── Alta de cubierta ─────────────────────────────────────────────
-  const abrirAlta  = () => { setFormAlta(VACIO_ALTA); setShowAlta(true); };
+  const abrirAlta = () => {
+    const numeros = catalogo.map((c) => parseInt(c.nombreCubierta, 10)).filter((n) => !isNaN(n));
+    const siguiente = numeros.length > 0 ? String(Math.max(...numeros) + 1) : "1";
+    setFormAlta({ ...VACIO_ALTA, nombreCubierta: siguiente });
+    setShowAlta(true);
+  };
   const cerrarAlta = () => { setShowAlta(false); setFormAlta(VACIO_ALTA); };
 
   const guardarAlta = async () => {
@@ -192,7 +198,8 @@ export default function Cubiertas() {
     try {
       const res = await editarRegistroCubierta(registroEditar._id, payloadEdit);
       if (res?.ok) {
-        await cargar();
+        const data = await res.json();
+        setRegistros((prev) => prev.map((r) => r._id === registroEditar._id ? data.registro : r));
         cerrarEditar();
         Swal.fire({ icon: "success", title: "Registro actualizado", timer: 1500, showConfirmButton: false });
       } else {
@@ -223,6 +230,27 @@ export default function Cubiertas() {
     }
   };
 
+  const registrosFiltrados = useMemo(() =>
+    registros.filter((r) => {
+      const nc = r.cubierta?.nombreCubierta || "";
+      const nm = r.maquinaLabel || r.maquina?.maquina || "";
+      if (!mostrarDesechadas && (r.maquinaLabel === "Desechada" || r.maquinaLabel === "Perdida")) return false;
+      return (!filtroCubierta || nc === filtroCubierta) && (!filtroMaquina || nm === filtroMaquina);
+    }),
+    [registros, filtroCubierta, filtroMaquina, mostrarDesechadas]
+  );
+
+  const cubiertasUnicas = useMemo(() =>
+    [...new Set(registros.map((r) => r.cubierta?.nombreCubierta).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
+    [registros]
+  );
+
+  const maquinasUnicas = useMemo(() =>
+    [...new Set(registros.map((r) => r.maquinaLabel || r.maquina?.maquina).filter(Boolean))].sort(),
+    [registros]
+  );
+
   const estiloX = {
     position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)",
     cursor: "pointer", color: "#fff", fontSize: "14px", fontWeight: "900", zIndex: 5, userSelect: "none",
@@ -246,12 +274,6 @@ export default function Cubiertas() {
     ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
     ws["A3"] = { v: "", t: "s" };
     headers.forEach((h, i) => { ws[`${cols[i]}4`] = { v: h, t: "s", s: estHeader }; });
-
-    const registrosFiltrados = registros.filter(r => {
-      const nc = r.cubierta?.nombreCubierta || "";
-      const nm = r.maquinaLabel || r.maquina?.maquina || "";
-      return (!filtroCubierta || nc === filtroCubierta) && (!filtroMaquina || nm === filtroMaquina);
-    });
 
     registrosFiltrados.forEach((r, idx) => {
       const row = idx + 5;
@@ -292,7 +314,7 @@ export default function Cubiertas() {
         <div style={{ position: "relative", width: "220px" }}>
           <Form.Select size="sm" value={filtroCubierta} onChange={(e) => setFiltroCubierta(e.target.value)} style={filtroCubierta ? selectActivo : {}}>
             <option value="">Nombre cubierta</option>
-            {[...new Set(registros.map(r => r.cubierta?.nombreCubierta).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map(nombre => (
+            {cubiertasUnicas.map((nombre) => (
               <option key={nombre} value={nombre}>{nombre}</option>
             ))}
           </Form.Select>
@@ -301,12 +323,20 @@ export default function Cubiertas() {
         <div style={{ position: "relative", width: "220px" }}>
           <Form.Select size="sm" value={filtroMaquina} onChange={(e) => setFiltroMaquina(e.target.value)} style={filtroMaquina ? selectActivo : {}}>
             <option value="">Máquina</option>
-            {[...new Set(registros.map(r => r.maquinaLabel || r.maquina?.maquina).filter(Boolean))].sort().map(nombre => (
+            {maquinasUnicas.map((nombre) => (
               <option key={nombre} value={nombre}>{nombre}</option>
             ))}
           </Form.Select>
           {filtroMaquina && <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>}
         </div>
+        <Form.Check
+          type="switch"
+          id="switch-desechadas"
+          label="Ver desechadas"
+          checked={mostrarDesechadas}
+          onChange={(e) => setMostrarDesechadas(e.target.checked)}
+          className="ms-2 align-self-center"
+        />
       </div>
 
       <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
@@ -320,14 +350,10 @@ export default function Cubiertas() {
             </tr>
           </thead>
           <tbody>
-            {registros.length === 0 ? (
+            {registrosFiltrados.length === 0 ? (
               <tr><td colSpan={4} className="text-muted py-3">Sin cubiertas registradas</td></tr>
             ) : (
-              registros.filter(r => {
-                const nc = r.cubierta?.nombreCubierta || "";
-                const nm = r.maquinaLabel || r.maquina?.maquina || "";
-                return (!filtroCubierta || nc === filtroCubierta) && (!filtroMaquina || nm === filtroMaquina);
-              }).map((r) => (
+              registrosFiltrados.map((r) => (
                 <tr key={r._id}>
                   <td style={r.maquinaLabel === "Desechada" ? { textDecoration: "line-through", textDecorationColor: "red", textDecorationThickness: "2px", color: "white" } : r.maquinaLabel === "Perdida" ? { textDecoration: "line-through", textDecorationColor: "#ffc107", textDecorationThickness: "2px", color: "white" } : {}}>{r.cubierta?.nombreCubierta || "-"}</td>
                   <td style={r.maquinaLabel === "Desechada" ? { textDecoration: "line-through", textDecorationColor: "red", textDecorationThickness: "2px", color: "white" } : r.maquinaLabel === "Perdida" ? { textDecoration: "line-through", textDecorationColor: "#ffc107", textDecorationThickness: "2px", color: "white" } : {}}>{r.maquinaLabel || r.maquina?.maquina || "-"}</td>
@@ -372,7 +398,7 @@ export default function Cubiertas() {
             <Form.Group className="mb-3 text-center">
               <Form.Label>Nombre cubierta <span className="text-danger">*</span></Form.Label>
               <Form.Control
-                className="w-50 mx-auto"
+                className="w-50 mx-auto text-center"
                 value={formAlta.nombreCubierta}
                 onChange={(e) => setFormAlta((p) => ({ ...p, nombreCubierta: e.target.value }))}
               />
@@ -381,7 +407,7 @@ export default function Cubiertas() {
               <Form.Label>Fecha <span className="text-danger">*</span></Form.Label>
               <Form.Control
                 type="date"
-                className="w-50 mx-auto"
+                className="w-50 mx-auto text-center"
                 value={formAlta.fecha}
                 onChange={(e) => setFormAlta((p) => ({ ...p, fecha: e.target.value }))}
               />
@@ -520,6 +546,7 @@ export default function Cubiertas() {
                 <td>
                   <Form.Select
                     size="sm"
+                    className="text-center"
                     value={formEditar.maquina}
                     onChange={(e) => setFormEditar((p) => ({ ...p, maquina: e.target.value }))}
                   >
@@ -536,6 +563,7 @@ export default function Cubiertas() {
                   <Form.Control
                     size="sm"
                     type="date"
+                    className="text-center"
                     value={formEditar.fecha}
                     onChange={(e) => setFormEditar((p) => ({ ...p, fecha: e.target.value }))}
                   />
@@ -544,6 +572,7 @@ export default function Cubiertas() {
                   <Form.Control
                     size="sm"
                     type="text"
+                    className="text-center"
                     value={formEditar.observaciones}
                     onChange={(e) => setFormEditar((p) => ({ ...p, observaciones: e.target.value }))}
                   />
