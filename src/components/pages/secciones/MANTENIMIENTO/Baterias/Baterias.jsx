@@ -54,6 +54,7 @@ export default function Baterias() {
   // Filtros
   const [filtroBateria, setFiltroBateria] = useState("");
   const [filtroMaquina, setFiltroMaquina] = useState("");
+  const [mostrarVendidas, setMostrarVendidas] = useState(false);
 
   const cargar = async () => {
     setCargando(true);
@@ -232,9 +233,10 @@ export default function Baterias() {
     registros.filter((r) => {
       const nb = r.bateria?.nombreBateria || "";
       const nm = r.maquinaLabel || r.maquina?.maquina || "";
+      if (!mostrarVendidas && r.maquinaLabel === "vendida") return false;
       return (!filtroBateria || nb === filtroBateria) && (!filtroMaquina || nm === filtroMaquina);
     }),
-    [registros, filtroBateria, filtroMaquina]
+    [registros, filtroBateria, filtroMaquina, mostrarVendidas]
   );
 
   const bateriasUnicas = useMemo(() =>
@@ -327,6 +329,14 @@ export default function Baterias() {
           </Form.Select>
           {filtroMaquina && <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>}
         </div>
+        <Form.Check
+          type="switch"
+          id="switch-vendidas"
+          label="Ver vendidas"
+          checked={mostrarVendidas}
+          onChange={(e) => setMostrarVendidas(e.target.checked)}
+          className="ms-2 align-self-center"
+        />
       </div>
 
       <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
@@ -546,6 +556,7 @@ export default function Baterias() {
                 <td>
                   <Form.Select
                     size="sm"
+                    className="text-center"
                     value={formEditar.maquina}
                     onChange={(e) => setFormEditar((p) => ({ ...p, maquina: e.target.value }))}
                   >
@@ -561,6 +572,7 @@ export default function Baterias() {
                   <Form.Control
                     size="sm"
                     type="date"
+                    className="text-center"
                     value={formEditar.fecha}
                     onChange={(e) => setFormEditar((p) => ({ ...p, fecha: e.target.value }))}
                   />
@@ -569,6 +581,7 @@ export default function Baterias() {
                   <Form.Control
                     size="sm"
                     type="text"
+                    className="text-center"
                     value={formEditar.observaciones}
                     onChange={(e) => setFormEditar((p) => ({ ...p, observaciones: e.target.value }))}
                   />
