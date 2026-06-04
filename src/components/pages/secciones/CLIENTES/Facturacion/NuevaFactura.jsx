@@ -165,7 +165,7 @@ const NuevaFactura = () => {
         remitoId: r._id,
         monto: Number(montosAFacturar[r._id]) || 0,
       })),
-      ...(esNotaCredito && { estadoPago: "Pagada" }),
+      ...(esNotaCredito && { estadoPago: "Pagada", facturaAsociada: data.facturaAsociada || "" }),
     };
 
     try {
@@ -278,6 +278,23 @@ const NuevaFactura = () => {
             </Form.Group>
           </Col>
         </Row>
+
+        {esNotaCredito && (
+          <Row className="mb-3">
+            <Col md={4}>
+              <Form.Group>
+                <Form.Label>Factura Asociada</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="N° de factura que origina la NC"
+                  {...register("facturaAsociada", { required: "Ingresá la factura asociada" })}
+                  isInvalid={!!errors.facturaAsociada}
+                />
+                <Form.Text className="text-danger">{errors.facturaAsociada?.message}</Form.Text>
+              </Form.Group>
+            </Col>
+          </Row>
+        )}
 
         <Row className="mb-3 align-items-end">
           <Col md={6}>

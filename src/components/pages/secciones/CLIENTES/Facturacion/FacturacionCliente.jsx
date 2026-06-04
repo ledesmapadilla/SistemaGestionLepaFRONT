@@ -277,6 +277,9 @@ const FacturacionCliente = () => {
             <span><strong>Fecha:</strong> {formatearFecha(facturaVer?.fecha)}</span>
             <span><strong>Tipo:</strong> {facturaVer?.tipoFactura}</span>
             <span><strong>Estado:</strong> {labelEstado(facturaVer?.estadoPago)}</span>
+            {facturaVer?.facturaAsociada && (
+              <span><strong>Factura asociada:</strong> {facturaVer.facturaAsociada}</span>
+            )}
           </div>
           <Table striped bordered hover className="text-center align-middle">
             <thead className="table-dark">
