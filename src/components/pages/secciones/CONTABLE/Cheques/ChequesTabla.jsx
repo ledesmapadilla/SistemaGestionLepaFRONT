@@ -51,7 +51,7 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
   const filasFiltradas = useMemo(() => {
     return cheques.filter((c) => {
       if (filtroCliente && c.cliente !== filtroCliente) return false;
-      if (filtroNumero && c.numeroCheque !== filtroNumero) return false;
+      if (filtroNumero && !String(c.numeroCheque).includes(filtroNumero)) return false;
       if (filtroValor && String(c.valor) !== filtroValor) return false;
       if (filtroFecha && c.fechaVencimiento !== filtroFecha) return false;
       if (filtroEstado && c.estado !== filtroEstado) return false;
@@ -142,13 +142,18 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
           opciones={unicos("cliente")}
           width="200px"
         />
-        <FiltroSelect
-          value={filtroNumero}
-          onChange={setFiltroNumero}
-          placeholder="N° Cheque"
-          opciones={unicos("numeroCheque")}
-          width="160px"
-        />
+        <div style={{ position: "relative", width: "160px" }}>
+          <Form.Control
+            size="sm"
+            type="text"
+            placeholder="N° Cheque"
+            value={filtroNumero}
+            onChange={(e) => setFiltroNumero(e.target.value)}
+          />
+          {filtroNumero && (
+            <span onClick={() => setFiltroNumero("")} style={estiloX}>✕</span>
+          )}
+        </div>
         <FiltroSelect
           value={filtroValor}
           onChange={setFiltroValor}
