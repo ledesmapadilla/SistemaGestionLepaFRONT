@@ -284,12 +284,27 @@ const NuevaFactura = () => {
             <Col md={4}>
               <Form.Group>
                 <Form.Label>Factura Asociada</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="N° de factura que origina la NC"
-                  {...register("facturaAsociada", { required: "Ingresá la factura asociada" })}
+                <Form.Select
+                  {...register("facturaAsociada", { required: "Seleccioná la factura asociada" })}
                   isInvalid={!!errors.facturaAsociada}
-                />
+                  disabled={!clienteSeleccionado}
+                >
+                  <option value="">
+                    {clienteSeleccionado ? "Seleccionar factura impaga..." : "Primero elegí un cliente"}
+                  </option>
+                  {todasFacturas
+                    .filter(
+                      (f) =>
+                        f.cliente === clienteSeleccionado &&
+                        f.estadoPago === "Pendiente" &&
+                        f.tipoFactura !== "Nota de Crédito"
+                    )
+                    .map((f) => (
+                      <option key={f._id} value={f.numeroFactura}>
+                        {f.tipoFactura} N° {f.numeroFactura} — {formatearFecha(f.fecha)} — {formatoMoneda(f.tipoFactura === "Factura X" ? f.total : f.total * 1.21)}
+                      </option>
+                    ))}
+                </Form.Select>
                 <Form.Text className="text-danger">{errors.facturaAsociada?.message}</Form.Text>
               </Form.Group>
             </Col>
