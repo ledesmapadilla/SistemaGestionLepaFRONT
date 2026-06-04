@@ -8,6 +8,7 @@ import {
   crearRegistroCubierta,
   editarRegistroCubierta,
   borrarRegistroCubierta,
+  obtenerHistorialCubierta,
 } from "../../../../../helpers/queriesRegistroCubiertas";
 import { API } from "../../../../../helpers/api";
 import authFetch from "../../../../../helpers/authFetch";
@@ -50,6 +51,8 @@ export default function Cubiertas() {
   // Modal Historial
   const [showHistorial, setShowHistorial]         = useState(false);
   const [registroHistorial, setRegistroHistorial] = useState(null);
+  const [historialData, setHistorialData]         = useState([]);
+  const [loadingHistorial, setLoadingHistorial]   = useState(false);
 
   // Filtros
   const [filtroCubierta, setFiltroCubierta] = useState("");
@@ -230,6 +233,21 @@ export default function Cubiertas() {
     }
   };
 
+  const abrirHistorial = async (r) => {
+    setRegistroHistorial(r);
+    setHistorialData([]);
+    setShowHistorial(true);
+    setLoadingHistorial(true);
+    try {
+      const data = await obtenerHistorialCubierta(r._id);
+      setHistorialData(data.historial || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingHistorial(false);
+    }
+  };
+
   const registrosFiltrados = useMemo(() =>
     registros.filter((r) => {
       const nc = r.cubierta?.nombreCubierta || "";
@@ -249,6 +267,12 @@ export default function Cubiertas() {
   const maquinasUnicas = useMemo(() =>
     [...new Set(registros.map((r) => r.maquinaLabel || r.maquina?.maquina).filter(Boolean))].sort(),
     [registros]
+  );
+
+  const EXCLUIR_MAQUINAS = ["pc1","pc2","pc3","pc4","pc5","wa200","xcmg","nisan","nissan","ranger","fiat","jd1","jd2","motoniveladora","carretón grande","carreton grande"];
+  const maquinasFiltradas = useMemo(() =>
+    maquinas.filter((m) => !EXCLUIR_MAQUINAS.includes((m.maquina || "").toLowerCase().trim())),
+    [maquinas]
   );
 
   const estiloX = {
@@ -362,7 +386,7 @@ export default function Cubiertas() {
                     <div className="d-flex gap-1 justify-content-center">
                       <Button size="sm" variant="outline-success" onClick={() => { setRegistroVer(r); setShowVer(true); }}>Ver</Button>
                       <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(r)}>Editar</Button>
-                      <Button size="sm" variant="outline-info" onClick={() => { setRegistroHistorial(r); setShowHistorial(true); }}>Historial</Button>
+                      <Button size="sm" variant="outline-info" onClick={() => abrirHistorial(r)}>Historial</Button>
                       <Button size="sm" variant="outline-danger" onClick={() => eliminar(r._id)}>Borrar</Button>
                     </div>
                   </td>
@@ -491,7 +515,7 @@ export default function Cubiertas() {
                 <option value="Desechada">Desechada</option>
                 <option value="Auxilio - Galpón">Auxilio - Galpón</option>
                 <option value="Perdida">Perdida</option>
-                {maquinas.filter(m => !["pc1","pc2","pc3","pc4","pc5","wa200","xcmg","nisan","nissan","ranger","fiat","jd1","jd2","motoniveladora","carretón grande","carreton grande"].includes((m.maquina||"").toLowerCase().trim())).map((m) => (
+                {maquinasFiltradas.map((m) => (
                   <option key={m._id} value={m._id}>{m.maquina}</option>
                 ))}
               </Form.Select>
@@ -554,7 +578,7 @@ export default function Cubiertas() {
                     <option value="Desechada">Desechada</option>
                     <option value="Auxilio - Galpón">Auxilio - Galpón</option>
                     <option value="Perdida">Perdida</option>
-                    {maquinas.filter(m => !["pc1","pc2","pc3","pc4","pc5","wa200","xcmg","nisan","nissan","ranger","fiat","jd1","jd2","motoniveladora","carretón grande","carreton grande"].includes((m.maquina||"").toLowerCase().trim())).map((m) => (
+                    {maquinasFiltradas.map((m) => (
                       <option key={m._id} value={m._id}>{m.maquina}</option>
                     ))}
                   </Form.Select>
@@ -595,7 +619,9 @@ export default function Cubiertas() {
           <Modal.Title>Historial - Cubierta {registroHistorial?.cubierta?.nombreCubierta || ""}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {!registroHistorial?.historial?.length ? (
+          {loadingHistorial ? (
+            <div className="text-center py-3"><Spinner animation="border" size="sm" /></div>
+          ) : historialData.length === 0 ? (
             <p className="text-muted text-center">Sin cambios registrados todavía.</p>
           ) : (
             <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
@@ -608,7 +634,7 @@ export default function Cubiertas() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[...registroHistorial.historial].reverse().map((h, i) => (
+                  {[...historialData].reverse().map((h, i) => (
                     <tr key={i}>
                       <td>{h.maquinaLabel || h.maquina?.maquina || "-"}</td>
                       <td>{h.observaciones || "-"}</td>

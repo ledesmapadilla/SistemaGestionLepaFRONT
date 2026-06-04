@@ -20,3 +20,9 @@ export const editarRegistroCubierta = async (id, data) => {
 export const borrarRegistroCubierta = async (id) => {
   return authFetch(`${base}/${id}`, { method: "DELETE" });
 };
+
+export const obtenerHistorialCubierta = async (id) => {
+  const res = await authFetch(`${base}/${id}/historial`);
+  if (!res?.ok) throw new Error("Error al obtener historial");
+  return res.json();
+};
