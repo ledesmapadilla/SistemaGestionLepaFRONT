@@ -260,7 +260,11 @@ const FacturacionCliente = () => {
             ) : (
               facturasFiltradas.map((f) => (
                 <tr key={f._id}>
-                  <td>{f.numeroFactura}</td>
+                  <td>
+                    {f.tipoFactura === "Nota de Crédito" && f.facturaAsociada
+                      ? `${f.numeroFactura} - ${f.facturaAsociada}`
+                      : f.numeroFactura}
+                  </td>
                   <td>{formatearFecha(f.fecha)}</td>
                   <td>{f.cliente}</td>
                   <td className="text-muted">{obrasDeFactura(f)}</td>
