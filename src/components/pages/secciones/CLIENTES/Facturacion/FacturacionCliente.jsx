@@ -251,7 +251,17 @@ const FacturacionCliente = () => {
                   <td className="text-muted">{obrasDeFactura(f)}</td>
                   <td>{f.tipoFactura}</td>
                   <td>{formatoMoneda(f.tipoFactura === "Factura X" ? f.total : f.total * 1.21)}</td>
-                  <td>{labelEstado(f.estadoPago)}</td>
+                  <td>
+                    <span
+                      style={{ cursor: "pointer", userSelect: "none" }}
+                      onClick={() => toggleEstado(f)}
+                      title="Clic para cambiar estado"
+                    >
+                      {f.estadoPago === "Pagada"
+                        ? <span className="text-success fw-bold">Pagada</span>
+                        : <span className="text-warning fw-bold">Impaga</span>}
+                    </span>
+                  </td>
                   <td className="d-flex gap-1 justify-content-center align-items-center">
                     <Button variant="outline-success" size="sm" onClick={() => setFacturaVerId(f._id)}>Ver</Button>
                     <Button variant="outline-warning" size="sm" onClick={() => abrirEditar(f)}>Editar</Button>
