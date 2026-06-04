@@ -19,7 +19,11 @@ const formatearFecha = (fecha) => {
   return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : fecha;
 };
 
-const labelEstado = (e) => (e === "Pendiente" ? "Impaga" : e ?? "-");
+const labelEstado = (e) => {
+  if (e === "Pendiente") return "Impaga";
+  if (e === "Anulada") return "Anulada";
+  return e ?? "-";
+};
 
 const obrasDeFactura = (f) => {
   const nombres = [...new Set((f.remitos || []).map((r) => r.obra?.nombreobra).filter(Boolean))];
@@ -209,6 +213,7 @@ const FacturacionCliente = () => {
             <option value="">Todos los estados</option>
             <option value="Pendiente">Impaga</option>
             <option value="Pagada">Pagada</option>
+            <option value="Anulada">Anulada</option>
           </Form.Select>
           {filtroEstado && (
             <span onClick={() => setFiltroEstado("")} style={estiloX}>✕</span>
