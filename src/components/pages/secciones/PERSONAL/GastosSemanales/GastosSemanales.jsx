@@ -329,10 +329,10 @@ const GastosSemanales = () => {
 
     const filaDePersonal = (p) => {
       const semanal = p.semanal?.length ? p.semanal[p.semanal.length - 1].valor : 0;
-      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: false, seleccionado: false };
+      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false };
     };
     const filaSoloAsistencia = (nombre) => ({
-      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0, marcado: false, seleccionado: false,
+      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false,
     });
 
     const semanalActualMap = {};
@@ -462,7 +462,7 @@ const GastosSemanales = () => {
           <div className="d-flex justify-content-start mb-2">
             <Button variant="outline-primary" size="sm" onClick={() => {
               modificado.current = true;
-              setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", pagado: 0, marcado: false, seleccionado: false, nuevo: true }]);
+              setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, nuevo: true }]);
             }}>+ Agregar personal</Button>
           </div>
           <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "65vh" }}>
@@ -494,8 +494,8 @@ const GastosSemanales = () => {
                         <Form.Control size="sm" type="text" value={r.personal} placeholder="Nombre..." onChange={(e) => actualizar(idx, "personal", e.target.value)} />
                       ) : (
                         <span
-                          onClick={() => actualizar(idx, "marcado", !r.marcado)}
-                          style={{ cursor: "pointer", color: r.marcado ? "#ffc107" : "#dee2e6", userSelect: "none" }}
+                          onClick={() => actualizar(idx, "marcado", ((r.marcado || 0) + 1) % 3)}
+                          style={{ cursor: "pointer", userSelect: "none", color: r.marcado === 1 ? "#ffc107" : "#dee2e6", textDecoration: r.marcado === 2 ? "line-through" : "none", textDecorationColor: "#dee2e6", textDecorationThickness: 1 }}
                         >
                           {r.personal}
                         </span>
