@@ -314,10 +314,10 @@ const GastosSemanales = () => {
 
     const filaDePersonal = (p) => {
       const semanal = p.semanal?.length ? p.semanal[p.semanal.length - 1].valor : 0;
-      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "" };
+      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0 };
     };
     const filaSoloAsistencia = (nombre) => ({
-      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "",
+      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0,
     });
 
     const semanalActualMap = {};
@@ -379,11 +379,12 @@ const GastosSemanales = () => {
   const totalAusentismo = registros.reduce((s, r) => s + (Number(r.ausentismo) || 0), 0);
   const totalExtrasNeto = registros.reduce((s, r) => s + netoExtras(r.extras), 0);
   const totalPagar = registros.reduce((s, r) => s + calcularPagar(r), 0);
+  const totalPagado = registros.reduce((s, r) => s + (Number(r.pagado) || 0), 0);
 
   const exportarExcel = () => {
     const titulo = `Gastos Semanales - ${labelSemana}`;
-    const headers = ["Personal", "Semanal Teórico", "Ausentismo", "Extras", "A Pagar", "Observaciones"];
-    const cols = "ABCDEF";
+    const headers = ["Personal", "Semanal Teórico", "Ausentismo", "Extras", "A Pagar", "Pagado", "Observaciones"];
+    const cols = "ABCDEFG";
     const moneda = { numFmt: "#,##0" };
     const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
     const estIzq = { alignment: { horizontal: "left", vertical: "center" } };
@@ -409,7 +410,8 @@ const GastosSemanales = () => {
       ws[`C${row}`] = { v: Number(r.ausentismo) || 0, t: "n", s: { ...estCentro, ...moneda } };
       ws[`D${row}`] = { v: netoExtras(r.extras), t: "n", s: { ...estCentro, ...moneda } };
       ws[`E${row}`] = { v: calcularPagar(r), t: "n", s: { ...estCentro, ...moneda } };
-      ws[`F${row}`] = { v: r.observaciones || "", t: "s", s: estCentro };
+      ws[`F${row}`] = { v: Number(r.pagado) || 0, t: "n", s: { ...estCentro, ...moneda } };
+      ws[`G${row}`] = { v: r.observaciones || "", t: "s", s: estCentro };
     });
 
     const totalRow = registros.length + 5;
@@ -418,10 +420,11 @@ const GastosSemanales = () => {
     ws[`C${totalRow}`] = { v: totalAusentismo, t: "n", s: { ...estTotal, ...moneda } };
     ws[`D${totalRow}`] = { v: totalExtrasNeto, t: "n", s: { ...estTotal, ...moneda } };
     ws[`E${totalRow}`] = { v: totalPagar, t: "n", s: { ...estTotal, ...moneda } };
-    ws[`F${totalRow}`] = { v: "", t: "s", s: estTotal };
+    ws[`F${totalRow}`] = { v: totalPagado, t: "n", s: { ...estTotal, ...moneda } };
+    ws[`G${totalRow}`] = { v: "", t: "s", s: estTotal };
 
-    ws["!ref"] = `A1:F${Math.max(totalRow, 4)}`;
-    ws["!cols"] = [{ wch: 24 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 28 }];
+    ws["!ref"] = `A1:G${Math.max(totalRow, 4)}`;
+    ws["!cols"] = [{ wch: 24 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 28 }];
 
     XLSXStyle.utils.book_append_sheet(wb, ws, "Gastos Semanales");
     XLSXStyle.writeFile(wb, `GastosSemanales_${semanaKey}.xlsx`);
@@ -444,7 +447,7 @@ const GastosSemanales = () => {
           <div className="d-flex justify-content-start mb-2">
             <Button variant="outline-primary" size="sm" onClick={() => {
               modificado.current = true;
-              setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", nuevo: true }]);
+              setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", pagado: 0, nuevo: true }]);
             }}>+ Agregar personal</Button>
           </div>
           <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "65vh" }}>
@@ -456,6 +459,7 @@ const GastosSemanales = () => {
                   <th style={{ minWidth: 110 }}>Ausentismo</th>
                   <th style={{ minWidth: 140 }}>Extras</th>
                   <th style={{ minWidth: 110 }}>Pagar</th>
+                  <th style={{ minWidth: 110 }}>Pagado</th>
                   <th style={{ minWidth: 180 }}>Observaciones</th>
                   <th style={{ width: 90 }}></th>
                 </tr>
@@ -487,6 +491,7 @@ const GastosSemanales = () => {
                     <td style={{ color: calcularPagar(r) < 0 ? "#dc3545" : "#198754", fontSize: "1.1rem" }}>
                       {pesos(calcularPagar(r))}
                     </td>
+                    <td><CeldaMoneda value={r.pagado || 0} onChange={(v) => actualizar(idx, "pagado", v)} /></td>
                     <td>
                       <Form.Control
                         size="sm"
@@ -521,6 +526,7 @@ const GastosSemanales = () => {
                   <td className="text-center">{pesos(totalAusentismo)}</td>
                   <td className="text-center" style={{ color: totalExtrasNeto >= 0 ? "#198754" : "#dc3545" }}>{pesos(totalExtrasNeto)}</td>
                   <td style={{ color: totalPagar < 0 ? "#dc3545" : "#ffc107" }}>{pesos(totalPagar)}</td>
+                  <td className="text-center">{pesos(totalPagado)}</td>
                   <td />
                   <td />
                 </tr>
