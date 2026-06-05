@@ -66,6 +66,7 @@ const CeldaMoneda = ({ value, onChange, textStyle = {}, defaultValue }) => {
         onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
         autoFocus
         className="text-center"
+        style={{ fontSize: "0.82rem" }}
       />
     );
   }
