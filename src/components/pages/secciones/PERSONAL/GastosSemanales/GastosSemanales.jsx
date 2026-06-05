@@ -380,6 +380,12 @@ const GastosSemanales = () => {
     );
   };
 
+  const actualizarYGuardar = (idx, campo, valor) => {
+    const nuevos = registros.map((r, i) => (i === idx ? { ...r, [campo]: valor } : r));
+    setRegistros(nuevos);
+    guardarGastoSemanal(semanaKey, nuevos);
+  };
+
   useEffect(() => {
     if (!modificado.current || loading) return;
     clearTimeout(autoSaveTimer.current);
@@ -485,7 +491,7 @@ const GastosSemanales = () => {
                   <tr key={idx}>
                     <td className="text-center">
                       <span
-                        onClick={() => actualizar(idx, "seleccionado", !r.seleccionado)}
+                        onClick={() => actualizarYGuardar(idx, "seleccionado", !r.seleccionado)}
                         style={{ cursor: "pointer", fontSize: 18, color: r.seleccionado ? "#198754" : "#495057", userSelect: "none", lineHeight: 1 }}
                       >●</span>
                     </td>
@@ -494,7 +500,7 @@ const GastosSemanales = () => {
                         <Form.Control size="sm" type="text" value={r.personal} placeholder="Nombre..." onChange={(e) => actualizar(idx, "personal", e.target.value)} />
                       ) : (
                         <span
-                          onClick={() => actualizar(idx, "marcado", ((r.marcado || 0) + 1) % 3)}
+                          onClick={() => actualizarYGuardar(idx, "marcado", ((r.marcado || 0) + 1) % 3)}
                           style={{ cursor: "pointer", userSelect: "none", color: r.marcado === 1 ? "#ffc107" : "#dee2e6", textDecoration: r.marcado === 2 ? "line-through" : "none", textDecorationColor: "#dee2e6", textDecorationThickness: 1 }}
                         >
                           {r.personal}
