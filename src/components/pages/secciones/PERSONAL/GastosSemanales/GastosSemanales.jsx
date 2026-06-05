@@ -507,9 +507,12 @@ const GastosSemanales = () => {
                       ) : (
                         <span
                           onClick={() => actualizarYGuardar(idx, "marcado", ((r.marcado || 0) + 1) % 3)}
-                          style={{ cursor: "pointer", userSelect: "none", color: r.marcado === 1 ? "#ffc107" : "#dee2e6", textDecoration: r.marcado === 2 ? "line-through" : "none", textDecorationColor: "#ffc107", textDecorationThickness: 3 }}
+                          style={{ cursor: "pointer", userSelect: "none", color: r.marcado === 1 ? "#ffc107" : "#dee2e6", position: "relative", display: "inline-block" }}
                         >
                           {r.personal}
+                          {r.marcado === 2 && (
+                            <span style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 3, background: "#ffc107", pointerEvents: "none" }} />
+                          )}
                         </span>
                       )}
                     </td>
