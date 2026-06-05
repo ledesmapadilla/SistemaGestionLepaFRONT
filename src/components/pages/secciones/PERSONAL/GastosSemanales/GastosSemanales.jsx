@@ -329,10 +329,10 @@ const GastosSemanales = () => {
 
     const filaDePersonal = (p) => {
       const semanal = p.semanal?.length ? p.semanal[p.semanal.length - 1].valor : 0;
-      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0 };
+      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: false };
     };
     const filaSoloAsistencia = (nombre) => ({
-      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0,
+      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0, marcado: false,
     });
 
     const semanalActualMap = {};
@@ -485,7 +485,14 @@ const GastosSemanales = () => {
                     <td className="text-start fw-semibold">
                       {r.nuevo ? (
                         <Form.Control size="sm" type="text" value={r.personal} placeholder="Nombre..." onChange={(e) => actualizar(idx, "personal", e.target.value)} />
-                      ) : r.personal}
+                      ) : (
+                        <span
+                          onClick={() => actualizar(idx, "marcado", !r.marcado)}
+                          style={{ cursor: "pointer", color: r.marcado ? "#ffc107" : "#dee2e6", userSelect: "none" }}
+                        >
+                          {r.personal}
+                        </span>
+                      )}
                     </td>
                     <td><CeldaMoneda value={r.semanal} onChange={(v) => actualizar(idx, "semanal", v)} textStyle={{ fontSize: "0.7rem", color: "#9ca3af" }} /></td>
                     <td><CeldaMoneda value={r.ausentismo} onChange={(v) => actualizar(idx, "ausentismo", v)} /></td>
