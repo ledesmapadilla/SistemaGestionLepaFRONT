@@ -39,16 +39,28 @@ const formVacio = () => ({
   detalle: "",
 });
 
-const CeldaMoneda = ({ value, onChange, textStyle = {} }) => {
+const CeldaMoneda = ({ value, onChange, textStyle = {}, defaultValue }) => {
   const [editando, setEditando] = useState(false);
+  const [editValue, setEditValue] = useState("");
+
+  const iniciarEdicion = () => {
+    setEditValue(Number(value) === 0 && defaultValue !== undefined ? defaultValue : value);
+    setEditando(true);
+  };
+
+  const confirmar = () => {
+    onChange(editValue);
+    setEditando(false);
+  };
+
   if (editando) {
     return (
       <Form.Control
         size="sm"
         type="number"
-        value={Number(value) === 0 ? "" : value}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={() => setEditando(false)}
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={confirmar}
         onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
         autoFocus
         className="text-center"
@@ -57,7 +69,7 @@ const CeldaMoneda = ({ value, onChange, textStyle = {} }) => {
   }
   return (
     <div
-      onClick={() => setEditando(true)}
+      onClick={iniciarEdicion}
       className="text-center"
       style={{ cursor: "pointer", minHeight: 31, padding: "4px 8px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#dee2e6", ...textStyle }}
     >
@@ -491,7 +503,7 @@ const GastosSemanales = () => {
                     <td style={{ color: calcularPagar(r) < 0 ? "#dc3545" : "#198754", fontSize: "1.1rem" }}>
                       {pesos(calcularPagar(r))}
                     </td>
-                    <td><CeldaMoneda value={r.pagado || 0} onChange={(v) => actualizar(idx, "pagado", v)} /></td>
+                    <td><CeldaMoneda value={r.pagado || 0} onChange={(v) => actualizar(idx, "pagado", v)} defaultValue={calcularPagar(r)} textStyle={{ fontSize: "0.82rem" }} /></td>
                     <td>
                       <Form.Control
                         size="sm"
