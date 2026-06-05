@@ -44,12 +44,14 @@ const CeldaMoneda = ({ value, onChange, textStyle = {}, defaultValue }) => {
   const [editValue, setEditValue] = useState("");
 
   const iniciarEdicion = () => {
-    setEditValue(Number(value) === 0 && defaultValue !== undefined ? defaultValue : value);
+    const raw = Number(value) === 0 && defaultValue !== undefined ? defaultValue : value;
+    setEditValue(pesos(raw));
     setEditando(true);
   };
 
   const confirmar = () => {
-    onChange(editValue);
+    const parsed = Number(editValue.replace(/[^\d]/g, "")) || 0;
+    onChange(parsed);
     setEditando(false);
   };
 
@@ -57,7 +59,7 @@ const CeldaMoneda = ({ value, onChange, textStyle = {}, defaultValue }) => {
     return (
       <Form.Control
         size="sm"
-        type="number"
+        type="text"
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
         onBlur={confirmar}
