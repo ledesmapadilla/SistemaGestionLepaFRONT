@@ -329,10 +329,10 @@ const GastosSemanales = () => {
 
     const filaDePersonal = (p) => {
       const semanal = p.semanal?.length ? p.semanal[p.semanal.length - 1].valor : 0;
-      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: false };
+      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: false, seleccionado: false };
     };
     const filaSoloAsistencia = (nombre) => ({
-      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0, marcado: false,
+      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0, marcado: false, seleccionado: false,
     });
 
     const semanalActualMap = {};
@@ -462,13 +462,14 @@ const GastosSemanales = () => {
           <div className="d-flex justify-content-start mb-2">
             <Button variant="outline-primary" size="sm" onClick={() => {
               modificado.current = true;
-              setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", pagado: 0, nuevo: true }]);
+              setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", pagado: 0, marcado: false, seleccionado: false, nuevo: true }]);
             }}>+ Agregar personal</Button>
           </div>
           <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "65vh" }}>
             <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
               <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                 <tr>
+                  <th style={{ width: 32 }}></th>
                   <th style={{ minWidth: 160 }}>Personal</th>
                   <th style={{ minWidth: 110 }}>Semanal Teórico</th>
                   <th style={{ minWidth: 110 }}>Ausentismo</th>
@@ -482,6 +483,12 @@ const GastosSemanales = () => {
               <tbody>
                 {registros.map((r, idx) => (
                   <tr key={idx}>
+                    <td className="text-center">
+                      <span
+                        onClick={() => actualizar(idx, "seleccionado", !r.seleccionado)}
+                        style={{ cursor: "pointer", fontSize: 18, color: r.seleccionado ? "#198754" : "#495057", userSelect: "none", lineHeight: 1 }}
+                      >●</span>
+                    </td>
                     <td className="text-start fw-semibold">
                       {r.nuevo ? (
                         <Form.Control size="sm" type="text" value={r.personal} placeholder="Nombre..." onChange={(e) => actualizar(idx, "personal", e.target.value)} />
@@ -543,6 +550,7 @@ const GastosSemanales = () => {
               </tbody>
               <tfoot>
                 <tr className="table-dark fw-bold">
+                  <td />
                   <td className="text-start">Total</td>
                   <td className="text-center">{pesos(totalSemanal)}</td>
                   <td className="text-center">{pesos(totalAusentismo)}</td>
