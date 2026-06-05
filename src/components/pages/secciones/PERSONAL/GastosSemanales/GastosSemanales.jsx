@@ -511,7 +511,7 @@ const GastosSemanales = () => {
                         >
                           {r.personal}
                           {r.marcado === 2 && (
-                            <span style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 3, background: "#ffc107", pointerEvents: "none" }} />
+                            <span style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 2, background: "#ffc107", pointerEvents: "none" }} />
                           )}
                         </span>
                       )}
