@@ -178,7 +178,6 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
         />
       </div>
 
-      <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
       <Table striped bordered hover className="text-center align-middle">
         <thead className="table-dark sticky-top">
           <tr>
@@ -215,7 +214,7 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
                     <Dropdown.Toggle size="sm" variant="outline-primary">
                       Utilizar
                     </Dropdown.Toggle>
-                    <Dropdown.Menu popperConfig={{ strategy: "fixed" }}>
+                    <Dropdown.Menu>
                       {USOS.map((uso) => (
                         <Dropdown.Item key={uso} eventKey={uso}>
                           {uso}
@@ -229,7 +228,6 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
           )}
         </tbody>
       </Table>
-      </div>
     </div>
   );
 };
