@@ -215,7 +215,7 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
                     <Dropdown.Toggle size="sm" variant="outline-primary">
                       Utilizar
                     </Dropdown.Toggle>
-                    <Dropdown.Menu>
+                    <Dropdown.Menu popperConfig={{ strategy: "fixed" }}>
                       {USOS.map((uso) => (
                         <Dropdown.Item key={uso} eventKey={uso}>
                           {uso}
