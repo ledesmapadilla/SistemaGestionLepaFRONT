@@ -68,7 +68,7 @@ const CuentaCorriente = () => {
     let saldoAcum = 0;
     return movFiltrados.map((m) => {
       saldoAcum += (m.debito || 0) - (m.credito || 0);
-      return { ...m, saldo: saldoAcum };
+      return { ...m, saldo: saldoAcum || 0 };
     });
   }, [movFiltrados]);
 
@@ -88,9 +88,11 @@ const CuentaCorriente = () => {
     const cols = ["A", "B", "C", "D", "E", "F", "G"];
     const libro = XLSXStyle.utils.book_new();
 
+    const fechaHoy = new Date().toLocaleDateString("es-AR");
     if (!filtroCliente) {
       const ws = {};
       ws["A1"] = { v: "CUENTA CORRIENTE — Todos los clientes", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+      ws["A2"] = { v: `Fecha: ${fechaHoy}`, t: "s", s: { font: { sz: 11 }, alignment: leftAlign } };
       ["Cliente", "Facturado", "Cobrado", "Saldo"].forEach((h, i) => {
         ws[`${["A","B","C","D"][i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
       });
@@ -117,6 +119,7 @@ const CuentaCorriente = () => {
     const numCols = new Set([4, 5, 6]);
     const ws = {};
     ws["A1"] = { v: titulo, t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+    ws["A2"] = { v: `Fecha: ${fechaHoy}`, t: "s", s: { font: { sz: 11 }, alignment: leftAlign } };
     headers.forEach((h, i) => {
       ws[`${cols[i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
     });
