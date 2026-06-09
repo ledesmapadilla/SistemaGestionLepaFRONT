@@ -211,7 +211,7 @@ const CuentaCorriente = () => {
           const totCob = filtroCliente
             ? totalCreditos
             : resumenPorCliente.reduce((s, r) => s + r.credito, 0);
-          const totSaldo = totFact - totCob;
+          const totSaldo = Math.round((totFact - totCob) * 100) / 100 || 0;
           return (
             <div className="d-flex gap-3">
               <div className="border rounded px-3 py-1 text-center" style={{ minWidth: "150px" }}>
