@@ -53,7 +53,8 @@ const CuentaCorriente = () => {
       const movs = todos.filter((m) => m.cliente === c);
       const debito = movs.reduce((s, m) => s + (m.debito || 0), 0);
       const credito = movs.reduce((s, m) => s + (m.credito || 0), 0);
-      return { cliente: c, debito, credito, saldo: debito - credito };
+      const saldo = Math.round((debito - credito) * 100) / 100;
+      return { cliente: c, debito, credito, saldo: saldo || 0 };
     });
   }, [todos, clientes]);
 
@@ -68,7 +69,8 @@ const CuentaCorriente = () => {
     let saldoAcum = 0;
     return movFiltrados.map((m) => {
       saldoAcum += (m.debito || 0) - (m.credito || 0);
-      return { ...m, saldo: saldoAcum || 0 };
+      const saldoRedondeado = Math.round(saldoAcum * 100) / 100;
+      return { ...m, saldo: saldoRedondeado || 0 };
     });
   }, [movFiltrados]);
 
