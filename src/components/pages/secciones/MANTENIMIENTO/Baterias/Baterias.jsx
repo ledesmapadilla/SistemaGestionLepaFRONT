@@ -251,30 +251,13 @@ export default function Baterias() {
 
   const registrosFiltrados = useMemo(() =>
     registros.filter((r) => {
-      const nb = r.bateria?.nombreBateria || "";
-      const nm = r.maquinaLabel || r.maquina?.maquina || "";
+      const nb = (r.bateria?.nombreBateria || "").toLowerCase();
+      const nm = (r.maquinaLabel || r.maquina?.maquina || "").toLowerCase();
       if (!mostrarVendidas && r.maquinaLabel === "vendida") return false;
-      return (!filtroBateria || nb === filtroBateria) && (!filtroMaquina || nm === filtroMaquina);
+      return nb.includes(filtroBateria.toLowerCase()) && nm.includes(filtroMaquina.toLowerCase());
     }),
     [registros, filtroBateria, filtroMaquina, mostrarVendidas]
   );
-
-  const bateriasUnicas = useMemo(() =>
-    [...new Set(registros.map((r) => r.bateria?.nombreBateria).filter(Boolean))]
-      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
-    [registros]
-  );
-
-  const maquinasUnicas = useMemo(() =>
-    [...new Set(registros.map((r) => r.maquinaLabel || r.maquina?.maquina).filter(Boolean))].sort(),
-    [registros]
-  );
-
-  const estiloX = {
-    position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)",
-    cursor: "pointer", color: "#fff", fontSize: "14px", fontWeight: "900", zIndex: 5, userSelect: "none",
-  };
-  const selectActivo = { backgroundImage: "none" };
 
   const exportarExcel = () => {
     const headers = ["Nombre batería", "Marca", "Máquina", "Observaciones"];
@@ -331,24 +314,22 @@ export default function Baterias() {
       </div>
 
       <div className="d-flex gap-2 mb-2">
-        <div style={{ position: "relative", width: "220px" }}>
-          <Form.Select size="sm" value={filtroBateria} onChange={(e) => setFiltroBateria(e.target.value)} style={filtroBateria ? selectActivo : {}}>
-            <option value="">Nombre batería</option>
-            {bateriasUnicas.map((nombre) => (
-              <option key={nombre} value={nombre}>{nombre}</option>
-            ))}
-          </Form.Select>
-          {filtroBateria && <span onClick={() => setFiltroBateria("")} style={estiloX}>✕</span>}
-        </div>
-        <div style={{ position: "relative", width: "220px" }}>
-          <Form.Select size="sm" value={filtroMaquina} onChange={(e) => setFiltroMaquina(e.target.value)} style={filtroMaquina ? selectActivo : {}}>
-            <option value="">Máquina</option>
-            {maquinasUnicas.map((nombre) => (
-              <option key={nombre} value={nombre}>{nombre}</option>
-            ))}
-          </Form.Select>
-          {filtroMaquina && <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>}
-        </div>
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Nombre batería..."
+          value={filtroBateria}
+          onChange={(e) => setFiltroBateria(e.target.value)}
+          style={{ width: "220px" }}
+        />
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Máquina..."
+          value={filtroMaquina}
+          onChange={(e) => setFiltroMaquina(e.target.value)}
+          style={{ width: "220px" }}
+        />
         <Form.Check
           type="switch"
           id="switch-vendidas"
