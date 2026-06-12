@@ -223,9 +223,11 @@ export default function Baterias() {
       confirmButtonText: "Sí, borrar",
     });
     if (!isConfirmed) return;
+    const bateriaId = registros.find((r) => r._id === id)?.bateria?._id;
     const res = await borrarRegistroBateria(id);
     if (res?.ok) {
       setRegistros((prev) => prev.filter((r) => r._id !== id));
+      if (bateriaId) setCatalogo((prev) => prev.filter((b) => b._id !== bateriaId));
       Swal.fire({ icon: "success", title: "Registro eliminado", timer: 1500, showConfirmButton: false });
     } else {
       Swal.fire("Error", "No se pudo eliminar el registro.", "error");
