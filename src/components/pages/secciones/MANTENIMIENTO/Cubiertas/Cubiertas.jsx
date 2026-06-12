@@ -250,23 +250,12 @@ export default function Cubiertas() {
 
   const registrosFiltrados = useMemo(() =>
     registros.filter((r) => {
-      const nc = r.cubierta?.nombreCubierta || "";
-      const nm = r.maquinaLabel || r.maquina?.maquina || "";
+      const nc = (r.cubierta?.nombreCubierta || "").toLowerCase();
+      const nm = (r.maquinaLabel || r.maquina?.maquina || "").toLowerCase();
       if (!mostrarDesechadas && (r.maquinaLabel === "Desechada" || r.maquinaLabel === "Perdida")) return false;
-      return (!filtroCubierta || nc === filtroCubierta) && (!filtroMaquina || nm === filtroMaquina);
+      return nc.includes(filtroCubierta.toLowerCase()) && nm.includes(filtroMaquina.toLowerCase());
     }),
     [registros, filtroCubierta, filtroMaquina, mostrarDesechadas]
-  );
-
-  const cubiertasUnicas = useMemo(() =>
-    [...new Set(registros.map((r) => r.cubierta?.nombreCubierta).filter(Boolean))]
-      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
-    [registros]
-  );
-
-  const maquinasUnicas = useMemo(() =>
-    [...new Set(registros.map((r) => r.maquinaLabel || r.maquina?.maquina).filter(Boolean))].sort(),
-    [registros]
   );
 
   const EXCLUIR_MAQUINAS = ["pc1","pc2","pc3","pc4","pc5","wa200","xcmg","nisan","nissan","ranger","fiat","jd1","jd2","motoniveladora","carretón grande","carreton grande"];
@@ -274,12 +263,6 @@ export default function Cubiertas() {
     maquinas.filter((m) => !EXCLUIR_MAQUINAS.includes((m.maquina || "").toLowerCase().trim())),
     [maquinas]
   );
-
-  const estiloX = {
-    position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)",
-    cursor: "pointer", color: "#fff", fontSize: "14px", fontWeight: "900", zIndex: 5, userSelect: "none",
-  };
-  const selectActivo = { backgroundImage: "none" };
 
   const exportarExcel = () => {
     const headers = ["Nombre cubierta", "Máquina", "Observaciones"];
@@ -335,24 +318,22 @@ export default function Cubiertas() {
       </div>
 
       <div className="d-flex gap-2 mb-2">
-        <div style={{ position: "relative", width: "220px" }}>
-          <Form.Select size="sm" value={filtroCubierta} onChange={(e) => setFiltroCubierta(e.target.value)} style={filtroCubierta ? selectActivo : {}}>
-            <option value="">Nombre cubierta</option>
-            {cubiertasUnicas.map((nombre) => (
-              <option key={nombre} value={nombre}>{nombre}</option>
-            ))}
-          </Form.Select>
-          {filtroCubierta && <span onClick={() => setFiltroCubierta("")} style={estiloX}>✕</span>}
-        </div>
-        <div style={{ position: "relative", width: "220px" }}>
-          <Form.Select size="sm" value={filtroMaquina} onChange={(e) => setFiltroMaquina(e.target.value)} style={filtroMaquina ? selectActivo : {}}>
-            <option value="">Máquina</option>
-            {maquinasUnicas.map((nombre) => (
-              <option key={nombre} value={nombre}>{nombre}</option>
-            ))}
-          </Form.Select>
-          {filtroMaquina && <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>}
-        </div>
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Nombre cubierta..."
+          value={filtroCubierta}
+          onChange={(e) => setFiltroCubierta(e.target.value)}
+          style={{ width: "220px" }}
+        />
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Máquina..."
+          value={filtroMaquina}
+          onChange={(e) => setFiltroMaquina(e.target.value)}
+          style={{ width: "220px" }}
+        />
         <Form.Check
           type="switch"
           id="switch-desechadas"
