@@ -436,19 +436,9 @@ const ServiceMaquinas = () => {
     XLSXStyle.writeFile(wb, "Service_Maquinas.xlsx");
   };
 
-  const estiloX = {
-    position: "absolute",
-    right: "10px",
-    top: "50%",
-    transform: "translateY(-50%)",
-    cursor: "pointer",
-    color: "#fff",
-  };
-  const selectActivo = { backgroundImage: "none" };
-
-  const maquinasFiltradas = filtroMaquina
-    ? maquinas.filter((m) => m._id === filtroMaquina)
-    : maquinas;
+  const maquinasFiltradas = maquinas.filter((m) =>
+    (m.maquina || "").toLowerCase().includes(filtroMaquina.toLowerCase())
+  );
 
   const esEIQoETX = (nombre) => {
     const n = nombre?.toLowerCase() || "";
@@ -490,22 +480,14 @@ const ServiceMaquinas = () => {
         </div>
 
         <div className="mb-2">
-          <div style={{ position: "relative", width: "200px" }}>
-            <Form.Select
-              size="sm"
-              value={filtroMaquina}
-              onChange={(e) => setFiltroMaquina(e.target.value)}
-              style={filtroMaquina ? selectActivo : {}}
-            >
-              <option value="">Todas las máquinas</option>
-              {maquinas.map((m) => (
-                <option key={m._id} value={m._id}>{m.maquina}</option>
-              ))}
-            </Form.Select>
-            {filtroMaquina && (
-              <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>
-            )}
-          </div>
+          <Form.Control
+            size="sm"
+            type="search"
+            placeholder="Máquina..."
+            value={filtroMaquina}
+            onChange={(e) => setFiltroMaquina(e.target.value)}
+            style={{ width: "220px" }}
+          />
         </div>
 
         <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
