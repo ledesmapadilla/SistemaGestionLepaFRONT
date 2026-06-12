@@ -146,28 +146,16 @@ const CobrosTabla = () => {
     return { saldosPorCobro, totalSaldoPorCobro };
   }, [cobros]);
 
-  const clientesUnicos = useMemo(
-    () => [...new Set(cobros.map((c) => c.cliente).filter(Boolean))].sort(),
-    [cobros]
-  );
-
-  const facturasUnicas = useMemo(
-    () => [...new Set(
-      cobros.flatMap((c) => (c.pagos || []).map((p) => p.factura?.numeroFactura).filter(Boolean))
-    )].sort((a, b) => a - b),
-    [cobros]
-  );
-
   const cobrosFiltrados = useMemo(
     () => [...cobros].reverse().filter((c) => {
-      const coincideCliente = filtroCliente === "" || c.cliente === filtroCliente;
+      const coincideCliente = filtroCliente === "" || c.cliente?.toLowerCase().includes(filtroCliente.toLowerCase());
       const coincideMedio =
         filtroMedio === "" ||
         c.medioPago === filtroMedio ||
         (c.mediosPago || []).some((m) => m.medioPago === filtroMedio);
       const coincideFactura =
         filtroFactura === "" ||
-        (c.pagos || []).some((p) => String(p.factura?.numeroFactura) === filtroFactura);
+        (c.pagos || []).some((p) => String(p.factura?.numeroFactura || "").includes(filtroFactura));
       const fecha = c.fecha?.split("T")[0] ?? "";
       const coincideDesde = filtroDesde === "" || fecha >= filtroDesde;
       const coincideHasta = filtroHasta === "" || fecha <= filtroHasta;
@@ -203,17 +191,14 @@ const CobrosTabla = () => {
       </div>
 
       <div className="d-flex flex-wrap gap-3 mb-3 align-items-center">
-        <div style={{ position: "relative", width: "220px" }}>
-          <Form.Select value={filtroCliente} onChange={(e) => setFiltroCliente(e.target.value)} style={filtroCliente ? selectActivo : {}}>
-            <option value="">Cliente</option>
-            {clientesUnicos.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </Form.Select>
-          {filtroCliente && (
-            <span onClick={() => setFiltroCliente("")} style={estiloX}>✕</span>
-          )}
-        </div>
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Cliente..."
+          value={filtroCliente}
+          onChange={(e) => setFiltroCliente(e.target.value)}
+          style={{ width: "220px" }}
+        />
 
         <div style={{ position: "relative", width: "190px" }}>
           <Form.Select value={filtroMedio} onChange={(e) => setFiltroMedio(e.target.value)} style={filtroMedio ? selectActivo : {}}>
@@ -229,17 +214,14 @@ const CobrosTabla = () => {
           )}
         </div>
 
-        <div style={{ position: "relative", width: "170px" }}>
-          <Form.Select value={filtroFactura} onChange={(e) => setFiltroFactura(e.target.value)} style={filtroFactura ? selectActivo : {}}>
-            <option value="">N° Factura</option>
-            {facturasUnicas.map((n) => (
-              <option key={n} value={String(n)}>N° {n}</option>
-            ))}
-          </Form.Select>
-          {filtroFactura && (
-            <span onClick={() => setFiltroFactura("")} style={estiloX}>✕</span>
-          )}
-        </div>
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="N° Factura..."
+          value={filtroFactura}
+          onChange={(e) => setFiltroFactura(e.target.value)}
+          style={{ width: "170px" }}
+        />
 
         <div className="ms-auto d-flex align-items-center gap-3">
           <div className="d-flex align-items-center gap-2">

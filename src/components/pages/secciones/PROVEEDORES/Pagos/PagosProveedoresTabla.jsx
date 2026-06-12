@@ -135,14 +135,9 @@ const PagosProveedoresTabla = () => {
     return { saldosPorPago, totalSaldoPorPago };
   }, [pagos]);
 
-  const proveedoresUnicos = useMemo(
-    () => [...new Set(pagos.map((p) => p.proveedor).filter(Boolean))].sort(),
-    [pagos]
-  );
-
   const pagosFiltrados = useMemo(
     () => [...pagos].reverse().filter((p) => {
-      const coincideProveedor = filtroProveedor === "" || p.proveedor === filtroProveedor;
+      const coincideProveedor = filtroProveedor === "" || p.proveedor?.toLowerCase().includes(filtroProveedor.toLowerCase());
       const coincideMedio =
         filtroMedio === "" ||
         (p.mediosPago || []).some((m) => m.medioPago === filtroMedio);
@@ -174,17 +169,14 @@ const PagosProveedoresTabla = () => {
       </div>
 
       <div className="d-flex flex-wrap gap-3 mb-3 align-items-center">
-        <div style={{ position: "relative", width: "250px" }}>
-          <Form.Select size="sm" value={filtroProveedor} onChange={(e) => setFiltroProveedor(e.target.value)} style={filtroProveedor ? selectActivo : {}}>
-            <option value="">Proveedor</option>
-            {proveedoresUnicos.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </Form.Select>
-          {filtroProveedor && (
-            <span onClick={() => setFiltroProveedor("")} style={estiloX}>✕</span>
-          )}
-        </div>
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Proveedor..."
+          value={filtroProveedor}
+          onChange={(e) => setFiltroProveedor(e.target.value)}
+          style={{ width: "250px" }}
+        />
 
         <div style={{ position: "relative", width: "190px" }}>
           <Form.Select size="sm" value={filtroMedio} onChange={(e) => setFiltroMedio(e.target.value)} style={filtroMedio ? selectActivo : {}}>

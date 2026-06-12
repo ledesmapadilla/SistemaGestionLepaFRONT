@@ -60,14 +60,9 @@ export default function ChequesPropio() {
     cargar();
   }, []);
 
-  const proveedoresUnicos = useMemo(
-    () => [...new Set(cheques.map((c) => c.proveedor).filter(Boolean))].sort(),
-    [cheques]
-  );
-
   const chequesFiltrados = useMemo(
     () => cheques.filter((c) => {
-      if (filtroProveedor && c.proveedor !== filtroProveedor) return false;
+      if (filtroProveedor && !c.proveedor?.toLowerCase().includes(filtroProveedor.toLowerCase())) return false;
       if (filtroEstado && c.estado !== filtroEstado) return false;
       if (filtroTipo && c.tipo !== filtroTipo) return false;
       return true;
@@ -161,13 +156,14 @@ export default function ChequesPropio() {
 
       {/* Filtros */}
       <div className="d-flex flex-wrap gap-3 mb-3">
-        <div style={{ position: "relative", width: 200 }}>
-          <Form.Select size="sm" value={filtroProveedor} onChange={(e) => setFiltroProveedor(e.target.value)} style={filtroProveedor ? selectActivo : {}}>
-            <option value="">Proveedor</option>
-            {proveedoresUnicos.map((p) => <option key={p} value={p}>{p}</option>)}
-          </Form.Select>
-          {filtroProveedor && <span onClick={() => setFiltroProveedor("")} style={estiloX}>✕</span>}
-        </div>
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Proveedor..."
+          value={filtroProveedor}
+          onChange={(e) => setFiltroProveedor(e.target.value)}
+          style={{ width: 200 }}
+        />
         <div style={{ position: "relative", width: 140 }}>
           <Form.Select size="sm" value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)} style={filtroTipo ? selectActivo : {}}>
             <option value="">Tipo</option>

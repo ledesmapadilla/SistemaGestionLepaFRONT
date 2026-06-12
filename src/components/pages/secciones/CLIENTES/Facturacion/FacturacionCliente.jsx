@@ -160,11 +160,9 @@ const FacturacionCliente = () => {
   };
   const selectActivo = { backgroundImage: "none" };
 
-  const clientesUnicos = [...new Set(facturas.map((f) => f.cliente).filter(Boolean))].sort();
-
   const facturasFiltradas = facturas.filter((f) => {
     const coincideNumero = filtroNumero === "" || f.numeroFactura?.toString().includes(filtroNumero);
-    const coincideCliente = filtroCliente === "" || f.cliente === filtroCliente;
+    const coincideCliente = filtroCliente === "" || f.cliente?.toLowerCase().includes(filtroCliente.toLowerCase());
     const coincideEstado = filtroEstado === "" || f.estadoPago === filtroEstado;
     return coincideNumero && coincideCliente && coincideEstado;
   });
@@ -184,36 +182,22 @@ const FacturacionCliente = () => {
       </div>
 
       <div className="d-flex gap-3 mb-3">
-        <div style={{ position: "relative", width: "180px" }}>
-          <Form.Select
-            value={filtroNumero}
-            onChange={(e) => setFiltroNumero(e.target.value)}
-            style={filtroNumero ? selectActivo : {}}
-          >
-            <option value="">Todos los N°</option>
-            {[...new Set(facturas.map((f) => f.numeroFactura).filter(Boolean))].sort().map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </Form.Select>
-          {filtroNumero && (
-            <span onClick={() => setFiltroNumero("")} style={estiloX}>✕</span>
-          )}
-        </div>
-        <div style={{ position: "relative", width: "250px" }}>
-          <Form.Select
-            value={filtroCliente}
-            onChange={(e) => setFiltroCliente(e.target.value)}
-            style={filtroCliente ? selectActivo : {}}
-          >
-            <option value="">Todos los clientes</option>
-            {clientesUnicos.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </Form.Select>
-          {filtroCliente && (
-            <span onClick={() => setFiltroCliente("")} style={estiloX}>✕</span>
-          )}
-        </div>
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="N° Factura..."
+          value={filtroNumero}
+          onChange={(e) => setFiltroNumero(e.target.value)}
+          style={{ width: "180px" }}
+        />
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Cliente..."
+          value={filtroCliente}
+          onChange={(e) => setFiltroCliente(e.target.value)}
+          style={{ width: "250px" }}
+        />
         <div style={{ position: "relative", width: "180px" }}>
           <Form.Select
             value={filtroEstado}

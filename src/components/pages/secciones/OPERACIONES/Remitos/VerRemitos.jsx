@@ -198,22 +198,7 @@ const VerRemitos = () => {
 
   const totalNoFacturado = calcularTotalNoFacturado();
 
-  const estiloX = {
-    position: "absolute",
-    right: "10px",
-    top: "50%",
-    transform: "translateY(-50%)",
-    cursor: "pointer",
-    color: "#fff",
-    fontSize: "14px",
-    fontWeight: "900",
-    zIndex: 5,
-    userSelect: "none",
-  };
-  const selectActivo = { backgroundImage: "none" };
-
-  const remitosUnicos = [...new Set(remitos.map((r) => r.remito).filter(Boolean))].sort((a, b) => a - b);
-  const remitosFiltrados = filtroRemito ? remitos.filter((r) => String(r.remito) === filtroRemito) : remitos;
+  const remitosFiltrados = filtroRemito ? remitos.filter((r) => String(r.remito).includes(filtroRemito)) : remitos;
 
   const exportarExcel = () => {
     const headers = ["N° Remito", "Fecha", "Maquinista", "$/hs Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Gasoil (lts)"];
@@ -301,22 +286,14 @@ const VerRemitos = () => {
         </div>
       </div>
       <div className="mb-2">
-        <div style={{ position: "relative", width: "170px" }}>
-          <Form.Select
-            size="sm"
-            value={filtroRemito}
-            onChange={(e) => setFiltroRemito(e.target.value)}
-            style={filtroRemito ? selectActivo : {}}
-          >
-            <option value="">N° Remito</option>
-            {remitosUnicos.map((n) => (
-              <option key={n} value={String(n)}>N° {n}</option>
-            ))}
-          </Form.Select>
-          {filtroRemito && (
-            <span onClick={() => setFiltroRemito("")} style={estiloX}>✕</span>
-          )}
-        </div>
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="N° Remito..."
+          value={filtroRemito}
+          onChange={(e) => setFiltroRemito(e.target.value)}
+          style={{ width: "170px" }}
+        />
       </div>
 
       <div ref={tableContainerRef} style={{ flex: 1, overflowY: "auto", minHeight: 0 }} className="table-responsive">

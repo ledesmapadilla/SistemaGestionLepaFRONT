@@ -43,17 +43,12 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
 
   const unicos = (campo) => [...new Set(cheques.map((c) => c[campo]).filter(Boolean))].sort();
 
-  const valoresUnicos = useMemo(
-    () => [...new Set(cheques.map((c) => c.valor))].sort((a, b) => a - b),
-    [cheques]
-  );
-
   const filasFiltradas = useMemo(() => {
     return cheques.filter((c) => {
-      if (filtroCliente && c.cliente !== filtroCliente) return false;
+      if (filtroCliente && !c.cliente?.toLowerCase().includes(filtroCliente.toLowerCase())) return false;
       if (filtroNumero && !String(c.numeroCheque).includes(filtroNumero)) return false;
-      if (filtroValor && String(c.valor) !== filtroValor) return false;
-      if (filtroFecha && c.fechaVencimiento !== filtroFecha) return false;
+      if (filtroValor && !String(c.valor).includes(filtroValor)) return false;
+      if (filtroFecha && !(c.fechaVencimiento || "").includes(filtroFecha)) return false;
       if (filtroEstado && c.estado !== filtroEstado) return false;
       return true;
     });
@@ -136,38 +131,37 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
       })()}
 
       <div className="d-flex flex-wrap gap-3 mb-3 align-items-center">
-        <FiltroSelect
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Cliente..."
           value={filtroCliente}
-          onChange={setFiltroCliente}
-          placeholder="Cliente"
-          opciones={unicos("cliente")}
-          width="200px"
+          onChange={(e) => setFiltroCliente(e.target.value)}
+          style={{ width: "200px" }}
         />
-        <div style={{ position: "relative", width: "160px" }}>
-          <Form.Control
-            size="sm"
-            type="text"
-            placeholder="N° Cheque"
-            value={filtroNumero}
-            onChange={(e) => setFiltroNumero(e.target.value)}
-          />
-          {filtroNumero && (
-            <span onClick={() => setFiltroNumero("")} style={estiloX}>✕</span>
-          )}
-        </div>
-        <FiltroSelect
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="N° Cheque"
+          value={filtroNumero}
+          onChange={(e) => setFiltroNumero(e.target.value)}
+          style={{ width: "160px" }}
+        />
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Valor..."
           value={filtroValor}
-          onChange={setFiltroValor}
-          placeholder="Valor"
-          opciones={valoresUnicos.map((v) => ({ value: String(v), label: formatoMoneda(v) }))}
-          width="180px"
+          onChange={(e) => setFiltroValor(e.target.value)}
+          style={{ width: "180px" }}
         />
-        <FiltroSelect
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Fecha vencimiento..."
           value={filtroFecha}
-          onChange={setFiltroFecha}
-          placeholder="Fecha vencimiento"
-          opciones={unicos("fechaVencimiento").map((f) => ({ value: f, label: formatearFecha(f) }))}
-          width="190px"
+          onChange={(e) => setFiltroFecha(e.target.value)}
+          style={{ width: "190px" }}
         />
         <FiltroSelect
           value={filtroEstado}

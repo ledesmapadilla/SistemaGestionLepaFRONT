@@ -58,30 +58,6 @@ const ResumenMes = () => {
     ...Array.from({ length: diasEnMes }, (_, i) => i + 1),
   ];
 
-  const personalOptions = useMemo(() => {
-    const set = new Set();
-    Object.values(registros).forEach((regs) =>
-      regs.forEach((r) => { if (r.personal) set.add(r.personal); })
-    );
-    return [...set].sort();
-  }, [registros]);
-
-  const obraOptions = useMemo(() => {
-    const set = new Set();
-    Object.values(registros).forEach((regs) =>
-      regs.forEach((r) => { if (r.obra) set.add(r.obra); })
-    );
-    return [...set].sort();
-  }, [registros]);
-
-  const maquinaOptions = useMemo(() => {
-    const set = new Set();
-    Object.values(registros).forEach((regs) =>
-      regs.forEach((r) => { if (r.maquina) set.add(r.maquina); })
-    );
-    return [...set].sort();
-  }, [registros]);
-
   // Handlers mutuamente excluyentes
   const handlePersonal = (val) => {
     setFiltroPersonal(val);
@@ -98,9 +74,9 @@ const ResumenMes = () => {
 
   const filtrarRegs = (regs = []) =>
     regs.filter((r) => {
-      if (filtroPersonal && r.personal !== filtroPersonal) return false;
-      if (filtroObra && r.obra !== filtroObra) return false;
-      if (filtroMaquina && r.maquina !== filtroMaquina) return false;
+      if (filtroPersonal && !(r.personal || "").toLowerCase().includes(filtroPersonal.toLowerCase())) return false;
+      if (filtroObra && !(r.obra || "").toLowerCase().includes(filtroObra.toLowerCase())) return false;
+      if (filtroMaquina && !(r.maquina || "").toLowerCase().includes(filtroMaquina.toLowerCase())) return false;
       return true;
     });
 
@@ -164,12 +140,6 @@ const ResumenMes = () => {
     XLSXStyle.writeFile(wb, `Resumen_${MESES[mes]}_${anio}.xlsx`);
   };
 
-  const estiloX = {
-    position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)",
-    cursor: "pointer", color: "#fff", fontSize: "14px", fontWeight: "900", zIndex: 5, userSelect: "none",
-  };
-  const selectActivo = { backgroundImage: "none" };
-
   const regsDiaModal = diaModal
     ? filtrarRegs(registros[diaKey(anio, mes, diaModal)] || [])
     : [];
@@ -198,27 +168,30 @@ const ResumenMes = () => {
 
       {/* Filtros mutuamente excluyentes */}
       <div className="d-flex gap-2 mb-4">
-        <div style={{ position: "relative", width: 200 }}>
-          <Form.Select size="sm" value={filtroPersonal} onChange={(e) => handlePersonal(e.target.value)} style={filtroPersonal ? selectActivo : {}}>
-            <option value="">Personal</option>
-            {personalOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-          </Form.Select>
-          {filtroPersonal && <span onClick={() => setFiltroPersonal("")} style={estiloX}>✕</span>}
-        </div>
-        <div style={{ position: "relative", width: 200 }}>
-          <Form.Select size="sm" value={filtroObra} onChange={(e) => handleObra(e.target.value)} style={filtroObra ? selectActivo : {}}>
-            <option value="">Obras</option>
-            {obraOptions.map((o) => <option key={o} value={o}>{o}</option>)}
-          </Form.Select>
-          {filtroObra && <span onClick={() => setFiltroObra("")} style={estiloX}>✕</span>}
-        </div>
-        <div style={{ position: "relative", width: 200 }}>
-          <Form.Select size="sm" value={filtroMaquina} onChange={(e) => handleMaquina(e.target.value)} style={filtroMaquina ? selectActivo : {}}>
-            <option value="">Máquina</option>
-            {maquinaOptions.map((m) => <option key={m} value={m}>{m}</option>)}
-          </Form.Select>
-          {filtroMaquina && <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>}
-        </div>
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Personal..."
+          value={filtroPersonal}
+          onChange={(e) => handlePersonal(e.target.value)}
+          style={{ width: 200 }}
+        />
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Obra..."
+          value={filtroObra}
+          onChange={(e) => handleObra(e.target.value)}
+          style={{ width: 200 }}
+        />
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Máquina..."
+          value={filtroMaquina}
+          onChange={(e) => handleMaquina(e.target.value)}
+          style={{ width: 200 }}
+        />
       </div>
 
       {/* Grilla calendario */}

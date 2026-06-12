@@ -160,11 +160,9 @@ const FacturacionProveedor = () => {
   };
   const selectActivo = { backgroundImage: "none" };
 
-  const proveedoresUnicos = [...new Set(facturas.map((f) => f.proveedor).filter(Boolean))].sort();
-
   const facturasFiltradas = facturas.filter((f) => {
     const coincideNumero = filtroNumero === "" || f.numeroFactura?.toString().includes(filtroNumero);
-    const coincideProveedor = filtroProveedor === "" || f.proveedor === filtroProveedor;
+    const coincideProveedor = filtroProveedor === "" || f.proveedor?.toLowerCase().includes(filtroProveedor.toLowerCase());
     const coincideEstado = filtroEstado === "" || f.estadoPago === filtroEstado;
     return coincideNumero && coincideProveedor && coincideEstado;
   });
@@ -181,26 +179,22 @@ const FacturacionProveedor = () => {
       </div>
 
       <div className="d-flex gap-3 mb-3">
-        <Form.Select
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="N° Factura..."
           value={filtroNumero}
           onChange={(e) => setFiltroNumero(e.target.value)}
           style={{ maxWidth: "180px" }}
-        >
-          <option value="">Todos los N°</option>
-          {[...new Set(facturas.map((f) => f.numeroFactura).filter(Boolean))].sort().map((n) => (
-            <option key={n} value={n}>{n}</option>
-          ))}
-        </Form.Select>
-        <Form.Select
+        />
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Proveedor..."
           value={filtroProveedor}
           onChange={(e) => setFiltroProveedor(e.target.value)}
           style={{ maxWidth: "250px" }}
-        >
-          <option value="">Todos los proveedores</option>
-          {proveedoresUnicos.map((p) => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </Form.Select>
+        />
         <div style={{ position: "relative", width: "180px" }}>
           <Form.Select
             value={filtroEstado}
