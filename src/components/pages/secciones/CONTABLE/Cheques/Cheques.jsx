@@ -67,6 +67,17 @@ const Cheques = () => {
     cargar();
   }, []);
 
+  useEffect(() => {
+    if (!modalCambio) return;
+    const dias = calcularDiasInteres(fechaCambio, modalCambio.fechaVencimiento, diasClearing);
+    const tasa = parsearNumero(tasaInteres);
+    const intereses = tasa != null && dias ? (modalCambio.valor || 0) * (tasa / 100 / 30) * dias : 0;
+    const gast = parsearNumero(gastos);
+    const gastosImp = gast != null ? (modalCambio.valor || 0) * (gast / 100) : 0;
+    const total = intereses + gastosImp;
+    setMontoDescontado(total > 0 ? total.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "");
+  }, [tasaInteres, gastos, fechaCambio, diasClearing, modalCambio]);
+
   const handleUtilizar = async (fila, uso) => {
     if (uso === "Pago proveedores") {
       setModalPago(fila);
@@ -154,7 +165,7 @@ const Cheques = () => {
     const extras = {
       tasaInteres: parsearNumero(tasaInteres),
       gastosPorc: parsearNumero(gastos),
-      montoDescontado: montoDescontadoCalc > 0 ? montoDescontadoCalc : null,
+      montoDescontado: parsearNumero(montoDescontado),
       fechaCambio: fechaCambio.trim(),
     };
     await actualizarEstadoCheque(
@@ -373,9 +384,14 @@ const Cheques = () => {
             <InputGroup className="w-50 mx-auto">
               <Form.Control
                 size="sm"
-                readOnly
-                value={montoDescontadoCalc > 0 ? formatoMoneda(montoDescontadoCalc) : ""}
-                onChange={() => {}}
+                type="text"
+                value={montoDescontado}
+                onChange={(e) => setMontoDescontado(e.target.value)}
+                onBlur={() => {
+                  const n = parsearNumero(montoDescontado);
+                  if (n != null) setMontoDescontado(n.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                }}
+                placeholder="0,00"
               />
             </InputGroup>
           </Form.Group>
