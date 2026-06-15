@@ -353,23 +353,20 @@ const Cheques = () => {
                 <InputGroup.Text>%</InputGroup.Text>
               </InputGroup>
             </Form.Group>
-            {(() => {
-              const tasa = parsearNumero(tasaInteres);
-              const dias = calcularDiasInteres(fechaCambio, modalCambio?.fechaVencimiento, diasClearing);
-              if (tasa == null || !dias) return null;
-              const interes = (modalCambio?.valor || 0) * (tasa / 100 / 30) * dias;
-              return (
-                <Form.Group>
-                  <Form.Label className="mb-1 fw-normal">Intereses</Form.Label>
-                  <Form.Control
-                    size="sm"
-                    style={{ width: "140px" }}
-                    readOnly
-                    value={formatoMoneda(interes)}
-                  />
-                </Form.Group>
-              );
-            })()}
+            <Form.Group>
+              <Form.Label className="mb-1 fw-normal">Intereses</Form.Label>
+              <Form.Control
+                size="sm"
+                style={{ width: "140px" }}
+                readOnly
+                value={(() => {
+                  const tasa = parsearNumero(tasaInteres);
+                  const dias = calcularDiasInteres(fechaCambio, modalCambio?.fechaVencimiento, diasClearing);
+                  if (tasa == null || !dias) return "";
+                  return formatoMoneda((modalCambio?.valor || 0) * (tasa / 100 / 30) * dias);
+                })()}
+              />
+            </Form.Group>
           </div>
 
           <Form.Group className="mb-2">
