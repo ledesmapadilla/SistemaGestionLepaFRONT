@@ -17,6 +17,7 @@ const Cheques = () => {
   const [tasaInteres, setTasaInteres] = useState("");
   const [gastos, setGastos] = useState("");
   const [montoDescontado, setMontoDescontado] = useState("");
+  const [fechaCambio, setFechaCambio] = useState("");
   const [empresaCambio, setEmpresaCambio] = useState("");
   const [obsCambio, setObsCambio] = useState("");
 
@@ -48,6 +49,7 @@ const Cheques = () => {
                 tasaInteres: m.tasaInteres ?? null,
                 gastosPorc: m.gastosPorc ?? null,
                 montoDescontado: m.montoDescontado ?? null,
+                fechaCambio: m.fechaCambio || "",
                 observaciones: m.observaciones || "",
               });
             }
@@ -76,6 +78,7 @@ const Cheques = () => {
       setTasaInteres("");
       setGastos("");
       setMontoDescontado("");
+      setFechaCambio(new Date().toLocaleDateString("en-CA"));
       setEmpresaCambio("");
       setObsCambio("");
       return;
@@ -137,11 +140,20 @@ const Cheques = () => {
     if (n != null) setter(n.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   };
 
+  const calcularDiasInteres = (desde, hasta) => {
+    if (!desde || !hasta) return null;
+    const d1 = new Date(desde);
+    const d2 = new Date(hasta);
+    const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : null;
+  };
+
   const confirmarCambio = async () => {
     const extras = {
       tasaInteres: parsearNumero(tasaInteres),
       gastosPorc: parsearNumero(gastos),
       montoDescontado: parsearNumero(montoDescontado),
+      fechaCambio: fechaCambio.trim(),
     };
     await actualizarEstadoCheque(
       modalCambio.cobroId, modalCambio.medioIndex,
@@ -204,6 +216,11 @@ const Cheques = () => {
           )}
           {modalVer?.estado === "Cambio" && (
             <>
+              {modalVer.fechaCambio && <p className="mb-1">Fecha: <span className="text-secondary">{formatearFecha(modalVer.fechaCambio)}</span></p>}
+              {modalVer.fechaCambio && modalVer.fechaVencimiento && (() => {
+                const dias = calcularDiasInteres(modalVer.fechaCambio, modalVer.fechaVencimiento);
+                return dias != null ? <p className="mb-1">Días intereses: <span className="text-secondary">{dias}</span></p> : null;
+              })()}
               {modalVer.tasaInteres != null && <p className="mb-1">Tasa interés: <span className="text-secondary">{Number(modalVer.tasaInteres).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span></p>}
               {modalVer.gastosPorc != null && <p className="mb-1">Gastos: <span className="text-secondary">{Number(modalVer.gastosPorc).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span></p>}
               {modalVer.montoDescontado != null && <p className="mb-1">Monto descontado: <span className="text-secondary">{formatoMoneda(modalVer.montoDescontado)}</span></p>}
@@ -228,6 +245,7 @@ const Cheques = () => {
                 tasaInteres: modalVer.tasaInteres ?? null,
                 gastosPorc: modalVer.gastosPorc ?? null,
                 montoDescontado: modalVer.montoDescontado ?? null,
+                fechaCambio: modalVer.fechaCambio ?? "",
               });
               setCheques((prev) =>
                 prev.map((c) => c._id === modalVer._id ? { ...c, observaciones: obsVer.trim() } : c)
@@ -286,6 +304,26 @@ const Cheques = () => {
           <p className="mb-0">Fecha de cobro: <span className="text-secondary">{formatearFecha(modalCambio?.fechaVencimiento)}</span></p>
           <p className="mb-0">Razón social cheque: <span className="text-secondary">{modalCambio?.cliente}</span></p>
           <p className="mb-2">Monto: <span className="text-secondary">{modalCambio ? formatoMoneda(modalCambio.valor) : ""}</span></p>
+
+          <Form.Group className="mb-2">
+            <Form.Label className="mb-1 fw-normal">Fecha</Form.Label>
+            <Form.Control
+              size="sm"
+              className="w-50 mx-auto"
+              type="date"
+              value={fechaCambio}
+              onChange={(e) => setFechaCambio(e.target.value)}
+            />
+          </Form.Group>
+
+          {fechaCambio && modalCambio?.fechaVencimiento && (() => {
+            const dias = calcularDiasInteres(fechaCambio, modalCambio.fechaVencimiento);
+            return dias != null ? (
+              <p className="text-center mb-2" style={{ fontSize: "0.9rem" }}>
+                Días intereses: <strong style={{ color: "var(--lepa-orange)" }}>{dias}</strong>
+              </p>
+            ) : null;
+          })()}
 
           <Form.Group className="mb-2">
             <Form.Label className="mb-1 fw-normal">Tasa interés</Form.Label>
