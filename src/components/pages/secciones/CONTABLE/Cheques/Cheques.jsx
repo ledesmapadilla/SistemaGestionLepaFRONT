@@ -189,6 +189,13 @@ const Cheques = () => {
     </>
   );
 
+  const diasInteresActual = calcularDiasInteres(fechaCambio, modalCambio?.fechaVencimiento, diasClearing);
+  const tasaInteresNum = parsearNumero(tasaInteres);
+  const interesesCalculados =
+    tasaInteresNum != null && diasInteresActual
+      ? formatoMoneda((modalCambio?.valor || 0) * (tasaInteresNum / 100 / 30) * diasInteresActual)
+      : "";
+
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
@@ -329,14 +336,11 @@ const Cheques = () => {
             </Form.Group>
           </div>
 
-          {fechaCambio && modalCambio?.fechaVencimiento && (() => {
-            const dias = calcularDiasInteres(fechaCambio, modalCambio.fechaVencimiento, diasClearing);
-            return dias != null ? (
-              <p className="text-center mb-2" style={{ fontSize: "0.9rem" }}>
-                Días intereses: <strong style={{ color: "var(--lepa-orange)" }}>{dias}</strong>
-              </p>
-            ) : null;
-          })()}
+          {diasInteresActual != null && (
+            <p className="text-center mb-2" style={{ fontSize: "0.9rem" }}>
+              Días intereses: <strong style={{ color: "var(--lepa-orange)" }}>{diasInteresActual}</strong>
+            </p>
+          )}
 
           <div className="d-flex gap-3 justify-content-center align-items-end mb-2">
             <Form.Group>
@@ -359,12 +363,8 @@ const Cheques = () => {
                 size="sm"
                 style={{ width: "140px" }}
                 readOnly
-                value={(() => {
-                  const tasa = parsearNumero(tasaInteres);
-                  const dias = calcularDiasInteres(fechaCambio, modalCambio?.fechaVencimiento, diasClearing);
-                  if (tasa == null || !dias) return "";
-                  return formatoMoneda((modalCambio?.valor || 0) * (tasa / 100 / 30) * dias);
-                })()}
+                value={interesesCalculados}
+                onChange={() => {}}
               />
             </Form.Group>
           </div>
