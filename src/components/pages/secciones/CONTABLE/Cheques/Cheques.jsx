@@ -381,15 +381,19 @@ const Cheques = () => {
           </Form.Group>
 
           <Form.Group className="mb-2">
-            <Form.Label className="mb-1 fw-normal">Empresa</Form.Label>
-            <Form.Control
+            <Form.Label className="mb-1 fw-normal">Proveedor</Form.Label>
+            <Form.Select
               size="sm"
               className="w-50 mx-auto"
-              type="text"
               value={empresaCambio}
               onChange={(e) => setEmpresaCambio(e.target.value)}
-              placeholder="Nombre de la empresa"
-            />
+            >
+              <option value="">Seleccionar proveedor...</option>
+              {proveedores.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+              <option value="Otros">Otros</option>
+            </Form.Select>
           </Form.Group>
 
           <Form.Group>
