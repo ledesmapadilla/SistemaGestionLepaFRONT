@@ -154,7 +154,7 @@ const Cheques = () => {
     const extras = {
       tasaInteres: parsearNumero(tasaInteres),
       gastosPorc: parsearNumero(gastos),
-      montoDescontado: parsearNumero(montoDescontado),
+      montoDescontado: montoDescontadoCalc > 0 ? montoDescontadoCalc : null,
       fechaCambio: fechaCambio.trim(),
     };
     await actualizarEstadoCheque(
@@ -191,15 +191,15 @@ const Cheques = () => {
 
   const diasInteresActual = calcularDiasInteres(fechaCambio, modalCambio?.fechaVencimiento, diasClearing);
   const tasaInteresNum = parsearNumero(tasaInteres);
-  const interesesCalculados =
+  const interesesNum =
     tasaInteresNum != null && diasInteresActual
-      ? formatoMoneda((modalCambio?.valor || 0) * (tasaInteresNum / 100 / 30) * diasInteresActual)
-      : "";
+      ? (modalCambio?.valor || 0) * (tasaInteresNum / 100 / 30) * diasInteresActual
+      : null;
+  const interesesCalculados = interesesNum != null ? formatoMoneda(interesesNum) : "";
   const gastosNum = parsearNumero(gastos);
-  const gastosCalculados =
-    gastosNum != null
-      ? formatoMoneda((modalCambio?.valor || 0) * (gastosNum / 100))
-      : "";
+  const gastosImporte = gastosNum != null ? (modalCambio?.valor || 0) * (gastosNum / 100) : null;
+  const gastosCalculados = gastosImporte != null ? formatoMoneda(gastosImporte) : "";
+  const montoDescontadoCalc = (interesesNum ?? 0) + (gastosImporte ?? 0);
 
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
@@ -345,7 +345,7 @@ const Cheques = () => {
               </InputGroup>
             </Form.Group>
             <Form.Group>
-              <Form.Label className="mb-1 fw-normal">Intereses</Form.Label>
+              <Form.Label className="mb-1 fw-normal">Intereses $</Form.Label>
               <InputGroup style={{ width: "140px" }}>
                 <Form.Control size="sm" readOnly value={interesesCalculados} onChange={() => {}} />
               </InputGroup>
@@ -371,17 +371,11 @@ const Cheques = () => {
           <Form.Group className="mb-2">
             <Form.Label className="mb-1 fw-normal">Monto descontado</Form.Label>
             <InputGroup className="w-50 mx-auto">
-              <InputGroup.Text>$</InputGroup.Text>
               <Form.Control
                 size="sm"
-                type="text"
-                value={montoDescontado}
-                onChange={(e) => setMontoDescontado(e.target.value)}
-                onBlur={() => {
-                  const n = parsearNumero(montoDescontado);
-                  if (n != null) setMontoDescontado(n.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-                }}
-                placeholder="0,00"
+                readOnly
+                value={montoDescontadoCalc > 0 ? formatoMoneda(montoDescontadoCalc) : ""}
+                onChange={() => {}}
               />
             </InputGroup>
           </Form.Group>
