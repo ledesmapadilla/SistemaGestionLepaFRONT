@@ -309,7 +309,7 @@ const Cheques = () => {
       </Modal>
 
       {/* Modal Cambio */}
-      <Modal show={!!modalCambio} onHide={() => setModalCambio(null)} centered>
+      <Modal show={!!modalCambio} onHide={() => setModalCambio(null)} centered scrollable>
         <Modal.Header closeButton>
           <Modal.Title>Cambio de cheque</Modal.Title>
         </Modal.Header>
