@@ -205,7 +205,7 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
                     Ver
                   </Button>
                   <Dropdown onSelect={(uso) => onUtilizar(c, uso)}>
-                    <Dropdown.Toggle size="sm" variant="outline-primary">
+                    <Dropdown.Toggle size="sm" variant="outline-primary" disabled={c.estado !== "En cartera"}>
                       Utilizar
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
