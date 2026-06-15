@@ -195,6 +195,11 @@ const Cheques = () => {
     tasaInteresNum != null && diasInteresActual
       ? formatoMoneda((modalCambio?.valor || 0) * (tasaInteresNum / 100 / 30) * diasInteresActual)
       : "";
+  const gastosNum = parsearNumero(gastos);
+  const gastosCalculados =
+    gastosNum != null
+      ? formatoMoneda((modalCambio?.valor || 0) * (gastosNum / 100))
+      : "";
 
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
@@ -369,20 +374,32 @@ const Cheques = () => {
             </Form.Group>
           </div>
 
-          <Form.Group className="mb-2">
-            <Form.Label className="mb-1 fw-normal">Gastos</Form.Label>
-            <InputGroup className="w-50 mx-auto">
+          <div className="d-flex gap-3 justify-content-center align-items-end mb-2">
+            <Form.Group>
+              <Form.Label className="mb-1 fw-normal">Gastos</Form.Label>
+              <InputGroup style={{ width: "130px" }}>
+                <Form.Control
+                  size="sm"
+                  type="text"
+                  value={gastos}
+                  onChange={(e) => setGastos(e.target.value)}
+                  onBlur={() => formatearPorcentaje(gastos, setGastos)}
+                  placeholder="0,00"
+                />
+                <InputGroup.Text>%</InputGroup.Text>
+              </InputGroup>
+            </Form.Group>
+            <Form.Group>
+              <Form.Label className="mb-1 fw-normal">Gastos $</Form.Label>
               <Form.Control
                 size="sm"
-                type="text"
-                value={gastos}
-                onChange={(e) => setGastos(e.target.value)}
-                onBlur={() => formatearPorcentaje(gastos, setGastos)}
-                placeholder="0,00"
+                style={{ width: "140px" }}
+                readOnly
+                value={gastosCalculados}
+                onChange={() => {}}
               />
-              <InputGroup.Text>%</InputGroup.Text>
-            </InputGroup>
-          </Form.Group>
+            </Form.Group>
+          </div>
 
           <Form.Group className="mb-2">
             <Form.Label className="mb-1 fw-normal">Monto descontado</Form.Label>
