@@ -144,7 +144,7 @@ const Cheques = () => {
     if (!desde || !hasta) return null;
     const d1 = new Date(desde);
     const d2 = new Date(hasta);
-    const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+    const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 3;
     return diff > 0 ? diff : null;
   };
 
@@ -320,7 +320,7 @@ const Cheques = () => {
             const dias = calcularDiasInteres(fechaCambio, modalCambio.fechaVencimiento);
             return dias != null ? (
               <p className="text-center mb-2" style={{ fontSize: "0.9rem" }}>
-                Días intereses: <strong style={{ color: "var(--lepa-orange)" }}>{dias}</strong>
+                Días intereses: <strong style={{ color: "var(--lepa-orange)" }}>{dias}</strong> <span className="text-secondary" style={{ fontSize: "0.8rem" }}>(+ 3 clearing)</span>
               </p>
             ) : null;
           })()}
