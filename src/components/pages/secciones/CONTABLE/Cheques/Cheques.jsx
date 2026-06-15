@@ -338,20 +338,39 @@ const Cheques = () => {
             ) : null;
           })()}
 
-          <Form.Group className="mb-2">
-            <Form.Label className="mb-1 fw-normal">Tasa interés</Form.Label>
-            <InputGroup className="w-50 mx-auto">
-              <Form.Control
-                size="sm"
-                type="text"
-                value={tasaInteres}
-                onChange={(e) => setTasaInteres(e.target.value)}
-                onBlur={() => formatearPorcentaje(tasaInteres, setTasaInteres)}
-                placeholder="0,00"
-              />
-              <InputGroup.Text>%</InputGroup.Text>
-            </InputGroup>
-          </Form.Group>
+          <div className="d-flex gap-3 justify-content-center align-items-end mb-2">
+            <Form.Group>
+              <Form.Label className="mb-1 fw-normal">Tasa interés</Form.Label>
+              <InputGroup style={{ width: "130px" }}>
+                <Form.Control
+                  size="sm"
+                  type="text"
+                  value={tasaInteres}
+                  onChange={(e) => setTasaInteres(e.target.value)}
+                  onBlur={() => formatearPorcentaje(tasaInteres, setTasaInteres)}
+                  placeholder="0,00"
+                />
+                <InputGroup.Text>%</InputGroup.Text>
+              </InputGroup>
+            </Form.Group>
+            {(() => {
+              const tasa = parsearNumero(tasaInteres);
+              const dias = calcularDiasInteres(fechaCambio, modalCambio?.fechaVencimiento, diasClearing);
+              if (tasa == null || !dias) return null;
+              const interes = (modalCambio?.valor || 0) * (tasa / 100 / 30) * dias;
+              return (
+                <Form.Group>
+                  <Form.Label className="mb-1 fw-normal">Intereses</Form.Label>
+                  <Form.Control
+                    size="sm"
+                    style={{ width: "140px" }}
+                    readOnly
+                    value={formatoMoneda(interes)}
+                  />
+                </Form.Group>
+              );
+            })()}
+          </div>
 
           <Form.Group className="mb-2">
             <Form.Label className="mb-1 fw-normal">Gastos</Form.Label>
