@@ -346,7 +346,9 @@ const Cheques = () => {
             </Form.Group>
             <Form.Group>
               <Form.Label className="mb-1 fw-normal">Intereses</Form.Label>
-              <Form.Control size="sm" style={{ width: "140px" }} readOnly value={interesesCalculados} onChange={() => {}} />
+              <InputGroup style={{ width: "140px" }}>
+                <Form.Control size="sm" readOnly value={interesesCalculados} onChange={() => {}} />
+              </InputGroup>
             </Form.Group>
           </div>
 
@@ -360,7 +362,9 @@ const Cheques = () => {
             </Form.Group>
             <Form.Group>
               <Form.Label className="mb-1 fw-normal">Gastos $</Form.Label>
-              <Form.Control size="sm" style={{ width: "140px" }} readOnly value={gastosCalculados} onChange={() => {}} />
+              <InputGroup style={{ width: "140px" }}>
+                <Form.Control size="sm" readOnly value={gastosCalculados} onChange={() => {}} />
+              </InputGroup>
             </Form.Group>
           </div>
 
