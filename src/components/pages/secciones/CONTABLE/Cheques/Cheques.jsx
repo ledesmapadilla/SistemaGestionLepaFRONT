@@ -18,6 +18,7 @@ const Cheques = () => {
   const [gastos, setGastos] = useState("");
   const [montoDescontado, setMontoDescontado] = useState("");
   const [fechaCambio, setFechaCambio] = useState("");
+  const [diasClearing, setDiasClearing] = useState("3");
   const [empresaCambio, setEmpresaCambio] = useState("");
   const [obsCambio, setObsCambio] = useState("");
 
@@ -79,6 +80,7 @@ const Cheques = () => {
       setGastos("");
       setMontoDescontado("");
       setFechaCambio(new Date().toLocaleDateString("en-CA"));
+      setDiasClearing("3");
       setEmpresaCambio("");
       setObsCambio("");
       return;
@@ -140,11 +142,11 @@ const Cheques = () => {
     if (n != null) setter(n.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   };
 
-  const calcularDiasInteres = (desde, hasta) => {
+  const calcularDiasInteres = (desde, hasta, clearing = 0) => {
     if (!desde || !hasta) return null;
     const d1 = new Date(desde);
     const d2 = new Date(hasta);
-    const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 3;
+    const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + (parseInt(clearing) || 0);
     return diff > 0 ? diff : null;
   };
 
@@ -305,22 +307,33 @@ const Cheques = () => {
           <p className="mb-0">Razón social cheque: <span className="text-secondary">{modalCambio?.cliente}</span></p>
           <p className="mb-2">Monto: <span className="text-secondary">{modalCambio ? formatoMoneda(modalCambio.valor) : ""}</span></p>
 
-          <Form.Group className="mb-2">
-            <Form.Label className="mb-1 fw-normal">Fecha</Form.Label>
-            <Form.Control
-              size="sm"
-              className="w-50 mx-auto"
-              type="date"
-              value={fechaCambio}
-              onChange={(e) => setFechaCambio(e.target.value)}
-            />
-          </Form.Group>
+          <div className="d-flex gap-3 justify-content-center mb-2">
+            <Form.Group>
+              <Form.Label className="mb-1 fw-normal">Fecha</Form.Label>
+              <Form.Control
+                size="sm"
+                type="date"
+                value={fechaCambio}
+                onChange={(e) => setFechaCambio(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group style={{ width: "110px" }}>
+              <Form.Label className="mb-1 fw-normal">Días clearing</Form.Label>
+              <Form.Control
+                size="sm"
+                type="number"
+                min="0"
+                value={diasClearing}
+                onChange={(e) => setDiasClearing(e.target.value)}
+              />
+            </Form.Group>
+          </div>
 
           {fechaCambio && modalCambio?.fechaVencimiento && (() => {
-            const dias = calcularDiasInteres(fechaCambio, modalCambio.fechaVencimiento);
+            const dias = calcularDiasInteres(fechaCambio, modalCambio.fechaVencimiento, diasClearing);
             return dias != null ? (
               <p className="text-center mb-2" style={{ fontSize: "0.9rem" }}>
-                Días intereses: <strong style={{ color: "var(--lepa-orange)" }}>{dias}</strong> <span className="text-secondary" style={{ fontSize: "0.8rem" }}>(+ 3 clearing)</span>
+                Días intereses: <strong style={{ color: "var(--lepa-orange)" }}>{dias}</strong>
               </p>
             ) : null;
           })()}
