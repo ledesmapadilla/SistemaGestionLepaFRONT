@@ -314,90 +314,51 @@ const Cheques = () => {
           <Modal.Title>Cambio de cheque</Modal.Title>
         </Modal.Header>
         <Modal.Body className="py-2">
-          <p className="mb-0">N° Cheque: <span className="text-secondary">{modalCambio?.numeroCheque}</span></p>
-          <p className="mb-0">Fecha de cobro: <span className="text-secondary">{formatearFecha(modalCambio?.fechaVencimiento)}</span></p>
-          <p className="mb-0">Razón social cheque: <span className="text-secondary">{modalCambio?.cliente}</span></p>
-          <p className="mb-2">Monto: <span className="text-secondary">{modalCambio ? formatoMoneda(modalCambio.valor) : ""}</span></p>
+          <div className="d-flex flex-wrap gap-3 justify-content-center mb-2" style={{ fontSize: "0.85rem" }}>
+            <span>N° Cheque: <span className="text-secondary">{modalCambio?.numeroCheque}</span></span>
+            <span>Fecha cobro: <span className="text-secondary">{formatearFecha(modalCambio?.fechaVencimiento)}</span></span>
+            <span>Razón social: <span className="text-secondary">{modalCambio?.cliente}</span></span>
+            <span>Monto: <span className="text-secondary">{modalCambio ? formatoMoneda(modalCambio.valor) : ""}</span></span>
+          </div>
 
-          <div className="d-flex gap-3 justify-content-center mb-2">
+          <div className="d-flex gap-3 justify-content-center align-items-end mb-1">
             <Form.Group>
-              <Form.Label className="mb-1 fw-normal">Fecha</Form.Label>
-              <Form.Control
-                size="sm"
-                type="date"
-                value={fechaCambio}
-                onChange={(e) => setFechaCambio(e.target.value)}
-              />
+              <Form.Label className="mb-1 fw-normal" style={{ fontSize: "0.85rem" }}>Fecha</Form.Label>
+              <Form.Control size="sm" type="date" value={fechaCambio} onChange={(e) => setFechaCambio(e.target.value)} />
             </Form.Group>
             <Form.Group style={{ width: "110px" }}>
-              <Form.Label className="mb-1 fw-normal">Días clearing</Form.Label>
-              <Form.Control
-                size="sm"
-                type="number"
-                min="0"
-                value={diasClearing}
-                onChange={(e) => setDiasClearing(e.target.value)}
-              />
+              <Form.Label className="mb-1 fw-normal" style={{ fontSize: "0.85rem" }}>Días clearing</Form.Label>
+              <Form.Control size="sm" type="number" min="0" value={diasClearing} onChange={(e) => setDiasClearing(e.target.value)} />
             </Form.Group>
+            {diasInteresActual != null && (
+              <div className="align-self-end pb-1" style={{ fontSize: "0.85rem" }}>
+                Días intereses: <strong style={{ color: "var(--lepa-orange)" }}>{diasInteresActual}</strong>
+              </div>
+            )}
           </div>
 
-          {diasInteresActual != null && (
-            <p className="text-center mb-2" style={{ fontSize: "0.9rem" }}>
-              Días intereses: <strong style={{ color: "var(--lepa-orange)" }}>{diasInteresActual}</strong>
-            </p>
-          )}
-
-          <div className="d-flex gap-3 justify-content-center align-items-end mb-2">
+          <div className="d-flex gap-2 justify-content-center align-items-end mb-1">
             <Form.Group>
-              <Form.Label className="mb-1 fw-normal">Tasa interés</Form.Label>
-              <InputGroup style={{ width: "130px" }}>
-                <Form.Control
-                  size="sm"
-                  type="text"
-                  value={tasaInteres}
-                  onChange={(e) => setTasaInteres(e.target.value)}
-                  onBlur={() => formatearPorcentaje(tasaInteres, setTasaInteres)}
-                  placeholder="0,00"
-                />
+              <Form.Label className="mb-1 fw-normal" style={{ fontSize: "0.85rem" }}>Tasa interés</Form.Label>
+              <InputGroup style={{ width: "120px" }}>
+                <Form.Control size="sm" type="text" value={tasaInteres} onChange={(e) => setTasaInteres(e.target.value)} onBlur={() => formatearPorcentaje(tasaInteres, setTasaInteres)} placeholder="0,00" />
                 <InputGroup.Text>%</InputGroup.Text>
               </InputGroup>
             </Form.Group>
             <Form.Group>
-              <Form.Label className="mb-1 fw-normal">Intereses</Form.Label>
-              <Form.Control
-                size="sm"
-                style={{ width: "140px" }}
-                readOnly
-                value={interesesCalculados}
-                onChange={() => {}}
-              />
+              <Form.Label className="mb-1 fw-normal" style={{ fontSize: "0.85rem" }}>Intereses</Form.Label>
+              <Form.Control size="sm" style={{ width: "130px" }} readOnly value={interesesCalculados} onChange={() => {}} />
             </Form.Group>
-          </div>
-
-          <div className="d-flex gap-3 justify-content-center align-items-end mb-2">
             <Form.Group>
-              <Form.Label className="mb-1 fw-normal">Gastos</Form.Label>
-              <InputGroup style={{ width: "130px" }}>
-                <Form.Control
-                  size="sm"
-                  type="text"
-                  value={gastos}
-                  onChange={(e) => setGastos(e.target.value)}
-                  onBlur={() => formatearPorcentaje(gastos, setGastos)}
-                  placeholder="0,00"
-                />
+              <Form.Label className="mb-1 fw-normal" style={{ fontSize: "0.85rem" }}>Gastos</Form.Label>
+              <InputGroup style={{ width: "110px" }}>
+                <Form.Control size="sm" type="text" value={gastos} onChange={(e) => setGastos(e.target.value)} onBlur={() => formatearPorcentaje(gastos, setGastos)} placeholder="0,00" />
                 <InputGroup.Text>%</InputGroup.Text>
               </InputGroup>
             </Form.Group>
             <Form.Group>
-              <Form.Label className="mb-1 fw-normal">Gastos $</Form.Label>
-              <Form.Control
-                size="sm"
-                style={{ width: "140px" }}
-                readOnly
-                value={gastosCalculados}
-                onChange={() => {}}
-              />
+              <Form.Label className="mb-1 fw-normal" style={{ fontSize: "0.85rem" }}>Gastos $</Form.Label>
+              <Form.Control size="sm" style={{ width: "130px" }} readOnly value={gastosCalculados} onChange={() => {}} />
             </Form.Group>
           </div>
 
