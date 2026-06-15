@@ -31,7 +31,7 @@ const formatearFecha = (fecha) => {
   return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : fecha;
 };
 
-const esVencido = (fecha) => !!fecha && fecha <= hoy;
+const esVencido = (fecha, estado) => !!fecha && fecha <= hoy && estado === "En cartera";
 
 const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
   const navigate = useNavigate();
@@ -194,7 +194,7 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
               <tr key={c._id}>
                 <td>{c.cliente}</td>
                 <td>{c.numeroCheque}</td>
-                <td className={esVencido(c.fechaVencimiento) ? "text-danger fw-bold" : ""}>
+                <td className={esVencido(c.fechaVencimiento, c.estado) ? "text-danger fw-bold" : ""}>
                   {formatoMoneda(c.valor)}
                 </td>
                 <td>{formatearFecha(c.fechaVencimiento)}</td>
