@@ -243,10 +243,14 @@ const Obras = () => {
       }
 
       cerrarModal();
+      const remitosActualizados = obraGuardada.remitosActualizados || 0;
       Swal.fire({
         icon: "success",
         title: editando ? "Obra actualizada" : "Obra creada",
-        timer: 2000,
+        text: editando && remitosActualizados > 0
+          ? `Se actualizaron precios en ${remitosActualizados} remito(s).`
+          : undefined,
+        timer: remitosActualizados > 0 ? 3000 : 2000,
         showConfirmButton: false,
       });
     } catch (error) {
