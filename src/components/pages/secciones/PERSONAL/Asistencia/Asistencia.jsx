@@ -598,7 +598,7 @@ const Asistencia = () => {
                                 : r
                             ));
                           }}
-                          style={{ cursor: "pointer", width: 16, height: 16 }}
+                          style={{ cursor: "pointer", accentColor: "#dc3545", width: 18, height: 18 }}
                         />
                       </div>
                     </td>
