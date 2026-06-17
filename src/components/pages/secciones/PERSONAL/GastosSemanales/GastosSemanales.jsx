@@ -331,13 +331,13 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
               <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
                 <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                   <tr>
-                    <th style={{ width: 32 }}></th>
-                    <th style={{ minWidth: 200 }}>Proveedor</th>
-                    <th style={{ minWidth: 120 }}>Deuda</th>
-                    <th style={{ minWidth: 120 }}>Pago</th>
-                    <th style={{ minWidth: 120 }}>Saldo</th>
-                    <th style={{ minWidth: 200 }}>Observaciones</th>
-                    <th style={{ width: 50 }}></th>
+                    <th className="fw-normal" style={{ width: 32 }}></th>
+                    <th className="fw-normal" style={{ minWidth: 200 }}>Proveedor</th>
+                    <th className="fw-normal" style={{ minWidth: 120 }}>Deuda</th>
+                    <th className="fw-normal" style={{ minWidth: 120 }}>Pago</th>
+                    <th className="fw-normal" style={{ minWidth: 120 }}>Saldo</th>
+                    <th className="fw-normal" style={{ minWidth: 200 }}>Observaciones</th>
+                    <th className="fw-normal" style={{ width: 50 }}></th>
                   </tr>
                 </thead>
                 <tbody>
