@@ -351,7 +351,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                             style={{ cursor: "pointer", fontSize: 18, color: f.seleccionado ? "#198754" : "#495057", userSelect: "none", lineHeight: 1 }}
                           >●</span>
                         </td>
-                        <td className="text-start fw-semibold">
+                        <td className="text-start">
                           {f.libre ? (
                             <Form.Control size="sm" type="text" value={f.proveedor} placeholder="Proveedor..." onChange={(e) => actualizar(idx, "proveedor", e.target.value)} />
                           ) : (
@@ -366,7 +366,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                           )}
                         </td>
                         <td><CeldaMoneda value={f.pago || 0} onChange={(v) => actualizar(idx, "pago", v)} defaultValue={Number(f.deuda) || 0} /></td>
-                        <td style={{ color: saldo > 0 ? "#ffc107" : saldo < 0 ? "#dc3545" : "#198754", fontWeight: 600 }}>
+                        <td style={{ color: saldo > 0 ? "#ffc107" : saldo < 0 ? "#dc3545" : "#198754" }}>
                           {pesos(saldo)}
                         </td>
                         <td>
@@ -388,7 +388,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                   )}
                 </tbody>
                 <tfoot>
-                  <tr className="table-dark fw-bold">
+                  <tr className="table-dark">
                     <td />
                     <td className="text-start">Total</td>
                     <td>{pesos(totalDeuda)}</td>
