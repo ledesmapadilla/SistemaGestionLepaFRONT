@@ -466,10 +466,13 @@ const GastosSemanales = () => {
       ) : (
         <>
           <div className="d-flex justify-content-between align-items-center mb-2">
-            <Button variant="outline-primary" size="sm" onClick={() => {
-              modificado.current = true;
-              setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, nuevo: true }]);
-            }}>+ Agregar personal</Button>
+            <div className="d-flex gap-2">
+              <Button variant="outline-primary" size="sm" onClick={() => {
+                modificado.current = true;
+                setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, nuevo: true }]);
+              }}>+ Agregar personal</Button>
+              <Button variant="outline-info" size="sm" onClick={() => {}}>Gastos Proveedores</Button>
+            </div>
             <div className="d-flex align-items-center gap-2">
               <span className="text-muted" style={{ fontSize: "0.85rem" }}>Suma</span>
               <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, textAlign: "center", fontSize: "0.95rem" }}>
