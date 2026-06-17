@@ -386,7 +386,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                   {filasVisibles.length === 0 && (
                     <tr><td colSpan={7} className="text-muted py-3">Sin proveedores con deuda.</td></tr>
                   )}
-                  <tr><td colSpan={7} style={{ padding: 0, height: 3, background: "#ffc107", borderColor: "#ffc107" }} /></tr>
+                  <tr><td colSpan={7} style={{ padding: 0, height: 1, background: "#ffc107", borderColor: "#ffc107" }} /></tr>
                 </tbody>
                 <tfoot>
                   <tr className="table-dark">
@@ -770,7 +770,7 @@ const GastosSemanales = () => {
                     </td>
                   </tr>
                 ))}
-                <tr><td colSpan={9} style={{ padding: 0, height: 3, background: "#ffc107", borderColor: "#ffc107" }} /></tr>
+                <tr><td colSpan={9} style={{ padding: 0, height: 1, background: "#ffc107", borderColor: "#ffc107" }} /></tr>
               </tbody>
               <tfoot>
                 <tr className="table-dark fw-bold">
