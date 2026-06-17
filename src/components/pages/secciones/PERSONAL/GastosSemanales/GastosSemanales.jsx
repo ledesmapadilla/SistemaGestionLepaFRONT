@@ -30,8 +30,10 @@ const netoExtras = (extras) =>
 const calcularPagar = (r) =>
   (Number(r.semanal) || 0) - (Number(r.ausentismo) || 0) + netoExtras(r.extras);
 
-const pesos = (n) =>
-  Number(n).toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
+const pesos = (n) => {
+  const v = Number(n) === 0 ? 0 : Number(n);
+  return v.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
+};
 
 const formVacio = () => ({
   fecha: new Date().toLocaleDateString("en-CA"),
