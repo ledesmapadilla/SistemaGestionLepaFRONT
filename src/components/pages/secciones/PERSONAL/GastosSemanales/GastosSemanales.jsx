@@ -374,12 +374,10 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                           <Form.Control size="sm" type="text" value={f.observaciones} onChange={(e) => actualizar(idx, "observaciones", e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }} />
                         </td>
                         <td>
-                          {f.libre && (
-                            <span
-                              onClick={() => borrar(idx)}
-                              style={{ cursor: "pointer", color: "#dc3545", fontWeight: 900, fontSize: 16, userSelect: "none" }}
-                            >✕</span>
-                          )}
+                          <span
+                            onClick={() => borrar(idx)}
+                            style={{ cursor: "pointer", color: "#dc3545", fontWeight: 900, fontSize: 16, userSelect: "none" }}
+                          >✕</span>
                         </td>
                       </tr>
                     );
