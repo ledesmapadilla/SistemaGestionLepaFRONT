@@ -247,12 +247,12 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
       });
       const filasDeuda = resumen.map((r) => {
         const g = guardadosMap[r.proveedor.trim().toLowerCase()];
-        return { proveedor: r.proveedor, deuda: r.deuda, pago: g?.pago || 0, observaciones: g?.observaciones || "", libre: false };
+        return { proveedor: r.proveedor, deuda: r.deuda, pago: g?.pago || 0, observaciones: g?.observaciones || "", libre: false, seleccionado: false };
       });
       const yaEstan = new Set(filasDeuda.map((f) => f.proveedor.trim().toLowerCase()));
       const filasExtra = (proveedoresGuardados || [])
         .filter((g) => g.libre || !g.proveedor || !yaEstan.has(g.proveedor.trim().toLowerCase()))
-        .map((g) => ({ proveedor: g.proveedor || "", deuda: g.deuda || 0, pago: g.pago || 0, observaciones: g.observaciones || "", libre: true }));
+        .map((g) => ({ proveedor: g.proveedor || "", deuda: g.deuda || 0, pago: g.pago || 0, observaciones: g.observaciones || "", libre: true, seleccionado: false }));
       setFilas([...filasDeuda, ...filasExtra]);
       setCargando(false);
     };
@@ -264,7 +264,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
     setFilas((prev) => prev.map((f, i) => (i === idx ? { ...f, [campo]: valor } : f)));
 
   const agregar = () =>
-    setFilas((prev) => [...prev, { proveedor: "", deuda: 0, pago: 0, observaciones: "", libre: true }]);
+    setFilas((prev) => [...prev, { proveedor: "", deuda: 0, pago: 0, observaciones: "", libre: true, seleccionado: false }]);
 
   const borrar = (idx) => setFilas((prev) => prev.filter((_, i) => i !== idx));
 
@@ -282,9 +282,13 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
     onHide();
   };
 
+  const toggleSel = (idx) =>
+    setFilas((prev) => prev.map((f, i) => (i === idx ? { ...f, seleccionado: !f.seleccionado } : f)));
+
   const totalDeuda = filas.reduce((s, f) => s + (Number(f.deuda) || 0), 0);
   const totalPago = filas.reduce((s, f) => s + (Number(f.pago) || 0), 0);
   const totalSaldo = totalDeuda - totalPago;
+  const sumaSeleccion = filas.filter((f) => f.seleccionado).reduce((s, f) => s + (Number(f.pago) || 0), 0);
 
   const filasVisibles = filas
     .map((f, idx) => ({ f, idx }))
@@ -312,10 +316,20 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
           <Spinner animation="border" className="d-block mx-auto my-5" />
         ) : (
           <>
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <Button variant="outline-primary" size="sm" onClick={agregar}>+ Agregar fila</Button>
+              <div className="d-flex align-items-center gap-2">
+                <span className="text-muted" style={{ fontSize: "0.85rem" }}>Suma</span>
+                <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, textAlign: "center", fontSize: "0.95rem" }}>
+                  {pesos(sumaSeleccion)}
+                </div>
+              </div>
+            </div>
             <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "60vh" }}>
               <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
                 <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                   <tr>
+                    <th style={{ width: 32 }}></th>
                     <th style={{ minWidth: 200 }}>Proveedor</th>
                     <th style={{ minWidth: 120 }}>Deuda</th>
                     <th style={{ minWidth: 120 }}>Pago</th>
@@ -329,6 +343,12 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                     const saldo = (Number(f.deuda) || 0) - (Number(f.pago) || 0);
                     return (
                       <tr key={idx}>
+                        <td className="text-center">
+                          <span
+                            onClick={() => toggleSel(idx)}
+                            style={{ cursor: "pointer", fontSize: 18, color: f.seleccionado ? "#198754" : "#495057", userSelect: "none", lineHeight: 1 }}
+                          >●</span>
+                        </td>
                         <td className="text-start fw-semibold">
                           {f.libre ? (
                             <Form.Control size="sm" type="text" value={f.proveedor} placeholder="Proveedor..." onChange={(e) => actualizar(idx, "proveedor", e.target.value)} />
@@ -362,11 +382,12 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                     );
                   })}
                   {filasVisibles.length === 0 && (
-                    <tr><td colSpan={6} className="text-muted py-3">Sin proveedores con deuda.</td></tr>
+                    <tr><td colSpan={7} className="text-muted py-3">Sin proveedores con deuda.</td></tr>
                   )}
                 </tbody>
                 <tfoot>
                   <tr className="table-dark fw-bold">
+                    <td />
                     <td className="text-start">Total</td>
                     <td>{pesos(totalDeuda)}</td>
                     <td>{pesos(totalPago)}</td>
@@ -376,9 +397,6 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                   </tr>
                 </tfoot>
               </Table>
-            </div>
-            <div className="mt-3">
-              <Button variant="outline-primary" size="sm" onClick={agregar}>+ Agregar fila</Button>
             </div>
           </>
         )}
