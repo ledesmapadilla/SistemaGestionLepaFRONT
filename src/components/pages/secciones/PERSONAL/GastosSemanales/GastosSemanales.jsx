@@ -272,18 +272,15 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
 
   const borrar = (idx) => {
     const fila = filas[idx];
+    setFilas((prev) => prev.filter((_, i) => i !== idx));
     Swal.fire({
-      icon: "warning",
-      title: "¿Borrar fila?",
-      html: `Se quitará <b>${fila?.proveedor || "esta fila"}</b> de la planilla de la semana.<br/><span style="font-size:0.85rem">No se borra el proveedor ni su cuenta corriente.</span>`,
-      showCancelButton: true,
-      confirmButtonText: "Sí, borrar",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#dc3545",
-    }).then((res) => {
-      if (res.isConfirmed) {
-        setFilas((prev) => prev.filter((_, i) => i !== idx));
-      }
+      toast: true,
+      position: "top-end",
+      icon: "success",
+      title: `Se quitó ${fila?.proveedor || "la fila"} de la planilla`,
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
     });
   };
 
