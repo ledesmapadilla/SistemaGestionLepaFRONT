@@ -4,6 +4,7 @@ import { Button, Table, Form, Spinner, Modal } from "react-bootstrap";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { obtenerAsistenciaPorFecha } from "../../../../../helpers/queriesAsistencia.js";
 import { obtenerGastoSemanalPorSemana, guardarGastoSemanal } from "../../../../../helpers/queriesGastoSemanal.js";
+import { obtenerCuentaCorrienteProveedor } from "../../../../../helpers/queriesCuentaCorrienteProveedor.js";
 import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
 import XLSXStyle from "xlsx-js-style";
 import "../../../../../styles/clientes.css";
@@ -210,6 +211,186 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, onGu
   );
 };
 
+const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => {
+  const [filas, setFilas] = useState([]);
+  const [filtro, setFiltro] = useState("");
+  const [cargando, setCargando] = useState(false);
+
+  useEffect(() => {
+    if (!show) return;
+    let activo = true;
+    const cargar = async () => {
+      setCargando(true);
+      setFiltro("");
+      let resumen = [];
+      try {
+        const data = await obtenerCuentaCorrienteProveedor();
+        const movs = Array.isArray(data) ? data : [];
+        const provs = [...new Set(movs.map((m) => m.proveedor).filter(Boolean))];
+        resumen = provs
+          .map((prov) => {
+            const ms = movs.filter((m) => m.proveedor === prov);
+            const debito = ms.reduce((s, m) => s + (m.debito || 0), 0);
+            const credito = ms.reduce((s, m) => s + (m.credito || 0), 0);
+            return { proveedor: prov, deuda: debito - credito };
+          })
+          .filter((r) => r.deuda > 0)
+          .sort((a, b) => a.proveedor.localeCompare(b.proveedor));
+      } catch (e) {
+        console.error("Error cargando deudas de proveedores:", e);
+      }
+      if (!activo) return;
+
+      const guardadosMap = {};
+      (proveedoresGuardados || []).forEach((g) => {
+        if (g.proveedor) guardadosMap[g.proveedor.trim().toLowerCase()] = g;
+      });
+      const filasDeuda = resumen.map((r) => {
+        const g = guardadosMap[r.proveedor.trim().toLowerCase()];
+        return { proveedor: r.proveedor, deuda: r.deuda, pago: g?.pago || 0, observaciones: g?.observaciones || "", libre: false };
+      });
+      const yaEstan = new Set(filasDeuda.map((f) => f.proveedor.trim().toLowerCase()));
+      const filasExtra = (proveedoresGuardados || [])
+        .filter((g) => g.libre || !g.proveedor || !yaEstan.has(g.proveedor.trim().toLowerCase()))
+        .map((g) => ({ proveedor: g.proveedor || "", deuda: g.deuda || 0, pago: g.pago || 0, observaciones: g.observaciones || "", libre: true }));
+      setFilas([...filasDeuda, ...filasExtra]);
+      setCargando(false);
+    };
+    cargar();
+    return () => { activo = false; };
+  }, [show]);
+
+  const actualizar = (idx, campo, valor) =>
+    setFilas((prev) => prev.map((f, i) => (i === idx ? { ...f, [campo]: valor } : f)));
+
+  const agregar = () =>
+    setFilas((prev) => [...prev, { proveedor: "", deuda: 0, pago: 0, observaciones: "", libre: true }]);
+
+  const borrar = (idx) => setFilas((prev) => prev.filter((_, i) => i !== idx));
+
+  const handleGuardar = () => {
+    const aGuardar = filas
+      .filter((f) => (Number(f.pago) || 0) > 0 || f.observaciones || (f.libre && (f.proveedor || Number(f.deuda) > 0)))
+      .map((f) => ({
+        proveedor: f.proveedor,
+        deuda: Number(f.deuda) || 0,
+        pago: Number(f.pago) || 0,
+        observaciones: f.observaciones || "",
+        libre: !!f.libre,
+      }));
+    onGuardar(aGuardar);
+    onHide();
+  };
+
+  const totalDeuda = filas.reduce((s, f) => s + (Number(f.deuda) || 0), 0);
+  const totalPago = filas.reduce((s, f) => s + (Number(f.pago) || 0), 0);
+  const totalSaldo = totalDeuda - totalPago;
+
+  const filasVisibles = filas
+    .map((f, idx) => ({ f, idx }))
+    .filter(({ f }) => f.libre || !filtro || f.proveedor.toLowerCase().includes(filtro.toLowerCase()));
+
+  return (
+    <Modal show={show} onHide={onHide} centered size="xl">
+      <Modal.Header closeButton>
+        <div className="d-flex align-items-center w-100" style={{ marginRight: 32 }}>
+          <Modal.Title className="flex-shrink-0">Gastos Proveedores</Modal.Title>
+          <div className="flex-grow-1 d-flex justify-content-center">
+            <Form.Control
+              size="sm"
+              type="text"
+              placeholder="Buscar proveedor..."
+              value={filtro}
+              onChange={(e) => setFiltro(e.target.value)}
+              style={{ maxWidth: 260 }}
+            />
+          </div>
+        </div>
+      </Modal.Header>
+      <Modal.Body>
+        {cargando ? (
+          <Spinner animation="border" className="d-block mx-auto my-5" />
+        ) : (
+          <>
+            <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "60vh" }}>
+              <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
+                <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
+                  <tr>
+                    <th style={{ minWidth: 200 }}>Proveedor</th>
+                    <th style={{ minWidth: 120 }}>Deuda</th>
+                    <th style={{ minWidth: 120 }}>Pago</th>
+                    <th style={{ minWidth: 120 }}>Saldo</th>
+                    <th style={{ minWidth: 200 }}>Observaciones</th>
+                    <th style={{ width: 50 }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filasVisibles.map(({ f, idx }) => {
+                    const saldo = (Number(f.deuda) || 0) - (Number(f.pago) || 0);
+                    return (
+                      <tr key={idx}>
+                        <td className="text-start fw-semibold">
+                          {f.libre ? (
+                            <Form.Control size="sm" type="text" value={f.proveedor} placeholder="Proveedor..." onChange={(e) => actualizar(idx, "proveedor", e.target.value)} />
+                          ) : (
+                            f.proveedor
+                          )}
+                        </td>
+                        <td>
+                          {f.libre ? (
+                            <CeldaMoneda value={f.deuda} onChange={(v) => actualizar(idx, "deuda", v)} />
+                          ) : (
+                            pesos(f.deuda || 0)
+                          )}
+                        </td>
+                        <td><CeldaMoneda value={f.pago || 0} onChange={(v) => actualizar(idx, "pago", v)} defaultValue={Number(f.deuda) || 0} /></td>
+                        <td style={{ color: saldo > 0 ? "#ffc107" : saldo < 0 ? "#dc3545" : "#198754", fontWeight: 600 }}>
+                          {pesos(saldo)}
+                        </td>
+                        <td>
+                          <Form.Control size="sm" type="text" value={f.observaciones} onChange={(e) => actualizar(idx, "observaciones", e.target.value)} />
+                        </td>
+                        <td>
+                          {f.libre && (
+                            <span
+                              onClick={() => borrar(idx)}
+                              style={{ cursor: "pointer", color: "#dc3545", fontWeight: 900, fontSize: 16, userSelect: "none" }}
+                            >✕</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filasVisibles.length === 0 && (
+                    <tr><td colSpan={6} className="text-muted py-3">Sin proveedores con deuda.</td></tr>
+                  )}
+                </tbody>
+                <tfoot>
+                  <tr className="table-dark fw-bold">
+                    <td className="text-start">Total</td>
+                    <td>{pesos(totalDeuda)}</td>
+                    <td>{pesos(totalPago)}</td>
+                    <td style={{ color: totalSaldo > 0 ? "#ffc107" : totalSaldo < 0 ? "#dc3545" : "#198754" }}>{pesos(totalSaldo)}</td>
+                    <td />
+                    <td />
+                  </tr>
+                </tfoot>
+              </Table>
+            </div>
+            <div className="mt-3">
+              <Button variant="outline-primary" size="sm" onClick={agregar}>+ Agregar fila</Button>
+            </div>
+          </>
+        )}
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="outline-secondary" onClick={onHide}>Cancelar</Button>
+        <Button variant="outline-success" onClick={handleGuardar}>Guardar</Button>
+      </Modal.Footer>
+    </Modal>
+  );
+};
+
 const GastosSemanales = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -227,6 +408,8 @@ const GastosSemanales = () => {
   const [asistenciaSemana, setAsistenciaSemana] = useState([]);
   const [verPersonal, setVerPersonal] = useState(null);
   const [verExtras, setVerExtras] = useState(null);
+  const [verProveedores, setVerProveedores] = useState(false);
+  const [proveedoresGuardados, setProveedoresGuardados] = useState([]);
   const modificado = useRef(false);
   const autoSaveTimer = useRef(null);
 
@@ -365,6 +548,7 @@ const GastosSemanales = () => {
       setRegistros([...filasPersonal, ...filasAsistencia]);
     }
     setAsistenciaSemana(asistenciaDocs);
+    setProveedoresGuardados(gastoDoc?.proveedores || []);
     modificado.current = false;
     setLoading(false);
   }, []);
@@ -471,7 +655,7 @@ const GastosSemanales = () => {
                 modificado.current = true;
                 setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, nuevo: true }]);
               }}>+ Agregar personal</Button>
-              <Button variant="outline-info" size="sm" onClick={() => {}}>Gastos Proveedores</Button>
+              <Button variant="outline-info" size="sm" onClick={() => setVerProveedores(true)}>Gastos Proveedores</Button>
             </div>
             <div className="d-flex align-items-center gap-2">
               <span className="text-muted" style={{ fontSize: "0.85rem" }}>Suma</span>
@@ -590,6 +774,16 @@ const GastosSemanales = () => {
         personalNombre={verExtras?.nombre}
         extras={verExtras !== null ? (registros[verExtras.idx]?.extras || []) : []}
         onGuardar={(nuevosExtras) => actualizar(verExtras.idx, "extras", nuevosExtras)}
+      />
+
+      <ProveedoresModal
+        show={verProveedores}
+        onHide={() => setVerProveedores(false)}
+        proveedoresGuardados={proveedoresGuardados}
+        onGuardar={(nuevos) => {
+          setProveedoresGuardados(nuevos);
+          guardarGastoSemanal(semanaKey, undefined, nuevos);
+        }}
       />
 
       <Modal show={!!verPersonal} onHide={() => setVerPersonal(null)} centered size="xl">
