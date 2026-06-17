@@ -48,7 +48,7 @@ const CeldaMoneda = ({ value, onChange, textStyle = {}, defaultValue }) => {
 
   const iniciarEdicion = () => {
     const raw = Number(value) === 0 && defaultValue !== undefined ? defaultValue : value;
-    setEditValue(pesos(raw));
+    setEditValue(Number(raw) === 0 ? "" : pesos(raw));
     setEditando(true);
   };
 
@@ -217,6 +217,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
   const [filas, setFilas] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [cargando, setCargando] = useState(false);
+  const keyRef = useRef(0);
 
   useEffect(() => {
     if (!show) return;
@@ -249,12 +250,12 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
       });
       const filasDeuda = resumen.map((r) => {
         const g = guardadosMap[r.proveedor.trim().toLowerCase()];
-        return { proveedor: r.proveedor, deuda: r.deuda, pago: g?.pago || 0, observaciones: g?.observaciones || "", libre: false, seleccionado: false };
+        return { _k: keyRef.current++, proveedor: r.proveedor, deuda: r.deuda, pago: g?.pago || 0, observaciones: g?.observaciones || "", libre: false, seleccionado: false };
       });
       const yaEstan = new Set(filasDeuda.map((f) => f.proveedor.trim().toLowerCase()));
       const filasExtra = (proveedoresGuardados || [])
         .filter((g) => g.libre || !g.proveedor || !yaEstan.has(g.proveedor.trim().toLowerCase()))
-        .map((g) => ({ proveedor: g.proveedor || "", deuda: g.deuda || 0, pago: g.pago || 0, observaciones: g.observaciones || "", libre: true, seleccionado: false }));
+        .map((g) => ({ _k: keyRef.current++, proveedor: g.proveedor || "", deuda: g.deuda || 0, pago: g.pago || 0, observaciones: g.observaciones || "", libre: true, seleccionado: false }));
       setFilas([...filasDeuda, ...filasExtra]);
       setCargando(false);
     };
@@ -266,7 +267,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
     setFilas((prev) => prev.map((f, i) => (i === idx ? { ...f, [campo]: valor } : f)));
 
   const agregar = () =>
-    setFilas((prev) => [...prev, { proveedor: "", deuda: 0, pago: 0, observaciones: "", libre: true, seleccionado: false }]);
+    setFilas((prev) => [...prev, { _k: keyRef.current++, proveedor: "", deuda: 0, pago: 0, observaciones: "", libre: true, seleccionado: false }]);
 
   const borrar = (idx) => setFilas((prev) => prev.filter((_, i) => i !== idx));
 
@@ -344,7 +345,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                   {filasVisibles.map(({ f, idx }) => {
                     const saldo = (Number(f.deuda) || 0) - (Number(f.pago) || 0);
                     return (
-                      <tr key={idx}>
+                      <tr key={f._k}>
                         <td className="text-center">
                           <span
                             onClick={() => toggleSel(idx)}
@@ -353,7 +354,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                         </td>
                         <td className="text-start">
                           {f.libre ? (
-                            <Form.Control size="sm" type="text" value={f.proveedor} placeholder="Proveedor..." onChange={(e) => actualizar(idx, "proveedor", e.target.value)} />
+                            <Form.Control size="sm" type="text" value={f.proveedor} placeholder="Proveedor..." onChange={(e) => actualizar(idx, "proveedor", e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }} />
                           ) : (
                             f.proveedor
                           )}
@@ -370,7 +371,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                           {pesos(saldo)}
                         </td>
                         <td>
-                          <Form.Control size="sm" type="text" value={f.observaciones} onChange={(e) => actualizar(idx, "observaciones", e.target.value)} />
+                          <Form.Control size="sm" type="text" value={f.observaciones} onChange={(e) => actualizar(idx, "observaciones", e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }} />
                         </td>
                         <td>
                           {f.libre && (
