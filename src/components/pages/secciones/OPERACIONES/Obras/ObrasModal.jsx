@@ -1,5 +1,6 @@
 import { Modal, Button, Form } from "react-bootstrap";
 import Select from "react-select";
+import AsyncButton from "../../../../shared/AsyncButton";
 
 const ModalObras = ({
   show,
@@ -20,6 +21,7 @@ const ModalObras = ({
   obraId,
   nombreObraOriginal,
   abrirModalPrecios,
+  isSubmitting,
 }) => {
   const opcionesClientes = clientes.map((c) => ({
     value: c.razonsocial,
@@ -246,9 +248,9 @@ const ModalObras = ({
             Cancelar
           </Button>
           {!verDetalle && (
-            <Button variant="outline-success" type="submit">
+            <AsyncButton variant="outline-success" type="submit" loading={isSubmitting}>
               Guardar
-            </Button>
+            </AsyncButton>
           )}
         </Modal.Footer>
       </Form>

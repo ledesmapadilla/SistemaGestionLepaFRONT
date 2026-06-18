@@ -25,7 +25,7 @@ const Clientes = () => {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: valoresIniciales,
   });
@@ -182,6 +182,7 @@ const Clientes = () => {
         cerrarModal={cerrarModal}
         clientes={clientes}
         clienteId={clienteId}
+        isSubmitting={isSubmitting}
       />
     </>
   );

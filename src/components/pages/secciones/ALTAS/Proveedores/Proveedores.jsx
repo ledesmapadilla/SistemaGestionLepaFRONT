@@ -26,7 +26,7 @@ const Proveedores = () => {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: valoresIniciales,
     mode: "onChange",
@@ -193,6 +193,7 @@ const Proveedores = () => {
         proveedorId={proveedorId}
         proveedores={proveedores}
         contactoOriginal={contactoOriginal}
+        isSubmitting={isSubmitting}
         register={register}
         errors={errors}
       />

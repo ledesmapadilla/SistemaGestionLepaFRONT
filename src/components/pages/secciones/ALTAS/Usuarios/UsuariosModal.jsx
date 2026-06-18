@@ -1,5 +1,6 @@
 import React from "react";
 import { Modal, Button, Form } from "react-bootstrap";
+import AsyncButton from "../../../../shared/AsyncButton";
 
 const UsuariosModal = ({
   show,
@@ -11,6 +12,7 @@ const UsuariosModal = ({
   editando,
   usuarios,
   usuarioId,
+  isSubmitting,
 }) => {
   return (
     <Modal show={show} onHide={onHide} centered>
@@ -109,9 +111,9 @@ const UsuariosModal = ({
           <Button variant="outline-secondary" onClick={onHide}>
             Cancelar
           </Button>
-          <Button variant="outline-success" type="submit">
+          <AsyncButton variant="outline-success" type="submit" loading={isSubmitting}>
             Guardar
-          </Button>
+          </AsyncButton>
         </Modal.Footer>
       </Form>
     </Modal>

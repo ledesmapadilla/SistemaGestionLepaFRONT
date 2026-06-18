@@ -1,4 +1,5 @@
 import { Modal, Button, Form, Row, Col } from "react-bootstrap";
+import AsyncButton from "../../../../shared/AsyncButton";
 
 const ESTADOS = ["Operativo", "En servicio programado", "Requiere atención", "Fuera de servicio"];
 
@@ -11,6 +12,7 @@ const ServiceMaquinaModal = ({
   errors,
   editando,
   maquinas,
+  isSubmitting,
 }) => {
   return (
     <Modal show={show} onHide={onHide} centered size="lg">
@@ -95,9 +97,9 @@ const ServiceMaquinaModal = ({
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={onHide}>Cancelar</Button>
-          <Button variant="outline-success" type="submit">
+          <AsyncButton variant="outline-success" type="submit" loading={isSubmitting}>
             {editando ? "Actualizar Cambios" : "Guardar Service"}
-          </Button>
+          </AsyncButton>
         </Modal.Footer>
       </Form>
     </Modal>

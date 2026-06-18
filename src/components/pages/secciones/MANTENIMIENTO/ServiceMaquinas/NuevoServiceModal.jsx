@@ -1,4 +1,5 @@
 import { Modal, Button, Form, Row, Col } from "react-bootstrap";
+import AsyncButton from "../../../../shared/AsyncButton";
 
 const NuevoServiceModal = ({
   show,
@@ -11,6 +12,7 @@ const NuevoServiceModal = ({
   ultimoHorometro,
   horometroMin,
   esEIQoETX,
+  isSubmitting,
 }) => {
   return (
     <Modal show={show} onHide={onHide} centered>
@@ -69,7 +71,7 @@ const NuevoServiceModal = ({
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={onHide}>Cancelar</Button>
-          <Button variant="outline-success" type="submit">Guardar</Button>
+          <AsyncButton variant="outline-success" type="submit" loading={isSubmitting}>Guardar</AsyncButton>
         </Modal.Footer>
       </Form>
     </Modal>

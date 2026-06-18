@@ -3,9 +3,10 @@ import { Modal, Button, Form, Row, Col, InputGroup } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { listarAceites } from "../../../../../helpers/queriesAceites";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas";
+import AsyncButton from "../../../../shared/AsyncButton";
 
 const AceiteConsumoModal = ({ show, onHide, onSubmit, editando = false, consumo = null }) => {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm();
   const [aceites, setAceites] = useState([]);
   const [maquinas, setMaquinas] = useState([]);
 
@@ -132,7 +133,7 @@ const AceiteConsumoModal = ({ show, onHide, onSubmit, editando = false, consumo 
 
         <Modal.Footer>
           <Button variant="outline-secondary" onClick={onHide}>Cancelar</Button>
-          <Button variant="outline-success" type="submit">{editando ? "Guardar Cambios" : "Registrar Consumo"}</Button>
+          <AsyncButton variant="outline-success" type="submit" loading={isSubmitting}>{editando ? "Guardar Cambios" : "Registrar Consumo"}</AsyncButton>
         </Modal.Footer>
       </Form>
     </Modal>

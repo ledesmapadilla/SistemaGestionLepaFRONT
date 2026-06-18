@@ -34,7 +34,7 @@ const Variables = () => {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: valoresIniciales,
     mode: "onChange",
@@ -204,6 +204,7 @@ const Variables = () => {
         cerrarModal={cerrarModal}
         variables={variables}
         variableId={variableId}
+        isSubmitting={isSubmitting}
       />
 
       <Modal show={showVer} onHide={() => setShowVer(false)} centered>

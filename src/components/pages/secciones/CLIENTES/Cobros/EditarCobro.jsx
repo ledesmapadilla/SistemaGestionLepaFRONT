@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { Button, Table, Container, Form, Spinner, Modal } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
+import AsyncButton from "../../../../shared/AsyncButton";
 import { editarCobro, listarCobros } from "../../../../../helpers/queriesCobros";
 import { listarFacturas } from "../../../../../helpers/queriesFacturas";
 
@@ -23,7 +24,7 @@ const totalConIva = (f) =>
 const EditarCobro = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, watch, reset, formState: { errors, isSubmitting } } = useForm();
 
   const [todasFacturas, setTodasFacturas] = useState([]);
   const [facturasDisponibles, setFacturasDisponibles] = useState([]);
@@ -377,7 +378,7 @@ const EditarCobro = () => {
         <div className="d-flex justify-content-end mb-3 gap-2">
           <Button type="button" variant="outline-secondary" onClick={() => navigate("/cobro-factura")}>Cancelar</Button>
           <Button type="button" variant="outline-primary" onClick={agregarFactura} disabled={!facturaElegida}>+ Agregar Factura</Button>
-          <Button type="submit" variant="outline-success">Guardar Cambios</Button>
+          <AsyncButton type="submit" variant="outline-success" loading={isSubmitting}>Guardar Cambios</AsyncButton>
         </div>
 
         {facturasSeleccionadas.length > 0 && (

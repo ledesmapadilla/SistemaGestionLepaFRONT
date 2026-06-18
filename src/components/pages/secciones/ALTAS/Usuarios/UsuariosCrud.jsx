@@ -26,7 +26,7 @@ const UsuariosCrud = () => {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: valoresIniciales,
     mode: "onChange",
@@ -327,6 +327,7 @@ const UsuariosCrud = () => {
         editando={editando}
         usuarios={usuarios}
         usuarioId={usuarioId}
+        isSubmitting={isSubmitting}
       />
     </Container>
   );

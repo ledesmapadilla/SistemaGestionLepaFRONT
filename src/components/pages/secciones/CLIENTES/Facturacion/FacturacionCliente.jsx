@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { listarFacturas, editarFactura, borrarFactura } from "../../../../../helpers/queriesFacturas";
+import AsyncButton from "../../../../shared/AsyncButton";
 
 const hoy = new Date().toLocaleDateString("en-CA");
 
@@ -43,7 +44,7 @@ const FacturacionCliente = () => {
   const [filtroNumero, setFiltroNumero] = useState("");
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Pendiente");
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm();
 
   useEffect(() => {
     cargarFacturas();
@@ -391,7 +392,7 @@ const FacturacionCliente = () => {
           </Modal.Body>
           <Modal.Footer>
             <Button variant="outline-secondary" onClick={() => setFacturaEditar(null)}>Cancelar</Button>
-            <Button variant="outline-success" type="submit">Guardar</Button>
+            <AsyncButton variant="outline-success" type="submit" loading={isSubmitting}>Guardar</AsyncButton>
           </Modal.Footer>
         </Form>
       </Modal>

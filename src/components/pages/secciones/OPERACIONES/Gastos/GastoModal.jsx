@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
+import AsyncButton from "../../../../shared/AsyncButton";
 import {
   crearGastoAPI,
   editarGastoAPI,
@@ -82,9 +83,15 @@ const GastoModal = ({
     return Object.keys(nuevosErrores).length === 0;
   };
 
+  const [submitting, setSubmitting] = useState(false);
+  const enviandoRef = useRef(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validarFormulario()) return;
+    if (enviandoRef.current) return;
+    enviandoRef.current = true;
+    setSubmitting(true);
 
     const datosGasto = {
       item: formData.item,
@@ -118,6 +125,9 @@ const GastoModal = ({
     } catch (error) {
       console.error(error);
       Swal.fire("Error", "Ocurrió un error en el servidor", "error");
+    } finally {
+      enviandoRef.current = false;
+      setSubmitting(false);
     }
   };
 
@@ -223,9 +233,9 @@ const GastoModal = ({
           <Button variant="outline-secondary" onClick={handleClose}>
             Cancelar
           </Button>
-          <Button variant="outline-success" type="submit">
+          <AsyncButton variant="outline-success" type="submit" loading={submitting}>
             {gastoEditar ? "Editar" : "Guardar"}
-          </Button>
+          </AsyncButton>
         </Modal.Footer>
       </Form>
     </Modal>

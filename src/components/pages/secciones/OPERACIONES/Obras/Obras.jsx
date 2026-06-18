@@ -47,7 +47,7 @@ const Obras = () => {
     reset,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: valoresIniciales,
     mode: "onChange",
@@ -432,6 +432,7 @@ const Obras = () => {
         obraId={obraId}
         nombreObraOriginal={nombreObraOriginal}
         abrirModalPrecios={abrirModalPrecios}
+        isSubmitting={isSubmitting}
       />
 
       <ModalPrecios

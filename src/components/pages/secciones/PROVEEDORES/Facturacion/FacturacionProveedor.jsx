@@ -10,6 +10,7 @@ import {
   borrarFacturaProveedor,
 } from "../../../../../helpers/queriesFacturasProveedores";
 import { listarObras } from "../../../../../helpers/queriesObras";
+import AsyncButton from "../../../../shared/AsyncButton";
 import "../../../../../styles/clientes.css";
 
 const hoy = new Date().toLocaleDateString("en-CA");
@@ -38,7 +39,7 @@ const FacturacionProveedor = () => {
   const [filtroNumero, setFiltroNumero] = useState("");
   const [filtroProveedor, setFiltroProveedor] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("Pendiente");
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm();
   const [editandoTotal, setEditandoTotal] = useState(false);
   const [inputTotal, setInputTotal] = useState("");
 
@@ -374,7 +375,7 @@ const FacturacionProveedor = () => {
           </Modal.Body>
           <Modal.Footer>
             <Button variant="outline-secondary" onClick={() => setFacturaEditar(null)}>Cancelar</Button>
-            <Button variant="outline-success" type="submit">Guardar</Button>
+            <AsyncButton variant="outline-success" type="submit" loading={isSubmitting}>Guardar</AsyncButton>
           </Modal.Footer>
         </Form>
       </Modal>

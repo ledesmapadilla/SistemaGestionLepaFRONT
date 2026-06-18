@@ -8,6 +8,7 @@ import {
   editarRemito,
 } from "../../../../../helpers/queriesRemitos";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
+import AsyncButton from "../../../../shared/AsyncButton";
 
 const filaVacia = {
   fecha: "",
@@ -747,9 +748,9 @@ const RemitosModal = ({
         <Button variant="outline-secondary" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button variant="outline-success" onClick={onSubmit}>
+        <AsyncButton variant="outline-success" onClick={onSubmit}>
           Guardar remito
-        </Button>
+        </AsyncButton>
       </Modal.Footer>
     </Modal>
   );

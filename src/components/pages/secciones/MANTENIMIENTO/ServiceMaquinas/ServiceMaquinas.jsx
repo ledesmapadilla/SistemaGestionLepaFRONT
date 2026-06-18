@@ -40,7 +40,7 @@ const EXCLUIDAS = [
 const ServiceMaquinas = () => {
   const navigate = useNavigate();
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     defaultValues: valoresIniciales,
     mode: "onChange",
   });
@@ -49,14 +49,14 @@ const ServiceMaquinas = () => {
     register: registerHoras,
     handleSubmit: handleSubmitHoras,
     reset: resetHoras,
-    formState: { errors: errorsHoras },
+    formState: { errors: errorsHoras, isSubmitting: isSubmittingHoras },
   } = useForm({ defaultValues: valoresHorasIniciales, mode: "onChange" });
 
   const {
     register: registerService,
     handleSubmit: handleSubmitService,
     reset: resetService,
-    formState: { errors: errorsService },
+    formState: { errors: errorsService, isSubmitting: isSubmittingService },
   } = useForm({ defaultValues: valoresServiceIniciales, mode: "onChange" });
 
   const [services, setServices] = useState([]);
@@ -564,6 +564,7 @@ const ServiceMaquinas = () => {
         errors={errors}
         editando={editando}
         maquinas={maquinas}
+        isSubmitting={isSubmitting}
       />
 
       {maquinaSeleccionada && showServiceModal && (
@@ -574,6 +575,7 @@ const ServiceMaquinas = () => {
           handleSubmit={handleSubmitService}
           register={registerService}
           errors={errorsService}
+          isSubmitting={isSubmittingService}
           maquinaNombre={maquinaSeleccionada.maquina}
           esEIQoETX={esEIQoETX(maquinaSeleccionada.maquina)}
           ultimoHorometro={getDatosHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina).horometro}
@@ -602,6 +604,7 @@ const ServiceMaquinas = () => {
           handleSubmit={handleSubmitHoras}
           register={registerHoras}
           errors={errorsHoras}
+          isSubmitting={isSubmittingHoras}
           maquinaNombre={maquinaSeleccionada.maquina}
           horometroActual={getDatosHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina).horometro}
           horometroMin={

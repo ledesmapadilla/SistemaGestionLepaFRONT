@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { Button, Table, Container, Form, Row, Col, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import AsyncButton from "../../../../shared/AsyncButton";
 import { crearFactura, listarFacturas } from "../../../../../helpers/queriesFacturas";
 import { listarRemitos, listarRemitosDisponibles } from "../../../../../helpers/queriesRemitos";
 
@@ -27,7 +28,7 @@ const NuevaFactura = () => {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm();
 
   const [todosRemitos, setTodosRemitos] = useState([]);
@@ -344,7 +345,7 @@ const NuevaFactura = () => {
           <Col md={6} className="d-flex justify-content-end gap-2">
             <Button variant="outline-secondary" onClick={() => navigate("/facturacion")}>Cancelar</Button>
             <Button variant="outline-primary" onClick={agregarRemito} disabled={!remitoElegido}>+ Agregar Remito</Button>
-            <Button type="submit" variant="outline-success">Guardar Factura</Button>
+            <AsyncButton type="submit" variant="outline-success" loading={isSubmitting}>Guardar Factura</AsyncButton>
           </Col>
         </Row>
 

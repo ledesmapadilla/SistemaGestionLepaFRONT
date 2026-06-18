@@ -1,9 +1,10 @@
 import React, { useEffect } from "react";
 import { Modal, Button, Form, Row, Col } from "react-bootstrap";
 import { useForm } from "react-hook-form";
+import AsyncButton from "../../../../shared/AsyncButton";
 
 const AceiteModal = ({ show, onHide, onSubmit, editando, aceite }) => {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm();
 
   useEffect(() => {
     if (show) {
@@ -73,9 +74,9 @@ const AceiteModal = ({ show, onHide, onSubmit, editando, aceite }) => {
 
         <Modal.Footer>
           <Button variant="outline-secondary" onClick={onHide}>Cancelar</Button>
-          <Button variant="outline-success" type="submit">
+          <AsyncButton variant="outline-success" type="submit" loading={isSubmitting}>
             {editando ? "Actualizar" : "Guardar"}
-          </Button>
+          </AsyncButton>
         </Modal.Footer>
       </Form>
     </Modal>

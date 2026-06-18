@@ -3,9 +3,10 @@ import { Modal, Button, Form, InputGroup, Row, Col } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { listarProveedores } from "../../../../../helpers/queriesProveedores";
 import { listarAceites } from "../../../../../helpers/queriesAceites";
+import AsyncButton from "../../../../shared/AsyncButton";
 
 const AceiteCompraModal = ({ show, onHide, onSubmit, editando = false, compra = null }) => {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm();
   const [proveedores, setProveedores] = useState([]);
   const [aceites, setAceites] = useState([]);
 
@@ -159,7 +160,7 @@ const AceiteCompraModal = ({ show, onHide, onSubmit, editando = false, compra = 
 
         <Modal.Footer>
           <Button variant="outline-secondary" onClick={onHide}>Cancelar</Button>
-          <Button variant="outline-success" type="submit">{editando ? "Guardar Cambios" : "Registrar Compra"}</Button>
+          <AsyncButton variant="outline-success" type="submit" loading={isSubmitting}>{editando ? "Guardar Cambios" : "Registrar Compra"}</AsyncButton>
         </Modal.Footer>
       </Form>
     </Modal>

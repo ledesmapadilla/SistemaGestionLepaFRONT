@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { Button, Table, Container, Form, Spinner, Modal } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import AsyncButton from "../../../../shared/AsyncButton";
 import { crearCobro, listarCobros } from "../../../../../helpers/queriesCobros";
 import { listarFacturas } from "../../../../../helpers/queriesFacturas";
 
@@ -22,7 +23,7 @@ const totalConIva = (f) =>
 
 const NuevoCobro = () => {
   const navigate = useNavigate();
-  const { register, handleSubmit, watch, formState: { errors } } = useForm();
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm();
 
   const [todasFacturas, setTodasFacturas] = useState([]);
   const [facturasDisponibles, setFacturasDisponibles] = useState([]);
@@ -368,7 +369,7 @@ const NuevoCobro = () => {
               {mediosPago.length > 0 ? `Formas de pago (${mediosPago.length})` : "+ Agregar forma de pago"}
             </Button>
           )}
-          <Button type="submit" variant="outline-success">Guardar Cobro</Button>
+          <AsyncButton type="submit" variant="outline-success" loading={isSubmitting}>Guardar Cobro</AsyncButton>
         </div>
 
         {facturasSeleccionadas.length > 0 && (

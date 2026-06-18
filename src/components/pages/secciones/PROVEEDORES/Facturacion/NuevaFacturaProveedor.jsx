@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { Button, Container, Form, Row, Col, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import AsyncButton from "../../../../shared/AsyncButton";
 import { crearFacturaProveedor, listarFacturasProveedores } from "../../../../../helpers/queriesFacturasProveedores";
 import { listarProveedores } from "../../../../../helpers/queriesProveedores";
 import { listarObras } from "../../../../../helpers/queriesObras";
@@ -19,7 +20,7 @@ const NuevaFacturaProveedor = () => {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm();
 
   const [proveedores, setProveedores] = useState([]);
@@ -234,7 +235,7 @@ const NuevaFacturaProveedor = () => {
 
         <div className="d-flex justify-content-end gap-2 mt-3">
           <Button variant="outline-secondary" onClick={() => navigate("/facturacion-proveedores")}>Cancelar</Button>
-          <Button type="submit" variant="outline-success">Guardar Factura</Button>
+          <AsyncButton type="submit" variant="outline-success" loading={isSubmitting}>Guardar Factura</AsyncButton>
         </div>
       </Form>
     </Container>

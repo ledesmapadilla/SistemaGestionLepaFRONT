@@ -30,7 +30,7 @@ const MaquinaTabla = () => {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: valoresIniciales,
     mode: "onChange",
@@ -261,6 +261,7 @@ const MaquinaTabla = () => {
         editando={editando}
         maquinas={maquinas}
         maquinaId={maquinaId}
+        isSubmitting={isSubmitting}
       />
     </>
   );

@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { Button, Table, Container, Form, Spinner, Modal } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import AsyncButton from "../../../../shared/AsyncButton";
 import { crearPagoProveedor, listarPagosProveedores } from "../../../../../helpers/queriesPagosProveedores";
 import { listarFacturasProveedores } from "../../../../../helpers/queriesFacturasProveedores";
 import { listarCobros, actualizarEstadoCheque } from "../../../../../helpers/queriesCobros";
@@ -24,7 +25,7 @@ const totalFactura = (f) =>
 
 const NuevoPagoProveedor = () => {
   const navigate = useNavigate();
-  const { register, handleSubmit, watch, formState: { errors } } = useForm();
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm();
 
   const [todasFacturas, setTodasFacturas] = useState([]);
   const [facturasDisponibles, setFacturasDisponibles] = useState([]);
@@ -464,7 +465,7 @@ const NuevoPagoProveedor = () => {
               {mediosPago.length > 0 ? `Formas de pago (${mediosPago.length})` : "+ Agregar forma de pago"}
             </Button>
           )}
-          <Button type="submit" variant="outline-success">Guardar Pago</Button>
+          <AsyncButton type="submit" variant="outline-success" loading={isSubmitting}>Guardar Pago</AsyncButton>
         </div>
 
         {facturasSeleccionadas.length > 0 && (

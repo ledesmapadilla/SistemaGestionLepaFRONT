@@ -1,4 +1,5 @@
 import { Modal, Button, Form } from "react-bootstrap";
+import AsyncButton from "../../../../shared/AsyncButton";
 
 const HorasModal = ({
   show,
@@ -10,6 +11,7 @@ const HorasModal = ({
   maquinaNombre,
   horometroActual,
   horometroMin,
+  isSubmitting,
 }) => {
   const hoy = new Date().toLocaleDateString("es-AR");
 
@@ -44,7 +46,7 @@ const HorasModal = ({
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={onHide}>Cancelar</Button>
-          <Button variant="outline-success" type="submit">Guardar</Button>
+          <AsyncButton variant="outline-success" type="submit" loading={isSubmitting}>Guardar</AsyncButton>
         </Modal.Footer>
       </Form>
     </Modal>

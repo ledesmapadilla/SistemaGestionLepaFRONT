@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, Table } from "react-bootstrap";
+import AsyncButton from "../../../../shared/AsyncButton";
 
 const formatoMoneda = (valor) => {
   if (valor === undefined || valor === null || valor === "" || Number(valor) === 0) return "-";
@@ -24,6 +25,7 @@ const VariablesModal = ({
   cerrarModal,
   variables,
   variableId,
+  isSubmitting,
 }) => {
   const [historial, setHistorial] = useState([]);
 
@@ -225,9 +227,9 @@ const VariablesModal = ({
           <Button variant="outline-secondary" onClick={cerrarModal}>
             Cancelar
           </Button>
-          <Button variant="outline-success" type="submit">
+          <AsyncButton variant="outline-success" type="submit" loading={isSubmitting}>
             Guardar
-          </Button>
+          </AsyncButton>
         </Modal.Footer>
       </Form>
     </Modal>
