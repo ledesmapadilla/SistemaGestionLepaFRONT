@@ -335,7 +335,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
               <Button variant="outline-primary" size="sm" onClick={agregar} style={{ justifySelf: "start" }}>+ Agregar fila</Button>
               <div className="d-flex align-items-center gap-2">
                 <span className="text-muted" style={{ fontSize: "0.85rem" }}>Total a Pagar</span>
-                <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#dee2e6", fontWeight: 600, textAlign: "center", fontSize: "0.95rem" }}>
+                <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 400, textAlign: "center", fontSize: "0.95rem" }}>
                   {pesos(totalPago)}
                 </div>
               </div>
