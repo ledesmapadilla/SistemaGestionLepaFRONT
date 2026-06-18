@@ -101,7 +101,7 @@ function Reparaciones() {
           <div
             key={m._id}
             style={{
-              backgroundColor: "#dc3545",
+              backgroundColor: "#8b4a4a",
               color: "#fff",
               borderRadius: "10px",
               padding: "0.8rem",
