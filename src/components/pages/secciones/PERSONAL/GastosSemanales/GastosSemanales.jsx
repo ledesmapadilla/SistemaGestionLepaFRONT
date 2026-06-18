@@ -328,10 +328,13 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
         Swal.fire({ position: "center", icon: "info", title: "El pago del proveedor está en cero", showConfirmButton: false, timer: 1800, timerProgressBar: true });
         return;
       }
+      // Feedback inmediato: tachar al instante mientras se registra el pago
+      setFilas(filas.map((f, i) => (i === idx ? { ...f, marcado: 2 } : f)));
       const hoy = new Date().toLocaleDateString("en-CA");
       const resp = await crearPagoEfectivoProveedor({ proveedor: fila.proveedor, monto: Number(fila.pago) || 0, fecha: hoy });
       if (!resp?.ok) {
         const data = await resp?.json().catch(() => null);
+        setFilas(filas.map((f, i) => (i === idx ? { ...f, marcado: 1 } : f)));
         Swal.fire({ icon: "error", title: "Error", text: data?.msg || "No se pudo registrar el pago en la cuenta corriente" });
         return;
       }
