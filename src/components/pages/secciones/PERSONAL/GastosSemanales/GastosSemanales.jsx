@@ -251,12 +251,12 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
       });
       const filasDeuda = resumen.map((r) => {
         const g = guardadosMap[r.proveedor.trim().toLowerCase()];
-        return { _k: keyRef.current++, proveedor: r.proveedor, deuda: r.deuda, pago: g?.pago || 0, observaciones: g?.observaciones || "", libre: false, seleccionado: false };
+        return { _k: keyRef.current++, proveedor: r.proveedor, deuda: r.deuda, pago: g?.pago || 0, observaciones: g?.observaciones || "", libre: false, seleccionado: false, marcado: g?.marcado || 0 };
       });
       const yaEstan = new Set(filasDeuda.map((f) => f.proveedor.trim().toLowerCase()));
       const filasExtra = (proveedoresGuardados || [])
         .filter((g) => g.libre || !g.proveedor || !yaEstan.has(g.proveedor.trim().toLowerCase()))
-        .map((g) => ({ _k: keyRef.current++, proveedor: g.proveedor || "", deuda: g.deuda || 0, pago: g.pago || 0, observaciones: g.observaciones || "", libre: true, seleccionado: false }));
+        .map((g) => ({ _k: keyRef.current++, proveedor: g.proveedor || "", deuda: g.deuda || 0, pago: g.pago || 0, observaciones: g.observaciones || "", libre: true, seleccionado: false, marcado: g.marcado || 0 }));
       setFilas([...filasDeuda, ...filasExtra]);
       setCargando(false);
     };
@@ -268,7 +268,10 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
     setFilas((prev) => prev.map((f, i) => (i === idx ? { ...f, [campo]: valor } : f)));
 
   const agregar = () =>
-    setFilas((prev) => [...prev, { _k: keyRef.current++, proveedor: "", deuda: 0, pago: 0, observaciones: "", libre: true, seleccionado: false }]);
+    setFilas((prev) => [...prev, { _k: keyRef.current++, proveedor: "", deuda: 0, pago: 0, observaciones: "", libre: true, seleccionado: false, marcado: 0 }]);
+
+  const toggleMarcado = (idx) =>
+    setFilas((prev) => prev.map((f, i) => (i === idx ? { ...f, marcado: ((f.marcado || 0) + 1) % 3 } : f)));
 
   const borrar = (idx) => {
     const fila = filas[idx];
@@ -285,13 +288,14 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
 
   const handleGuardar = () => {
     const aGuardar = filas
-      .filter((f) => (Number(f.pago) || 0) > 0 || f.observaciones || (f.libre && (f.proveedor || Number(f.deuda) > 0)))
+      .filter((f) => (Number(f.pago) || 0) > 0 || f.observaciones || (f.marcado || 0) > 0 || (f.libre && (f.proveedor || Number(f.deuda) > 0)))
       .map((f) => ({
         proveedor: f.proveedor,
         deuda: Number(f.deuda) || 0,
         pago: Number(f.pago) || 0,
         observaciones: f.observaciones || "",
         libre: !!f.libre,
+        marcado: f.marcado || 0,
       }));
     onGuardar(aGuardar);
     onHide();
@@ -374,7 +378,15 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                           {f.libre ? (
                             <Form.Control size="sm" type="text" value={f.proveedor} placeholder="Proveedor..." onChange={(e) => actualizar(idx, "proveedor", e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }} />
                           ) : (
-                            f.proveedor
+                            <span
+                              onClick={() => toggleMarcado(idx)}
+                              style={{ cursor: "pointer", userSelect: "none", color: f.marcado === 1 ? "#ffc107" : "#dee2e6", position: "relative", display: "inline-block" }}
+                            >
+                              {f.proveedor}
+                              {f.marcado === 2 && (
+                                <span style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 2, background: "#ffc107", pointerEvents: "none" }} />
+                              )}
+                            </span>
                           )}
                         </td>
                         <td>
