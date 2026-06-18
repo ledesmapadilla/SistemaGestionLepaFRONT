@@ -274,8 +274,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
     const fila = filas[idx];
     setFilas((prev) => prev.filter((_, i) => i !== idx));
     Swal.fire({
-      toast: true,
-      position: "top-end",
+      position: "center",
       icon: "success",
       title: `Se quitó ${fila?.proveedor || "la fila"} de la planilla`,
       showConfirmButton: false,
