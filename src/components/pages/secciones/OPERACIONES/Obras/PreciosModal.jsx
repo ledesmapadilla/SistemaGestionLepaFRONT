@@ -351,7 +351,6 @@ const PreciosModal = ({
                           type="text"
                           value={focusadoPrecio === index ? item.precio : formatearMoneda(item.precio)}
                           placeholder="0"
-                          disabled={esFilaExistente}
                           isInvalid={invalida && item.precio === ""}
                           onFocus={() => setFocusadoPrecio(index)}
                           onBlur={() => setFocusadoPrecio(null)}

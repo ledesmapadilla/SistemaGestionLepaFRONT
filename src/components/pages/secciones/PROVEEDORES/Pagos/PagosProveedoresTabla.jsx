@@ -68,8 +68,8 @@ const PagosProveedoresTabla = () => {
   };
 
   const exportarExcel = () => {
-    const headers = ["Fecha", "Proveedor", "Facturas", "Obra", "Total factura", "Total pagado", "Saldo", "Medio de pago"];
-    const cols = ["A", "B", "C", "D", "E", "F", "G", "H"];
+    const headers = ["Fecha", "Proveedor", "Facturas", "Obra", "Total factura", "Total pagado", "Saldo", "Medio de pago", "Observaciones"];
+    const cols = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
@@ -83,6 +83,7 @@ const PagosProveedoresTabla = () => {
       totalPago(p),
       totalSaldoPorPago[p._id] ?? 0,
       (p.mediosPago || []).map((m) => m.medioPago).join(", ") || "-",
+      p.observaciones || "-",
     ]);
 
     const ws = {};
@@ -105,8 +106,8 @@ const PagosProveedoresTabla = () => {
       });
     });
 
-    ws["!ref"] = `A1:H${filas.length + 3}`;
-    ws["!cols"] = [{ wch: 12 }, { wch: 30 }, { wch: 24 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 16 }];
+    ws["!ref"] = `A1:I${filas.length + 3}`;
+    ws["!cols"] = [{ wch: 12 }, { wch: 30 }, { wch: 24 }, { wch: 22 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 30 }];
 
     const libro = XLSXStyle.utils.book_new();
     XLSXStyle.utils.book_append_sheet(libro, ws, "Pagos Proveedores");
@@ -223,13 +224,14 @@ const PagosProveedoresTabla = () => {
               <th>Total pagado</th>
               <th>Saldo</th>
               <th>Medio de pago</th>
+              <th>Observaciones</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {pagosFiltrados.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-muted py-3">Sin pagos registrados</td>
+                <td colSpan={10} className="text-muted py-3">Sin pagos registrados</td>
               </tr>
             ) : (
               pagosFiltrados.map((p) => (
@@ -250,6 +252,7 @@ const PagosProveedoresTabla = () => {
                       ? p.mediosPago.map((m) => m.medioPago).join(", ")
                       : "-"}
                   </td>
+                  <td className="text-muted" title={p.observaciones || ""}>{p.observaciones || "-"}</td>
                   <td className="d-flex gap-1 justify-content-center align-items-center">
                     <Button size="sm" variant="outline-success" onClick={() => setPagoVerId(p._id)}>Ver</Button>
                     <Button size="sm" variant="outline-danger" onClick={() => eliminar(p._id)}>Borrar</Button>
@@ -283,6 +286,11 @@ const PagosProveedoresTabla = () => {
               </span>
             )}
           </div>
+          {pagoVer?.observaciones && (
+            <div className="mb-3 small">
+              <strong>Observaciones:</strong> {pagoVer.observaciones}
+            </div>
+          )}
           <Table striped bordered hover className="text-center align-middle">
             <thead className="table-dark">
               <tr>

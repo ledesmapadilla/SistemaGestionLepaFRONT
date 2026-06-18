@@ -295,6 +295,7 @@ const NuevoPagoProveedor = () => {
     const payload = {
       fecha: data.fecha?.substring(0, 10),
       proveedor: data.proveedor,
+      observaciones: data.observaciones || "",
       mediosPago: mediosPago.map((m) => ({
         medioPago: m.medioPago,
         monto: parseFloat(m.monto),
@@ -416,6 +417,14 @@ const NuevoPagoProveedor = () => {
                   <option key={nombre} value={nombre}>{nombre}</option>
                 ))}
               </Form.Select>
+            </div>
+            <div className="d-flex align-items-center gap-2 flex-grow-1">
+              <Form.Label className="mb-0 text-nowrap">Observaciones</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Observaciones (opcional)"
+                {...register("observaciones")}
+              />
             </div>
           </div>
           <div className="d-flex align-items-center gap-3">
