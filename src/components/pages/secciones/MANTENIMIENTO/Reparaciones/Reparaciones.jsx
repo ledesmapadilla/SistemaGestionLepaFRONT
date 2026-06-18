@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Row, Col, Spinner, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas";
+import ReparacionesMaquina from "./ReparacionesMaquina";
 
-const TarjetaMaquina = ({ maquina }) => {
+const TarjetaMaquina = ({ maquina, onClick }) => {
   const lbl = { color: "#fff", fontSize: "0.72rem" };
   const val = { color: "#6c757d", fontSize: "0.72rem" };
   const fila = {
@@ -15,7 +16,10 @@ const TarjetaMaquina = ({ maquina }) => {
   };
 
   return (
-    <div style={{ border: "1px solid #ffc107", borderRadius: 6, marginBottom: 8 }}>
+    <div
+      onClick={onClick}
+      style={{ border: "1px solid #ffc107", borderRadius: 6, marginBottom: 8, cursor: "pointer" }}
+    >
       <div
         style={{
           backgroundColor: "#6c757d",
@@ -52,12 +56,12 @@ const TarjetaMaquina = ({ maquina }) => {
           style={{
             textAlign: "center",
             padding: "10px 0 4px",
-            color: "#6c757d",
+            color: "#ffc107",
             fontSize: "0.72rem",
-            fontStyle: "italic",
+            fontWeight: 600,
           }}
         >
-          (contenido a definir)
+          Ver reparaciones →
         </div>
       </div>
     </div>
@@ -68,6 +72,7 @@ const Reparaciones = () => {
   const navigate = useNavigate();
   const [maquinas, setMaquinas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [maquinaSel, setMaquinaSel] = useState(null);
 
   useEffect(() => {
     const cargar = async () => {
@@ -92,6 +97,9 @@ const Reparaciones = () => {
 
   if (loading)
     return <Spinner animation="border" className="d-block mx-auto my-5" />;
+
+  if (maquinaSel)
+    return <ReparacionesMaquina maquina={maquinaSel} onVolver={() => setMaquinaSel(null)} />;
 
   return (
     <div className="mx-auto my-2" style={{ maxWidth: "85vw" }}>
@@ -121,7 +129,7 @@ const Reparaciones = () => {
               xl={2}
               style={{ flex: "0 0 20%", maxWidth: "20%" }}
             >
-              <TarjetaMaquina maquina={m} />
+              <TarjetaMaquina maquina={m} onClick={() => setMaquinaSel(m)} />
             </Col>
           ))}
         </Row>
