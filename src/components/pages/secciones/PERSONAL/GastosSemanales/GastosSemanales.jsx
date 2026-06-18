@@ -622,6 +622,8 @@ const GastosSemanales = () => {
   const totalExtrasNeto = registros.reduce((s, r) => s + netoExtras(r.extras), 0);
   const totalPagar = registros.reduce((s, r) => s + calcularPagar(r), 0);
   const totalPagado = registros.reduce((s, r) => s + (Number(r.pagado) || 0), 0);
+  const totalProveedores = proveedoresGuardados.reduce((s, p) => s + (Number(p.pago) || 0), 0);
+  const totalGeneral = totalPagar + totalProveedores;
 
   const exportarExcel = () => {
     const titulo = `Gastos Semanales - ${labelSemana}`;
@@ -686,6 +688,20 @@ const GastosSemanales = () => {
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
         <>
+          <div className="d-flex justify-content-center gap-4 mb-3 flex-wrap">
+            {[
+              { label: "Total Personal", valor: totalPagar },
+              { label: "Total Proveedores", valor: totalProveedores },
+              { label: "Total General", valor: totalGeneral },
+            ].map((t) => (
+              <div key={t.label} className="d-flex align-items-center gap-2">
+                <span className="text-muted" style={{ fontSize: "0.85rem" }}>{t.label}:</span>
+                <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", textAlign: "center", fontSize: "0.95rem" }}>
+                  {pesos(t.valor)}
+                </div>
+              </div>
+            ))}
+          </div>
           <div className="d-flex justify-content-between align-items-center mb-2">
             <div className="d-flex gap-2">
               <Button variant="outline-primary" size="sm" onClick={() => {
