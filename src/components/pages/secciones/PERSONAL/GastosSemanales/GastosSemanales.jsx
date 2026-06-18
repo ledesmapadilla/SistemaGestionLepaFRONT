@@ -5,6 +5,7 @@ import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { obtenerAsistenciaPorFecha } from "../../../../../helpers/queriesAsistencia.js";
 import { obtenerGastoSemanalPorSemana, guardarGastoSemanal } from "../../../../../helpers/queriesGastoSemanal.js";
 import { obtenerCuentaCorrienteProveedor } from "../../../../../helpers/queriesCuentaCorrienteProveedor.js";
+import { crearPagoEfectivoProveedor, borrarPagoProveedor } from "../../../../../helpers/queriesPagosProveedores.js";
 import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
 import XLSXStyle from "xlsx-js-style";
 import Swal from "sweetalert2";
@@ -246,18 +247,26 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
       }
       if (!activo) return;
 
+      const guardados = proveedoresGuardados || [];
       const guardadosMap = {};
-      (proveedoresGuardados || []).forEach((g) => {
+      guardados.forEach((g) => {
         if (g.proveedor) guardadosMap[g.proveedor.trim().toLowerCase()] = g;
       });
-      const filasDeuda = resumen.map((r) => {
-        const g = guardadosMap[r.proveedor.trim().toLowerCase()];
-        return { _k: keyRef.current++, proveedor: r.proveedor, deuda: r.deuda, pago: g?.pago || 0, observaciones: g?.observaciones || "", libre: false, seleccionado: false, marcado: g?.marcado || 0 };
-      });
-      const yaEstan = new Set(filasDeuda.map((f) => f.proveedor.trim().toLowerCase()));
-      const filasExtra = (proveedoresGuardados || [])
-        .filter((g) => g.libre || !g.proveedor || !yaEstan.has(g.proveedor.trim().toLowerCase()))
-        .map((g) => ({ _k: keyRef.current++, proveedor: g.proveedor || "", deuda: g.deuda || 0, pago: g.pago || 0, observaciones: g.observaciones || "", libre: true, seleccionado: false, marcado: g.marcado || 0 }));
+      // Proveedores ya pagados desde la planilla: filas históricas con datos guardados
+      // (se excluyen de la deuda en vivo para no restar dos veces el pago)
+      const pagadosSet = new Set(
+        guardados.filter((g) => (g.marcado || 0) === 2 && g.proveedor).map((g) => g.proveedor.trim().toLowerCase())
+      );
+      const filasDeuda = resumen
+        .filter((r) => !pagadosSet.has(r.proveedor.trim().toLowerCase()))
+        .map((r) => {
+          const g = guardadosMap[r.proveedor.trim().toLowerCase()];
+          return { _k: keyRef.current++, proveedor: r.proveedor, deuda: r.deuda, pago: g?.pago || 0, observaciones: g?.observaciones || "", libre: false, seleccionado: false, marcado: g?.marcado || 0, pagoId: g?.pagoId || "" };
+        });
+      const enDeuda = new Set(filasDeuda.map((f) => f.proveedor.trim().toLowerCase()));
+      const filasExtra = guardados
+        .filter((g) => g.libre || !g.proveedor || !enDeuda.has(g.proveedor.trim().toLowerCase()))
+        .map((g) => ({ _k: keyRef.current++, proveedor: g.proveedor || "", deuda: g.deuda || 0, pago: g.pago || 0, observaciones: g.observaciones || "", libre: !!g.libre, seleccionado: false, marcado: g.marcado || 0, pagoId: g.pagoId || "" }));
       setFilas([...filasDeuda, ...filasExtra]);
       setCargando(false);
     };
@@ -271,52 +280,87 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
   const agregar = () =>
     setFilas((prev) => [...prev, { _k: keyRef.current++, proveedor: "", deuda: 0, pago: 0, observaciones: "", libre: true, seleccionado: false, marcado: 0 }]);
 
-  const toggleMarcado = (idx) => {
+  const mapForSave = (arr) => arr
+    .filter((f) => (Number(f.pago) || 0) > 0 || f.observaciones || (f.marcado || 0) > 0 || (f.libre && (f.proveedor || Number(f.deuda) > 0)))
+    .map((f) => ({
+      proveedor: f.proveedor,
+      deuda: Number(f.deuda) || 0,
+      pago: Number(f.pago) || 0,
+      observaciones: f.observaciones || "",
+      libre: !!f.libre,
+      marcado: f.marcado || 0,
+      pagoId: f.pagoId || "",
+    }));
+
+  const persistir = (arr) => onGuardar(mapForSave(arr));
+
+  const toggleMarcado = async (idx) => {
     const fila = filas[idx];
     const actual = fila?.marcado || 0;
+
     if (actual === 2) {
-      Swal.fire({
+      const res = await Swal.fire({
         icon: "warning",
         title: "¿Desea anular el pago del proveedor?",
         showCancelButton: true,
         confirmButtonText: "Sí, anular",
         cancelButtonText: "Cancelar",
         confirmButtonColor: "#dc3545",
-      }).then((res) => {
-        if (res.isConfirmed) {
-          setFilas((prev) => prev.map((f, i) => (i === idx ? { ...f, marcado: 0, pago: 0 } : f)));
+      });
+      if (!res.isConfirmed) return;
+      if (fila.pagoId) {
+        const del = await borrarPagoProveedor(fila.pagoId);
+        if (!del?.ok) {
+          Swal.fire({ icon: "error", title: "Error", text: "No se pudo anular el pago en la cuenta corriente" });
+          return;
         }
-      });
+      }
+      const nuevas = filas.map((f, i) => (i === idx ? { ...f, marcado: 0, pago: 0, pagoId: "" } : f));
+      setFilas(nuevas);
+      persistir(nuevas);
       return;
     }
+
     const siguiente = (actual + 1) % 3;
-    if (siguiente === 2 && (Number(fila?.pago) || 0) === 0) {
-      Swal.fire({
-        position: "center",
-        icon: "info",
-        title: "El pago del proveedor está en cero",
-        showConfirmButton: false,
-        timer: 1800,
-        timerProgressBar: true,
-      });
+
+    if (siguiente === 2) {
+      if ((Number(fila?.pago) || 0) === 0) {
+        Swal.fire({ position: "center", icon: "info", title: "El pago del proveedor está en cero", showConfirmButton: false, timer: 1800, timerProgressBar: true });
+        return;
+      }
+      const hoy = new Date().toLocaleDateString("en-CA");
+      const resp = await crearPagoEfectivoProveedor({ proveedor: fila.proveedor, monto: Number(fila.pago) || 0, fecha: hoy });
+      if (!resp?.ok) {
+        const data = await resp?.json().catch(() => null);
+        Swal.fire({ icon: "error", title: "Error", text: data?.msg || "No se pudo registrar el pago en la cuenta corriente" });
+        return;
+      }
+      const data = await resp.json();
+      const pagoId = data?.pago?._id || "";
+      const nuevas = filas.map((f, i) => (i === idx ? { ...f, marcado: 2, pagoId } : f));
+      setFilas(nuevas);
+      persistir(nuevas);
+      Swal.fire({ position: "center", icon: "success", title: "Pago de proveedor realizado", showConfirmButton: false, timer: 1800, timerProgressBar: true });
       return;
     }
-    setFilas((prev) => prev.map((f, i) => (i === idx ? { ...f, marcado: siguiente } : f)));
-    if (siguiente === 2) {
-      Swal.fire({
-        position: "center",
-        icon: "success",
-        title: "Pago de proveedor realizado",
-        showConfirmButton: false,
-        timer: 1800,
-        timerProgressBar: true,
-      });
-    }
+
+    const nuevas = filas.map((f, i) => (i === idx ? { ...f, marcado: siguiente } : f));
+    setFilas(nuevas);
+    persistir(nuevas);
   };
 
-  const borrar = (idx) => {
+  const borrar = async (idx) => {
     const fila = filas[idx];
-    setFilas((prev) => prev.filter((_, i) => i !== idx));
+    if (fila?.pagoId) {
+      const del = await borrarPagoProveedor(fila.pagoId);
+      if (!del?.ok) {
+        Swal.fire({ icon: "error", title: "Error", text: "No se pudo anular el pago en la cuenta corriente" });
+        return;
+      }
+    }
+    const nuevas = filas.filter((_, i) => i !== idx);
+    setFilas(nuevas);
+    persistir(nuevas);
     Swal.fire({
       position: "center",
       icon: "success",
@@ -328,17 +372,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
   };
 
   const handleGuardar = () => {
-    const aGuardar = filas
-      .filter((f) => (Number(f.pago) || 0) > 0 || f.observaciones || (f.marcado || 0) > 0 || (f.libre && (f.proveedor || Number(f.deuda) > 0)))
-      .map((f) => ({
-        proveedor: f.proveedor,
-        deuda: Number(f.deuda) || 0,
-        pago: Number(f.pago) || 0,
-        observaciones: f.observaciones || "",
-        libre: !!f.libre,
-        marcado: f.marcado || 0,
-      }));
-    onGuardar(aGuardar);
+    persistir(filas);
     onHide();
   };
 

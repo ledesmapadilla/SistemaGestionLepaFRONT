@@ -24,6 +24,18 @@ export const crearPagoProveedor = async (pago) => {
   }
 };
 
+export const crearPagoEfectivoProveedor = async ({ proveedor, monto, fecha }) => {
+  try {
+    return await authFetch(`${base}/efectivo`, {
+      method: "POST",
+      body: JSON.stringify({ proveedor, monto, fecha }),
+    });
+  } catch (error) {
+    console.error("Error al registrar pago en efectivo:", error);
+    return null;
+  }
+};
+
 export const editarPagoProveedor = async (id, pago) => {
   try {
     return await authFetch(`${base}/${id}`, { method: "PUT", body: JSON.stringify(pago) });
