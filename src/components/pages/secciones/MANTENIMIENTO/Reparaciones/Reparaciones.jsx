@@ -2,6 +2,22 @@ import { useState, useEffect } from "react";
 import { Container, Spinner } from "react-bootstrap";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas";
 
+// Subtítulo (texto chico abajo del código) por máquina. Las no listadas usan su marca.
+const SUBTITULO = {
+  PC1: "Komatsu PC200",
+  PC2: "Komatsu PC200",
+  PC3: "Komatsu PC200",
+  PC4: "Komatsu PC200",
+  PC5: "Komatsu PC200",
+  WA200: "Pala cargadora Komatsu",
+  XCMG: "Pala cargadora XCMG",
+  JD1: "Retropala John Deere",
+  JD2: "Retropala John Deere",
+  Fiat: "Camioneta Fiat",
+  Nissan: "Camioneta Nissan",
+  Ranger: "Camioneta Ranger",
+};
+
 // Orden por categoría: PC → palas cargadoras → retroexcavadoras → camiones →
 // motoniveladora → bateas → carretones → camionetas (resto)
 const categoriaOrden = (m) => {
@@ -93,9 +109,9 @@ function Reparaciones() {
             }}
           >
             <div style={{ fontSize: "1.4rem", fontWeight: 700 }}>{m.maquina}</div>
-            {(m.marca || m.modelo) && (
+            {(SUBTITULO[m.maquina] || m.marca || m.modelo) && (
               <div style={{ fontSize: "0.85rem", opacity: 0.85, marginTop: "4px" }}>
-                {m.marca || m.modelo}
+                {SUBTITULO[m.maquina] || m.marca || m.modelo}
               </div>
             )}
           </div>
