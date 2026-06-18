@@ -270,8 +270,25 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
   const agregar = () =>
     setFilas((prev) => [...prev, { _k: keyRef.current++, proveedor: "", deuda: 0, pago: 0, observaciones: "", libre: true, seleccionado: false, marcado: 0 }]);
 
-  const toggleMarcado = (idx) =>
+  const toggleMarcado = (idx) => {
+    const fila = filas[idx];
+    if ((fila?.marcado || 0) === 2) {
+      Swal.fire({
+        icon: "warning",
+        title: "¿Desea anular el pago del proveedor?",
+        showCancelButton: true,
+        confirmButtonText: "Sí, anular",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#dc3545",
+      }).then((res) => {
+        if (res.isConfirmed) {
+          setFilas((prev) => prev.map((f, i) => (i === idx ? { ...f, marcado: 0, pago: 0 } : f)));
+        }
+      });
+      return;
+    }
     setFilas((prev) => prev.map((f, i) => (i === idx ? { ...f, marcado: ((f.marcado || 0) + 1) % 3 } : f)));
+  };
 
   const borrar = (idx) => {
     const fila = filas[idx];
