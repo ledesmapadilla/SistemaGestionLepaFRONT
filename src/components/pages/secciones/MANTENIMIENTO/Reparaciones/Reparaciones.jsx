@@ -2,6 +2,20 @@ import { useState, useEffect } from "react";
 import { Container, Spinner } from "react-bootstrap";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas";
 
+// Orden por categoría: PC → palas cargadoras → retroexcavadoras → camiones →
+// motoniveladora → bateas → carretones → camionetas (resto)
+const categoriaOrden = (m) => {
+  const n = (m.maquina || "").toLowerCase().trim();
+  if (/^pc\d/.test(n)) return 0;                 // PC1..PC5
+  if (n === "wa200" || n === "xcmg") return 1;   // palas cargadoras
+  if (/^jd\d/.test(n)) return 2;                 // retroexcavadoras (JD)
+  if (n === "eiq" || n === "etx") return 3;      // camiones
+  if (n.includes("motoniveladora")) return 4;    // motoniveladora
+  if (n.includes("batea")) return 5;             // bateas
+  if (n.includes("carret")) return 6;            // carretones
+  return 7;                                       // camionetas / resto
+};
+
 function Reparaciones() {
   const [maquinas, setMaquinas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,9 +27,14 @@ function Reparaciones() {
         if (res?.ok) {
           const data = await res.json();
           setMaquinas(
-            [...data].sort((a, b) =>
-              (a.maquina || "").localeCompare(b.maquina || "")
-            )
+            [...data].sort((a, b) => {
+              const ca = categoriaOrden(a);
+              const cb = categoriaOrden(b);
+              if (ca !== cb) return ca - cb;
+              return (a.maquina || "").localeCompare(b.maquina || "", "es", {
+                numeric: true,
+              });
+            })
           );
         }
       } catch (error) {
