@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Container, Button, Table, Form } from "react-bootstrap";
+import DetalleReparacion from "./DetalleReparacion";
 
 const PARTES = [
   "Motor",
@@ -27,11 +28,21 @@ const filaVacia = () => ({
 
 function HistorialReparaciones({ maquina, onVolver }) {
   const [filas, setFilas] = useState([]);
+  const [detalleSel, setDetalleSel] = useState(null);
 
   const agregar = () => setFilas((p) => [...p, filaVacia()]);
   const editar = (id, campo, valor) =>
     setFilas((p) => p.map((f) => (f.id === id ? { ...f, [campo]: valor } : f)));
   const borrar = (id) => setFilas((p) => p.filter((f) => f.id !== id));
+
+  if (detalleSel)
+    return (
+      <DetalleReparacion
+        maquina={maquina}
+        reparacion={detalleSel}
+        onVolver={() => setDetalleSel(null)}
+      />
+    );
 
   return (
     <Container className="py-4">
@@ -93,8 +104,11 @@ function HistorialReparaciones({ maquina, onVolver }) {
                 />
               </td>
               <td>
-                {/* Abrirá una página a diseñar */}
-                <Button size="sm" variant="outline-secondary" onClick={() => {}}>
+                <Button
+                  size="sm"
+                  variant="outline-secondary"
+                  onClick={() => setDetalleSel(f)}
+                >
                   +
                 </Button>
               </td>
