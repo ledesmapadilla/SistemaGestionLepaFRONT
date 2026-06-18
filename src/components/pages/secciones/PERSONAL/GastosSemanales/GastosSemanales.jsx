@@ -688,15 +688,15 @@ const GastosSemanales = () => {
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
         <>
-          <div className="d-flex justify-content-center gap-4 mb-3 flex-wrap">
+          <div className="d-flex justify-content-center align-items-center gap-4 mb-3 flex-wrap">
             {[
-              { label: "Total Personal", valor: totalPagar },
-              { label: "Total Proveedores", valor: totalProveedores },
-              { label: "Total General", valor: totalGeneral },
+              { label: "Total Personal", valor: totalPagar, principal: false },
+              { label: "Total Proveedores", valor: totalProveedores, principal: false },
+              { label: "Total General", valor: totalGeneral, principal: true },
             ].map((t) => (
               <div key={t.label} className="d-flex align-items-center gap-2">
-                <span className="text-muted" style={{ fontSize: "0.85rem" }}>{t.label}:</span>
-                <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", textAlign: "center", fontSize: "0.95rem" }}>
+                <span className="text-muted" style={{ fontSize: t.principal ? "0.85rem" : "0.75rem" }}>{t.label}:</span>
+                <div style={{ minWidth: t.principal ? 130 : 110, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: t.principal ? "#ffc107" : "#9ca3af", textAlign: "center", fontSize: t.principal ? "0.95rem" : "0.8rem" }}>
                   {pesos(t.valor)}
                 </div>
               </div>
