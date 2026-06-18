@@ -788,7 +788,7 @@ const GastosSemanales = () => {
                 ))}
               </tbody>
               <tfoot>
-                <tr className="table-dark fw-bold" style={{ borderTop: "2px solid #ffc107" }}>
+                <tr className="table-dark" style={{ borderTop: "2px solid #ffc107" }}>
                   <td />
                   <td className="text-start">Total</td>
                   <td className="text-center">{pesos(totalSemanal)}</td>
