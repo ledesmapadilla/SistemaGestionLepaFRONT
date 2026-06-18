@@ -301,6 +301,16 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
       return;
     }
     setFilas((prev) => prev.map((f, i) => (i === idx ? { ...f, marcado: siguiente } : f)));
+    if (siguiente === 2) {
+      Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "Pago de proveedor realizado",
+        showConfirmButton: false,
+        timer: 1800,
+        timerProgressBar: true,
+      });
+    }
   };
 
   const borrar = (idx) => {
