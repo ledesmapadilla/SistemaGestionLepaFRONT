@@ -272,7 +272,8 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
 
   const toggleMarcado = (idx) => {
     const fila = filas[idx];
-    if ((fila?.marcado || 0) === 2) {
+    const actual = fila?.marcado || 0;
+    if (actual === 2) {
       Swal.fire({
         icon: "warning",
         title: "¿Desea anular el pago del proveedor?",
@@ -287,7 +288,19 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
       });
       return;
     }
-    setFilas((prev) => prev.map((f, i) => (i === idx ? { ...f, marcado: ((f.marcado || 0) + 1) % 3 } : f)));
+    const siguiente = (actual + 1) % 3;
+    if (siguiente === 2 && (Number(fila?.pago) || 0) === 0) {
+      Swal.fire({
+        position: "center",
+        icon: "info",
+        title: "El pago del proveedor está en cero",
+        showConfirmButton: false,
+        timer: 1800,
+        timerProgressBar: true,
+      });
+      return;
+    }
+    setFilas((prev) => prev.map((f, i) => (i === idx ? { ...f, marcado: siguiente } : f)));
   };
 
   const borrar = (idx) => {
