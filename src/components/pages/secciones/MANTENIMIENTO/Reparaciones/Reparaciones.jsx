@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Container, Spinner } from "react-bootstrap";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas";
+import HistorialReparaciones from "./HistorialReparaciones";
 
 // Subtítulo (texto chico abajo del código) por máquina. Las no listadas usan su marca.
 const SUBTITULO = {
@@ -49,6 +50,7 @@ const categoriaOrden = (m) => {
 function Reparaciones() {
   const [maquinas, setMaquinas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [maquinaSel, setMaquinaSel] = useState(null);
 
   useEffect(() => {
     const cargar = async () => {
@@ -79,6 +81,14 @@ function Reparaciones() {
   if (loading)
     return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
+  if (maquinaSel)
+    return (
+      <HistorialReparaciones
+        maquina={maquinaSel}
+        onVolver={() => setMaquinaSel(null)}
+      />
+    );
+
   return (
     <Container className="py-4">
       <div className="text-center" style={{ marginTop: "2rem", marginBottom: "3rem" }}>
@@ -100,6 +110,7 @@ function Reparaciones() {
         {maquinas.map((m) => (
           <div
             key={m._id}
+            onClick={() => setMaquinaSel(m)}
             style={{
               backgroundColor: "#8b4a4a",
               color: "#fff",
