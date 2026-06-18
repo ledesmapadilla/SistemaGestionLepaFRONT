@@ -10,6 +10,20 @@ export const listarRemitos = async (estado = "") => {
   return res.json();
 };
 
+export const existeRemito = async (numero) => {
+  const res = await authFetch(`${remitosBackend}/existe/${Number(numero)}`);
+  if (!res?.ok) throw new Error("Error al verificar remito");
+  const data = await res.json();
+  return data.existe;
+};
+
+export const proximoNumeroRemito = async (desde = 9000) => {
+  const res = await authFetch(`${remitosBackend}/proximo-numero?desde=${desde}`);
+  if (!res?.ok) throw new Error("Error al obtener próximo número de remito");
+  const data = await res.json();
+  return data.numero;
+};
+
 export const listarRemitosDisponibles = async () => {
   const res = await authFetch(`${remitosBackend}?disponibles=true`);
   if (!res?.ok) throw new Error("Error al listar remitos disponibles");

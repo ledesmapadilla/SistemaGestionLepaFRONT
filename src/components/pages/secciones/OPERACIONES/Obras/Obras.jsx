@@ -22,7 +22,7 @@ import {
   listarObras,
   borrarObra as borrarObraAPI,
 } from "../../../../../helpers/queriesObras.js";
-import { crearRemito, listarRemitos } from "../../../../../helpers/queriesRemitos.js";
+import { crearRemito, proximoNumeroRemito } from "../../../../../helpers/queriesRemitos.js";
 
 import "../../../../../styles/clientes.css";
 
@@ -224,10 +224,7 @@ const Obras = () => {
           }];
 
           if (itemsRemito.length > 0) {
-            const todosRemitos = await listarRemitos();
-            const usados = new Set(todosRemitos.map((r) => Number(r.remito)));
-            let nextNum = 9000;
-            while (usados.has(nextNum)) nextNum++;
+            const nextNum = await proximoNumeroRemito(9000);
 
             await crearRemito({
               obra: obraGuardada._id,

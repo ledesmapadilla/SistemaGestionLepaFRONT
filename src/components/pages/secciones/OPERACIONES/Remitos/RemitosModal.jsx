@@ -3,7 +3,7 @@ import { Modal, Button, Form, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import {
   crearRemito,
-  listarRemitos,
+  existeRemito,
   editarItemRemito,
   editarRemito,
 } from "../../../../../helpers/queriesRemitos";
@@ -204,9 +204,8 @@ const RemitosModal = ({
     if (!valor) return;
 
     try {
-      const remitosExistentes = await listarRemitos();
+      const existe = await existeRemito(valor);
       if (remitoValidandoRef.current !== valor) return;
-      const existe = remitosExistentes.some((r) => r.remito === Number(valor));
       if (existe) {
         setErrorNumeroRemito("El remito ya existe");
       }
@@ -282,10 +281,7 @@ const RemitosModal = ({
           setErrorNumeroRemito("Complete remito");
           hayError = true;
         } else {
-          const remitosExistentes = await listarRemitos();
-          const existe = remitosExistentes.some(
-            (r) => r.remito === Number(remito)
-          );
+          const existe = await existeRemito(remito);
 
           if (existe) {
             setErrorNumeroRemito("El remito ya existe");
