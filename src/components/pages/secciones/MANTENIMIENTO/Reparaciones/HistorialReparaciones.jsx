@@ -46,7 +46,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
 
   return (
     <Container className="py-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-5">
         <Button variant="outline-secondary" size="sm" onClick={onVolver}>
           ← Volver
         </Button>
