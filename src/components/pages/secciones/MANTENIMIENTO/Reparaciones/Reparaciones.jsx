@@ -16,6 +16,20 @@ const SUBTITULO = {
   Fiat: "Camioneta Fiat",
   Nissan: "Camioneta Nissan",
   Ranger: "Camioneta Ranger",
+  "Carretón grande": "",
+};
+
+// Subtítulo a mostrar: si la máquina está en el mapa usa ese valor (puede ser
+// vacío para no mostrar nada); si no, cae a la marca/modelo.
+const subDe = (m) =>
+  m.maquina in SUBTITULO ? SUBTITULO[m.maquina] : m.marca || m.modelo || "";
+
+// Tamaño de fuente del código según el largo, para que no se salga de la tarjeta.
+const fontCodigo = (n) => {
+  const len = (n || "").length;
+  if (len <= 6) return "1.4rem";
+  if (len <= 10) return "1.1rem";
+  return "0.92rem";
 };
 
 // Orden por categoría: PC → palas cargadoras → retroexcavadoras → camiones →
@@ -87,10 +101,10 @@ function Reparaciones() {
           <div
             key={m._id}
             style={{
-              backgroundColor: "#4a6fa5",
+              backgroundColor: "#dc3545",
               color: "#fff",
               borderRadius: "10px",
-              padding: "1.2rem 1.6rem",
+              padding: "0.8rem",
               cursor: "pointer",
               boxShadow: "3px 3px 8px rgba(0,0,0,0.25)",
               userSelect: "none",
@@ -98,6 +112,11 @@ function Reparaciones() {
               width: "160px",
               height: "100px",
               textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "scale(1.06)";
@@ -108,10 +127,12 @@ function Reparaciones() {
               e.currentTarget.style.boxShadow = "3px 3px 8px rgba(0,0,0,0.25)";
             }}
           >
-            <div style={{ fontSize: "1.4rem", fontWeight: 700 }}>{m.maquina}</div>
-            {(SUBTITULO[m.maquina] || m.marca || m.modelo) && (
-              <div style={{ fontSize: "0.85rem", opacity: 0.85, marginTop: "4px" }}>
-                {SUBTITULO[m.maquina] || m.marca || m.modelo}
+            <div style={{ fontSize: fontCodigo(m.maquina), fontWeight: 700, lineHeight: 1.1, wordBreak: "break-word" }}>
+              {m.maquina}
+            </div>
+            {subDe(m) && (
+              <div style={{ fontSize: "0.8rem", opacity: 0.85, marginTop: "4px", lineHeight: 1.1 }}>
+                {subDe(m)}
               </div>
             )}
           </div>
