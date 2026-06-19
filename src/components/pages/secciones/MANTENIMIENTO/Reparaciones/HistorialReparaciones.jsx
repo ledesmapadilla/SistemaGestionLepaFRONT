@@ -201,10 +201,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
         style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center" }}
         className="mb-5"
       >
-        <div className="d-flex gap-2 justify-content-start">
-          <Button variant="outline-light" size="sm" onClick={exportarExcel}>
-            Excel
-          </Button>
+        <div className="d-flex justify-content-start">
           <Button variant="outline-success" size="sm" onClick={onVolver}>
             Volver
           </Button>
@@ -213,6 +210,9 @@ function HistorialReparaciones({ maquina, onVolver }) {
           Historial de reparaciones - {maquina?.maquina}
         </h4>
         <div className="d-flex gap-2 justify-content-end">
+          <Button variant="outline-light" size="sm" onClick={exportarExcel}>
+            Excel
+          </Button>
           <Button variant="outline-primary" size="sm" onClick={agregar}>
             + Agregar
           </Button>
