@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Container, Button, Table, Form, Spinner } from "react-bootstrap";
 import Swal from "sweetalert2";
 import DetalleReparacion from "./DetalleReparacion";
+import DetalleRepuestos from "./DetalleRepuestos";
 import AsyncButton from "../../../../shared/AsyncButton";
 import {
   obtenerReparacionesPorMaquina,
@@ -36,6 +37,7 @@ const filaVacia = () => ({
 function HistorialReparaciones({ maquina, onVolver }) {
   const [filas, setFilas] = useState([]);
   const [detalleSel, setDetalleSel] = useState(null);
+  const [repuestosSel, setRepuestosSel] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [editandoId, setEditandoId] = useState(null);
 
@@ -106,6 +108,14 @@ function HistorialReparaciones({ maquina, onVolver }) {
     }
   };
 
+  const guardarRepuestos = async (filaId, repuestos) => {
+    const nuevasFilas = filas.map((f) =>
+      f.id === filaId ? { ...f, repuestos } : f
+    );
+    setFilas(nuevasFilas);
+    return await guardarReparaciones(maquina?._id, nuevasFilas);
+  };
+
   if (detalleSel)
     return (
       <DetalleReparacion
@@ -114,6 +124,18 @@ function HistorialReparaciones({ maquina, onVolver }) {
         onVolver={() => setDetalleSel(null)}
       />
     );
+
+  if (repuestosSel) {
+    const fila = filas.find((f) => f.id === repuestosSel);
+    return (
+      <DetalleRepuestos
+        maquina={maquina}
+        reparacion={fila}
+        onVolver={() => setRepuestosSel(null)}
+        onGuardar={(reps) => guardarRepuestos(repuestosSel, reps)}
+      />
+    );
+  }
 
   return (
     <Container className="py-4">
@@ -146,13 +168,14 @@ function HistorialReparaciones({ maquina, onVolver }) {
             <th style={{ width: 150 }}>Parte</th>
             <th style={{ width: 130 }}>Prioridad</th>
             <th style={{ width: 140 }}>Estado</th>
+            <th style={{ width: 90 }}>Detalles</th>
             <th style={{ width: 160 }}>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {filas.length === 0 && (
             <tr>
-              <td colSpan={7} className="text-muted py-3">
+              <td colSpan={8} className="text-muted py-3">
                 Sin reparaciones cargadas
               </td>
             </tr>
@@ -246,6 +269,15 @@ function HistorialReparaciones({ maquina, onVolver }) {
                     {f.estado || "-"}
                   </span>
                 )}
+              </td>
+              <td>
+                <Button
+                  size="sm"
+                  variant="outline-secondary"
+                  onClick={() => setRepuestosSel(f.id)}
+                >
+                  +
+                </Button>
               </td>
               <td>
                 <div className="d-flex gap-1 justify-content-center align-items-center">
