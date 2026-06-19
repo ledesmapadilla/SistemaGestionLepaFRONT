@@ -47,11 +47,11 @@ function HistorialReparaciones({ maquina, onVolver }) {
   return (
     <Container className="py-4">
       <div className="d-flex justify-content-between align-items-center mb-5">
-        <Button variant="outline-secondary" size="sm" onClick={onVolver}>
-          ← Volver
+        <Button variant="outline-success" size="sm" onClick={onVolver}>
+          Volver
         </Button>
         <h4 className="fw-bold mb-0 text-center">
-          Historial de reparaciones — {maquina?.maquina}
+          Historial de reparaciones - {maquina?.maquina}
         </h4>
         <Button variant="outline-primary" size="sm" onClick={agregar}>
           + Agregar
@@ -63,7 +63,6 @@ function HistorialReparaciones({ maquina, onVolver }) {
           <tr>
             <th style={{ width: 140 }}>Fecha</th>
             <th>Reparación</th>
-            <th>Descripción</th>
             <th style={{ width: 80 }}>Detalle</th>
             <th style={{ width: 150 }}>Parte</th>
             <th style={{ width: 130 }}>Prioridad</th>
@@ -74,7 +73,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
         <tbody>
           {filas.length === 0 && (
             <tr>
-              <td colSpan={8} className="text-muted py-3">
+              <td colSpan={7} className="text-muted py-3">
                 Sin reparaciones cargadas
               </td>
             </tr>
@@ -94,13 +93,6 @@ function HistorialReparaciones({ maquina, onVolver }) {
                   size="sm"
                   value={f.reparacion}
                   onChange={(e) => editar(f.id, "reparacion", e.target.value)}
-                />
-              </td>
-              <td>
-                <Form.Control
-                  size="sm"
-                  value={f.descripcion}
-                  onChange={(e) => editar(f.id, "descripcion", e.target.value)}
                 />
               </td>
               <td>
