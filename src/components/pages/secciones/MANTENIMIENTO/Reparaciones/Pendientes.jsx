@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Container, Button, Table, Spinner } from "react-bootstrap";
+import XLSXStyle from "xlsx-js-style";
 import { obtenerTodasReparaciones } from "../../../../../helpers/queriesReparaciones";
 
 const COLOR_ESTADO = {
@@ -70,6 +71,44 @@ function Pendientes({ onVolver }) {
     cargar();
   }, []);
 
+  const exportarRepuestosExcel = () => {
+    const titulo = "Repuestos pendientes";
+    const headers = ["Fecha", "Repuesto", "Cantidad", "Máquina", "Responsable", "Estado"];
+    const cols = "ABCDEF";
+    const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
+    const estIzq = { alignment: { horizontal: "left", vertical: "center" } };
+    const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
+    const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
+
+    const wb = XLSXStyle.utils.book_new();
+    const ws = {};
+
+    const hoy = new Date();
+    const fechaSerial = Math.round((Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
+
+    ws["A1"] = { v: titulo, t: "s", s: estTitulo };
+    ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
+    ws["A3"] = { v: "", t: "s" };
+    headers.forEach((h, i) => { ws[`${cols[i]}4`] = { v: h, t: "s", s: estHeader }; });
+
+    repuestos.forEach((r, rowIdx) => {
+      const row = rowIdx + 5;
+      ws[`A${row}`] = { v: r.fecha ? r.fecha.split("-").reverse().join("/") : "", t: "s", s: estCentro };
+      ws[`B${row}`] = { v: r.repuesto || "", t: "s", s: estIzq };
+      ws[`C${row}`] = { v: Number(r.cantidad) || 0, t: "n", s: estCentro };
+      ws[`D${row}`] = { v: r.maquina || "", t: "s", s: estCentro };
+      ws[`E${row}`] = { v: r.responsable || "", t: "s", s: estCentro };
+      ws[`F${row}`] = { v: r.estado || "", t: "s", s: estCentro };
+    });
+
+    const lastRow = repuestos.length + 4;
+    ws["!ref"] = `A1:F${Math.max(lastRow, 4)}`;
+    ws["!cols"] = [{ wch: 14 }, { wch: 32 }, { wch: 12 }, { wch: 18 }, { wch: 20 }, { wch: 14 }];
+
+    XLSXStyle.utils.book_append_sheet(wb, ws, "Repuestos pendientes");
+    XLSXStyle.writeFile(wb, "RepuestosPendientes.xlsx");
+  };
+
   return (
     <Container className="py-4">
       <div
@@ -129,7 +168,18 @@ function Pendientes({ onVolver }) {
             </Table>
           </div>
 
-          <h4 className="mb-3 text-center mt-5">Repuestos pendientes</h4>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center" }}
+            className="mt-5 mb-3"
+          >
+            <span />
+            <h4 className="mb-0 text-center">Repuestos pendientes</h4>
+            <div className="d-flex justify-content-end">
+              <Button variant="outline-light" size="sm" onClick={exportarRepuestosExcel}>
+                Excel
+              </Button>
+            </div>
+          </div>
           <div className="w-75 mx-auto" style={{ maxHeight: "65vh", overflowY: "auto" }}>
             <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
               <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
