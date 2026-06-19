@@ -168,7 +168,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
             <th style={{ width: 150 }}>Parte</th>
             <th style={{ width: 130 }}>Prioridad</th>
             <th style={{ width: 140 }}>Estado</th>
-            <th style={{ width: 90 }}>Detalles</th>
+            <th style={{ width: 90 }}>Repuestos</th>
             <th style={{ width: 160 }}>Acciones</th>
           </tr>
         </thead>
