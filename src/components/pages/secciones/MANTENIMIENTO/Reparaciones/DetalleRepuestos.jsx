@@ -3,6 +3,14 @@ import { Container, Button, Table, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
 import AsyncButton from "../../../../shared/AsyncButton";
 
+const ESTADOS = ["Pedido", "Pendiente", "En proceso", "Colocado"];
+const COLOR_ESTADO = {
+  Pedido: "#0dcaf0",
+  Pendiente: "#6c757d",
+  "En proceso": "#ffc107",
+  Colocado: "#198754",
+};
+
 const filaVacia = () => ({
   id: crypto.randomUUID(),
   repuesto: "",
@@ -10,6 +18,7 @@ const filaVacia = () => ({
   precio: 0,
   proveedor: "",
   responsable: "",
+  estado: "Pedido",
 });
 
 const pesos = (n) =>
@@ -64,6 +73,7 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
         timer: 1500,
         timerProgressBar: true,
       });
+      onVolver();
     } else {
       Swal.fire({
         icon: "error",
@@ -103,26 +113,29 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
       <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
         <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
           <tr>
+            <th style={{ width: 40 }}>#</th>
             <th>Repuesto</th>
             <th style={{ width: 110 }}>Cantidad</th>
             <th style={{ width: 150 }}>Precio</th>
             <th style={{ width: 200 }}>Proveedor</th>
             <th style={{ width: 180 }}>Responsable</th>
+            <th style={{ width: 140 }}>Estado</th>
             <th style={{ width: 160 }}>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {filas.length === 0 && (
             <tr>
-              <td colSpan={6} className="text-muted py-3">
+              <td colSpan={8} className="text-muted py-3">
                 Sin repuestos cargados
               </td>
             </tr>
           )}
-          {filas.map((f) => {
+          {filas.map((f, idx) => {
             const editando = editandoId === f.id;
             return (
             <tr key={f.id}>
+              <td className="text-muted">{idx + 1}</td>
               <td className="text-start">
                 {editando ? (
                   <Form.Control
@@ -181,6 +194,25 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
                 )}
               </td>
               <td>
+                {editando ? (
+                  <Form.Select
+                    size="sm"
+                    value={f.estado || "Pedido"}
+                    onChange={(e) => editar(f.id, "estado", e.target.value)}
+                  >
+                    {ESTADOS.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </Form.Select>
+                ) : (
+                  <span style={{ color: COLOR_ESTADO[f.estado] || "#dee2e6", fontWeight: 600 }}>
+                    {f.estado || "-"}
+                  </span>
+                )}
+              </td>
+              <td>
                 <div className="d-flex gap-1 justify-content-center align-items-center">
                   {editando ? (
                     <Button size="sm" variant="outline-success" onClick={finalizarEdicion}>
@@ -203,11 +235,11 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
         {filas.length > 0 && (
           <tfoot>
             <tr className="table-dark">
-              <td className="text-end" colSpan={2}>
+              <td className="text-end" colSpan={3}>
                 Total
               </td>
               <td>{pesos(total)}</td>
-              <td colSpan={3} />
+              <td colSpan={4} />
             </tr>
           </tfoot>
         )}
