@@ -139,11 +139,15 @@ function HistorialReparaciones({ maquina, onVolver }) {
 
   return (
     <Container className="py-4">
-      <div className="d-flex justify-content-between align-items-center mb-5">
-        <h4 className="fw-bold mb-0">
+      <div
+        style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center" }}
+        className="mb-5"
+      >
+        <span />
+        <h4 className="mb-0 text-center">
           Historial de reparaciones - {maquina?.maquina}
         </h4>
-        <div className="d-flex gap-2">
+        <div className="d-flex gap-2 justify-content-end">
           <Button variant="outline-primary" size="sm" onClick={agregar}>
             + Agregar
           </Button>
@@ -159,8 +163,9 @@ function HistorialReparaciones({ maquina, onVolver }) {
       {cargando ? (
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
-      <Table striped bordered hover responsive className="text-center align-middle">
-        <thead className="table-dark">
+      <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+      <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
+        <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
           <tr>
             <th style={{ width: 140 }}>Fecha</th>
             <th>Reparación</th>
@@ -300,6 +305,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
           })}
         </tbody>
       </Table>
+      </div>
       )}
     </Container>
   );
