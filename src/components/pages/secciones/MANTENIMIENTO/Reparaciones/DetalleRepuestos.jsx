@@ -23,11 +23,30 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
   const [filas, setFilas] = useState(
     (reparacion?.repuestos || []).map((r) => ({ ...r, id: r.id || crypto.randomUUID() }))
   );
+  const [editandoId, setEditandoId] = useState(null);
 
-  const agregar = () => setFilas((p) => [...p, filaVacia()]);
+  const agregar = () => {
+    const nueva = filaVacia();
+    setFilas((p) => [...p, nueva]);
+    setEditandoId(nueva.id);
+  };
   const editar = (id, campo, valor) =>
     setFilas((p) => p.map((f) => (f.id === id ? { ...f, [campo]: valor } : f)));
-  const borrar = (id) => setFilas((p) => p.filter((f) => f.id !== id));
+  const borrar = (id) => {
+    setFilas((p) => p.filter((f) => f.id !== id));
+    setEditandoId((prev) => (prev === id ? null : prev));
+  };
+  const finalizarEdicion = () => {
+    setEditandoId(null);
+    Swal.fire({
+      position: "center",
+      icon: "success",
+      title: "Repuesto actualizado",
+      showConfirmButton: false,
+      timer: 1500,
+      timerProgressBar: true,
+    });
+  };
 
   const total = filas.reduce(
     (s, f) => s + (Number(f.cantidad) || 0) * (Number(f.precio) || 0),
@@ -84,7 +103,7 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
             <th style={{ width: 150 }}>Precio</th>
             <th style={{ width: 200 }}>Proveedor</th>
             <th style={{ width: 180 }}>Responsable</th>
-            <th style={{ width: 90 }}>Acciones</th>
+            <th style={{ width: 160 }}>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -95,52 +114,86 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
               </td>
             </tr>
           )}
-          {filas.map((f) => (
+          {filas.map((f) => {
+            const editando = editandoId === f.id;
+            return (
             <tr key={f.id}>
               <td className="text-start">
-                <Form.Control
-                  size="sm"
-                  value={f.repuesto}
-                  onChange={(e) => editar(f.id, "repuesto", e.target.value)}
-                />
+                {editando ? (
+                  <Form.Control
+                    size="sm"
+                    value={f.repuesto}
+                    onChange={(e) => editar(f.id, "repuesto", e.target.value)}
+                  />
+                ) : (
+                  f.repuesto || "-"
+                )}
               </td>
               <td>
-                <Form.Control
-                  type="number"
-                  size="sm"
-                  value={f.cantidad}
-                  onChange={(e) => editar(f.id, "cantidad", e.target.value)}
-                />
+                {editando ? (
+                  <Form.Control
+                    type="number"
+                    size="sm"
+                    value={f.cantidad}
+                    onChange={(e) => editar(f.id, "cantidad", e.target.value)}
+                  />
+                ) : (
+                  Number(f.cantidad) || 0
+                )}
               </td>
               <td>
-                <Form.Control
-                  type="number"
-                  size="sm"
-                  value={f.precio}
-                  onChange={(e) => editar(f.id, "precio", e.target.value)}
-                />
+                {editando ? (
+                  <Form.Control
+                    type="number"
+                    size="sm"
+                    value={f.precio}
+                    onChange={(e) => editar(f.id, "precio", e.target.value)}
+                  />
+                ) : (
+                  pesos(f.precio)
+                )}
               </td>
               <td>
-                <Form.Control
-                  size="sm"
-                  value={f.proveedor}
-                  onChange={(e) => editar(f.id, "proveedor", e.target.value)}
-                />
+                {editando ? (
+                  <Form.Control
+                    size="sm"
+                    value={f.proveedor}
+                    onChange={(e) => editar(f.id, "proveedor", e.target.value)}
+                  />
+                ) : (
+                  f.proveedor || "-"
+                )}
               </td>
               <td>
-                <Form.Control
-                  size="sm"
-                  value={f.responsable}
-                  onChange={(e) => editar(f.id, "responsable", e.target.value)}
-                />
+                {editando ? (
+                  <Form.Control
+                    size="sm"
+                    value={f.responsable}
+                    onChange={(e) => editar(f.id, "responsable", e.target.value)}
+                  />
+                ) : (
+                  f.responsable || "-"
+                )}
               </td>
               <td>
-                <Button size="sm" variant="outline-danger" onClick={() => borrar(f.id)}>
-                  Borrar
-                </Button>
+                <div className="d-flex gap-1 justify-content-center align-items-center">
+                  {editando ? (
+                    <Button size="sm" variant="outline-success" onClick={finalizarEdicion}>
+                      Listo
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="outline-warning" onClick={() => setEditandoId(f.id)}>
+                      Editar
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline-danger" onClick={() => borrar(f.id)}>
+                    Borrar
+                  </Button>
+                </div>
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
         {filas.length > 0 && (
           <tfoot>
