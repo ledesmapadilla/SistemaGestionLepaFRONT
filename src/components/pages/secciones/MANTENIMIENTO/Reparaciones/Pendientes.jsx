@@ -64,7 +64,7 @@ function Pendientes({ onVolver }) {
       {cargando ? (
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
-        <div className="w-50 mx-auto" style={{ maxHeight: "65vh", overflowY: "auto" }}>
+        <div className="w-75 mx-auto" style={{ maxHeight: "65vh", overflowY: "auto" }}>
           <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
             <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
               <tr>
