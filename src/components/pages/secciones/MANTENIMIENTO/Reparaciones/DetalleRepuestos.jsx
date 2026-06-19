@@ -3,11 +3,12 @@ import { Container, Button, Table, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
 import AsyncButton from "../../../../shared/AsyncButton";
 
-const ESTADOS = ["Pedido", "Pendiente", "En proceso", "Colocado"];
+const ESTADOS = ["Pedido", "Pendiente", "En proceso", "En taller", "Colocado"];
 const COLOR_ESTADO = {
   Pedido: "#0dcaf0",
   Pendiente: "#6c757d",
   "En proceso": "#ffc107",
+  "En taller": "#fd7e14",
   Colocado: "#198754",
 };
 
@@ -27,6 +28,18 @@ const pesos = (n) =>
     currency: "ARS",
     maximumFractionDigits: 0,
   });
+
+// Input que muestra el valor con formato moneda mientras se escribe y queda
+// vacío cuando el valor es 0 (en vez de mostrar "0").
+const InputMoneda = ({ value, onChange }) => (
+  <Form.Control
+    size="sm"
+    type="text"
+    inputMode="numeric"
+    value={Number(value) ? pesos(value) : ""}
+    onChange={(e) => onChange(Number(e.target.value.replace(/[^\d]/g, "")) || 0)}
+  />
+);
 
 function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
   const [filas, setFilas] = useState(
@@ -89,7 +102,11 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
         style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center" }}
         className="mb-5"
       >
-        <span />
+        <div className="d-flex justify-content-start">
+          <Button variant="outline-primary" size="sm" onClick={agregar}>
+            + Agregar
+          </Button>
+        </div>
         <h4 className="mb-0 text-center">
           Repuestos - {reparacion?.reparacion || "reparación"}
           <small className="text-muted ms-2" style={{ fontSize: "1rem", fontWeight: 400 }}>
@@ -97,9 +114,6 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
           </small>
         </h4>
         <div className="d-flex gap-2 justify-content-end">
-          <Button variant="outline-primary" size="sm" onClick={agregar}>
-            + Agregar
-          </Button>
           <AsyncButton variant="outline-success" size="sm" onClick={guardar}>
             Guardar
           </AsyncButton>
@@ -161,11 +175,9 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
               </td>
               <td>
                 {editando ? (
-                  <Form.Control
-                    type="number"
-                    size="sm"
+                  <InputMoneda
                     value={f.precio}
-                    onChange={(e) => editar(f.id, "precio", e.target.value)}
+                    onChange={(v) => editar(f.id, "precio", v)}
                   />
                 ) : (
                   pesos(f.precio)
