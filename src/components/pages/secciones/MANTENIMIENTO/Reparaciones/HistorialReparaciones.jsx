@@ -202,8 +202,8 @@ function HistorialReparaciones({ maquina, onVolver }) {
         className="mb-5"
       >
         <div className="d-flex justify-content-start">
-          <Button variant="outline-success" size="sm" onClick={onVolver}>
-            Volver
+          <Button variant="outline-primary" size="sm" onClick={agregar}>
+            + Agregar
           </Button>
         </div>
         <h4 className="mb-0 text-center">
@@ -213,12 +213,12 @@ function HistorialReparaciones({ maquina, onVolver }) {
           <Button variant="outline-light" size="sm" onClick={exportarExcel}>
             Excel
           </Button>
-          <Button variant="outline-primary" size="sm" onClick={agregar}>
-            + Agregar
-          </Button>
           <AsyncButton variant="outline-success" size="sm" onClick={guardar}>
             Guardar
           </AsyncButton>
+          <Button variant="outline-success" size="sm" onClick={onVolver}>
+            Volver
+          </Button>
         </div>
       </div>
 

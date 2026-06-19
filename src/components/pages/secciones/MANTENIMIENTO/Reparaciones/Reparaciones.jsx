@@ -104,6 +104,37 @@ function Reparaciones() {
           marginBottom: "2rem",
         }}
       >
+        <div
+          style={{
+            backgroundColor: "#3a5a78",
+            color: "#fff",
+            borderRadius: "10px",
+            padding: "0.8rem",
+            cursor: "pointer",
+            boxShadow: "3px 3px 8px rgba(0,0,0,0.25)",
+            userSelect: "none",
+            transition: "transform 0.15s ease, box-shadow 0.15s ease",
+            width: "332px",
+            height: "100px",
+            textAlign: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.06)";
+            e.currentTarget.style.boxShadow = "5px 5px 14px rgba(0,0,0,0.35)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = "3px 3px 8px rgba(0,0,0,0.25)";
+          }}
+        >
+          <div style={{ fontSize: "1.5rem", fontWeight: 700, letterSpacing: "1px" }}>
+            PENDIENTES
+          </div>
+        </div>
         {maquinas.length === 0 && (
           <p className="text-muted">Sin máquinas registradas.</p>
         )}
