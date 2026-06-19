@@ -393,9 +393,10 @@ function HistorialReparaciones({ maquina, onVolver }) {
                   <input
                     type="radio"
                     checked={!!f.maquinaParada}
+                    disabled={!editando}
                     onChange={() => {}}
-                    onClick={() => editar(f.id, "maquinaParada", !f.maquinaParada)}
-                    style={{ cursor: "pointer", accentColor: "#ff0000", width: 20, height: 20 }}
+                    onClick={() => editando && editar(f.id, "maquinaParada", !f.maquinaParada)}
+                    style={{ cursor: editando ? "pointer" : "not-allowed", accentColor: "#ff0000", width: 20, height: 20 }}
                   />
                 </div>
               </td>

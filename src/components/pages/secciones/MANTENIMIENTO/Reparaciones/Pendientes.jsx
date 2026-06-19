@@ -28,6 +28,7 @@ function Pendientes({ onVolver }) {
                   reparacion: r.reparacion || "",
                   maquina,
                   tieneRepuestos: (r.repuestos || []).length > 0,
+                  maquinaParada: !!r.maquinaParada,
                   estado: r.estado || "",
                 });
               }
@@ -51,19 +52,19 @@ function Pendientes({ onVolver }) {
         style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center" }}
         className="mb-5"
       >
-        <div className="d-flex justify-content-start">
+        <span />
+        <h4 className="mb-0 text-center">Reparaciones pendientes</h4>
+        <div className="d-flex justify-content-end">
           <Button variant="outline-success" size="sm" onClick={onVolver}>
             Volver
           </Button>
         </div>
-        <h4 className="mb-0 text-center">Reparaciones pendientes</h4>
-        <span />
       </div>
 
       {cargando ? (
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
-        <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+        <div className="w-50 mx-auto" style={{ maxHeight: "65vh", overflowY: "auto" }}>
           <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
             <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
               <tr>
@@ -71,13 +72,14 @@ function Pendientes({ onVolver }) {
                 <th>Reparación</th>
                 <th style={{ width: 180 }}>Máquina</th>
                 <th style={{ width: 120 }}>Repuestos</th>
+                <th style={{ width: 120 }}>Máquina parada</th>
                 <th style={{ width: 140 }}>Estado</th>
               </tr>
             </thead>
             <tbody>
               {filas.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-muted py-3">
+                  <td colSpan={6} className="text-muted py-3">
                     No hay reparaciones pendientes
                   </td>
                 </tr>
@@ -89,6 +91,9 @@ function Pendientes({ onVolver }) {
                   <td>{f.maquina}</td>
                   <td style={{ color: f.tieneRepuestos ? "#198754" : "#6c757d", fontWeight: 600 }}>
                     {f.tieneRepuestos ? "Sí" : "No"}
+                  </td>
+                  <td style={{ color: f.maquinaParada ? "#dc3545" : "#6c757d", fontWeight: 600 }}>
+                    {f.maquinaParada ? "Sí" : "No"}
                   </td>
                   <td style={{ color: COLOR_ESTADO[f.estado] || "#dee2e6", fontWeight: 600 }}>
                     {f.estado || "-"}
