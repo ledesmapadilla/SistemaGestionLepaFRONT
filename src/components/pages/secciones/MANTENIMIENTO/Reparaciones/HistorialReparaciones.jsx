@@ -227,8 +227,8 @@ function HistorialReparaciones({ maquina, onVolver }) {
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
       <>
-      <div className="d-flex mb-3">
-        <div className="position-relative w-50 pe-1">
+      <div className="d-flex gap-2 mb-3 w-50">
+        <div className="position-relative flex-fill">
           <Form.Select
             size="sm"
             value={filtroReparacion}
@@ -251,7 +251,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
             </button>
           )}
         </div>
-        <div className="position-relative w-50 ps-1">
+        <div className="position-relative flex-fill">
           <Form.Select
             size="sm"
             value={filtroParte}
@@ -389,13 +389,15 @@ function HistorialReparaciones({ maquina, onVolver }) {
                 )}
               </td>
               <td>
-                <Button
-                  size="sm"
-                  variant={f.maquinaParada ? "danger" : "outline-secondary"}
-                  onClick={() => editar(f.id, "maquinaParada", !f.maquinaParada)}
-                >
-                  {f.maquinaParada ? "Parada" : "Activa"}
-                </Button>
+                <div className="d-flex justify-content-center">
+                  <input
+                    type="radio"
+                    checked={!!f.maquinaParada}
+                    onChange={() => {}}
+                    onClick={() => editar(f.id, "maquinaParada", !f.maquinaParada)}
+                    style={{ cursor: "pointer", accentColor: "#ff0000", width: 20, height: 20 }}
+                  />
+                </div>
               </td>
               <td>
                 <Button
