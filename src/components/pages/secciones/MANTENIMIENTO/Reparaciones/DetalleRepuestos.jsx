@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Container, Button, Table, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
+import XLSXStyle from "xlsx-js-style";
 import AsyncButton from "../../../../shared/AsyncButton";
 
 const ESTADOS = ["Pedido", "Pendiente", "En proceso", "En taller", "Colocado"];
@@ -75,6 +76,51 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
     0
   );
 
+  const exportarExcel = () => {
+    const titulo = `Repuestos - ${reparacion?.reparacion || "reparación"} (${maquina?.maquina || ""})`;
+    const headers = ["#", "Repuesto", "Cantidad", "Precio", "Proveedor", "Responsable", "Estado"];
+    const cols = "ABCDEFG";
+    const moneda = { numFmt: "#,##0" };
+    const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
+    const estIzq = { alignment: { horizontal: "left", vertical: "center" } };
+    const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
+    const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
+    const estTotal = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" }, numFmt: "#,##0" };
+
+    const wb = XLSXStyle.utils.book_new();
+    const ws = {};
+
+    const hoy = new Date();
+    const fechaSerial = Math.round((Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
+
+    ws["A1"] = { v: titulo, t: "s", s: estTitulo };
+    ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
+    ws["A3"] = { v: "", t: "s" };
+    headers.forEach((h, i) => { ws[`${cols[i]}4`] = { v: h, t: "s", s: estHeader }; });
+
+    filas.forEach((r, rowIdx) => {
+      const row = rowIdx + 5;
+      ws[`A${row}`] = { v: rowIdx + 1, t: "n", s: estCentro };
+      ws[`B${row}`] = { v: r.repuesto || "", t: "s", s: estIzq };
+      ws[`C${row}`] = { v: Number(r.cantidad) || 0, t: "n", s: estCentro };
+      ws[`D${row}`] = { v: Number(r.precio) || 0, t: "n", s: { ...estCentro, ...moneda } };
+      ws[`E${row}`] = { v: r.proveedor || "", t: "s", s: estCentro };
+      ws[`F${row}`] = { v: r.responsable || "", t: "s", s: estCentro };
+      ws[`G${row}`] = { v: r.estado || "", t: "s", s: estCentro };
+    });
+
+    const totalRow = filas.length + 5;
+    ["A", "B", "E", "F", "G"].forEach((c) => { ws[`${c}${totalRow}`] = { v: "", t: "s", s: estTotal }; });
+    ws[`C${totalRow}`] = { v: "Total", t: "s", s: estTotal };
+    ws[`D${totalRow}`] = { v: total, t: "n", s: { ...estTotal, ...moneda } };
+
+    ws["!ref"] = `A1:G${Math.max(totalRow, 4)}`;
+    ws["!cols"] = [{ wch: 5 }, { wch: 32 }, { wch: 12 }, { wch: 14 }, { wch: 22 }, { wch: 20 }, { wch: 14 }];
+
+    XLSXStyle.utils.book_append_sheet(wb, ws, "Repuestos");
+    XLSXStyle.writeFile(wb, `Repuestos_${reparacion?.reparacion || ""}.xlsx`);
+  };
+
   const guardar = async () => {
     const res = await onGuardar(filas);
     if (res?.ok) {
@@ -117,6 +163,9 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
           <AsyncButton variant="outline-success" size="sm" onClick={guardar}>
             Guardar
           </AsyncButton>
+          <Button variant="outline-light" size="sm" onClick={exportarExcel}>
+            Excel
+          </Button>
           <Button variant="outline-success" size="sm" onClick={onVolver}>
             Volver
           </Button>

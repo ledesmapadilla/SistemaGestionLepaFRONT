@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Container, Button, Table, Form, Spinner } from "react-bootstrap";
 import Swal from "sweetalert2";
+import XLSXStyle from "xlsx-js-style";
 import DetalleReparacion from "./DetalleReparacion";
 import DetalleRepuestos from "./DetalleRepuestos";
 import AsyncButton from "../../../../shared/AsyncButton";
@@ -40,6 +41,8 @@ function HistorialReparaciones({ maquina, onVolver }) {
   const [repuestosSel, setRepuestosSel] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [editandoId, setEditandoId] = useState(null);
+  const [filtroReparacion, setFiltroReparacion] = useState("");
+  const [filtroParte, setFiltroParte] = useState("");
 
   useEffect(() => {
     const cargar = async () => {
@@ -116,6 +119,61 @@ function HistorialReparaciones({ maquina, onVolver }) {
     return await guardarReparaciones(maquina?._id, nuevasFilas);
   };
 
+  const reparacionesUnicas = useMemo(
+    () => [...new Set(filas.map((f) => f.reparacion).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+    [filas]
+  );
+  const partesUnicas = useMemo(
+    () => [...new Set(filas.map((f) => f.parte).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+    [filas]
+  );
+  const filasFiltradas = useMemo(
+    () =>
+      filas.filter(
+        (f) =>
+          (!filtroReparacion || f.reparacion === filtroReparacion) &&
+          (!filtroParte || f.parte === filtroParte)
+      ),
+    [filas, filtroReparacion, filtroParte]
+  );
+
+  const exportarExcel = () => {
+    const titulo = `Historial de reparaciones - ${maquina?.maquina || ""}`;
+    const headers = ["Fecha", "Reparación", "Parte", "Prioridad", "Estado"];
+    const cols = "ABCDE";
+    const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
+    const estIzq = { alignment: { horizontal: "left", vertical: "center" } };
+    const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
+    const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
+
+    const wb = XLSXStyle.utils.book_new();
+    const ws = {};
+
+    const hoy = new Date();
+    const fechaSerial = Math.round((Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
+
+    ws["A1"] = { v: titulo, t: "s", s: estTitulo };
+    ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
+    ws["A3"] = { v: "", t: "s" };
+    headers.forEach((h, i) => { ws[`${cols[i]}4`] = { v: h, t: "s", s: estHeader }; });
+
+    filasFiltradas.forEach((r, rowIdx) => {
+      const row = rowIdx + 5;
+      ws[`A${row}`] = { v: r.fecha ? r.fecha.split("-").reverse().join("/") : "", t: "s", s: estCentro };
+      ws[`B${row}`] = { v: r.reparacion || "", t: "s", s: estIzq };
+      ws[`C${row}`] = { v: r.parte || "", t: "s", s: estCentro };
+      ws[`D${row}`] = { v: r.prioridad || "", t: "s", s: estCentro };
+      ws[`E${row}`] = { v: r.estado || "", t: "s", s: estCentro };
+    });
+
+    const lastRow = filasFiltradas.length + 4;
+    ws["!ref"] = `A1:E${Math.max(lastRow, 4)}`;
+    ws["!cols"] = [{ wch: 14 }, { wch: 36 }, { wch: 16 }, { wch: 14 }, { wch: 14 }];
+
+    XLSXStyle.utils.book_append_sheet(wb, ws, "Reparaciones");
+    XLSXStyle.writeFile(wb, `HistorialReparaciones_${maquina?.maquina || ""}.xlsx`);
+  };
+
   if (detalleSel)
     return (
       <DetalleReparacion
@@ -143,7 +201,14 @@ function HistorialReparaciones({ maquina, onVolver }) {
         style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center" }}
         className="mb-5"
       >
-        <span />
+        <div className="d-flex gap-2 justify-content-start">
+          <Button variant="outline-light" size="sm" onClick={exportarExcel}>
+            Excel
+          </Button>
+          <Button variant="outline-success" size="sm" onClick={onVolver}>
+            Volver
+          </Button>
+        </div>
         <h4 className="mb-0 text-center">
           Historial de reparaciones - {maquina?.maquina}
         </h4>
@@ -154,15 +219,61 @@ function HistorialReparaciones({ maquina, onVolver }) {
           <AsyncButton variant="outline-success" size="sm" onClick={guardar}>
             Guardar
           </AsyncButton>
-          <Button variant="outline-success" size="sm" onClick={onVolver}>
-            Volver
-          </Button>
         </div>
       </div>
 
       {cargando ? (
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
+      <>
+      <div className="d-flex gap-2 mb-3">
+        <div className="position-relative flex-fill">
+          <Form.Select
+            size="sm"
+            value={filtroReparacion}
+            onChange={(e) => setFiltroReparacion(e.target.value)}
+            style={filtroReparacion ? { backgroundImage: "none" } : {}}
+          >
+            <option value="">Reparación (todas)</option>
+            {reparacionesUnicas.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </Form.Select>
+          {filtroReparacion && (
+            <button
+              type="button"
+              className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold"
+              aria-label="Limpiar"
+              onClick={() => setFiltroReparacion("")}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        <div className="position-relative flex-fill">
+          <Form.Select
+            size="sm"
+            value={filtroParte}
+            onChange={(e) => setFiltroParte(e.target.value)}
+            style={filtroParte ? { backgroundImage: "none" } : {}}
+          >
+            <option value="">Parte (todas)</option>
+            {partesUnicas.map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </Form.Select>
+          {filtroParte && (
+            <button
+              type="button"
+              className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold"
+              aria-label="Limpiar"
+              onClick={() => setFiltroParte("")}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
       <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
       <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
         <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
@@ -178,14 +289,14 @@ function HistorialReparaciones({ maquina, onVolver }) {
           </tr>
         </thead>
         <tbody>
-          {filas.length === 0 && (
+          {filasFiltradas.length === 0 && (
             <tr>
               <td colSpan={8} className="text-muted py-3">
                 Sin reparaciones cargadas
               </td>
             </tr>
           )}
-          {filas.map((f) => {
+          {filasFiltradas.map((f) => {
             const editando = editandoId === f.id;
             return (
             <tr key={f.id}>
@@ -306,6 +417,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
         </tbody>
       </Table>
       </div>
+      </>
       )}
     </Container>
   );
