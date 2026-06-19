@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Container, Spinner } from "react-bootstrap";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas";
 import HistorialReparaciones from "./HistorialReparaciones";
+import Pendientes from "./Pendientes";
 
 // Subtítulo (texto chico abajo del código) por máquina. Las no listadas usan su marca.
 const SUBTITULO = {
@@ -51,6 +52,7 @@ function Reparaciones() {
   const [maquinas, setMaquinas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [maquinaSel, setMaquinaSel] = useState(null);
+  const [verPendientes, setVerPendientes] = useState(false);
 
   useEffect(() => {
     const cargar = async () => {
@@ -89,6 +91,8 @@ function Reparaciones() {
       />
     );
 
+  if (verPendientes) return <Pendientes onVolver={() => setVerPendientes(false)} />;
+
   return (
     <Container className="py-4">
       <div className="text-center" style={{ marginTop: "2rem", marginBottom: "3rem" }}>
@@ -104,37 +108,6 @@ function Reparaciones() {
           marginBottom: "2rem",
         }}
       >
-        <div
-          style={{
-            backgroundColor: "#3a5a78",
-            color: "#fff",
-            borderRadius: "10px",
-            padding: "0.8rem",
-            cursor: "pointer",
-            boxShadow: "3px 3px 8px rgba(0,0,0,0.25)",
-            userSelect: "none",
-            transition: "transform 0.15s ease, box-shadow 0.15s ease",
-            width: "332px",
-            height: "100px",
-            textAlign: "center",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "scale(1.06)";
-            e.currentTarget.style.boxShadow = "5px 5px 14px rgba(0,0,0,0.35)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "3px 3px 8px rgba(0,0,0,0.25)";
-          }}
-        >
-          <div style={{ fontSize: "1.5rem", fontWeight: 700, letterSpacing: "1px" }}>
-            PENDIENTES
-          </div>
-        </div>
         {maquinas.length === 0 && (
           <p className="text-muted">Sin máquinas registradas.</p>
         )}
@@ -179,6 +152,39 @@ function Reparaciones() {
             )}
           </div>
         ))}
+
+        <div
+          onClick={() => setVerPendientes(true)}
+          style={{
+            backgroundColor: "#3a5a78",
+            color: "#fff",
+            borderRadius: "10px",
+            padding: "0.8rem",
+            cursor: "pointer",
+            boxShadow: "3px 3px 8px rgba(0,0,0,0.25)",
+            userSelect: "none",
+            transition: "transform 0.15s ease, box-shadow 0.15s ease",
+            width: "332px",
+            height: "100px",
+            textAlign: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.06)";
+            e.currentTarget.style.boxShadow = "5px 5px 14px rgba(0,0,0,0.35)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = "3px 3px 8px rgba(0,0,0,0.25)";
+          }}
+        >
+          <div style={{ fontSize: "1.5rem", fontWeight: 700, letterSpacing: "1px" }}>
+            PENDIENTES
+          </div>
+        </div>
       </div>
     </Container>
   );
