@@ -19,6 +19,7 @@ export const API = {
   asistencia: `${BASE}/api/asistencia`,
   gastoSemanal: `${BASE}/api/gasto-semanal`,
   serviceMaquina: `${BASE}/api/service-maquina`,
+  reparacionesMaquina: `${BASE}/api/reparaciones-maquina`,
   tablero: `${BASE}/api/tablero`,
   facturasProveedores: `${BASE}/api/facturas-proveedores`,
   pagosProveedores: `${BASE}/api/pagos-proveedores`,

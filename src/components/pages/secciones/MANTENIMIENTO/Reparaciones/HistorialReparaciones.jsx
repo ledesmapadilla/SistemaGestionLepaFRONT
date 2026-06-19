@@ -1,6 +1,12 @@
-import { useState } from "react";
-import { Container, Button, Table, Form } from "react-bootstrap";
+import { useState, useEffect } from "react";
+import { Container, Button, Table, Form, Spinner } from "react-bootstrap";
+import Swal from "sweetalert2";
 import DetalleReparacion from "./DetalleReparacion";
+import AsyncButton from "../../../../shared/AsyncButton";
+import {
+  obtenerReparacionesPorMaquina,
+  guardarReparaciones,
+} from "../../../../../helpers/queriesReparaciones";
 
 const PARTES = [
   "Motor",
@@ -29,11 +35,55 @@ const filaVacia = () => ({
 function HistorialReparaciones({ maquina, onVolver }) {
   const [filas, setFilas] = useState([]);
   const [detalleSel, setDetalleSel] = useState(null);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    const cargar = async () => {
+      setCargando(true);
+      try {
+        const res = await obtenerReparacionesPorMaquina(maquina?._id);
+        if (res?.ok) {
+          const data = await res.json();
+          const items = (data?.reparaciones || []).map((r) => ({
+            ...r,
+            id: r.id || crypto.randomUUID(),
+          }));
+          setFilas(items);
+        }
+      } catch (error) {
+        console.error("Error al cargar reparaciones:", error);
+      } finally {
+        setCargando(false);
+      }
+    };
+    if (maquina?._id) cargar();
+    else setCargando(false);
+  }, [maquina?._id]);
 
   const agregar = () => setFilas((p) => [...p, filaVacia()]);
   const editar = (id, campo, valor) =>
     setFilas((p) => p.map((f) => (f.id === id ? { ...f, [campo]: valor } : f)));
   const borrar = (id) => setFilas((p) => p.filter((f) => f.id !== id));
+
+  const guardar = async () => {
+    const res = await guardarReparaciones(maquina?._id, filas);
+    if (res?.ok) {
+      Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "Reparaciones guardadas",
+        showConfirmButton: false,
+        timer: 1800,
+        timerProgressBar: true,
+      });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudieron guardar las reparaciones",
+      });
+    }
+  };
 
   if (detalleSel)
     return (
@@ -53,11 +103,19 @@ function HistorialReparaciones({ maquina, onVolver }) {
         <h4 className="fw-bold mb-0 text-center">
           Historial de reparaciones - {maquina?.maquina}
         </h4>
-        <Button variant="outline-primary" size="sm" onClick={agregar}>
-          + Agregar
-        </Button>
+        <div className="d-flex gap-2">
+          <Button variant="outline-primary" size="sm" onClick={agregar}>
+            + Agregar
+          </Button>
+          <AsyncButton variant="outline-success" size="sm" onClick={guardar}>
+            Guardar
+          </AsyncButton>
+        </div>
       </div>
 
+      {cargando ? (
+        <Spinner animation="border" className="d-block mx-auto my-5" />
+      ) : (
       <Table striped bordered hover responsive className="text-center align-middle">
         <thead className="table-dark">
           <tr>
@@ -153,6 +211,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
           ))}
         </tbody>
       </Table>
+      )}
     </Container>
   );
 }
