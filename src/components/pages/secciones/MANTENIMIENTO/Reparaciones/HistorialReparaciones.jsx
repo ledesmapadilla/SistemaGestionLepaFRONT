@@ -19,7 +19,8 @@ const PARTES = [
   "Chapa",
 ];
 const PRIORIDADES = ["Normal", "Urgente", "Crítico"];
-const ESTADOS = ["En proceso", "Terminado"];
+const ESTADOS = ["Pendiente", "En proceso", "Terminado"];
+const COLOR_ESTADO = { Pendiente: "#6c757d", "En proceso": "#ffc107", Terminado: "#198754" };
 
 const hoy = () => new Date().toISOString().split("T")[0];
 const filaVacia = () => ({
@@ -29,13 +30,14 @@ const filaVacia = () => ({
   descripcion: "",
   parte: "",
   prioridad: "Normal",
-  estado: "En proceso",
+  estado: "Pendiente",
 });
 
 function HistorialReparaciones({ maquina, onVolver }) {
   const [filas, setFilas] = useState([]);
   const [detalleSel, setDetalleSel] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [editandoId, setEditandoId] = useState(null);
 
   useEffect(() => {
     const cargar = async () => {
@@ -60,10 +62,17 @@ function HistorialReparaciones({ maquina, onVolver }) {
     else setCargando(false);
   }, [maquina?._id]);
 
-  const agregar = () => setFilas((p) => [...p, filaVacia()]);
+  const agregar = () => {
+    const nueva = filaVacia();
+    setFilas((p) => [...p, nueva]);
+    setEditandoId(nueva.id);
+  };
   const editar = (id, campo, valor) =>
     setFilas((p) => p.map((f) => (f.id === id ? { ...f, [campo]: valor } : f)));
-  const borrar = (id) => setFilas((p) => p.filter((f) => f.id !== id));
+  const borrar = (id) => {
+    setFilas((p) => p.filter((f) => f.id !== id));
+    setEditandoId((prev) => (prev === id ? null : prev));
+  };
 
   const guardar = async () => {
     const res = await guardarReparaciones(maquina?._id, filas);
@@ -125,7 +134,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
             <th style={{ width: 150 }}>Parte</th>
             <th style={{ width: 130 }}>Prioridad</th>
             <th style={{ width: 140 }}>Estado</th>
-            <th style={{ width: 50 }}></th>
+            <th style={{ width: 160 }}>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -136,22 +145,32 @@ function HistorialReparaciones({ maquina, onVolver }) {
               </td>
             </tr>
           )}
-          {filas.map((f) => (
+          {filas.map((f) => {
+            const editando = editandoId === f.id;
+            return (
             <tr key={f.id}>
               <td>
-                <Form.Control
-                  type="date"
-                  size="sm"
-                  value={f.fecha}
-                  onChange={(e) => editar(f.id, "fecha", e.target.value)}
-                />
+                {editando ? (
+                  <Form.Control
+                    type="date"
+                    size="sm"
+                    value={f.fecha}
+                    onChange={(e) => editar(f.id, "fecha", e.target.value)}
+                  />
+                ) : (
+                  f.fecha ? f.fecha.split("-").reverse().join("/") : "-"
+                )}
               </td>
-              <td>
-                <Form.Control
-                  size="sm"
-                  value={f.reparacion}
-                  onChange={(e) => editar(f.id, "reparacion", e.target.value)}
-                />
+              <td className={editando ? "" : "text-start"}>
+                {editando ? (
+                  <Form.Control
+                    size="sm"
+                    value={f.reparacion}
+                    onChange={(e) => editar(f.id, "reparacion", e.target.value)}
+                  />
+                ) : (
+                  f.reparacion || "-"
+                )}
               </td>
               <td>
                 <Button
@@ -163,52 +182,78 @@ function HistorialReparaciones({ maquina, onVolver }) {
                 </Button>
               </td>
               <td>
-                <Form.Select
-                  size="sm"
-                  value={f.parte}
-                  onChange={(e) => editar(f.id, "parte", e.target.value)}
-                >
-                  <option value="">—</option>
-                  {PARTES.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </Form.Select>
+                {editando ? (
+                  <Form.Select
+                    size="sm"
+                    value={f.parte}
+                    onChange={(e) => editar(f.id, "parte", e.target.value)}
+                  >
+                    <option value="">—</option>
+                    {PARTES.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </Form.Select>
+                ) : (
+                  f.parte || "-"
+                )}
               </td>
               <td>
-                <Form.Select
-                  size="sm"
-                  value={f.prioridad}
-                  onChange={(e) => editar(f.id, "prioridad", e.target.value)}
-                >
-                  {PRIORIDADES.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </Form.Select>
+                {editando ? (
+                  <Form.Select
+                    size="sm"
+                    value={f.prioridad}
+                    onChange={(e) => editar(f.id, "prioridad", e.target.value)}
+                  >
+                    {PRIORIDADES.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </Form.Select>
+                ) : (
+                  f.prioridad || "-"
+                )}
               </td>
               <td>
-                <Form.Select
-                  size="sm"
-                  value={f.estado}
-                  onChange={(e) => editar(f.id, "estado", e.target.value)}
-                >
-                  {ESTADOS.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </Form.Select>
+                {editando ? (
+                  <Form.Select
+                    size="sm"
+                    value={f.estado}
+                    onChange={(e) => editar(f.id, "estado", e.target.value)}
+                  >
+                    {ESTADOS.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </Form.Select>
+                ) : (
+                  <span style={{ color: COLOR_ESTADO[f.estado] || "#dee2e6", fontWeight: 600 }}>
+                    {f.estado || "-"}
+                  </span>
+                )}
               </td>
               <td>
-                <Button size="sm" variant="outline-danger" onClick={() => borrar(f.id)}>
-                  ✕
-                </Button>
+                <div className="d-flex gap-1 justify-content-center align-items-center">
+                  {editando ? (
+                    <Button size="sm" variant="outline-success" onClick={() => setEditandoId(null)}>
+                      Listo
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="outline-warning" onClick={() => setEditandoId(f.id)}>
+                      Editar
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline-danger" onClick={() => borrar(f.id)}>
+                    Borrar
+                  </Button>
+                </div>
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </Table>
       )}
