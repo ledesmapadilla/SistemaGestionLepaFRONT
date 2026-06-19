@@ -33,6 +33,7 @@ const filaVacia = () => ({
   parte: "",
   prioridad: "Normal",
   estado: "Pendiente",
+  maquinaParada: false,
 });
 
 function HistorialReparaciones({ maquina, onVolver }) {
@@ -226,8 +227,8 @@ function HistorialReparaciones({ maquina, onVolver }) {
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
       <>
-      <div className="d-flex gap-2 mb-3">
-        <div className="position-relative flex-fill">
+      <div className="d-flex mb-3">
+        <div className="position-relative w-50 pe-1">
           <Form.Select
             size="sm"
             value={filtroReparacion}
@@ -250,7 +251,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
             </button>
           )}
         </div>
-        <div className="position-relative flex-fill">
+        <div className="position-relative w-50 ps-1">
           <Form.Select
             size="sm"
             value={filtroParte}
@@ -284,6 +285,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
             <th style={{ width: 150 }}>Parte</th>
             <th style={{ width: 130 }}>Prioridad</th>
             <th style={{ width: 140 }}>Estado</th>
+            <th style={{ width: 120 }}>Máquina parada</th>
             <th style={{ width: 90 }}>Repuestos</th>
             <th style={{ width: 160 }}>Acciones</th>
           </tr>
@@ -291,7 +293,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
         <tbody>
           {filasFiltradas.length === 0 && (
             <tr>
-              <td colSpan={8} className="text-muted py-3">
+              <td colSpan={9} className="text-muted py-3">
                 Sin reparaciones cargadas
               </td>
             </tr>
@@ -385,6 +387,15 @@ function HistorialReparaciones({ maquina, onVolver }) {
                     {f.estado || "-"}
                   </span>
                 )}
+              </td>
+              <td>
+                <Button
+                  size="sm"
+                  variant={f.maquinaParada ? "danger" : "outline-secondary"}
+                  onClick={() => editar(f.id, "maquinaParada", !f.maquinaParada)}
+                >
+                  {f.maquinaParada ? "Parada" : "Activa"}
+                </Button>
               </td>
               <td>
                 <Button
