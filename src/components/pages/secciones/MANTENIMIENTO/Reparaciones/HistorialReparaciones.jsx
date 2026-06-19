@@ -74,6 +74,18 @@ function HistorialReparaciones({ maquina, onVolver }) {
     setEditandoId((prev) => (prev === id ? null : prev));
   };
 
+  const finalizarEdicion = () => {
+    setEditandoId(null);
+    Swal.fire({
+      position: "center",
+      icon: "success",
+      title: "Reparación actualizada",
+      showConfirmButton: false,
+      timer: 1500,
+      timerProgressBar: true,
+    });
+  };
+
   const guardar = async () => {
     const res = await guardarReparaciones(maquina?._id, filas);
     if (res?.ok) {
@@ -106,10 +118,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
   return (
     <Container className="py-4">
       <div className="d-flex justify-content-between align-items-center mb-5">
-        <Button variant="outline-success" size="sm" onClick={onVolver}>
-          Volver
-        </Button>
-        <h4 className="fw-bold mb-0 text-center">
+        <h4 className="fw-bold mb-0">
           Historial de reparaciones - {maquina?.maquina}
         </h4>
         <div className="d-flex gap-2">
@@ -119,6 +128,9 @@ function HistorialReparaciones({ maquina, onVolver }) {
           <AsyncButton variant="outline-success" size="sm" onClick={guardar}>
             Guardar
           </AsyncButton>
+          <Button variant="outline-success" size="sm" onClick={onVolver}>
+            Volver
+          </Button>
         </div>
       </div>
 
@@ -238,7 +250,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
               <td>
                 <div className="d-flex gap-1 justify-content-center align-items-center">
                   {editando ? (
-                    <Button size="sm" variant="outline-success" onClick={() => setEditandoId(null)}>
+                    <Button size="sm" variant="outline-success" onClick={finalizarEdicion}>
                       Listo
                     </Button>
                   ) : (
