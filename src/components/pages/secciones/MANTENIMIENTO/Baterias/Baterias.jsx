@@ -178,7 +178,7 @@ export default function Baterias() {
     setRegistroEditar(r);
     setFormEditar({
       maquina:       r.maquinaLabel || r.maquina?._id || r.maquina || "",
-      fecha:         r.fecha || "",
+      fecha:         hoy(),
       observaciones: "",
     });
     setShowEditar(true);
@@ -615,6 +615,7 @@ export default function Baterias() {
                 <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                   <tr>
                     <th>Máquina</th>
+                    <th>Fecha</th>
                     <th>Observaciones</th>
                     <th>Editado el</th>
                   </tr>
@@ -623,6 +624,7 @@ export default function Baterias() {
                   {[...historialData].reverse().map((h, i) => (
                     <tr key={i}>
                       <td>{h.maquinaLabel || h.maquina?.maquina || "-"}</td>
+                      <td>{h.fecha ? new Date(h.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
                       <td>{h.observaciones || "-"}</td>
                       <td>{h.editadoEn ? new Date(h.editadoEn).toLocaleDateString("es-AR") : "-"}</td>
                     </tr>
