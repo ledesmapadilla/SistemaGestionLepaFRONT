@@ -482,19 +482,20 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                                 title="Marcar"
                                 style={{ cursor: "pointer", fontSize: 16, lineHeight: 1, userSelect: "none", color: f.marcado === 1 ? "#ffc107" : f.marcado === 2 ? "#dc3545" : "#adb5bd" }}
                               >{f.marcado === 2 ? "✓" : "●"}</span>
-                              <Form.Control
-                                size="sm"
-                                type="text"
-                                value={f.proveedor}
-                                placeholder="Proveedor..."
-                                onChange={(e) => actualizar(idx, "proveedor", e.target.value)}
-                                onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
-                                style={{
-                                  color: f.marcado === 1 ? "#ffc107" : undefined,
-                                  textDecoration: f.marcado === 2 ? "line-through" : undefined,
-                                  textDecorationColor: f.marcado === 2 ? "#ffc107" : undefined,
-                                }}
-                              />
+                              <div style={{ position: "relative", flex: 1 }}>
+                                <Form.Control
+                                  size="sm"
+                                  type="text"
+                                  value={f.proveedor}
+                                  placeholder="Proveedor..."
+                                  onChange={(e) => actualizar(idx, "proveedor", e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+                                  style={{ color: f.marcado === 1 ? "#ffc107" : undefined }}
+                                />
+                                {f.marcado === 2 && (
+                                  <span style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 2, background: "#ffc107", pointerEvents: "none" }} />
+                                )}
+                              </div>
                             </div>
                           ) : (
                             <span
