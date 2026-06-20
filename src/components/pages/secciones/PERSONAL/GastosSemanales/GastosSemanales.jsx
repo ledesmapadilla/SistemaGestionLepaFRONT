@@ -26,6 +26,17 @@ const formatFecha = (date) =>
 const toKey = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
+// Clave normalizada de nombre: sin acentos, sin mayúsculas, espacios colapsados.
+// Igual criterio que Asistencia, para que la misma persona no se duplique por
+// diferencias de tipeo (acentos, espacios) entre el alta, asistencia y lo guardado.
+const normNombre = (s) =>
+  (s || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, " ");
+
 const netoExtras = (extras) =>
   (extras || []).reduce((s, e) => s + (e.descuentaAumenta === "aumenta" ? 1 : -1) * (Number(e.monto) || 0), 0);
 
@@ -573,7 +584,7 @@ const GastosSemanales = () => {
     const personalVisible = personal.filter((p) =>
       !p.createdAt || p.createdAt.slice(0, 10) <= sabadoKey
     );
-    const nombresPersonalDB = new Set(personalVisible.map((p) => p.nombre.trim().toLowerCase()));
+    const nombresPersonalDB = new Set(personalVisible.map((p) => normNombre(p.nombre)));
 
     const ausenciasMap = {};
     diasSemana.forEach((d, idx) => {
@@ -582,7 +593,7 @@ const GastosSemanales = () => {
       if (!doc?.registros) return;
       doc.registros.forEach((r) => {
         if (!r.personal) return;
-        const k = r.personal.trim().toLowerCase();
+        const k = normNombre(r.personal);
         if (!ausenciasMap[k]) ausenciasMap[k] = 0;
         if (r.ausente) ausenciasMap[k] += esSabado ? 0.5 : 1;
         if (r.mediaFalta) ausenciasMap[k] += 0.5;
@@ -595,8 +606,8 @@ const GastosSemanales = () => {
       const ultimo = p.semanal?.length ? p.semanal[p.semanal.length - 1] : null;
       const semanal = ultimo ? ultimo.valor : 0;
       const cant = ultimo ? Number(ultimo.cantJornales || 0) : 0;
-      jornalMap[p.nombre.trim().toLowerCase()] = cant > 0 ? semanal / cant : 0;
-      semanalMap[p.nombre.trim().toLowerCase()] = semanal;
+      jornalMap[normNombre(p.nombre)] = cant > 0 ? semanal / cant : 0;
+      semanalMap[normNombre(p.nombre)] = semanal;
     });
 
     let zamoranoMins = 0;
@@ -615,18 +626,25 @@ const GastosSemanales = () => {
       }
     });
 
-    const nombresEnAsistencia = new Set();
+    // Map normKey -> nombre original, así una misma persona escrita distinto
+    // (acentos/espacios/mayúsculas) entre días no genera filas repetidas.
+    const nombresEnAsistencia = new Map();
     asistenciaDocs.forEach((doc) => {
       if (!doc?.registros) return;
-      doc.registros.forEach((r) => { if (r.personal) nombresEnAsistencia.add(r.personal.trim()); });
+      doc.registros.forEach((r) => {
+        if (!r.personal) return;
+        const k = normNombre(r.personal);
+        if (!nombresEnAsistencia.has(k)) nombresEnAsistencia.set(k, r.personal.trim());
+      });
     });
-    const soloEnAsistencia = Array.from(nombresEnAsistencia)
-      .filter((n) => !nombresPersonalDB.has(n.trim().toLowerCase()));
+    const soloEnAsistencia = Array.from(nombresEnAsistencia.entries())
+      .filter(([k]) => !nombresPersonalDB.has(k))
+      .map(([, nombre]) => nombre);
 
     setNombresPersonal(nombresPersonalDB);
 
     const calcAusentismo = (nombre) => {
-      const key = nombre.trim().toLowerCase();
+      const key = normNombre(nombre);
       if (nombre.toLowerCase().includes("zamorano")) {
         const semanal = semanalMap[key] || 0;
         const horas = zamoranoMins / 60;
@@ -648,12 +666,24 @@ const GastosSemanales = () => {
     const semanalActualMap = {};
     personalVisible.forEach((p) => {
       const ultimo = p.semanal?.length ? p.semanal[p.semanal.length - 1] : null;
-      semanalActualMap[p.nombre.trim().toLowerCase()] = ultimo ? ultimo.valor : null;
+      semanalActualMap[normNombre(p.nombre)] = ultimo ? ultimo.valor : null;
     });
+
+    // Elimina filas repetidas de la misma persona (por nombre normalizado),
+    // conservando la primera (las guardadas con datos van primero).
+    const dedupPorNombre = (arr) => {
+      const vistos = new Set();
+      return arr.filter((r) => {
+        const k = normNombre(r.personal);
+        if (!k || vistos.has(k)) return false;
+        vistos.add(k);
+        return true;
+      });
+    };
 
     if (gastoDoc?.registros?.length) {
       const existentes = gastoDoc.registros.map((r) => {
-        const semanalActual = semanalActualMap[r.personal?.trim().toLowerCase()];
+        const semanalActual = semanalActualMap[normNombre(r.personal)];
         return {
           ...r,
           extras: r.extras || [],
@@ -661,18 +691,18 @@ const GastosSemanales = () => {
           ausentismo: calcAusentismo(r.personal),
         };
       });
-      const nombresExistentes = new Set(existentes.map((r) => r.personal.trim().toLowerCase()));
+      const nombresExistentes = new Set(existentes.map((r) => normNombre(r.personal)));
       const nuevosDePersonal = personalVisible
-        .filter((p) => !nombresExistentes.has(p.nombre.trim().toLowerCase()))
+        .filter((p) => !nombresExistentes.has(normNombre(p.nombre)))
         .map(filaDePersonal);
       const nuevosDeAsistencia = soloEnAsistencia
-        .filter((n) => !nombresExistentes.has(n.trim().toLowerCase()))
+        .filter((n) => !nombresExistentes.has(normNombre(n)))
         .map(filaSoloAsistencia);
-      setRegistros([...existentes, ...nuevosDePersonal, ...nuevosDeAsistencia]);
+      setRegistros(dedupPorNombre([...existentes, ...nuevosDePersonal, ...nuevosDeAsistencia]));
     } else {
       const filasPersonal = personalVisible.map(filaDePersonal);
       const filasAsistencia = soloEnAsistencia.map(filaSoloAsistencia);
-      setRegistros([...filasPersonal, ...filasAsistencia]);
+      setRegistros(dedupPorNombre([...filasPersonal, ...filasAsistencia]));
     }
     setAsistenciaSemana(asistenciaDocs);
     setProveedoresGuardados(gastoDoc?.proveedores || []);
