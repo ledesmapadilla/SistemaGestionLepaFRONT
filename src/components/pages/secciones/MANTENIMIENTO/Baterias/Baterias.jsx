@@ -617,7 +617,6 @@ export default function Baterias() {
                     <th>Máquina</th>
                     <th>Fecha</th>
                     <th>Observaciones</th>
-                    <th>Editado el</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -626,7 +625,6 @@ export default function Baterias() {
                       <td>{h.maquinaLabel || h.maquina?.maquina || "-"}</td>
                       <td>{h.fecha ? new Date(h.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
                       <td>{h.observaciones || "-"}</td>
-                      <td>{h.editadoEn ? new Date(h.editadoEn).toLocaleDateString("es-AR") : "-"}</td>
                     </tr>
                   ))}
                 </tbody>
