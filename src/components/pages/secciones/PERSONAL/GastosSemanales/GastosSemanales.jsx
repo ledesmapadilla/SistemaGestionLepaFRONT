@@ -35,7 +35,9 @@ const normNombre = (s) =>
     .toLowerCase()
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
-    .replace(/\s+/g, " ");
+    .replace(/[.,;]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 const netoExtras = (extras) =>
   (extras || []).reduce((s, e) => s + (e.descuentaAumenta === "aumenta" ? 1 : -1) * (Number(e.monto) || 0), 0);
