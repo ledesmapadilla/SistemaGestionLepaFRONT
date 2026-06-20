@@ -931,7 +931,18 @@ const GastosSemanales = () => {
                         )}
                         {!nombresPersonal.has((r.personal || "").trim().toLowerCase()) && (
                           <span
-                            onClick={() => {
+                            onClick={async () => {
+                              const res = await Swal.fire({
+                                title: "¿Quitar de la planilla?",
+                                text: `Se quitará ${r.personal || "la fila"} de los gastos semanales`,
+                                icon: "warning",
+                                showCancelButton: true,
+                                confirmButtonColor: "#dc3545",
+                                cancelButtonColor: "#6c757d",
+                                confirmButtonText: "Sí, borrar",
+                                cancelButtonText: "Cancelar",
+                              });
+                              if (!res.isConfirmed) return;
                               modificado.current = true;
                               setRegistros((prev) => prev.filter((_, i) => i !== idx));
                             }}
