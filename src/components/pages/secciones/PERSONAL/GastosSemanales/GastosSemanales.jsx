@@ -268,7 +268,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
       // Proveedores ya pagados desde la planilla: filas históricas con datos guardados
       // (se excluyen de la deuda en vivo para no restar dos veces el pago)
       const pagadosSet = new Set(
-        guardados.filter((g) => (g.marcado || 0) === 2 && g.proveedor).map((g) => g.proveedor.trim().toLowerCase())
+        guardados.filter((g) => (g.marcado || 0) === 2 && g.proveedor && !g.libre).map((g) => g.proveedor.trim().toLowerCase())
       );
       const filasDeuda = resumen
         .filter((r) => !pagadosSet.has(r.proveedor.trim().toLowerCase()))
@@ -306,6 +306,15 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
     }));
 
   const persistir = (arr) => onGuardar(mapForSave(arr));
+
+  // Para proveedores agregados manualmente (libre): solo cicla el estado visual
+  // amarillo/tachado, sin registrar ni anular pagos en la cuenta corriente.
+  const toggleMarcadoVisual = (idx) => {
+    const siguiente = ((filas[idx]?.marcado || 0) + 1) % 3;
+    const nuevas = filas.map((f, i) => (i === idx ? { ...f, marcado: siguiente } : f));
+    setFilas(nuevas);
+    persistir(nuevas);
+  };
 
   const toggleMarcado = async (idx) => {
     const fila = filas[idx];
@@ -467,7 +476,26 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                         </td>
                         <td className="text-start">
                           {f.libre ? (
-                            <Form.Control size="sm" type="text" value={f.proveedor} placeholder="Proveedor..." onChange={(e) => actualizar(idx, "proveedor", e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }} />
+                            <div className="d-flex align-items-center gap-2">
+                              <span
+                                onClick={() => toggleMarcadoVisual(idx)}
+                                title="Marcar"
+                                style={{ cursor: "pointer", fontSize: 16, lineHeight: 1, userSelect: "none", color: f.marcado === 1 ? "#ffc107" : f.marcado === 2 ? "#dc3545" : "#adb5bd" }}
+                              >{f.marcado === 2 ? "✓" : "●"}</span>
+                              <Form.Control
+                                size="sm"
+                                type="text"
+                                value={f.proveedor}
+                                placeholder="Proveedor..."
+                                onChange={(e) => actualizar(idx, "proveedor", e.target.value)}
+                                onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+                                style={{
+                                  color: f.marcado === 1 ? "#ffc107" : undefined,
+                                  textDecoration: f.marcado === 2 ? "line-through" : undefined,
+                                  textDecorationColor: f.marcado === 2 ? "#ffc107" : undefined,
+                                }}
+                              />
+                            </div>
                           ) : (
                             <span
                               onClick={() => toggleMarcado(idx)}
