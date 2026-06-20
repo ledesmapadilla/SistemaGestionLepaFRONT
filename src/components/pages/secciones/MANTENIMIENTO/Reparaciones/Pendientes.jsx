@@ -71,42 +71,66 @@ function Pendientes({ onVolver }) {
     cargar();
   }, []);
 
-  const exportarRepuestosExcel = () => {
-    const titulo = "Repuestos pendientes";
-    const headers = ["Fecha", "Repuesto", "Cantidad", "Máquina", "Responsable", "Estado"];
-    const cols = "ABCDEF";
+  const exportarExcel = () => {
     const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
     const estIzq = { alignment: { horizontal: "left", vertical: "center" } };
     const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
     const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
 
-    const wb = XLSXStyle.utils.book_new();
-    const ws = {};
-
     const hoy = new Date();
     const fechaSerial = Math.round((Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
 
-    ws["A1"] = { v: titulo, t: "s", s: estTitulo };
-    ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
-    ws["A3"] = { v: "", t: "s" };
-    headers.forEach((h, i) => { ws[`${cols[i]}4`] = { v: h, t: "s", s: estHeader }; });
+    const crearHoja = (titulo, headers, datos, anchos) => {
+      const ws = {};
+      const cols = "ABCDEFGHIJ";
+      ws["A1"] = { v: titulo, t: "s", s: estTitulo };
+      ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
+      ws["A3"] = { v: "", t: "s" };
+      headers.forEach((h, i) => { ws[`${cols[i]}4`] = { v: h, t: "s", s: estHeader }; });
+      datos.forEach((fila, rowIdx) => {
+        const row = rowIdx + 5;
+        fila.forEach((celda, i) => { ws[`${cols[i]}${row}`] = celda; });
+      });
+      const lastRow = datos.length + 4;
+      ws["!ref"] = `A1:${cols[headers.length - 1]}${Math.max(lastRow, 4)}`;
+      ws["!cols"] = anchos;
+      return ws;
+    };
 
-    repuestos.forEach((r, rowIdx) => {
-      const row = rowIdx + 5;
-      ws[`A${row}`] = { v: r.fecha ? r.fecha.split("-").reverse().join("/") : "", t: "s", s: estCentro };
-      ws[`B${row}`] = { v: r.repuesto || "", t: "s", s: estIzq };
-      ws[`C${row}`] = { v: Number(r.cantidad) || 0, t: "n", s: estCentro };
-      ws[`D${row}`] = { v: r.maquina || "", t: "s", s: estCentro };
-      ws[`E${row}`] = { v: r.responsable || "", t: "s", s: estCentro };
-      ws[`F${row}`] = { v: r.estado || "", t: "s", s: estCentro };
-    });
+    const fmtFecha = (f) => (f ? f.split("-").reverse().join("/") : "");
 
-    const lastRow = repuestos.length + 4;
-    ws["!ref"] = `A1:F${Math.max(lastRow, 4)}`;
-    ws["!cols"] = [{ wch: 14 }, { wch: 32 }, { wch: 12 }, { wch: 18 }, { wch: 20 }, { wch: 14 }];
+    const hojaReparaciones = crearHoja(
+      "Reparaciones pendientes",
+      ["Fecha", "Reparación", "Máquina", "Repuestos", "Máquina parada", "Estado"],
+      filas.map((f) => [
+        { v: fmtFecha(f.fecha), t: "s", s: estCentro },
+        { v: f.reparacion || "", t: "s", s: estIzq },
+        { v: f.maquina || "", t: "s", s: estCentro },
+        { v: f.tieneRepuestos ? "Sí" : "No", t: "s", s: estCentro },
+        { v: f.maquinaParada ? "Sí" : "No", t: "s", s: estCentro },
+        { v: f.estado || "", t: "s", s: estCentro },
+      ]),
+      [{ wch: 14 }, { wch: 36 }, { wch: 18 }, { wch: 12 }, { wch: 14 }, { wch: 14 }]
+    );
 
-    XLSXStyle.utils.book_append_sheet(wb, ws, "Repuestos pendientes");
-    XLSXStyle.writeFile(wb, "RepuestosPendientes.xlsx");
+    const hojaRepuestos = crearHoja(
+      "Repuestos pendientes",
+      ["Fecha", "Repuesto", "Cantidad", "Máquina", "Responsable", "Estado"],
+      repuestos.map((r) => [
+        { v: fmtFecha(r.fecha), t: "s", s: estCentro },
+        { v: r.repuesto || "", t: "s", s: estIzq },
+        { v: Number(r.cantidad) || 0, t: "n", s: estCentro },
+        { v: r.maquina || "", t: "s", s: estCentro },
+        { v: r.responsable || "", t: "s", s: estCentro },
+        { v: r.estado || "", t: "s", s: estCentro },
+      ]),
+      [{ wch: 14 }, { wch: 32 }, { wch: 12 }, { wch: 18 }, { wch: 20 }, { wch: 14 }]
+    );
+
+    const wb = XLSXStyle.utils.book_new();
+    XLSXStyle.utils.book_append_sheet(wb, hojaReparaciones, "Reparaciones");
+    XLSXStyle.utils.book_append_sheet(wb, hojaRepuestos, "Repuestos");
+    XLSXStyle.writeFile(wb, "Pendientes.xlsx");
   };
 
   return (
@@ -117,7 +141,10 @@ function Pendientes({ onVolver }) {
       >
         <span />
         <h4 className="mb-0 text-center">Reparaciones pendientes</h4>
-        <div className="d-flex justify-content-end">
+        <div className="d-flex gap-2 justify-content-end">
+          <Button variant="outline-light" size="sm" onClick={exportarExcel}>
+            Excel
+          </Button>
           <Button variant="outline-success" size="sm" onClick={onVolver}>
             Volver
           </Button>
@@ -168,18 +195,7 @@ function Pendientes({ onVolver }) {
             </Table>
           </div>
 
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center" }}
-            className="mt-5 mb-3"
-          >
-            <span />
-            <h4 className="mb-0 text-center">Repuestos pendientes</h4>
-            <div className="d-flex justify-content-end">
-              <Button variant="outline-light" size="sm" onClick={exportarRepuestosExcel}>
-                Excel
-              </Button>
-            </div>
-          </div>
+          <h4 className="mb-3 text-center mt-5">Repuestos pendientes</h4>
           <div className="w-75 mx-auto" style={{ maxHeight: "65vh", overflowY: "auto" }}>
             <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
               <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
