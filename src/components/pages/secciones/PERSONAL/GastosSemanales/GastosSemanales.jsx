@@ -589,16 +589,34 @@ const GastosSemanales = () => {
     const nombresPersonalDB = new Set(personalVisible.map((p) => normNombre(p.nombre)));
 
     const ausenciasMap = {};
+    const tieneRegistro = new Set(); // `${normNombre}|${dKey}` con registro de asistencia
     diasSemana.forEach((d, idx) => {
       const esSabado = d.getDay() === 6;
       const doc = asistenciaDocs[idx];
       if (!doc?.registros) return;
+      const dKey = toKey(d);
       doc.registros.forEach((r) => {
         if (!r.personal) return;
         const k = normNombre(r.personal);
+        tieneRegistro.add(`${k}|${dKey}`);
         if (!ausenciasMap[k]) ausenciasMap[k] = 0;
         if (r.ausente) ausenciasMap[k] += esSabado ? 0.5 : 1;
         if (r.mediaFalta) ausenciasMap[k] += 0.5;
+      });
+    });
+
+    // Inactivos: los días SIN registro desde su fecha de desactivación cuentan
+    // como falta (sábado 0.5, resto 1), así no se les paga días que no trabajaron.
+    diasSemana.forEach((d) => {
+      const esSabado = d.getDay() === 6;
+      const dKey = toKey(d);
+      personalVisible.forEach((p) => {
+        if (p.activo === false && p.fechaDesactivado && dKey >= p.fechaDesactivado) {
+          const k = normNombre(p.nombre);
+          if (!tieneRegistro.has(`${k}|${dKey}`)) {
+            ausenciasMap[k] = (ausenciasMap[k] || 0) + (esSabado ? 0.5 : 1);
+          }
+        }
       });
     });
 
