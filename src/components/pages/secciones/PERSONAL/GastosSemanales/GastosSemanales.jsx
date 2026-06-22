@@ -51,12 +51,14 @@ const parseHoraMin = (str) => {
   return h * 60 + (isNaN(m) ? 0 : m);
 };
 
-// Dif. de un día en minutos: 9h - (sale - entra). null si falta dato.
-const difMinDia = (entra, sale) => {
+// Dif. de un día en minutos: jornada esperada - (sale - entra). null si falta
+// dato. La jornada esperada es 9h de lun a vie y 4h el sábado (8:00 a 12:00).
+const difMinDia = (entra, sale, esSabado = false) => {
   const e = parseHoraMin(entra);
   const s = parseHoraMin(sale);
   if (e == null || s == null) return null;
-  return 9 * 60 - (s - e);
+  const base = (esSabado ? 4 : 9) * 60;
+  return base - (s - e);
 };
 
 // minutos -> "hh:mm" (con signo)
@@ -743,10 +745,11 @@ const GastosSemanales = () => {
     diasSemana.forEach((d, idx) => {
       const doc = asistenciaDocs[idx];
       if (!doc?.registros) return;
+      const esSabado = d.getDay() === 6;
       doc.registros.forEach((r) => {
         if (!r.personal || r.ausente || r.mediaFalta) return;
         if (r.personal.toLowerCase().includes("zamorano")) return;
-        const dm = difMinDia(r.entra, r.sale);
+        const dm = difMinDia(r.entra, r.sale, esSabado);
         if (dm == null) return;
         const k = normNombre(r.personal);
         difMinsMap[k] = (difMinsMap[k] || 0) + dm;
@@ -1146,9 +1149,9 @@ const GastosSemanales = () => {
                 (r) => r.personal?.trim().toLowerCase() === verPersonal?.trim().toLowerCase()
               )
             );
-            const totalDifMin = esZamoranoPerson ? 0 : regsModal.reduce((s, reg) => {
+            const totalDifMin = esZamoranoPerson ? 0 : regsModal.reduce((s, reg, idx) => {
               if (!reg || reg.ausente || reg.mediaFalta) return s;
-              const dm = difMinDia(reg.entra, reg.sale);
+              const dm = difMinDia(reg.entra, reg.sale, diasModal[idx].getDay() === 6);
               return dm == null ? s : s + dm;
             }, 0);
             const regGasto = registros.find((x) => normNombre(x.personal) === normNombre(verPersonal || ""));
@@ -1200,7 +1203,7 @@ const GastosSemanales = () => {
                     const esZamorano = reg.personal?.toLowerCase().includes("zamorano");
                     const estado = reg.ausente ? "Ausente" : reg.mediaFalta ? "Media falta" : "Presente";
                     const colorEstado = reg.ausente ? "#dc3545" : reg.mediaFalta ? "#ffc107" : "#198754";
-                    const difDia = esZamorano || reg.ausente || reg.mediaFalta ? null : difMinDia(reg.entra, reg.sale);
+                    const difDia = esZamorano || reg.ausente || reg.mediaFalta ? null : difMinDia(reg.entra, reg.sale, d.getDay() === 6);
                     return (
                       <tr key={idx}>
                         <td>{label}</td>

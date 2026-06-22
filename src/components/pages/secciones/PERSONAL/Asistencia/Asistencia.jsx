@@ -122,10 +122,11 @@ const Asistencia = () => {
     const key = diaKey(anio, mes, dia);
 
     const personalDelDia = filtrarPersonalParaDia(key);
+    const esSabadoDia = fechaDia.getDay() === 6;
     const filaDePersonal = (p) => ({
       id: p._id, personal: p.nombre, maquina: "", obra: "", mediaFalta: false,
       ausente: false, remito: true, horometro: "", entra: "8:00",
-      sale: "17:00", observaciones: "",
+      sale: esSabadoDia ? "12:00" : "17:00", observaciones: "",
     });
 
     // Usar datos del caché (cargados al abrir el mes); no hacer request adicional
@@ -295,12 +296,13 @@ const Asistencia = () => {
     return h * 60 + (isNaN(m) ? 0 : m);
   };
 
-  // Dif. = 9 horas - (sale - entra), en formato hh:mm (puede ser negativo)
-  const calcularDif = (entra, sale) => {
+  // Dif. = jornada esperada - (sale - entra), en formato hh:mm (puede ser
+  // negativo). La jornada es 9h de lun a vie y 4h el sábado (8:00 a 12:00).
+  const calcularDif = (entra, sale, esSabado = false) => {
     const e = parseHoraMin(entra);
     const s = parseHoraMin(sale);
     if (e == null || s == null) return "";
-    const dif = 9 * 60 - (s - e);
+    const dif = (esSabado ? 4 : 9) * 60 - (s - e);
     const neg = dif < 0;
     const abs = Math.abs(dif);
     const h = Math.floor(abs / 60);
@@ -677,7 +679,7 @@ const Asistencia = () => {
                     <td>
                       {(() => {
                         if (fila.personal?.toLowerCase().includes("zamorano")) return "-";
-                        const dif = calcularDif(fila.entra, fila.sale);
+                        const dif = calcularDif(fila.entra, fila.sale, esSabadoModal);
                         if (!dif) return "-";
                         return (
                           <span style={{ fontWeight: 600, color: dif.startsWith("-") ? "#dc3545" : "#198754" }}>
