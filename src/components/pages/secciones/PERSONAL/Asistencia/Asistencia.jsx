@@ -124,8 +124,8 @@ const Asistencia = () => {
     const personalDelDia = filtrarPersonalParaDia(key);
     const filaDePersonal = (p) => ({
       id: p._id, personal: p.nombre, maquina: "", obra: "", mediaFalta: false,
-      ausente: false, remito: true, horometro: "", entra: "",
-      sale: p.nombre.toLowerCase().includes("zamorano") ? "17:00" : "", observaciones: "",
+      ausente: false, remito: true, horometro: "", entra: "8:00",
+      sale: "17:00", observaciones: "",
     });
 
     // Usar datos del caché (cargados al abrir el mes); no hacer request adicional
