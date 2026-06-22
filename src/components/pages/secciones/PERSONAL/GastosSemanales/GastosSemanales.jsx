@@ -7,6 +7,7 @@ import { obtenerGastoSemanalPorSemana, guardarGastoSemanal } from "../../../../.
 import { obtenerCuentaCorrienteProveedor } from "../../../../../helpers/queriesCuentaCorrienteProveedor.js";
 import { crearPagoEfectivoProveedor, borrarPagoProveedor } from "../../../../../helpers/queriesPagosProveedores.js";
 import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
+import AsyncButton from "../../../../shared/AsyncButton.jsx";
 import XLSXStyle from "xlsx-js-style";
 import Swal from "sweetalert2";
 import "../../../../../styles/clientes.css";
@@ -199,8 +200,8 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, onGu
 
   const borrar = (idx) => setExtras((prev) => prev.filter((_, i) => i !== idx));
 
-  const handleGuardar = () => {
-    onGuardar(extras);
+  const handleGuardar = async () => {
+    await onGuardar(extras);
     onHide();
   };
 
@@ -288,7 +289,7 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, onGu
       </Modal.Body>
       <Modal.Footer>
         <Button variant="outline-secondary" onClick={onHide}>Cancelar</Button>
-        <Button variant="outline-success" onClick={handleGuardar}>Guardar</Button>
+        <AsyncButton variant="outline-success" onClick={handleGuardar}>Guardar</AsyncButton>
       </Modal.Footer>
     </Modal>
   );
@@ -461,8 +462,8 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
     });
   };
 
-  const handleGuardar = () => {
-    persistir(filas);
+  const handleGuardar = async () => {
+    await persistir(filas);
     onHide();
   };
 
@@ -619,7 +620,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
       </Modal.Body>
       <Modal.Footer>
         <Button variant="outline-secondary" onClick={onHide}>Cancelar</Button>
-        <Button variant="outline-success" onClick={handleGuardar}>Guardar</Button>
+        <AsyncButton variant="outline-success" onClick={handleGuardar}>Guardar</AsyncButton>
       </Modal.Footer>
     </Modal>
   );
@@ -1110,7 +1111,11 @@ const GastosSemanales = () => {
         onHide={() => setVerExtras(null)}
         personalNombre={verExtras?.nombre}
         extras={verExtras !== null ? (registros[verExtras.idx]?.extras || []) : []}
-        onGuardar={(nuevosExtras) => actualizar(verExtras.idx, "extras", nuevosExtras)}
+        onGuardar={(nuevosExtras) => {
+          const nuevos = registros.map((r, i) => (i === verExtras.idx ? { ...r, extras: nuevosExtras } : r));
+          setRegistros(nuevos);
+          return guardarGastoSemanal(semanaKey, nuevos);
+        }}
       />
 
       <ProveedoresModal
@@ -1119,7 +1124,7 @@ const GastosSemanales = () => {
         proveedoresGuardados={proveedoresGuardados}
         onGuardar={(nuevos) => {
           setProveedoresGuardados(nuevos);
-          guardarGastoSemanal(semanaKey, undefined, nuevos);
+          return guardarGastoSemanal(semanaKey, undefined, nuevos);
         }}
       />
 
