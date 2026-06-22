@@ -9,6 +9,7 @@ import XLSXStyle from "xlsx-js-style";
 import { listarAsistencia, guardarAsistencia as guardarAsistenciaAPI } from "../../../../../helpers/queriesAsistencia.js";
 import { listarServices } from "../../../../../helpers/queriesServiceMaquinas.js";
 import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
+import AsyncButton from "../../../../shared/AsyncButton.jsx";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -749,7 +750,7 @@ const Asistencia = () => {
         <Modal.Footer className="justify-content-end">
           <div className="d-flex gap-2">
             <Button variant="outline-secondary" onClick={cerrarModal}>Cerrar</Button>
-            <Button variant="outline-success" onClick={guardarModal}>Guardar</Button>
+            <AsyncButton variant="outline-success" onClick={guardarModal}>Guardar</AsyncButton>
           </div>
         </Modal.Footer>
       </Modal>
