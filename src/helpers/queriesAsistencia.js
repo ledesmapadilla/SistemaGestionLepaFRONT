@@ -22,6 +22,16 @@ export const obtenerAsistenciaPorFecha = async (fecha) => {
   }
 };
 
+// Trae todas las asistencias entre dos fechas (inclusive) en un solo pedido.
+export const listarAsistenciaRango = async (desde, hasta) => {
+  try {
+    return await authFetch(`${URL}?desde=${desde}&hasta=${hasta}`);
+  } catch (error) {
+    console.error("Error al listar asistencia por rango:", error);
+    return null;
+  }
+};
+
 export const guardarAsistencia = async (fecha, registros) => {
   try {
     return await authFetch(URL, {

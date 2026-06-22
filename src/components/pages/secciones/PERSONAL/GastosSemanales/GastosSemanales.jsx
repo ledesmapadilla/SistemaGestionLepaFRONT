@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Table, Form, Spinner, Modal } from "react-bootstrap";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
-import { obtenerAsistenciaPorFecha } from "../../../../../helpers/queriesAsistencia.js";
+import { listarAsistenciaRango } from "../../../../../helpers/queriesAsistencia.js";
 import { obtenerGastoSemanalPorSemana, guardarGastoSemanal } from "../../../../../helpers/queriesGastoSemanal.js";
 import { obtenerCuentaCorrienteProveedor } from "../../../../../helpers/queriesCuentaCorrienteProveedor.js";
 import { crearPagoEfectivoProveedor, borrarPagoProveedor } from "../../../../../helpers/queriesPagosProveedores.js";
@@ -662,17 +662,26 @@ const GastosSemanales = () => {
       return d;
     });
 
-    const [resP, resG, ...asistenciaRaws] = await Promise.all([
+    const desdeKey = toKey(diasSemana[0]);
+    const hastaKey = toKey(diasSemana[diasSemana.length - 1]);
+
+    const [resP, resG, resA] = await Promise.all([
       listarPersonal(),
       obtenerGastoSemanalPorSemana(key),
-      ...diasSemana.map((d) => obtenerAsistenciaPorFecha(toKey(d))),
+      listarAsistenciaRango(desdeKey, hastaKey),
     ]);
 
-    const [personal, gastoDoc, ...asistenciaDocs] = await Promise.all([
+    const [personal, gastoDoc, asistenciaArr] = await Promise.all([
       resP?.ok ? resP.json() : Promise.resolve([]),
       resG?.ok ? resG.json() : Promise.resolve(null),
-      ...asistenciaRaws.map((r) => r?.ok ? r.json() : Promise.resolve(null)),
+      resA?.ok ? resA.json() : Promise.resolve([]),
     ]);
+
+    // Reconstruye el array por día (uno por jornada, null si no hay registro)
+    // para conservar el acceso por índice que usa el resto del componente.
+    const asistenciaPorFecha = {};
+    (asistenciaArr || []).forEach((d) => { if (d?.fecha) asistenciaPorFecha[d.fecha] = d; });
+    const asistenciaDocs = diasSemana.map((d) => asistenciaPorFecha[toKey(d)] || null);
 
     const sabado = new Date(fechaLunes);
     sabado.setDate(sabado.getDate() + 5);
