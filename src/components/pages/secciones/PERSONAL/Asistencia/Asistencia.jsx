@@ -286,6 +286,27 @@ const Asistencia = () => {
     return neg ? `-${str}` : str;
   };
 
+  // Parsea "hh:mm" a minutos; null si no es válido
+  const parseHoraMin = (str) => {
+    if (!str) return null;
+    const [h, m] = String(str).split(":").map(Number);
+    if (isNaN(h)) return null;
+    return h * 60 + (isNaN(m) ? 0 : m);
+  };
+
+  // Dif. = 9 horas - (sale - entra), en formato hh:mm (puede ser negativo)
+  const calcularDif = (entra, sale) => {
+    const e = parseHoraMin(entra);
+    const s = parseHoraMin(sale);
+    if (e == null || s == null) return "";
+    const dif = 9 * 60 - (s - e);
+    const neg = dif < 0;
+    const abs = Math.abs(dif);
+    const h = Math.floor(abs / 60);
+    const m = abs % 60;
+    return `${neg ? "-" : ""}${h}:${String(m).padStart(2, "0")}`;
+  };
+
   const abrirResumen = (diasSemana) => {
     const nombresEnAlta = new Set(listaPersonal.map((p) => normNombre(p.nombre)));
     const mapa = {};
@@ -521,6 +542,7 @@ const Asistencia = () => {
                   <th style={{ width: 60 }}>Remito</th>
                   <th style={{ width: 100 }}>Entra</th>
                   <th style={{ width: 100 }}>Sale</th>
+                  <th style={{ width: 80 }}>Dif.</th>
                   <th>Máquina</th>
                   <th style={{ width: 120 }}>Horómetro</th>
                   <th>Obra</th>
@@ -650,6 +672,17 @@ const Asistencia = () => {
                           >✕</span>
                         )}
                       </div>
+                    </td>
+                    <td>
+                      {(() => {
+                        const dif = calcularDif(fila.entra, fila.sale);
+                        if (!dif) return "-";
+                        return (
+                          <span style={{ fontWeight: 600, color: dif.startsWith("-") ? "#dc3545" : "#198754" }}>
+                            {dif}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td>
                       <Form.Select

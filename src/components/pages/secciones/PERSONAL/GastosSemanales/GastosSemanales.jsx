@@ -42,8 +42,45 @@ const normNombre = (s) =>
 const netoExtras = (extras) =>
   (extras || []).reduce((s, e) => s + (e.descuentaAumenta === "aumenta" ? 1 : -1) * (Number(e.monto) || 0), 0);
 
+// "hh:mm" -> minutos; null si no es válido
+const parseHoraMin = (str) => {
+  if (!str) return null;
+  const [h, m] = String(str).split(":").map(Number);
+  if (isNaN(h)) return null;
+  return h * 60 + (isNaN(m) ? 0 : m);
+};
+
+// Dif. de un día en minutos: 9h - (sale - entra). null si falta dato.
+const difMinDia = (entra, sale) => {
+  const e = parseHoraMin(entra);
+  const s = parseHoraMin(sale);
+  if (e == null || s == null) return null;
+  return 9 * 60 - (s - e);
+};
+
+// minutos -> "hh:mm" (con signo)
+const minsAHHMM = (mins) => {
+  const neg = mins < 0;
+  const abs = Math.abs(mins);
+  const h = Math.floor(abs / 60);
+  const m = abs % 60;
+  return `${neg ? "-" : ""}${h}:${String(m).padStart(2, "0")}`;
+};
+
+// Valor de la hora: jornal (semanal / cantJornales) dividido 8 (la hora de
+// almuerzo de la jornada de 9 hs no se paga).
+const valorHora = (r) => {
+  const cant = Number(r.cantJornales) || 0;
+  if (cant <= 0) return 0;
+  return (Number(r.semanal) || 0) / cant / 8;
+};
+
+// Monto por diferencia horaria de la semana. difMin negativo (trabajó de más)
+// suma; positivo (trabajó de menos) resta.
+const difMonto = (r) => Math.round(-((Number(r.difMin) || 0) / 60) * valorHora(r));
+
 const calcularPagar = (r) =>
-  (Number(r.semanal) || 0) - (Number(r.ausentismo) || 0) + netoExtras(r.extras);
+  (Number(r.semanal) || 0) - (Number(r.ausentismo) || 0) + netoExtras(r.extras) + difMonto(r);
 
 const pesos = (n) => {
   const v = Math.round(Number(n)) || 0;
@@ -651,12 +688,31 @@ const GastosSemanales = () => {
 
     const jornalMap = {};
     const semanalMap = {};
+    const cantJornalesMap = {};
     personalVisible.forEach((p) => {
       const ultimo = p.semanal?.length ? p.semanal[p.semanal.length - 1] : null;
       const semanal = ultimo ? ultimo.valor : 0;
       const cant = ultimo ? Number(ultimo.cantJornales || 0) : 0;
       jornalMap[normNombre(p.nombre)] = cant > 0 ? semanal / cant : 0;
       semanalMap[normNombre(p.nombre)] = semanal;
+      cantJornalesMap[normNombre(p.nombre)] = cant;
+    });
+
+    // Suma de la Dif. horaria de la semana (9h - jornada real) por persona.
+    // No aplica a Zamorano (se paga por horómetro) ni a días ausente/media falta
+    // (eso ya lo descuenta el ausentismo).
+    const difMinsMap = {};
+    diasSemana.forEach((d, idx) => {
+      const doc = asistenciaDocs[idx];
+      if (!doc?.registros) return;
+      doc.registros.forEach((r) => {
+        if (!r.personal || r.ausente || r.mediaFalta) return;
+        if (r.personal.toLowerCase().includes("zamorano")) return;
+        const dm = difMinDia(r.entra, r.sale);
+        if (dm == null) return;
+        const k = normNombre(r.personal);
+        difMinsMap[k] = (difMinsMap[k] || 0) + dm;
+      });
     });
 
     let zamoranoMins = 0;
@@ -706,10 +762,11 @@ const GastosSemanales = () => {
 
     const filaDePersonal = (p) => {
       const semanal = p.semanal?.length ? p.semanal[p.semanal.length - 1].valor : 0;
-      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false };
+      const k = normNombre(p.nombre);
+      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[k] || 0, cantJornales: cantJornalesMap[k] || 0 };
     };
     const filaSoloAsistencia = (nombre) => ({
-      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false,
+      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[normNombre(nombre)] || 0, cantJornales: cantJornalesMap[normNombre(nombre)] || 0,
     });
 
     const semanalActualMap = {};
@@ -733,11 +790,14 @@ const GastosSemanales = () => {
     if (gastoDoc?.registros?.length) {
       const existentes = gastoDoc.registros.map((r) => {
         const semanalActual = semanalActualMap[normNombre(r.personal)];
+        const k = normNombre(r.personal);
         return {
           ...r,
           extras: r.extras || [],
           semanal: semanalActual !== null && semanalActual !== undefined ? semanalActual : r.semanal,
           ausentismo: calcAusentismo(r.personal),
+          difMin: difMinsMap[k] || 0,
+          cantJornales: cantJornalesMap[k] || 0,
         };
       });
       const nombresExistentes = new Set(existentes.map((r) => normNombre(r.personal)));
@@ -1037,6 +1097,13 @@ const GastosSemanales = () => {
                 (r) => r.personal?.trim().toLowerCase() === verPersonal?.trim().toLowerCase()
               )
             );
+            const totalDifMin = esZamoranoPerson ? 0 : regsModal.reduce((s, reg) => {
+              if (!reg || reg.ausente || reg.mediaFalta) return s;
+              const dm = difMinDia(reg.entra, reg.sale);
+              return dm == null ? s : s + dm;
+            }, 0);
+            const regGasto = registros.find((x) => normNombre(x.personal) === normNombre(verPersonal || ""));
+            const montoDif = regGasto ? difMonto({ ...regGasto, difMin: totalDifMin }) : 0;
             let totalHorometroStr = null;
             if (esZamoranoPerson) {
               const totalMins = regsModal.reduce((s, reg) => {
@@ -1064,6 +1131,7 @@ const GastosSemanales = () => {
                     <th>Estado</th>
                     <th>Entra</th>
                     <th>Sale</th>
+                    <th>Dif.</th>
                     <th>Máquina</th>
                     <th>Horómetro</th>
                     <th>Obra</th>
@@ -1077,18 +1145,22 @@ const GastosSemanales = () => {
                     if (!reg) return (
                       <tr key={idx}>
                         <td>{label}</td>
-                        <td colSpan={7} className="text-muted">Sin registro</td>
+                        <td colSpan={8} className="text-muted">Sin registro</td>
                       </tr>
                     );
                     const esZamorano = reg.personal?.toLowerCase().includes("zamorano");
                     const estado = reg.ausente ? "Ausente" : reg.mediaFalta ? "Media falta" : "Presente";
                     const colorEstado = reg.ausente ? "#dc3545" : reg.mediaFalta ? "#ffc107" : "#198754";
+                    const difDia = esZamorano || reg.ausente || reg.mediaFalta ? null : difMinDia(reg.entra, reg.sale);
                     return (
                       <tr key={idx}>
                         <td>{label}</td>
                         <td style={{ color: colorEstado, fontWeight: 600 }}>{estado}</td>
                         <td>{reg.entra || "-"}</td>
                         <td>{reg.sale || "-"}</td>
+                        <td style={difDia != null ? { color: difDia < 0 ? "#198754" : difDia > 0 ? "#dc3545" : undefined, fontWeight: 600 } : {}}>
+                          {difDia != null ? minsAHHMM(difDia) : "-"}
+                        </td>
                         <td>{reg.maquina || "-"}</td>
                         <td>{esZamorano ? calcularHorometroZamorano(reg.entra, reg.sale) : (reg.horometro || "-")}</td>
                         <td>{reg.obra || "-"}</td>
@@ -1097,15 +1169,24 @@ const GastosSemanales = () => {
                     );
                   })}
                 </tbody>
-                {totalHorometroStr !== null && (
+                {(totalHorometroStr !== null || (!esZamoranoPerson && totalDifMin !== 0)) && (
                   <tfoot>
-                    <tr className="table-dark fw-bold">
-                      <td colSpan={5} className="text-end">Total horómetro</td>
-                      <td style={{ color: esZamoranoPerson && totalHorometroStr.startsWith("-") ? "#198754" : esZamoranoPerson ? "#dc3545" : undefined }}>
-                        {totalHorometroStr}
-                      </td>
-                      <td colSpan={2} />
-                    </tr>
+                    {totalHorometroStr !== null && (
+                      <tr className="table-dark fw-bold">
+                        <td colSpan={6} className="text-end">Total horómetro</td>
+                        <td style={{ color: esZamoranoPerson && totalHorometroStr.startsWith("-") ? "#198754" : esZamoranoPerson ? "#dc3545" : undefined }}>
+                          {totalHorometroStr}
+                        </td>
+                        <td colSpan={2} />
+                      </tr>
+                    )}
+                    {!esZamoranoPerson && totalDifMin !== 0 && (
+                      <tr className="table-dark fw-bold">
+                        <td colSpan={4} className="text-end">Total Dif.</td>
+                        <td style={{ color: totalDifMin < 0 ? "#198754" : "#dc3545" }}>{minsAHHMM(totalDifMin)}</td>
+                        <td colSpan={4} style={{ color: montoDif >= 0 ? "#198754" : "#dc3545" }}>{pesos(montoDif)}</td>
+                      </tr>
+                    )}
                   </tfoot>
                 )}
               </Table>
