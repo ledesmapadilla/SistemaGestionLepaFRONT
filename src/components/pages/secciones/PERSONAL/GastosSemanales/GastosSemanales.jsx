@@ -79,8 +79,32 @@ const valorHora = (r) => {
 // suma; positivo (trabajó de menos) resta.
 const difMonto = (r) => Math.round(-((Number(r.difMin) || 0) / 60) * valorHora(r));
 
+// La diferencia horaria se refleja como una fila de extra automática
+// (marcada con auto="dif"), no se suma aparte en calcularPagar.
+const AUTO_DIF = "dif";
+const sinExtraDif = (extras) => (extras || []).filter((e) => e.auto !== AUTO_DIF);
+const construirExtraDif = (r, fecha) => {
+  const monto = difMonto(r);
+  if (!monto) return null;
+  const positivo = monto > 0; // trabajó de más -> aumenta
+  const hs = minsAHHMM(Math.abs(Number(r.difMin) || 0));
+  return {
+    fecha,
+    descuentaAumenta: positivo ? "aumenta" : "descuenta",
+    monto: Math.abs(monto),
+    detalle: positivo ? `Hs extras (${hs})` : `Horas descontadas (${hs})`,
+    auto: AUTO_DIF,
+  };
+};
+// Reemplaza la fila auto de diferencia por una recalculada (o la quita si es 0)
+const conExtraDif = (r, fecha) => {
+  const base = sinExtraDif(r.extras);
+  const auto = construirExtraDif(r, fecha);
+  return auto ? [...base, auto] : base;
+};
+
 const calcularPagar = (r) =>
-  (Number(r.semanal) || 0) - (Number(r.ausentismo) || 0) + netoExtras(r.extras) + difMonto(r);
+  (Number(r.semanal) || 0) - (Number(r.ausentismo) || 0) + netoExtras(r.extras);
 
 const pesos = (n) => {
   const v = Math.round(Number(n)) || 0;
@@ -236,10 +260,14 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, onGu
                     <td>{pesos(e.monto)}</td>
                     <td>{e.detalle || "-"}</td>
                     <td>
-                      <div className="d-flex gap-1 justify-content-center align-items-center">
-                        <Button size="sm" variant="outline-warning" onClick={() => iniciarEditar(idx)} disabled={editandoIdx !== null}>Editar</Button>
-                        <Button size="sm" variant="outline-danger" onClick={() => borrar(idx)} disabled={editandoIdx !== null}>Borrar</Button>
-                      </div>
+                      {e.auto ? (
+                        <span className="text-muted" style={{ fontSize: "0.78rem", fontStyle: "italic" }}>Automático</span>
+                      ) : (
+                        <div className="d-flex gap-1 justify-content-center align-items-center">
+                          <Button size="sm" variant="outline-warning" onClick={() => iniciarEditar(idx)} disabled={editandoIdx !== null}>Editar</Button>
+                          <Button size="sm" variant="outline-danger" onClick={() => borrar(idx)} disabled={editandoIdx !== null}>Borrar</Button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 )
@@ -763,11 +791,16 @@ const GastosSemanales = () => {
     const filaDePersonal = (p) => {
       const semanal = p.semanal?.length ? p.semanal[p.semanal.length - 1].valor : 0;
       const k = normNombre(p.nombre);
-      return { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[k] || 0, cantJornales: cantJornalesMap[k] || 0 };
+      const base = { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[k] || 0, cantJornales: cantJornalesMap[k] || 0 };
+      base.extras = conExtraDif(base, sabadoKey);
+      return base;
     };
-    const filaSoloAsistencia = (nombre) => ({
-      personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[normNombre(nombre)] || 0, cantJornales: cantJornalesMap[normNombre(nombre)] || 0,
-    });
+    const filaSoloAsistencia = (nombre) => {
+      const k = normNombre(nombre);
+      const base = { personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[k] || 0, cantJornales: cantJornalesMap[k] || 0 };
+      base.extras = conExtraDif(base, sabadoKey);
+      return base;
+    };
 
     const semanalActualMap = {};
     personalVisible.forEach((p) => {
@@ -791,7 +824,7 @@ const GastosSemanales = () => {
       const existentes = gastoDoc.registros.map((r) => {
         const semanalActual = semanalActualMap[normNombre(r.personal)];
         const k = normNombre(r.personal);
-        return {
+        const fila = {
           ...r,
           extras: r.extras || [],
           semanal: semanalActual !== null && semanalActual !== undefined ? semanalActual : r.semanal,
@@ -799,6 +832,8 @@ const GastosSemanales = () => {
           difMin: difMinsMap[k] || 0,
           cantJornales: cantJornalesMap[k] || 0,
         };
+        fila.extras = conExtraDif(fila, sabadoKey);
+        return fila;
       });
       const nombresExistentes = new Set(existentes.map((r) => normNombre(r.personal)));
       const nuevosDePersonal = personalVisible
