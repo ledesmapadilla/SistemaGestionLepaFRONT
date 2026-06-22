@@ -675,6 +675,7 @@ const Asistencia = () => {
                     </td>
                     <td>
                       {(() => {
+                        if (fila.personal?.toLowerCase().includes("zamorano")) return "-";
                         const dif = calcularDif(fila.entra, fila.sale);
                         if (!dif) return "-";
                         return (
