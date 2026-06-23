@@ -75,12 +75,6 @@ export const recalcularEstadosRemitos = async () => {
   return res.json();
 };
 
-export const liberarRemitosNC = async () => {
-  const res = await authFetch(`${remitosBackend}/liberar-nc`, { method: "PUT" });
-  if (!res?.ok) throw new Error("Error al liberar remitos de notas de crédito");
-  return res.json();
-};
-
 export const editarItemRemito = async (remitoId, itemId, datosItem) => {
   try {
     const respuesta = await authFetch(`${remitosBackend}/${remitoId}/items/${itemId}`, {
