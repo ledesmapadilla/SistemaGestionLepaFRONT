@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { listarFacturas, editarFactura, borrarFactura } from "../../../../../helpers/queriesFacturas";
+import { liberarRemitosNC } from "../../../../../helpers/queriesRemitos";
 import AsyncButton from "../../../../shared/AsyncButton";
 
 const hoy = new Date().toLocaleDateString("en-CA");
@@ -109,6 +110,25 @@ const FacturacionCliente = () => {
     }
   };
 
+  const repararRemitosNC = async () => {
+    const result = await Swal.fire({
+      title: "¿Reparar remitos de NC?",
+      text: "Devuelve a 'Sin facturar' los remitos de facturas anuladas por una Nota de Crédito.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Sí, reparar",
+      cancelButtonText: "Cancelar",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      const data = await liberarRemitosNC();
+      await cargarFacturas();
+      Swal.fire({ icon: "success", title: "Listo", text: data.msg || "Remitos liberados" });
+    } catch (error) {
+      Swal.fire({ icon: "error", title: "Error", text: error.message || "No se pudo reparar" });
+    }
+  };
+
   const exportarExcel = () => {
     const headers = ["N° Factura", "Fecha", "Cliente", "Obra", "Tipo", "Total (con iva)", "Estado"];
     const cols = ["A", "B", "C", "D", "E", "F", "G"];
@@ -176,6 +196,7 @@ const FacturacionCliente = () => {
       <h6 className="text-center mb-2">Listado de facturas <small className="text-muted">(iva incluido)</small></h6>
       <div className="d-flex justify-content-end align-items-center mb-3">
         <div className="d-flex gap-2">
+          <Button variant="outline-warning" onClick={repararRemitosNC}>Reparar remitos NC</Button>
           <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
           <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
           <Button variant="outline-primary" onClick={() => navigate("/facturacion/nueva")}>Nueva Factura</Button>
