@@ -125,7 +125,8 @@ const Asistencia = () => {
     const esSabadoDia = fechaDia.getDay() === 6;
     const filaDePersonal = (p) => ({
       id: p._id, personal: p.nombre, maquina: "", obra: "", mediaFalta: false,
-      ausente: false, remito: true, horometro: "", entra: "8:00",
+      ausente: false, remito: true, horometro: "",
+      entra: p.nombre?.toLowerCase().includes("zamorano") ? "8:30" : "8:00",
       sale: esSabadoDia ? "12:00" : "17:00", observaciones: "",
     });
 
