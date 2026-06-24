@@ -62,16 +62,20 @@ const CuentaCorriente = () => {
   const movFiltrados = useMemo(() => {
     let lista = todos.filter((m) => m.cliente === filtroCliente);
     if (filtroObra) lista = lista.filter((m) => (m.obras || []).includes(filtroObra));
-    return lista;
+    // Orden cronológico ascendente para calcular el saldo acumulado correctamente
+    return [...lista].sort((a, b) => (a.fecha || "").localeCompare(b.fecha || ""));
   }, [todos, filtroCliente, filtroObra]);
 
+  // Saldo acumulado calculado de más viejo a más reciente, luego se muestra al revés
   const movConSaldo = useMemo(() => {
     let saldoAcum = 0;
-    return movFiltrados.map((m) => {
+    const conSaldo = movFiltrados.map((m) => {
       saldoAcum += (m.debito || 0) - (m.credito || 0);
       const saldoRedondeado = Math.round(saldoAcum * 100) / 100;
       return { ...m, saldo: saldoRedondeado || 0 };
     });
+    // Mostrar de más reciente a más viejo
+    return conSaldo.reverse();
   }, [movFiltrados]);
 
   const totalDebitos = movFiltrados.reduce((s, m) => s + (m.debito || 0), 0);
