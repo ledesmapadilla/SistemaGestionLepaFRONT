@@ -610,16 +610,20 @@ export default function Cubiertas() {
                 <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                   <tr>
                     <th>Máquina</th>
+                    <th>Fecha</th>
                     <th>Observaciones</th>
-                    <th>Editado el</th>
                   </tr>
                 </thead>
                 <tbody>
                   {[...historialData].reverse().map((h, i) => (
                     <tr key={i}>
                       <td>{h.maquinaLabel || h.maquina?.maquina || "-"}</td>
+                      <td>{
+                        h.esActual
+                          ? (h.editadoEn ? new Date(h.editadoEn).toLocaleDateString("es-AR") : "-")
+                          : (h.fecha ? new Date(h.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-")
+                      }</td>
                       <td>{h.observaciones || "-"}</td>
-                      <td>{h.editadoEn ? new Date(h.editadoEn).toLocaleDateString("es-AR") : "-"}</td>
                     </tr>
                   ))}
                 </tbody>
