@@ -290,8 +290,13 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, onGu
         </div>
       </Modal.Body>
       <Modal.Footer>
+        {editandoIdx !== null && (
+          <span className="text-warning me-auto" style={{ fontSize: "0.8rem" }}>
+            Confirmá la fila con ✓ antes de guardar
+          </span>
+        )}
         <Button variant="outline-secondary" onClick={onHide}>Cancelar</Button>
-        <AsyncButton variant="outline-success" onClick={handleGuardar}>Guardar</AsyncButton>
+        <AsyncButton variant="outline-success" onClick={handleGuardar} disabled={editandoIdx !== null}>Guardar</AsyncButton>
       </Modal.Footer>
     </Modal>
   );
