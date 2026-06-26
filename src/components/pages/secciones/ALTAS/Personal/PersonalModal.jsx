@@ -14,12 +14,21 @@ const formatoMiles = (valor) => {
   return `$ ${numeroFormateado}`;
 };
 
+const formatoMonedaInput = (valor) => {
+  if (valor === undefined || valor === null || valor === "") return "";
+  const numero = Number(valor);
+  if (isNaN(numero)) return valor;
+  return `$ ${new Intl.NumberFormat("es-AR").format(numero)}`;
+};
+
 const PersonalModal = ({
   show,
   onHide,
   onSubmit,
   handleSubmit,
   register,
+  watch,
+  setValue,
   errors,
   editando,
   personal,
@@ -30,6 +39,8 @@ const PersonalModal = ({
 }) => {
   const [historial, setHistorial] = useState([]);
   const [activo, setActivo] = useState(true);
+  const [editandoSemanal, setEditandoSemanal] = useState(false);
+  const semanalValor = watch ? watch("semanal") : "";
 
   useEffect(() => {
     if (show && editando) {
@@ -239,17 +250,28 @@ const PersonalModal = ({
           ) : (
             <>
               <Form.Group className="mb-3">
-                <Form.Label className="d-block text-center fw-bold">Semanal</Form.Label>
+                <Form.Label className="d-block text-center fw-bold">Semanal*</Form.Label>
                 <Form.Control
                   className="text-center"
-                  type="number"
-                  step="0.01"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="$ 0"
+                  value={editandoSemanal ? (semanalValor ?? "") : formatoMonedaInput(semanalValor)}
+                  onFocus={() => setEditandoSemanal(true)}
+                  onChange={(e) =>
+                    setValue("semanal", e.target.value.replace(/[^\d.]/g, ""), {
+                      shouldValidate: true,
+                    })
+                  }
+                  onBlur={() => setEditandoSemanal(false)}
+                  isInvalid={!!errors.semanal}
+                />
+                <input
+                  type="hidden"
                   {...register("semanal", {
-                    min: {
-                      value: 0,
-                      message: "Las horas semanales no pueden ser negativas",
-                    },
+                    required: "El semanal es obligatorio",
+                    validate: (v) =>
+                      Number(v) > 0 || "El semanal es obligatorio",
                   })}
                 />
                 <Form.Text className="text-danger d-block text-center">
@@ -257,14 +279,18 @@ const PersonalModal = ({
                 </Form.Text>
               </Form.Group>
               <Form.Group className="mb-3">
-                <Form.Label className="d-block text-center fw-bold">Cant. de jornales semanales</Form.Label>
+                <Form.Label className="d-block text-center fw-bold">Cant. de jornales semanales*</Form.Label>
                 <Form.Control
                   className="text-center w-50 mx-auto"
                   type="number"
                   step="0.5"
                   min="0"
+                  isInvalid={!!errors.cantJornales}
                   {...register("cantJornales", {
+                    required: "La cantidad de jornales es obligatoria",
                     min: { value: 0, message: "No puede ser negativo" },
+                    validate: (v) =>
+                      Number(v) > 0 || "La cantidad de jornales es obligatoria",
                   })}
                 />
                 <Form.Text className="text-danger d-block text-center">

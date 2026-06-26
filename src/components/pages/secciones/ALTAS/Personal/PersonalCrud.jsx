@@ -48,6 +48,8 @@ const Personal = () => {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: valoresIniciales,
@@ -404,6 +406,8 @@ const Personal = () => {
         onSubmit={onSubmit}
         handleSubmit={handleSubmit}
         register={register}
+        watch={watch}
+        setValue={setValue}
         errors={errors}
         editando={editando}
         personal={personal}
