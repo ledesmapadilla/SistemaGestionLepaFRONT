@@ -20,12 +20,19 @@ const formatearFecha = (fecha) => {
 const formatoMoneda = (valor) =>
   Number(valor).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 
+const estiloX = {
+  position: "absolute", right: "10px", top: "50%",
+  transform: "translateY(-50%)", cursor: "pointer",
+  color: "#fff", fontSize: "14px", fontWeight: "900",
+  zIndex: 5, userSelect: "none",
+};
+
 const totalFactura = (f) =>
   f.tipoFactura === "Factura X" || f.tipoFactura === "Factura B" ? f.total : f.total * 1.21;
 
 const NuevoPagoProveedor = () => {
   const navigate = useNavigate();
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm();
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm();
 
   const [todasFacturas, setTodasFacturas] = useState([]);
   const [facturasDisponibles, setFacturasDisponibles] = useState([]);
@@ -407,17 +414,25 @@ const NuevoPagoProveedor = () => {
             </div>
             <div className="d-flex align-items-center gap-2">
               <Form.Label className="mb-0 text-nowrap">Proveedor</Form.Label>
-              <Form.Select
-                style={{ width: "260px" }}
-                {...proveedorReg}
-                onChange={(e) => { onChangeProveedor(e); setFacturasSeleccionadas([]); setMediosPago([]); }}
-                isInvalid={!!errors.proveedor}
-              >
-                <option value="">Seleccionar...</option>
-                {proveedoresConFacturas.map((nombre) => (
-                  <option key={nombre} value={nombre}>{nombre}</option>
-                ))}
-              </Form.Select>
+              <div style={{ position: "relative", width: "260px" }}>
+                <Form.Select
+                  {...proveedorReg}
+                  onChange={(e) => { onChangeProveedor(e); setFacturasSeleccionadas([]); setMediosPago([]); }}
+                  isInvalid={!!errors.proveedor}
+                  style={proveedorSeleccionado ? { backgroundImage: "none" } : undefined}
+                >
+                  <option value="">Seleccionar...</option>
+                  {proveedoresConFacturas.map((nombre) => (
+                    <option key={nombre} value={nombre}>{nombre}</option>
+                  ))}
+                </Form.Select>
+                {proveedorSeleccionado && (
+                  <span
+                    onClick={() => { setValue("proveedor", ""); setFacturasSeleccionadas([]); setMediosPago([]); }}
+                    style={estiloX}
+                  >✕</span>
+                )}
+              </div>
             </div>
             <div className="d-flex align-items-center gap-2 flex-grow-1">
               <Form.Label className="mb-0 text-nowrap">Observaciones</Form.Label>
