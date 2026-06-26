@@ -81,6 +81,7 @@ const NuevaFacturaProveedor = () => {
       numeroFactura: data.numeroFactura,
       proveedor: data.proveedor,
       concepto: data.concepto || "",
+      observaciones: data.observaciones || "",
       obra: data.obra || "",
       total: totalConIvaNum / (1 + ivaRate),
     };
@@ -228,6 +229,20 @@ const NuevaFacturaProveedor = () => {
                 readOnly
                 className="text-muted"
                 value={totalConIvaNum ? formatoMoneda(totalSinIva) : ""}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+
+        <Row className="mb-3">
+          <Col md={12}>
+            <Form.Group>
+              <Form.Label>Observaciones</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                placeholder="Observaciones adicionales (opcional)"
+                {...register("observaciones")}
               />
             </Form.Group>
           </Col>

@@ -35,6 +35,8 @@ const FacturacionProveedor = () => {
   const [loading, setLoading] = useState(true);
   const [facturaVerId, setFacturaVerId] = useState(null);
   const facturaVer = facturas.find((f) => f._id === facturaVerId) || null;
+  const [observacionVerId, setObservacionVerId] = useState(null);
+  const observacionVer = facturas.find((f) => f._id === observacionVerId) || null;
   const [facturaEditar, setFacturaEditar] = useState(null);
   const [filtroNumero, setFiltroNumero] = useState("");
   const [filtroProveedor, setFiltroProveedor] = useState("");
@@ -70,6 +72,7 @@ const FacturacionProveedor = () => {
       tipoFactura: f.tipoFactura,
       numeroFactura: f.numeroFactura,
       concepto: f.concepto,
+      observaciones: f.observaciones || "",
       obra: f.obra || "",
       total: f.total,
     });
@@ -109,8 +112,8 @@ const FacturacionProveedor = () => {
   };
 
   const exportarExcel = () => {
-    const headers = ["N° Factura", "Fecha", "Proveedor", "Concepto", "Obra", "Tipo", "Total", "Estado"];
-    const cols = ["A", "B", "C", "D", "E", "F", "G", "H"];
+    const headers = ["N° Factura", "Fecha", "Proveedor", "Concepto", "Observaciones", "Obra", "Tipo", "Total", "Estado"];
+    const cols = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
@@ -120,6 +123,7 @@ const FacturacionProveedor = () => {
       formatearFecha(f.fecha),
       f.proveedor,
       f.concepto || "-",
+      f.observaciones || "-",
       f.obra || "-",
       f.tipoFactura,
       f.total,
@@ -135,7 +139,7 @@ const FacturacionProveedor = () => {
 
     filas.forEach((fila, rowIdx) => {
       fila.forEach((val, colIdx) => {
-        const isCurrency = colIdx === 6 && typeof val === "number";
+        const isCurrency = colIdx === 7 && typeof val === "number";
         ws[`${cols[colIdx]}${rowIdx + 4}`] = {
           v: val ?? "-",
           t: isCurrency ? "n" : typeof val === "number" ? "n" : "s",
@@ -145,8 +149,8 @@ const FacturacionProveedor = () => {
       });
     });
 
-    ws["!ref"] = `A1:H${filas.length + 3}`;
-    ws["!cols"] = [{ wch: 14 }, { wch: 12 }, { wch: 28 }, { wch: 28 }, { wch: 28 }, { wch: 18 }, { wch: 16 }, { wch: 12 }];
+    ws["!ref"] = `A1:I${filas.length + 3}`;
+    ws["!cols"] = [{ wch: 14 }, { wch: 12 }, { wch: 28 }, { wch: 28 }, { wch: 32 }, { wch: 28 }, { wch: 18 }, { wch: 16 }, { wch: 12 }];
 
     const libro = XLSXStyle.utils.book_new();
     XLSXStyle.utils.book_append_sheet(libro, ws, "Facturas Proveedores");
@@ -225,6 +229,7 @@ const FacturacionProveedor = () => {
               <th>Fecha</th>
               <th>Proveedor</th>
               <th>Concepto</th>
+              <th>Observaciones</th>
               <th>Obra</th>
               <th>Tipo</th>
               <th>Total</th>
@@ -235,7 +240,7 @@ const FacturacionProveedor = () => {
           <tbody>
             {facturasFiltradas.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-muted py-3">
+                <td colSpan={10} className="text-muted py-3">
                   Sin facturas cargadas
                 </td>
               </tr>
@@ -246,6 +251,13 @@ const FacturacionProveedor = () => {
                   <td>{formatearFecha(f.fecha)}</td>
                   <td>{f.proveedor}</td>
                   <td className="text-muted">{f.concepto || "-"}</td>
+                  <td>
+                    {f.observaciones ? (
+                      <Button variant="outline-info" size="sm" onClick={() => setObservacionVerId(f._id)}>Ver</Button>
+                    ) : (
+                      <span className="text-muted">-</span>
+                    )}
+                  </td>
                   <td className="text-muted">{f.obra || "-"}</td>
                   <td>{f.tipoFactura}</td>
                   <td>{formatoMoneda(f.total)}</td>
@@ -275,6 +287,7 @@ const FacturacionProveedor = () => {
             <span><strong>Fecha:</strong> {formatearFecha(facturaVer?.fecha)}</span>
             <span><strong>Tipo:</strong> {facturaVer?.tipoFactura}</span>
             <span><strong>Concepto:</strong> {facturaVer?.concepto || "-"}</span>
+            <span><strong>Observaciones:</strong> {facturaVer?.observaciones || "-"}</span>
             <span><strong>Obra:</strong> {facturaVer?.obra || "-"}</span>
             <span><strong>Total:</strong> {formatoMoneda(facturaVer?.total)}</span>
             <span><strong>Estado:</strong> {labelEstado(facturaVer?.estadoPago)}</span>
@@ -282,6 +295,23 @@ const FacturacionProveedor = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="outline-secondary" onClick={() => setFacturaVerId(null)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal ver observación */}
+      <Modal show={!!observacionVerId} onHide={() => setObservacionVerId(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Observaciones — Factura {observacionVer?.numeroFactura}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="mb-0" style={{ whiteSpace: "pre-wrap" }}>
+            {observacionVer?.observaciones || "-"}
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setObservacionVerId(null)}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
 
@@ -339,6 +369,19 @@ const FacturacionProveedor = () => {
                     type="text"
                     {...register("concepto")}
                     placeholder="Descripción del servicio o producto"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row className="mb-3">
+              <Col md={12}>
+                <Form.Group>
+                  <Form.Label>Observaciones</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={2}
+                    {...register("observaciones")}
+                    placeholder="Observaciones adicionales (opcional)"
                   />
                 </Form.Group>
               </Col>
