@@ -173,13 +173,13 @@ const CuentaCorrienteProveedor = () => {
             )}
           </div>
           {!filtroProveedor && (
-            <div style={{ position: "relative", width: "160px" }}>
+            <div style={{ position: "relative", width: "180px" }}>
               <Form.Select
                 value={filtroDeuda}
                 onChange={(e) => setFiltroDeuda(e.target.value)}
                 style={filtroDeuda ? { backgroundImage: "none", height: "34px" } : { height: "34px" }}
               >
-                <option value="">Todos</option>
+                <option value="">Todas las deudas</option>
                 <option value="con">Con deuda</option>
                 <option value="sin">Sin deuda</option>
               </Form.Select>
