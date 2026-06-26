@@ -179,7 +179,7 @@ const CuentaCorrienteProveedor = () => {
                 onChange={(e) => setFiltroDeuda(e.target.value)}
                 style={filtroDeuda ? { backgroundImage: "none", height: "34px" } : { height: "34px" }}
               >
-                <option value="">Todas las deudas</option>
+                <option value="">Estado</option>
                 <option value="con">Con deuda</option>
                 <option value="sin">Sin deuda</option>
               </Form.Select>
