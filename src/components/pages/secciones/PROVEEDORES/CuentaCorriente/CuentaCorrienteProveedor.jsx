@@ -27,6 +27,7 @@ const CuentaCorrienteProveedor = () => {
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroProveedor, setFiltroProveedor] = useState("");
+  const [filtroDeuda, setFiltroDeuda] = useState("");
 
   useEffect(() => {
     const cargar = async () => {
@@ -54,6 +55,12 @@ const CuentaCorrienteProveedor = () => {
       return { proveedor: prov, debito, credito, saldo: debito - credito };
     });
   }, [todos, proveedores]);
+
+  const resumenFiltrado = useMemo(() => {
+    if (filtroDeuda === "con") return resumenPorProveedor.filter((r) => r.saldo > 0.01);
+    if (filtroDeuda === "sin") return resumenPorProveedor.filter((r) => r.saldo <= 0.01);
+    return resumenPorProveedor;
+  }, [resumenPorProveedor, filtroDeuda]);
 
   const movFiltrados = useMemo(() => {
     if (!filtroProveedor) return [];
@@ -85,7 +92,7 @@ const CuentaCorrienteProveedor = () => {
       ["Proveedor", "A pagar", "Pagado", "Saldo"].forEach((h, i) => {
         ws[`${["A","B","C","D"][i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
       });
-      resumenPorProveedor.forEach((r, ri) => {
+      resumenFiltrado.forEach((r, ri) => {
         const fila = [r.proveedor, r.debito, r.credito, r.saldo];
         fila.forEach((val, ci) => {
           const isCurrency = ci > 0;
@@ -96,7 +103,7 @@ const CuentaCorrienteProveedor = () => {
           };
         });
       });
-      ws["!ref"] = `A1:D${resumenPorProveedor.length + 3}`;
+      ws["!ref"] = `A1:D${resumenFiltrado.length + 3}`;
       ws["!cols"] = [{ wch: 30 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
       XLSXStyle.utils.book_append_sheet(libro, ws, "Resumen");
       XLSXStyle.writeFile(libro, "CuentaCorriente_Proveedores_Todos.xlsx");
@@ -139,7 +146,7 @@ const CuentaCorrienteProveedor = () => {
       <h6 className="text-center mb-1">Cuenta Corriente Proveedores</h6>
       <div className="d-flex justify-content-end align-items-center mb-1">
         <div className="d-flex gap-2">
-          {(filtroProveedor ? movConSaldo.length : resumenPorProveedor.length) > 0 && (
+          {(filtroProveedor ? movConSaldo.length : resumenFiltrado.length) > 0 && (
             <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
           )}
           <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
@@ -147,7 +154,7 @@ const CuentaCorrienteProveedor = () => {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", marginBottom: "0.5rem", gap: "0.5rem" }}>
-        {/* Filtro proveedor — izquierda */}
+        {/* Filtros — izquierda */}
         <div className="d-flex align-items-center gap-2">
           <Form.Label className="mb-0 text-nowrap" style={{ width: "75px" }}>Proveedor</Form.Label>
           <div style={{ position: "relative", width: "280px" }}>
@@ -165,16 +172,32 @@ const CuentaCorrienteProveedor = () => {
               <span onClick={() => setFiltroProveedor("")} style={estiloX}>✕</span>
             )}
           </div>
+          {!filtroProveedor && (
+            <div style={{ position: "relative", width: "160px" }}>
+              <Form.Select
+                value={filtroDeuda}
+                onChange={(e) => setFiltroDeuda(e.target.value)}
+                style={filtroDeuda ? { backgroundImage: "none", height: "34px" } : { height: "34px" }}
+              >
+                <option value="">Todos</option>
+                <option value="con">Con deuda</option>
+                <option value="sin">Sin deuda</option>
+              </Form.Select>
+              {filtroDeuda && (
+                <span onClick={() => setFiltroDeuda("")} style={estiloX}>✕</span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Totales — centro */}
-        {!loading && (filtroProveedor ? movConSaldo.length : resumenPorProveedor.length) > 0 ? (() => {
+        {!loading && (filtroProveedor ? movConSaldo.length : resumenFiltrado.length) > 0 ? (() => {
           const totPagar = filtroProveedor
             ? totalDebitos
-            : resumenPorProveedor.reduce((s, r) => s + r.debito, 0);
+            : resumenFiltrado.reduce((s, r) => s + r.debito, 0);
           const totPagado = filtroProveedor
             ? totalCreditos
-            : resumenPorProveedor.reduce((s, r) => s + r.credito, 0);
+            : resumenFiltrado.reduce((s, r) => s + r.credito, 0);
           const totSaldo = totPagar - totPagado;
           return (
             <div className="d-flex gap-3">
@@ -204,7 +227,7 @@ const CuentaCorrienteProveedor = () => {
           <Spinner animation="border" />
         </div>
       ) : !filtroProveedor ? (
-        resumenPorProveedor.length === 0 ? (
+        resumenFiltrado.length === 0 ? (
           <p className="text-muted">Sin movimientos.</p>
         ) : (
           <div style={{ maxHeight: "calc(100vh - 260px)", overflowY: "auto" }}>
@@ -219,7 +242,7 @@ const CuentaCorrienteProveedor = () => {
                 </tr>
               </thead>
               <tbody>
-                {resumenPorProveedor.map((r) => (
+                {resumenFiltrado.map((r) => (
                   <tr key={r.proveedor}>
                     <td className="text-start fw-semibold">{r.proveedor}</td>
                     <td>{formatoMoneda(r.debito)}</td>
