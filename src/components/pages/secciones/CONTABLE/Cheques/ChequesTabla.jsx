@@ -206,8 +206,7 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
                     Ver
                   </Button>
                   <Dropdown onSelect={(uso) => onUtilizar(c, uso)}>
-                    {/* TEMPORAL: botón habilitado siempre para reingresar cheques fuera de cartera. Revertir a: disabled={c.estado !== "En cartera"} */}
-                    <Dropdown.Toggle size="sm" variant="outline-primary">
+                    <Dropdown.Toggle size="sm" variant="outline-primary" disabled={c.estado !== "En cartera"}>
                       Utilizar
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
