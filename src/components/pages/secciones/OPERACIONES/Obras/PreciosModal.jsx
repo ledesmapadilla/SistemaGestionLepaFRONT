@@ -271,7 +271,7 @@ const PreciosModal = ({
                               value={focusadoPrecio === index ? item.precio : formatearMoneda(item.precio)}
                               placeholder="Sin definir"
                               className="text-center"
-                              onFocus={() => setFocusadoPrecio(index)}
+                              onFocus={(e) => { setFocusadoPrecio(index); const el = e.target; setTimeout(() => el.select(), 0); }}
                               onBlur={() => setFocusadoPrecio(null)}
                               onChange={(e) => cambiarCampo(index, "precio", normalizarPrecio(e.target.value))}
                             />
@@ -352,7 +352,7 @@ const PreciosModal = ({
                           value={focusadoPrecio === index ? item.precio : formatearMoneda(item.precio)}
                           placeholder="0"
                           isInvalid={invalida && item.precio === ""}
-                          onFocus={() => setFocusadoPrecio(index)}
+                          onFocus={(e) => { setFocusadoPrecio(index); const el = e.target; setTimeout(() => el.select(), 0); }}
                           onBlur={() => setFocusadoPrecio(null)}
                           onChange={(e) => cambiarCampo(index, "precio", normalizarPrecio(e.target.value))}
                         />

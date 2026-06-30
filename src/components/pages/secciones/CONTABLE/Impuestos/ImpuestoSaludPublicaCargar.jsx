@@ -381,7 +381,7 @@ export default function ImpuestoSaludPublicaCargar() {
                   <Form.Control size="sm" type="text"
                     value={editandoValorP ? formPagarH.valor : (formPagarH.valor ? formatoMoneda(formPagarH.valor) : "")}
                     placeholder="$0"
-                    onFocus={() => { setEditandoValorP(true); setFormPagarH((p) => ({ ...p, valor: "" })); }}
+                    onFocus={(e) => { setEditandoValorP(true); const el = e.target; setTimeout(() => el.select(), 0); }}
                     onChange={(e) => setFormPagarH((p) => ({ ...p, valor: e.target.value }))}
                     onBlur={() => setEditandoValorP(false)}
                   />
@@ -416,7 +416,7 @@ export default function ImpuestoSaludPublicaCargar() {
                   <Form.Control type="text"
                     value={editandoCampo === campo ? formCargar[campo] : (formCargar[campo] ? formatoMoneda(formCargar[campo]) : "")}
                     placeholder="$0"
-                    onFocus={() => { setEditandoCampo(campo); setFormCargar((p) => ({ ...p, [campo]: "" })); }}
+                    onFocus={(e) => { setEditandoCampo(campo); const el = e.target; setTimeout(() => el.select(), 0); }}
                     onChange={(e) => setFormCargar((p) => ({ ...p, [campo]: e.target.value }))}
                     onBlur={() => setEditandoCampo(null)}
                     onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
@@ -450,7 +450,7 @@ export default function ImpuestoSaludPublicaCargar() {
                   <Form.Control size="sm" type="text"
                     value={editandoValorH ? formHistorial.valor : (formHistorial.valor ? formatoMoneda(formHistorial.valor) : "")}
                     placeholder="$0"
-                    onFocus={() => { setEditandoValorH(true); setFormHistorial((p) => ({ ...p, valor: "" })); }}
+                    onFocus={(e) => { setEditandoValorH(true); const el = e.target; setTimeout(() => el.select(), 0); }}
                     onChange={(e) => setFormHistorial((p) => ({ ...p, valor: e.target.value }))}
                     onBlur={() => setEditandoValorH(false)}
                   />

@@ -407,7 +407,7 @@ const FacturacionProveedor = () => {
                   <Form.Control
                     type="text"
                     value={editandoTotal ? inputTotal : formatoMoneda(watch("total") ?? 0)}
-                    onFocus={() => { setEditandoTotal(true); setInputTotal(String(watch("total") ?? "")); }}
+                    onFocus={(e) => { setEditandoTotal(true); setInputTotal(String(watch("total") ?? "")); const el = e.target; setTimeout(() => el.select(), 0); }}
                     onChange={(e) => setInputTotal(e.target.value)}
                     onBlur={() => { setValue("total", parseFloat(inputTotal) || 0, { shouldValidate: true }); setEditandoTotal(false); }}
                     isInvalid={!!errors.total}

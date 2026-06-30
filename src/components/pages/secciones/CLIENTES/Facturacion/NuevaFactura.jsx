@@ -381,9 +381,10 @@ const NuevaFactura = () => {
                             ? (montosAFacturar[r._id] ?? "")
                             : formatoMoneda(montosAFacturar[r._id] ?? saldo)
                         }
-                        onFocus={() => {
+                        onFocus={(e) => {
                           setInputFocusadoId(r._id);
-                          setMontosAFacturar((prev) => ({ ...prev, [r._id]: "" }));
+                          const el = e.target;
+                          setTimeout(() => el.select(), 0);
                         }}
                         onBlur={() => {
                           setInputFocusadoId(null);
@@ -436,9 +437,11 @@ const NuevaFactura = () => {
                     type="text"
                     size="sm"
                     value={totalFocusado ? totalInputStr : formatoMoneda(Math.abs(totalEfectivo))}
-                    onFocus={() => {
+                    onFocus={(e) => {
                       setTotalFocusado(true);
-                      setTotalInputStr("0");
+                      setTotalInputStr(String(Math.abs(totalEfectivo)));
+                      const el = e.target;
+                      setTimeout(() => el.select(), 0);
                     }}
                     onBlur={() => {
                       setTotalFocusado(false);

@@ -211,7 +211,7 @@ const NuevaFacturaProveedor = () => {
                 type="text"
                 placeholder="0.00"
                 value={editandoTotal ? (totalRaw ?? "") : (totalRaw ? formatoMoneda(Number(totalRaw)) : "")}
-                onFocus={() => setEditandoTotal(true)}
+                onFocus={(e) => { setEditandoTotal(true); const el = e.target; setTimeout(() => el.select(), 0); }}
                 onChange={(e) => setValue("total", e.target.value, { shouldValidate: true })}
                 onBlur={() => setEditandoTotal(false)}
                 onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}

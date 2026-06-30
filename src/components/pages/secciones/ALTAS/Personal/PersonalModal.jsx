@@ -257,7 +257,7 @@ const PersonalModal = ({
                   inputMode="decimal"
                   placeholder="$ 0"
                   value={editandoSemanal ? (semanalValor ?? "") : formatoMonedaInput(semanalValor)}
-                  onFocus={() => setEditandoSemanal(true)}
+                  onFocus={(e) => { setEditandoSemanal(true); const el = e.target; setTimeout(() => el.select(), 0); }}
                   onChange={(e) =>
                     setValue("semanal", e.target.value.replace(/[^\d.]/g, ""), {
                       shouldValidate: true,
