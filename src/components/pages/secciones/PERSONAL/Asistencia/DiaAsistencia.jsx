@@ -173,16 +173,18 @@ const DiaAsistencia = () => {
 
   const exportarExcel = () => {
     const titulo = `Asistencia - ${dia} de ${MESES[mes]} ${anio}`;
+    const fecha = `Fecha: ${new Date().toLocaleDateString("es-AR")}`;
     const headers = ["Personal", "Ausente", "Remito", "Entra", "Sale", "Máquina", "Horómetro", "Obra", "Observaciones"];
     const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
     const estHeader = { font: { bold: true }, alignment: { horizontal: "center", vertical: "center" } };
     const estTitulo = { font: { bold: true, sz: 14 }, alignment: { horizontal: "left", vertical: "center" } };
+    const estFecha = { alignment: { horizontal: "left", vertical: "center" } };
 
     const wb = XLSXStyle.utils.book_new();
     const ws = {};
 
     ws["A1"] = { v: titulo, t: "s", s: estTitulo };
-    ws["A2"] = { v: "", t: "s" };
+    ws["A2"] = { v: fecha, t: "s", s: estFecha };
 
     const cols = "ABCDEFGHI";
     headers.forEach((h, i) => {
@@ -257,7 +259,7 @@ const DiaAsistencia = () => {
               <option key={p._id} value={p.nombre}>{p.nombre}</option>
             ))}
           </Form.Select>
-          <Button variant="outline-info" onClick={exportarExcel}>Excel</Button>
+          <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
           <Button variant="outline-success" onClick={volver}>Volver</Button>
         </div>
       </div>
