@@ -93,8 +93,10 @@ const PreciosTabla = ({
       t: "s",
       s: { font: { bold: true, sz: 14 }, alignment: leftAlign },
     };
+    // Fila 2: fecha de emisión
+    ws["A2"] = { v: `Fecha: ${new Date().toLocaleDateString("es-AR")}`, t: "s", s: { alignment: leftAlign } };
 
-    // Fila 3: headers con negrita y centrado (fila 2 vacía como espacio)
+    // Fila 3: headers con negrita y centrado
     headers.forEach((h, i) => {
       const cell = `${colLetters[i]}3`;
       ws[cell] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };

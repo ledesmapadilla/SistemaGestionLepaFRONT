@@ -230,23 +230,25 @@ const VerRemitos = () => {
 
     // Fila 1: título
     ws["A1"] = { v: "LISTADO DE REMITOS", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
-    // Fila 2: razón social
-    ws["A2"] = { v: `Razón Social: ${razonsocial}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
-    // Fila 3: obra
-    ws["A3"] = { v: `Obra: ${obraNombre}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
-    // Fila 4: vacía, Fila 5: headers
+    // Fila 2: fecha de emisión
+    ws["A2"] = { v: `Fecha: ${new Date().toLocaleDateString("es-AR")}`, t: "s", s: { alignment: leftAlign } };
+    // Fila 3: razón social
+    ws["A3"] = { v: `Razón Social: ${razonsocial}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+    // Fila 4: obra
+    ws["A4"] = { v: `Obra: ${obraNombre}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+    // Fila 5: vacía, Fila 6: headers
 
     headers.forEach((h, i) => {
-      ws[`${cols[i]}5`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
+      ws[`${cols[i]}6`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
     });
 
-    // Filas desde la 6: datos
+    // Filas desde la 7: datos
     // Columnas con moneda: D(3)=$ Hora, I(8)=$ Unitario, J(9)=$ Total
     const currencyCols = new Set([3, 8, 9]);
     filas.forEach((fila, rowIdx) => {
       fila.forEach((val, colIdx) => {
         const isCurrency = currencyCols.has(colIdx) && val !== null && val !== "-";
-        ws[`${cols[colIdx]}${rowIdx + 6}`] = {
+        ws[`${cols[colIdx]}${rowIdx + 7}`] = {
           v: val ?? "-",
           t: isCurrency ? "n" : typeof val === "number" ? "n" : "s",
           s: { alignment: centerAlign, ...(isCurrency ? { numFmt: currencyFmt } : {}) },
@@ -255,7 +257,7 @@ const VerRemitos = () => {
       });
     });
 
-    ws["!ref"] = `A1:${cols[cols.length - 1]}${filas.length + 5}`;
+    ws["!ref"] = `A1:${cols[cols.length - 1]}${filas.length + 6}`;
     ws["!cols"] = colWidths.map((wch) => ({ wch }));
 
     const libro = XLSXStyle.utils.book_new();

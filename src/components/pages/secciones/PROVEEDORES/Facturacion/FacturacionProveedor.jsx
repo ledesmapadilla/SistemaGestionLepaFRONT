@@ -132,6 +132,7 @@ const FacturacionProveedor = () => {
 
     const ws = {};
     ws["A1"] = { v: "LISTADO DE FACTURAS — PROVEEDORES", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+    ws["A2"] = { v: `Fecha: ${new Date().toLocaleDateString("es-AR")}`, t: "s", s: { alignment: leftAlign } };
 
     headers.forEach((h, i) => {
       ws[`${cols[i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };

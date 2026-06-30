@@ -23,11 +23,12 @@ const CostoObraTabla = ({ obra, costos, onVolver, onVerGastos, onAnalizada }) =>
 
     const ws = {};
     ws["A1"] = { v: "ANÁLISIS DE COSTOS", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
-    ws["A2"] = { v: `Razón Social: ${obra?.razonsocial || "-"}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
-    ws["A3"] = { v: `Obra: ${obra?.nombreobra || "-"}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+    ws["A2"] = { v: `Fecha: ${new Date().toLocaleDateString("es-AR")}`, t: "s", s: { alignment: leftAlign } };
+    ws["A3"] = { v: `Razón Social: ${obra?.razonsocial || "-"}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+    ws["A4"] = { v: `Obra: ${obra?.nombreobra || "-"}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
 
     headers.forEach((h, i) => {
-      ws[`${cols[i]}5`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
+      ws[`${cols[i]}6`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
     });
 
     const valores = [
@@ -39,7 +40,7 @@ const CostoObraTabla = ({ obra, costos, onVolver, onVerGastos, onAnalizada }) =>
       saldoFinal,
     ];
     valores.forEach((val, colIdx) => {
-      ws[`${cols[colIdx]}6`] = {
+      ws[`${cols[colIdx]}7`] = {
         v: val,
         t: "n",
         z: currencyFmt,
@@ -47,7 +48,7 @@ const CostoObraTabla = ({ obra, costos, onVolver, onVerGastos, onAnalizada }) =>
       };
     });
 
-    ws["!ref"] = "A1:F6";
+    ws["!ref"] = "A1:F7";
     ws["!cols"] = [{ wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
 
     const libro = XLSXStyle.utils.book_new();

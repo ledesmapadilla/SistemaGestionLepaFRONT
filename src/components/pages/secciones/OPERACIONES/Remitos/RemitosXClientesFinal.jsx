@@ -110,18 +110,19 @@ const RemitosXClientesFinal = () => {
 
     const ws = {};
     ws["A1"] = { v: "REMITOS SIN FACTURAR", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
-    ws["A2"] = { v: `Razón Social: ${razonsocial}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
-    ws["A3"] = { v: `Obra: ${obraNombre}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+    ws["A2"] = { v: `Fecha: ${new Date().toLocaleDateString("es-AR")}`, t: "s", s: { alignment: leftAlign } };
+    ws["A3"] = { v: `Razón Social: ${razonsocial}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+    ws["A4"] = { v: `Obra: ${obraNombre}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
 
     headers.forEach((h, i) => {
-      ws[`${cols[i]}5`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
+      ws[`${cols[i]}6`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
     });
 
     const currencyCols = new Set([7, 8]); // $ Unitario y $ Total
     filas.forEach((fila, rowIdx) => {
       fila.forEach((val, colIdx) => {
         const isCurrency = currencyCols.has(colIdx) && typeof val === "number";
-        ws[`${cols[colIdx]}${rowIdx + 6}`] = {
+        ws[`${cols[colIdx]}${rowIdx + 7}`] = {
           v: val ?? "-",
           t: isCurrency ? "n" : typeof val === "number" ? "n" : "s",
           s: { alignment: centerAlign, ...(isCurrency ? { numFmt: currencyFmt } : {}) },
@@ -130,7 +131,7 @@ const RemitosXClientesFinal = () => {
       });
     });
 
-    ws["!ref"] = `A1:J${filas.length + 5}`;
+    ws["!ref"] = `A1:J${filas.length + 6}`;
     ws["!cols"] = [{ wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 12 }];
 
     const libro = XLSXStyle.utils.book_new();
