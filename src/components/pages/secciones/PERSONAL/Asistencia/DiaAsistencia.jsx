@@ -310,9 +310,9 @@ const DiaAsistencia = () => {
         </div>
       </div>
 
-      <div style={{ overflowX: "auto" }}>
+      <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "65vh" }}>
         <Table striped bordered hover className="text-center align-middle mb-3">
-          <thead className="table-dark">
+          <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
             <tr>
               <th style={{ width: 200 }}>Personal</th>
               <th style={{ width: 80 }}>Media Falta</th>
