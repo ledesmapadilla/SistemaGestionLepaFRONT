@@ -201,7 +201,7 @@ const DiaAsistencia = () => {
         fila.sale,
         fila.maquina,
         fila.personal?.toLowerCase().includes("zamorano")
-          ? calcularHorometroZamorano(fila.entra, fila.sale)
+          ? calcularHorometroZamorano(fila.entra, fila.sale, esSabado)
           : fila.horometro,
         fila.obra,
         fila.observaciones,
@@ -432,7 +432,7 @@ const DiaAsistencia = () => {
                 <td>
                   {fila.personal?.toLowerCase().includes("zamorano") ? (
                     <span style={{ color: "#dc3545", fontSize: "1.2rem", fontWeight: 700 }}>
-                      {calcularHorometroZamorano(fila.entra, fila.sale)}
+                      {calcularHorometroZamorano(fila.entra, fila.sale, esSabado)}
                     </span>
                   ) : (
                     <Form.Control

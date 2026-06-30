@@ -148,7 +148,7 @@ const Asistencia = () => {
         if (!r.remito) mapa[keyNombre].sinRemito += 1;
         if (r.observaciones) mapa[keyNombre].observaciones.push(r.observaciones);
         if (r.personal.toLowerCase().includes("zamorano"))
-          mapa[keyNombre].horometroMins += horometroStrAMins(calcularHorometroZamorano(r.entra, r.sale));
+          mapa[keyNombre].horometroMins += horometroStrAMins(calcularHorometroZamorano(r.entra, r.sale, esSabado));
       });
       // Agregar personas que deberían estar ese día aunque no tengan registro guardado
       filtrarPersonalParaDia(key).forEach((p) => {

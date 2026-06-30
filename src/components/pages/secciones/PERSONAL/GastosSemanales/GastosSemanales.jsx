@@ -773,7 +773,7 @@ const GastosSemanales = () => {
       } else if (reg.mediaFalta) {
         zamoranoMins += 240;
       } else {
-        zamoranoMins += horometroStrAMins(calcularHorometroZamorano(reg.entra, reg.sale));
+        zamoranoMins += horometroStrAMins(calcularHorometroZamorano(reg.entra, reg.sale, esSabado));
       }
     });
 
@@ -1163,9 +1163,9 @@ const GastosSemanales = () => {
             const montoDif = regGasto ? difMonto({ ...regGasto, difMin: totalDifMin }) : 0;
             let totalHorometroStr = null;
             if (esZamoranoPerson) {
-              const totalMins = regsModal.reduce((s, reg) => {
+              const totalMins = regsModal.reduce((s, reg, idx) => {
                 if (!reg) return s;
-                return s + horometroStrAMins(calcularHorometroZamorano(reg.entra, reg.sale));
+                return s + horometroStrAMins(calcularHorometroZamorano(reg.entra, reg.sale, diasModal[idx].getDay() === 6));
               }, 0);
               const neg = totalMins < 0;
               const abs = Math.abs(totalMins);
@@ -1219,7 +1219,7 @@ const GastosSemanales = () => {
                           {difDia != null ? minsAHHMM(difDia) : "-"}
                         </td>
                         <td>{reg.maquina || "-"}</td>
-                        <td>{esZamorano ? calcularHorometroZamorano(reg.entra, reg.sale) : (reg.horometro || "-")}</td>
+                        <td>{esZamorano ? calcularHorometroZamorano(reg.entra, reg.sale, d.getDay() === 6) : (reg.horometro || "-")}</td>
                         <td>{reg.obra || "-"}</td>
                         <td>{reg.observaciones || "-"}</td>
                       </tr>
