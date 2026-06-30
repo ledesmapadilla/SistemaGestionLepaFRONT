@@ -522,11 +522,11 @@ const DiaAsistencia = () => {
             ))}
           </tbody>
         </Table>
-      </div>
 
-      <div className="d-flex justify-content-end gap-2 mb-4">
-        <Button variant="outline-secondary" onClick={volver}>Cerrar</Button>
-        <AsyncButton variant="outline-success" onClick={guardar}>Guardar</AsyncButton>
+        <div className="d-flex justify-content-end gap-2 mb-2">
+          <Button variant="outline-secondary" onClick={volver}>Cerrar</Button>
+          <AsyncButton variant="outline-success" onClick={guardar}>Guardar</AsyncButton>
+        </div>
       </div>
     </div>
   );
