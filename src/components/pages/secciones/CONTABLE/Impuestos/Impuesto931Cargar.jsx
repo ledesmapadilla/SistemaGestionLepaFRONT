@@ -632,7 +632,7 @@ export default function Impuesto931Cargar() {
               type="text"
               value={editandoValor ? valorEditar : (valorEditar ? formatoMoneda(valorEditar) : "")}
               placeholder="$0"
-              onFocus={() => { setEditandoValor(true); setValorEditar(""); }}
+              onFocus={(e) => { setEditandoValor(true); const el = e.target; setTimeout(() => el.select(), 0); }}
               onChange={(e) => setValorEditar(e.target.value)}
               onBlur={() => setEditandoValor(false)}
               onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}

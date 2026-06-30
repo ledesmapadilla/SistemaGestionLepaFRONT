@@ -400,7 +400,7 @@ const NuevoCobro = () => {
                       size="sm"
                       style={{ width: "130px", margin: "0 auto", textAlign: "center" }}
                       value={editandoMontoId === f._id ? f.montoCobrado : formatoMoneda(f.montoCobrado)}
-                      onFocus={() => { setEditandoMontoId(f._id); actualizarCampo(f._id, "montoCobrado", ""); }}
+                      onFocus={(e) => { setEditandoMontoId(f._id); const el = e.target; setTimeout(() => el.select(), 0); }}
                       onChange={(e) => actualizarCampo(f._id, "montoCobrado", e.target.value)}
                       onBlur={() => setEditandoMontoId(null)}
                     />
@@ -494,7 +494,7 @@ const NuevoCobro = () => {
                       size="sm"
                       value={editandoMontoId === m.id ? m.monto : (m.monto ? formatoMoneda(m.monto) : "")}
                       placeholder="0.00"
-                      onFocus={() => { setEditandoMontoId(m.id); actualizarMedioPago(m.id, "monto", ""); }}
+                      onFocus={(e) => { setEditandoMontoId(m.id); const el = e.target; setTimeout(() => el.select(), 0); }}
                       onChange={(e) => actualizarMedioPago(m.id, "monto", e.target.value)}
                       onBlur={() => setEditandoMontoId(null)}
                     />

@@ -510,7 +510,7 @@ const NuevoPagoProveedor = () => {
                       size="sm"
                       style={{ width: "130px", margin: "0 auto", textAlign: "center" }}
                       value={editandoMontoId === f._id ? f.montoPagado : formatoMoneda(f.montoPagado)}
-                      onFocus={() => { setEditandoMontoId(f._id); actualizarCampo(f._id, "montoPagado", ""); }}
+                      onFocus={(e) => { setEditandoMontoId(f._id); const el = e.target; setTimeout(() => el.select(), 0); }}
                       onChange={(e) => actualizarCampo(f._id, "montoPagado", e.target.value)}
                       onBlur={() => setEditandoMontoId(null)}
                       onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
@@ -576,7 +576,7 @@ const NuevoPagoProveedor = () => {
                       value={editandoMontoId === m.id ? m.monto : (m.monto ? formatoMoneda(m.monto) : "")}
                       placeholder="0.00"
                       readOnly={!!m.chequeId}
-                      onFocus={() => { if (!m.chequeId) { setEditandoMontoId(m.id); actualizarMedioPago(m.id, "monto", ""); } }}
+                      onFocus={(e) => { if (!m.chequeId) { setEditandoMontoId(m.id); const el = e.target; setTimeout(() => el.select(), 0); } }}
                       onChange={(e) => { if (!m.chequeId) actualizarMedioPago(m.id, "monto", e.target.value); }}
                       onBlur={() => setEditandoMontoId(null)}
                     />
@@ -690,7 +690,7 @@ const NuevoPagoProveedor = () => {
                 type="text"
                 value={editandoMontoAltaCheque ? formAltaCheque.monto : (formAltaCheque.monto ? formatoMoneda(formAltaCheque.monto) : "")}
                 placeholder="$0,00"
-                onFocus={() => { setEditandoMontoAltaCheque(true); setFormAltaCheque((p) => ({ ...p, monto: "" })); }}
+                onFocus={(e) => { setEditandoMontoAltaCheque(true); const el = e.target; setTimeout(() => el.select(), 0); }}
                 onChange={(e) => setFormAltaCheque((p) => ({ ...p, monto: e.target.value }))}
                 onBlur={() => setEditandoMontoAltaCheque(false)}
                 onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
