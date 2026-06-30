@@ -59,6 +59,7 @@ const ImpuestosResumen = lazy(() => import("./components/pages/secciones/CONTABL
 const ImpuestosResumenAnual = lazy(() => import("./components/pages/secciones/CONTABLE/Impuestos/ImpuestosResumenAnual.jsx"));
 const Asistencia = lazy(() => import("./components/pages/secciones/PERSONAL/Asistencia/Asistencia.jsx"));
 const ResumenMes = lazy(() => import("./components/pages/secciones/PERSONAL/Asistencia/ResumenMes.jsx"));
+const DiaAsistencia = lazy(() => import("./components/pages/secciones/PERSONAL/Asistencia/DiaAsistencia.jsx"));
 const GastosSemanales = lazy(() => import("./components/pages/secciones/PERSONAL/GastosSemanales/GastosSemanales.jsx"));
 const ServiceMaquinas = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/ServiceMaquinas/ServiceMaquinas.jsx"));
 const TableroControl = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/TableroControl/TableroControl.jsx"));
@@ -163,6 +164,7 @@ function App() {
                       <Route path="/impuestos/:anio/resumen-anual" element={<ImpuestosResumenAnual />} />
                       <Route path="/personal/asistencia" element={<Asistencia />} />
                       <Route path="/personal/resumen-mes" element={<ResumenMes />} />
+                      <Route path="/personal/asistencia-dia" element={<DiaAsistencia />} />
                       <Route path="/personal/gastos-semanales" element={<GastosSemanales />} />
                       <Route path="/facturacion-proveedores" element={<FacturacionProveedor />} />
                       <Route path="/facturacion-proveedores/nueva" element={<NuevaFacturaProveedor />} />
