@@ -66,11 +66,13 @@ const Asistencia = () => {
         const docs = await resA.json();
         const mapa = {};
         docs.forEach((doc) => {
+          const [yy, mm, dd] = doc.fecha.split("-").map(Number);
+          const esSabadoDoc = new Date(yy, mm - 1, dd).getDay() === 6;
           mapa[doc.fecha] = doc.registros.map((r, i) => ({
             ...r,
             id: r.id || i,
             remito: r.personal?.toLowerCase().includes("zamorano") || !r.obra || r.obra === "Taller" ? true : r.remito,
-            sale: r.personal?.toLowerCase().includes("zamorano") && !r.sale ? "17:00" : r.sale,
+            sale: r.personal?.toLowerCase().includes("zamorano") && !r.sale ? (esSabadoDoc ? "12:00" : "17:00") : r.sale,
           }));
         });
         setRegistros(mapa);
