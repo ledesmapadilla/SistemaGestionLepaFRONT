@@ -1,13 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Button, Form, Table, Spinner } from "react-bootstrap";
-import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
-import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
-import { listarObras } from "../../../../../helpers/queriesObras.js";
+import { Button, Form, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
-import { listarAsistencia, guardarAsistencia as guardarAsistenciaAPI } from "../../../../../helpers/queriesAsistencia.js";
-import { listarServices } from "../../../../../helpers/queriesServiceMaquinas.js";
+import { guardarAsistencia as guardarAsistenciaAPI } from "../../../../../helpers/queriesAsistencia.js";
 import { calcularHorometroZamorano } from "../../../../../helpers/horometroUtils.js";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
 
@@ -22,34 +18,33 @@ const diaKey = (anio, mes, dia) =>
 const DiaAsistencia = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const st = location.state;
   const hoy = new Date();
 
-  const anio = location.state?.anio ?? hoy.getFullYear();
-  const mes = location.state?.mes ?? hoy.getMonth();
-  const dia = location.state?.dia ?? hoy.getDate();
+  // Si no hay state (acceso directo a la URL), volver a la grilla
+  useEffect(() => {
+    if (!st) navigate("/personal/asistencia", { replace: true });
+  }, [st, navigate]);
 
-  const [loadingDatos, setLoadingDatos] = useState(true);
-  const [loadingMes, setLoadingMes] = useState(true);
-  const [listaPersonal, setListaPersonal] = useState([]);
-  const [listaMaquinas, setListaMaquinas] = useState([]);
-  const [listaObras, setListaObras] = useState([]);
-  const [listaServices, setListaServices] = useState([]);
+  const anio = st?.anio ?? hoy.getFullYear();
+  const mes = st?.mes ?? hoy.getMonth();
+  const dia = st?.dia ?? hoy.getDate();
 
-  const [registros, setRegistros] = useState({});
+  // Datos recibidos ya cargados desde la grilla — la página no hace ninguna
+  // petición al abrir el día (antes refetcheaba todo y por eso demoraba).
+  const listaPersonal = useMemo(() => st?.personal ?? [], [st]);
+  const listaMaquinas = useMemo(() => st?.maquinas ?? [], [st]);
+  const listaObras = useMemo(() => st?.obras ?? [], [st]);
+  const listaServices = useMemo(() => st?.services ?? [], [st]);
+  const registros = useMemo(() => st?.registros ?? {}, [st]);
+
   const [edits, setEdits] = useState(null);
   const [busquedaPersona, setBusquedaPersona] = useState("");
-
-  const loading = loadingDatos || loadingMes;
 
   const keyDia = diaKey(anio, mes, dia);
   const hoyKey = diaKey(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
   const editandoHoy = keyDia === hoyKey;
   const esSabado = new Date(anio, mes, dia).getDay() === 6;
-
-  // Si no hay state (acceso directo a la URL), volver a la grilla
-  useEffect(() => {
-    if (!location.state) navigate("/personal/asistencia", { replace: true });
-  }, [location.state, navigate]);
 
   const filtrarPersonalParaDia = (key, lista) =>
     lista.filter((p) => {
@@ -60,47 +55,6 @@ const DiaAsistencia = () => {
       return true;
     });
 
-  // Carga referencia (personal, máquinas, obras, services)
-  useEffect(() => {
-    const cargar = async () => {
-      const [resP, resM, resO, resSvc] = await Promise.all([
-        listarPersonal(),
-        listarMaquinas(),
-        listarObras(),
-        listarServices(),
-      ]);
-      if (resP?.ok) setListaPersonal(await resP.json());
-      if (resM?.ok) setListaMaquinas(await resM.json());
-      if (resO?.ok) setListaObras(await resO.json());
-      if (resSvc?.ok) setListaServices(await resSvc.json());
-      setLoadingDatos(false);
-    };
-    cargar();
-  }, []);
-
-  // Carga asistencia del mes (para el día y para el cálculo de horómetro máximo)
-  useEffect(() => {
-    const cargarAsistencia = async () => {
-      setLoadingMes(true);
-      const resA = await listarAsistencia(anio, mes);
-      if (resA?.ok) {
-        const docs = await resA.json();
-        const mapa = {};
-        docs.forEach((doc) => {
-          mapa[doc.fecha] = doc.registros.map((r, i) => ({
-            ...r,
-            id: r.id || i,
-            remito: r.personal?.toLowerCase().includes("zamorano") || !r.obra || r.obra === "Taller" ? true : r.remito,
-            sale: r.personal?.toLowerCase().includes("zamorano") && !r.sale ? "17:00" : r.sale,
-          }));
-        });
-        setRegistros(mapa);
-      }
-      setLoadingMes(false);
-    };
-    cargarAsistencia();
-  }, [anio, mes]);
-
   const personalDelDia = useMemo(
     () => filtrarPersonalParaDia(keyDia, listaPersonal),
     [keyDia, listaPersonal]
@@ -109,8 +63,6 @@ const DiaAsistencia = () => {
   // Borrador inicial derivado de los datos cargados (sin efectos). Las ediciones
   // del usuario se guardan en `edits`; mientras no edite, se ve el inicial.
   const borradorInicial = useMemo(() => {
-    if (loading) return [];
-
     const filaDePersonal = (p) => ({
       id: p._id, personal: p.nombre, maquina: "", obra: "", mediaFalta: false,
       ausente: false, remito: true, horometro: "",
@@ -139,7 +91,7 @@ const DiaAsistencia = () => {
       .map(filaDePersonal);
 
     return [...filasDedup, ...faltantes].map((f) => ({ ...f }));
-  }, [loading, registros, personalDelDia, listaPersonal, keyDia, esSabado]);
+  }, [registros, personalDelDia, listaPersonal, keyDia, esSabado]);
 
   const borrador = edits ?? borradorInicial;
 
@@ -287,7 +239,7 @@ const DiaAsistencia = () => {
     return `${neg ? "-" : ""}${h}:${String(m).padStart(2, "0")}`;
   };
 
-  if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
+  if (!st) return null;
 
   return (
     <div className="container mt-4">

@@ -2,7 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Modal, Form, Table, Spinner } from "react-bootstrap";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
+import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
+import { listarObras } from "../../../../../helpers/queriesObras.js";
 import { listarAsistencia } from "../../../../../helpers/queriesAsistencia.js";
+import { listarServices } from "../../../../../helpers/queriesServiceMaquinas.js";
 import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
 
 const MESES = [
@@ -23,6 +26,9 @@ const Asistencia = () => {
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [loadingMes, setLoadingMes] = useState(true);
   const [listaPersonal, setListaPersonal] = useState([]);
+  const [listaMaquinas, setListaMaquinas] = useState([]);
+  const [listaObras, setListaObras] = useState([]);
+  const [listaServices, setListaServices] = useState([]);
 
   const [registros, setRegistros] = useState({});
   const [semanaResumen, setSemanaResumen] = useState(null);
@@ -31,11 +37,20 @@ const Asistencia = () => {
   const anios = Array.from({ length: 10 }, (_, i) => 2026 + i);
   const loading = loadingDatos || loadingMes;
 
-  // Carga referencia (personal) — solo al montar
+  // Carga referencia (personal, máquinas, obras, services) — solo al montar.
+  // Se conservan para pasarlas a la página del día sin que ésta vuelva a pedirlas.
   useEffect(() => {
     const cargar = async () => {
-      const resP = await listarPersonal();
+      const [resP, resM, resO, resSvc] = await Promise.all([
+        listarPersonal(),
+        listarMaquinas(),
+        listarObras(),
+        listarServices(),
+      ]);
       if (resP?.ok) setListaPersonal(await resP.json());
+      if (resM?.ok) setListaMaquinas(await resM.json());
+      if (resO?.ok) setListaObras(await resO.json());
+      if (resSvc?.ok) setListaServices(await resSvc.json());
       setLoadingDatos(false);
     };
     cargar();
@@ -92,7 +107,17 @@ const Asistencia = () => {
     const hoyInicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
     if (fechaDia > hoyInicio) return;
 
-    navigate("/personal/asistencia-dia", { state: { anio, mes, dia } });
+    // Pasar los datos ya cargados para que la página del día no haga peticiones
+    navigate("/personal/asistencia-dia", {
+      state: {
+        anio, mes, dia,
+        personal: listaPersonal,
+        maquinas: listaMaquinas,
+        obras: listaObras,
+        services: listaServices,
+        registros,
+      },
+    });
   };
 
   const normNombre = (s) =>
