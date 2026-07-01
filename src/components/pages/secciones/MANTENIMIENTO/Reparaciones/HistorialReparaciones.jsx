@@ -44,6 +44,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
   const [editandoId, setEditandoId] = useState(null);
   const [filtroReparacion, setFiltroReparacion] = useState("");
   const [filtroParte, setFiltroParte] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("activas");
 
   useEffect(() => {
     const cargar = async () => {
@@ -135,9 +136,13 @@ function HistorialReparaciones({ maquina, onVolver }) {
       filas.filter(
         (f) =>
           (!filtroReparacion || f.reparacion === filtroReparacion) &&
-          (!filtroParte || f.parte === filtroParte)
+          (!filtroParte || f.parte === filtroParte) &&
+          (filtroEstado === "" ||
+            (filtroEstado === "activas"
+              ? f.estado === "Pendiente" || f.estado === "En proceso"
+              : f.estado === filtroEstado))
       ),
-    [filas, filtroReparacion, filtroParte]
+    [filas, filtroReparacion, filtroParte, filtroEstado]
   );
 
   const exportarExcel = () => {
@@ -229,7 +234,31 @@ function HistorialReparaciones({ maquina, onVolver }) {
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
       <>
-      <div className="d-flex gap-2 mb-3 w-50">
+      <div className="d-flex gap-2 mb-3 w-75">
+        <div className="position-relative flex-fill">
+          <Form.Select
+            size="sm"
+            value={filtroEstado}
+            onChange={(e) => setFiltroEstado(e.target.value)}
+            style={filtroEstado !== "activas" ? { backgroundImage: "none" } : {}}
+          >
+            <option value="activas">Pendientes y en proceso</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="En proceso">En proceso</option>
+            <option value="Terminado">Terminado</option>
+            <option value="">Todos</option>
+          </Form.Select>
+          {filtroEstado !== "activas" && (
+            <button
+              type="button"
+              className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold"
+              aria-label="Limpiar"
+              onClick={() => setFiltroEstado("activas")}
+            >
+              ✕
+            </button>
+          )}
+        </div>
         <div className="position-relative flex-fill">
           <Form.Select
             size="sm"
