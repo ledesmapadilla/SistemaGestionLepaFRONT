@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Container, Spinner } from "react-bootstrap";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas";
+import { obtenerTodasReparaciones } from "../../../../../helpers/queriesReparaciones";
 import HistorialReparaciones from "./HistorialReparaciones";
 import Pendientes from "./Pendientes";
 
@@ -53,13 +54,17 @@ function Reparaciones() {
   const [loading, setLoading] = useState(true);
   const [maquinaSel, setMaquinaSel] = useState(null);
   const [verPendientes, setVerPendientes] = useState(false);
+  const [alertaMaquinas, setAlertaMaquinas] = useState(() => new Set());
 
   useEffect(() => {
     const cargar = async () => {
       try {
-        const res = await listarMaquinas();
-        if (res?.ok) {
-          const data = await res.json();
+        const [resMaq, resRep] = await Promise.all([
+          listarMaquinas(),
+          obtenerTodasReparaciones(),
+        ]);
+        if (resMaq?.ok) {
+          const data = await resMaq.json();
           setMaquinas(
             [...data].sort((a, b) => {
               const ca = categoriaOrden(a);
@@ -70,6 +75,17 @@ function Reparaciones() {
               });
             })
           );
+        }
+        if (resRep?.ok) {
+          const dataRep = await resRep.json();
+          const ids = new Set();
+          (Array.isArray(dataRep) ? dataRep : []).forEach((doc) => {
+            const tiene = (doc.reparaciones || []).some(
+              (r) => r.estado === "Pendiente" || r.estado === "En proceso"
+            );
+            if (tiene) ids.add(String(doc.maquina?._id || doc.maquina));
+          });
+          setAlertaMaquinas(ids);
         }
       } catch (error) {
         console.error("Error al cargar máquinas:", error);
@@ -132,6 +148,7 @@ function Reparaciones() {
               alignItems: "center",
               justifyContent: "center",
               overflow: "hidden",
+              position: "relative",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "scale(1.06)";
@@ -142,6 +159,13 @@ function Reparaciones() {
               e.currentTarget.style.boxShadow = "3px 3px 8px rgba(0,0,0,0.25)";
             }}
           >
+            {alertaMaquinas.has(String(m._id)) && (
+              <i
+                className="bi bi-exclamation-triangle-fill"
+                title="Tiene reparaciones pendientes o en proceso"
+                style={{ position: "absolute", top: 6, right: 8, color: "#ffc107", fontSize: "1.15rem" }}
+              />
+            )}
             <div style={{ fontSize: fontCodigo(m.maquina), fontWeight: 700, lineHeight: 1.1, wordBreak: "break-word" }}>
               {m.maquina}
             </div>
