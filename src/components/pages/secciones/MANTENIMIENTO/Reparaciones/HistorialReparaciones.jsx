@@ -135,14 +135,16 @@ function HistorialReparaciones({ maquina, onVolver }) {
     () =>
       filas.filter(
         (f) =>
-          (!filtroReparacion || f.reparacion === filtroReparacion) &&
-          (!filtroParte || f.parte === filtroParte) &&
-          (filtroEstado === "" ||
-            (filtroEstado === "activas"
-              ? f.estado === "Pendiente" || f.estado === "En proceso"
-              : f.estado === filtroEstado))
+          // La fila en edición no se filtra hasta confirmar con "Listo"
+          f.id === editandoId ||
+          ((!filtroReparacion || f.reparacion === filtroReparacion) &&
+            (!filtroParte || f.parte === filtroParte) &&
+            (filtroEstado === "" ||
+              (filtroEstado === "activas"
+                ? f.estado === "Pendiente" || f.estado === "En proceso"
+                : f.estado === filtroEstado)))
       ),
-    [filas, filtroReparacion, filtroParte, filtroEstado]
+    [filas, filtroReparacion, filtroParte, filtroEstado, editandoId]
   );
 
   const exportarExcel = () => {
