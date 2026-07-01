@@ -200,13 +200,9 @@ function HistorialReparaciones({ maquina, onVolver }) {
     <Container className="py-4">
       <div
         style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center" }}
-        className="mb-5"
+        className="mb-3"
       >
-        <div className="d-flex justify-content-start">
-          <Button variant="outline-primary" size="sm" onClick={agregar}>
-            + Agregar
-          </Button>
-        </div>
+        <div></div>
         <h4 className="mb-0 text-center">
           Historial de reparaciones - {maquina?.maquina}
         </h4>
@@ -221,6 +217,12 @@ function HistorialReparaciones({ maquina, onVolver }) {
             Volver
           </Button>
         </div>
+      </div>
+
+      <div className="mb-4">
+        <Button variant="outline-primary" size="sm" onClick={agregar}>
+          Agregar reparación
+        </Button>
       </div>
 
       {cargando ? (
