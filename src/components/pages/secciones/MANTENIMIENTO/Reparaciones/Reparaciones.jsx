@@ -169,11 +169,19 @@ function Reparaciones() {
             }}
           >
             {alertaMaquinas.has(String(m._id)) && (
-              <i
-                className="bi bi-exclamation-triangle-fill"
+              <span
                 title="Tiene reparaciones pendientes o en proceso"
-                style={{ position: "absolute", top: 6, right: 8, color: "#ffc107", fontSize: "1.7rem" }}
-              />
+                style={{ position: "absolute", top: 6, right: 8, width: "1.7rem", height: "1.7rem", lineHeight: 1 }}
+              >
+                <i
+                  className="bi bi-triangle-fill"
+                  style={{ position: "absolute", inset: 0, color: "#ffc107", fontSize: "1.7rem" }}
+                />
+                <i
+                  className="bi bi-exclamation"
+                  style={{ position: "absolute", left: "50%", top: "60%", transform: "translate(-50%, -50%)", color: "#000", fontSize: "1.1rem" }}
+                />
+              </span>
             )}
             <div style={{ fontSize: fontCodigo(m.maquina), fontWeight: 700, lineHeight: 1.1, wordBreak: "break-word" }}>
               {m.maquina}
