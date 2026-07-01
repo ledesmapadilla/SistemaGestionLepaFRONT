@@ -163,7 +163,7 @@ function Reparaciones() {
               <i
                 className="bi bi-exclamation-triangle-fill"
                 title="Tiene reparaciones pendientes o en proceso"
-                style={{ position: "absolute", top: 6, right: 8, color: "#ffc107", fontSize: "1.15rem" }}
+                style={{ position: "absolute", top: 6, right: 8, color: "#ffc107", fontSize: "1.7rem" }}
               />
             )}
             <div style={{ fontSize: fontCodigo(m.maquina), fontWeight: 700, lineHeight: 1.1, wordBreak: "break-word" }}>
