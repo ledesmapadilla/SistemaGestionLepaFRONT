@@ -18,6 +18,7 @@ const PARTES = [
   "Tren rodante",
   "Cabina",
   "Chapa",
+  "Otra",
 ];
 const PRIORIDADES = ["Normal", "Urgente", "Crítico"];
 const ESTADOS = ["Pendiente", "En proceso", "Terminado"];
@@ -93,10 +94,26 @@ function HistorialReparaciones({ maquina, onVolver }) {
   const editar = (id, campo, valor) =>
     setFilas((p) => p.map((f) => (f.id === id ? { ...f, [campo]: valor } : f)));
   const borrar = async (id) => {
+    const { isConfirmed } = await Swal.fire({
+      title: "¿Eliminar reparación?",
+      icon: "warning",
+      showCancelButton: true,
+      customClass: { confirmButton: "swal-btn-danger" },
+      confirmButtonText: "Sí, borrar",
+    });
+    if (!isConfirmed) return;
     const nuevas = filas.filter((f) => f.id !== id);
     setFilas(nuevas);
     setEditandoId((prev) => (prev === id ? null : prev));
     await persistir(nuevas);
+    Swal.fire({
+      position: "center",
+      icon: "success",
+      title: "Reparación eliminada",
+      showConfirmButton: false,
+      timer: 1500,
+      timerProgressBar: true,
+    });
   };
 
   const verObservacion = (texto) =>
@@ -108,13 +125,17 @@ function HistorialReparaciones({ maquina, onVolver }) {
     });
 
   const finalizarEdicion = async () => {
+    const fila = filas.find((f) => f.id === editandoId);
+    if (fila && !fila.parte) {
+      return Swal.fire({ icon: "warning", title: "Atención", text: "La parte es obligatoria." });
+    }
     setEditandoId(null);
     const res = await persistir(filas);
     if (res?.ok) {
       Swal.fire({
         position: "center",
         icon: "success",
-        title: "Cambios guardados",
+        title: "Reparación guardada",
         showConfirmButton: false,
         timer: 1500,
         timerProgressBar: true,
