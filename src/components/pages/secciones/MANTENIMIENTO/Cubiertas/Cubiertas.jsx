@@ -18,7 +18,7 @@ const hoy = () => new Date().toLocaleDateString("en-CA");
 const VACIO_ALTA  = { nombreCubierta: "", fecha: hoy() };
 const VACIO_NUEVA = { cubierta: "", maquina: "", fecha: hoy(), observaciones: "" };
 
-export default function Cubiertas() {
+export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas camiones" }) {
   const navigate = useNavigate();
   const [registros, setRegistros] = useState([]);
   const [catalogo, setCatalogo]   = useState([]);
@@ -63,8 +63,8 @@ export default function Cubiertas() {
     setCargando(true);
     try {
       const [regs, cats, maqRes] = await Promise.all([
-        listarRegistrosCubiertas(),
-        listarCubiertas(),
+        listarRegistrosCubiertas(categoria),
+        listarCubiertas(categoria),
         authFetch(API.maquinas),
       ]);
       setRegistros(regs);
@@ -99,7 +99,7 @@ export default function Cubiertas() {
 
     setGuardandoAlta(true);
     try {
-      const res = await crearCubierta(formAlta);
+      const res = await crearCubierta({ ...formAlta, categoria });
       if (res?.ok) {
         const data = await res.json();
         setCatalogo((prev) => [data.cubierta, ...prev]);
@@ -152,6 +152,7 @@ export default function Cubiertas() {
     const esEspecial = ESPECIALES.includes(formNueva.maquina);
     const payload = {
       cubierta:     formNueva.cubierta,
+      categoria,
       maquina:      esEspecial ? null : formNueva.maquina,
       maquinaLabel: esEspecial ? formNueva.maquina : "",
       fecha:        formNueva.fecha,
@@ -277,7 +278,7 @@ export default function Cubiertas() {
     const hoy = new Date();
     const fechaSerial = Math.round((Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
 
-    ws["A1"] = { v: "Cubiertas camiones", t: "s", s: estTitulo };
+    ws["A1"] = { v: titulo, t: "s", s: estTitulo };
     ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
     ws["A3"] = { v: "", t: "s" };
     headers.forEach((h, i) => { ws[`${cols[i]}4`] = { v: h, t: "s", s: estHeader }; });
@@ -293,8 +294,8 @@ export default function Cubiertas() {
     ws["!ref"] = `A1:C${lastRow}`;
     ws["!cols"] = [{ wch: 22 }, { wch: 22 }, { wch: 28 }];
 
-    XLSXStyle.utils.book_append_sheet(wb, ws, "Cubiertas camiones");
-    XLSXStyle.writeFile(wb, "Cubiertas camiones.xlsx");
+    XLSXStyle.utils.book_append_sheet(wb, ws, titulo.substring(0, 31));
+    XLSXStyle.writeFile(wb, `${titulo}.xlsx`);
   };
 
   if (cargando) return <Spinner animation="border" className="d-block mx-auto my-5" />;
@@ -302,7 +303,7 @@ export default function Cubiertas() {
   return (
     <div className="w-75 mx-auto my-2">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h6 className="mb-0">Cubiertas camiones</h6>
+        <h6 className="mb-0">{titulo}</h6>
         <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 

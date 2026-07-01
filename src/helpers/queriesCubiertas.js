@@ -3,8 +3,9 @@ import { API } from "./api";
 
 const base = API.cubiertas;
 
-export const listarCubiertas = async () => {
-  const res = await authFetch(base);
+export const listarCubiertas = async (categoria = "camiones") => {
+  const url = categoria ? `${base}?categoria=${encodeURIComponent(categoria)}` : base;
+  const res = await authFetch(url);
   if (!res?.ok) throw new Error("Error al listar cubiertas");
   return res.json();
 };

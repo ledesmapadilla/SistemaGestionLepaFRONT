@@ -5,7 +5,7 @@ const tarjetas = [
   {
     titulo: "Palas cargadoras",
     icono: "bi-truck-front-fill",
-    ruta: "",
+    ruta: "/mantenimiento/cubiertas/palas",
     color: "#0d6efd",
   },
   {
