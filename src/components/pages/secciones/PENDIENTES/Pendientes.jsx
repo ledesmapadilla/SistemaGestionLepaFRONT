@@ -124,8 +124,8 @@ export default function Pendientes() {
         {RESPONSABLES.map((r) => (
           <Col key={r.nombre}>
             <Card
-              className="h-100 shadow-sm border-0"
-              style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
+              className="h-100 shadow-sm border-0 mx-auto"
+              style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s", maxWidth: "50%" }}
               onClick={() => abrir(r)}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-4px)";
