@@ -140,13 +140,9 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
     <Container className="py-4">
       <div
         style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center" }}
-        className="mb-5"
+        className="mb-3"
       >
-        <div className="d-flex justify-content-start">
-          <Button variant="outline-primary" size="sm" onClick={agregar}>
-            + Agregar
-          </Button>
-        </div>
+        <div></div>
         <h4 className="mb-0 text-center">
           Repuestos - {reparacion?.reparacion || "reparación"}
           <small className="text-muted ms-2" style={{ fontSize: "1rem", fontWeight: 400 }}>
@@ -161,6 +157,12 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
             Volver
           </Button>
         </div>
+      </div>
+
+      <div className="mb-4">
+        <Button variant="outline-primary" size="sm" onClick={agregar}>
+          Agregar repuesto
+        </Button>
       </div>
 
       <div style={{ maxHeight: "65vh", overflowY: "auto" }}>

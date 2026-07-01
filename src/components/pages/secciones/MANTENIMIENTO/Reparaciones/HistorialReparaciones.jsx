@@ -214,7 +214,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
       >
         <div></div>
         <h4 className="mb-0 text-center">
-          Historial de reparaciones - {maquina?.maquina}
+          Reparaciones - {maquina?.maquina}
         </h4>
         <div className="d-flex gap-2 justify-content-end">
           <Button variant="outline-light" size="sm" onClick={exportarExcel}>
