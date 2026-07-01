@@ -34,6 +34,7 @@ const filaVacia = () => ({
   prioridad: "Normal",
   estado: "Pendiente",
   maquinaParada: false,
+  observaciones: "",
 });
 
 function HistorialReparaciones({ maquina, onVolver }) {
@@ -140,8 +141,8 @@ function HistorialReparaciones({ maquina, onVolver }) {
 
   const exportarExcel = () => {
     const titulo = `Historial de reparaciones - ${maquina?.maquina || ""}`;
-    const headers = ["Fecha", "Reparación", "Parte", "Prioridad", "Estado"];
-    const cols = "ABCDE";
+    const headers = ["Fecha", "Reparación", "Parte", "Prioridad", "Estado", "Observaciones"];
+    const cols = "ABCDEF";
     const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
     const estIzq = { alignment: { horizontal: "left", vertical: "center" } };
     const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
@@ -165,11 +166,12 @@ function HistorialReparaciones({ maquina, onVolver }) {
       ws[`C${row}`] = { v: r.parte || "", t: "s", s: estCentro };
       ws[`D${row}`] = { v: r.prioridad || "", t: "s", s: estCentro };
       ws[`E${row}`] = { v: r.estado || "", t: "s", s: estCentro };
+      ws[`F${row}`] = { v: r.observaciones || "", t: "s", s: estIzq };
     });
 
     const lastRow = filasFiltradas.length + 4;
-    ws["!ref"] = `A1:E${Math.max(lastRow, 4)}`;
-    ws["!cols"] = [{ wch: 14 }, { wch: 36 }, { wch: 16 }, { wch: 14 }, { wch: 14 }];
+    ws["!ref"] = `A1:F${Math.max(lastRow, 4)}`;
+    ws["!cols"] = [{ wch: 14 }, { wch: 36 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 30 }];
 
     XLSXStyle.utils.book_append_sheet(wb, ws, "Reparaciones");
     XLSXStyle.writeFile(wb, `HistorialReparaciones_${maquina?.maquina || ""}.xlsx`);
@@ -287,6 +289,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
             <th style={{ width: 150 }}>Parte</th>
             <th style={{ width: 130 }}>Prioridad</th>
             <th style={{ width: 140 }}>Estado</th>
+            <th style={{ width: 220 }}>Observaciones</th>
             <th style={{ width: 120 }}>Máquina parada</th>
             <th style={{ width: 90 }}>Repuestos</th>
             <th style={{ width: 160 }}>Acciones</th>
@@ -295,7 +298,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
         <tbody>
           {filasFiltradas.length === 0 && (
             <tr>
-              <td colSpan={9} className="text-muted py-3">
+              <td colSpan={10} className="text-muted py-3">
                 Sin reparaciones cargadas
               </td>
             </tr>
@@ -388,6 +391,17 @@ function HistorialReparaciones({ maquina, onVolver }) {
                   <span style={{ color: COLOR_ESTADO[f.estado] || "#dee2e6", fontWeight: 600 }}>
                     {f.estado || "-"}
                   </span>
+                )}
+              </td>
+              <td className={editando ? "" : "text-start"}>
+                {editando ? (
+                  <Form.Control
+                    size="sm"
+                    value={f.observaciones || ""}
+                    onChange={(e) => editar(f.id, "observaciones", e.target.value)}
+                  />
+                ) : (
+                  f.observaciones || "-"
                 )}
               </td>
               <td>

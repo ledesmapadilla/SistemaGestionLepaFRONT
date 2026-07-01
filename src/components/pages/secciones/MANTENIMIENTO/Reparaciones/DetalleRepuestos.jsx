@@ -21,6 +21,7 @@ const filaVacia = () => ({
   proveedor: "",
   responsable: "",
   estado: "Pedido",
+  observaciones: "",
 });
 
 const pesos = (n) =>
@@ -78,8 +79,8 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
 
   const exportarExcel = () => {
     const titulo = `Repuestos - ${reparacion?.reparacion || "reparación"} (${maquina?.maquina || ""})`;
-    const headers = ["#", "Repuesto", "Cantidad", "Precio", "Proveedor", "Responsable", "Estado"];
-    const cols = "ABCDEFG";
+    const headers = ["#", "Repuesto", "Cantidad", "Precio", "Proveedor", "Responsable", "Estado", "Observaciones"];
+    const cols = "ABCDEFGH";
     const moneda = { numFmt: "#,##0" };
     const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
     const estIzq = { alignment: { horizontal: "left", vertical: "center" } };
@@ -107,15 +108,16 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
       ws[`E${row}`] = { v: r.proveedor || "", t: "s", s: estCentro };
       ws[`F${row}`] = { v: r.responsable || "", t: "s", s: estCentro };
       ws[`G${row}`] = { v: r.estado || "", t: "s", s: estCentro };
+      ws[`H${row}`] = { v: r.observaciones || "", t: "s", s: estIzq };
     });
 
     const totalRow = filas.length + 5;
-    ["A", "B", "E", "F", "G"].forEach((c) => { ws[`${c}${totalRow}`] = { v: "", t: "s", s: estTotal }; });
+    ["A", "B", "E", "F", "G", "H"].forEach((c) => { ws[`${c}${totalRow}`] = { v: "", t: "s", s: estTotal }; });
     ws[`C${totalRow}`] = { v: "Total", t: "s", s: estTotal };
     ws[`D${totalRow}`] = { v: total, t: "n", s: { ...estTotal, ...moneda } };
 
-    ws["!ref"] = `A1:G${Math.max(totalRow, 4)}`;
-    ws["!cols"] = [{ wch: 5 }, { wch: 32 }, { wch: 12 }, { wch: 14 }, { wch: 22 }, { wch: 20 }, { wch: 14 }];
+    ws["!ref"] = `A1:H${Math.max(totalRow, 4)}`;
+    ws["!cols"] = [{ wch: 5 }, { wch: 32 }, { wch: 12 }, { wch: 14 }, { wch: 22 }, { wch: 20 }, { wch: 14 }, { wch: 28 }];
 
     XLSXStyle.utils.book_append_sheet(wb, ws, "Repuestos");
     XLSXStyle.writeFile(wb, `Repuestos_${reparacion?.reparacion || ""}.xlsx`);
@@ -183,13 +185,14 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
             <th style={{ width: 200 }}>Proveedor</th>
             <th style={{ width: 180 }}>Responsable</th>
             <th style={{ width: 140 }}>Estado</th>
+            <th style={{ width: 220 }}>Observaciones</th>
             <th style={{ width: 160 }}>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {filas.length === 0 && (
             <tr>
-              <td colSpan={8} className="text-muted py-3">
+              <td colSpan={9} className="text-muted py-3">
                 Sin repuestos cargados
               </td>
             </tr>
@@ -273,6 +276,17 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
                   </span>
                 )}
               </td>
+              <td className={editando ? "" : "text-start"}>
+                {editando ? (
+                  <Form.Control
+                    size="sm"
+                    value={f.observaciones || ""}
+                    onChange={(e) => editar(f.id, "observaciones", e.target.value)}
+                  />
+                ) : (
+                  f.observaciones || "-"
+                )}
+              </td>
               <td>
                 <div className="d-flex gap-1 justify-content-center align-items-center">
                   {editando ? (
@@ -300,7 +314,7 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
                 Total
               </td>
               <td>{pesos(total)}</td>
-              <td colSpan={4} />
+              <td colSpan={5} />
             </tr>
           </tfoot>
         )}
