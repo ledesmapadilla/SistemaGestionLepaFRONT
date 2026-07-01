@@ -240,7 +240,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
             size="sm"
             value={filtroEstado}
             onChange={(e) => setFiltroEstado(e.target.value)}
-            style={filtroEstado !== "activas" ? { backgroundImage: "none" } : {}}
+            style={filtroEstado !== "" ? { backgroundImage: "none" } : {}}
           >
             <option value="activas">Pendientes y en proceso</option>
             <option value="Pendiente">Pendiente</option>
@@ -248,12 +248,12 @@ function HistorialReparaciones({ maquina, onVolver }) {
             <option value="Terminado">Terminado</option>
             <option value="">Todos</option>
           </Form.Select>
-          {filtroEstado !== "activas" && (
+          {filtroEstado !== "" && (
             <button
               type="button"
               className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold"
               aria-label="Limpiar"
-              onClick={() => setFiltroEstado("activas")}
+              onClick={() => setFiltroEstado("")}
             >
               ✕
             </button>
