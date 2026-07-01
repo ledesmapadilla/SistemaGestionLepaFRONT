@@ -268,8 +268,17 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
     palas: ["wa200", "xcmg"],
   };
   const ESPECIALES_OPCIONES = ["Auxilio - Galpón", "Perdida", "Desechada"];
-  // Cantidad de cubiertas esperada por máquina (para el resumen).
-  const CUBIERTAS_ESPERADAS = { wa200: 4, xcmg: 4 };
+  // Cantidad de cubiertas esperada por máquina, según categoría (para el resumen).
+  // Los nombres se comparan en minúsculas; se incluyen variantes con/sin acento.
+  const CUBIERTAS_ESPERADAS = {
+    palas: { wa200: 4, xcmg: 4 },
+    camiones: {
+      "bateas 1": 8, "bateas 2": 8,
+      "carreton chico": 8, "carretón chico": 8,
+      eiq: 6, etx: 6,
+    },
+  };
+  const esperadasCat = CUBIERTAS_ESPERADAS[categoria] || {};
 
   const EXCLUIR_MAQUINAS = ["pc1","pc2","pc3","pc4","pc5","wa200","xcmg","nisan","nissan","ranger","fiat","jd1","jd2","motoniveladora","carretón grande","carreton grande"];
 
@@ -295,8 +304,8 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
   }, [maquinas, categoria]);
 
   // Resumen por máquina: cantidad de cubiertas asignadas actualmente, última
-  // fecha y alerta si WA200/XCMG no tienen la cantidad esperada de cubiertas.
-  const hayResumen = !!MAQUINAS_CATEGORIA[categoria];
+  // fecha y alerta si una máquina no tiene la cantidad esperada de cubiertas.
+  const hayResumen = Object.keys(esperadasCat).length > 0;
   const resumen = useMemo(() => {
     const grupos = new Map();
     const agregar = (label) => {
@@ -311,15 +320,15 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
       if (r.fecha && r.fecha > g.fecha) g.fecha = r.fecha; // última (YYYY-MM-DD compara bien)
     });
 
-    // Asegurar filas para las máquinas de la categoría aunque tengan 0 cubiertas.
-    (MAQUINAS_CATEGORIA[categoria] || []).forEach((nombre) => {
+    // Asegurar filas para las máquinas esperadas aunque tengan 0 cubiertas.
+    Object.keys(esperadasCat).forEach((nombre) => {
       const m = maquinas.find((mq) => (mq.maquina || "").toLowerCase().trim() === nombre);
       if (m) agregar(m.maquina);
     });
 
     return [...grupos.values()].map((g) => {
       const norm = g.maquina.toLowerCase().trim();
-      const esperada = CUBIERTAS_ESPERADAS[norm];
+      const esperada = esperadasCat[norm];
       let alerta = "";
       if (esperada !== undefined) {
         const diff = g.cantidad - esperada;
@@ -332,9 +341,9 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
       }
       return { ...g, alerta };
     }).sort((a, b) => {
-      // Máquinas con cantidad esperada primero (WA200, XCMG)
-      const pa = CUBIERTAS_ESPERADAS[a.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
-      const pb = CUBIERTAS_ESPERADAS[b.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
+      // Máquinas con cantidad esperada primero
+      const pa = esperadasCat[a.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
+      const pb = esperadasCat[b.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
       return pa - pb || a.maquina.localeCompare(b.maquina);
     });
   }, [registros, maquinas, categoria]);
