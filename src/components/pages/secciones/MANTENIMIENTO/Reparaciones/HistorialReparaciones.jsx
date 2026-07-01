@@ -81,6 +81,14 @@ function HistorialReparaciones({ maquina, onVolver }) {
     setEditandoId((prev) => (prev === id ? null : prev));
   };
 
+  const verObservacion = (texto) =>
+    Swal.fire({
+      title: "Observaciones",
+      text: texto,
+      confirmButtonText: "Cerrar",
+      confirmButtonColor: "#6c757d",
+    });
+
   const finalizarEdicion = () => {
     setEditandoId(null);
     Swal.fire({
@@ -319,7 +327,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
                   f.fecha ? f.fecha.split("-").reverse().join("/") : "-"
                 )}
               </td>
-              <td className={editando ? "" : "text-start"}>
+              <td className={editando ? "" : "text-start"} style={editando ? {} : { maxWidth: 320 }}>
                 {editando ? (
                   <Form.Control
                     size="sm"
@@ -327,7 +335,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
                     onChange={(e) => editar(f.id, "reparacion", e.target.value)}
                   />
                 ) : (
-                  f.reparacion || "-"
+                  <div className="text-truncate" title={f.reparacion}>{f.reparacion || "-"}</div>
                 )}
               </td>
               <td>
@@ -393,15 +401,29 @@ function HistorialReparaciones({ maquina, onVolver }) {
                   </span>
                 )}
               </td>
-              <td className={editando ? "" : "text-start"}>
+              <td className={editando ? "" : "text-start"} style={editando ? {} : { maxWidth: 220 }}>
                 {editando ? (
                   <Form.Control
                     size="sm"
                     value={f.observaciones || ""}
                     onChange={(e) => editar(f.id, "observaciones", e.target.value)}
                   />
+                ) : f.observaciones ? (
+                  <div className="d-flex align-items-center gap-1">
+                    <span className="text-truncate" style={{ minWidth: 0 }} title={f.observaciones}>
+                      {f.observaciones}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline-secondary"
+                      className="py-0 px-1 flex-shrink-0"
+                      onClick={() => verObservacion(f.observaciones)}
+                    >
+                      Ver
+                    </Button>
+                  </div>
                 ) : (
-                  f.observaciones || "-"
+                  "-"
                 )}
               </td>
               <td>
