@@ -393,11 +393,10 @@ function HistorialReparaciones({ maquina, onVolver }) {
               <td>
                 <div className="d-flex justify-content-center">
                   <input
-                    type="radio"
+                    type="checkbox"
                     checked={!!f.maquinaParada}
                     disabled={!editando}
-                    onChange={() => {}}
-                    onClick={() => editando && editar(f.id, "maquinaParada", !f.maquinaParada)}
+                    onChange={(e) => editar(f.id, "maquinaParada", e.target.checked)}
                     style={{ cursor: editando ? "pointer" : "not-allowed", accentColor: "#ff0000", width: 20, height: 20 }}
                   />
                 </div>
