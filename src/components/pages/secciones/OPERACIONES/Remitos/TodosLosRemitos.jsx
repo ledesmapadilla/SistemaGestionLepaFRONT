@@ -13,7 +13,6 @@ import XLSXStyle from "xlsx-js-style";
 import { useNavigate } from "react-router-dom";
 import RemitosModal from "../Remitos/RemitosModal";
 import Swal from "sweetalert2";
-import "bootstrap-icons/font/bootstrap-icons.css";
 import {
   listarRemitos,
   eliminarRemito,

@@ -4,7 +4,6 @@ import XLSXStyle from "xlsx-js-style";
 import { useLocation, useNavigate } from "react-router-dom";
 import RemitosModal from "./RemitosModal";
 import Swal from "sweetalert2";
-import "bootstrap-icons/font/bootstrap-icons.css";
 import {
   listarRemitosPorObra,
   eliminarRemito,
