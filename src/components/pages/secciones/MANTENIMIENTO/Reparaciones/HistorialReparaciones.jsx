@@ -78,6 +78,13 @@ function HistorialReparaciones({ maquina, onVolver }) {
     return res;
   };
 
+  // Salir del modo edición con la tecla Esc
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") setEditandoId(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const agregar = () => {
     const nueva = filaVacia();
     setFilas((p) => [...p, nueva]);

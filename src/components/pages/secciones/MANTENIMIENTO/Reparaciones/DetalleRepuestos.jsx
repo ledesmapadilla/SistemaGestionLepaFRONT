@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Container, Button, Table, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
@@ -56,6 +56,13 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
     }
     return res;
   };
+
+  // Salir del modo edición con la tecla Esc
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") setEditandoId(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const agregar = () => {
     const nueva = filaVacia();
