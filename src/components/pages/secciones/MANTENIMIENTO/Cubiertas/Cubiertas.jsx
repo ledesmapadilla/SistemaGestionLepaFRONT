@@ -259,11 +259,35 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
     [registros, filtroCubierta, filtroMaquina, mostrarDesechadas]
   );
 
+  // Máquinas reales que aplican a cada categoría (nombres normalizados, en orden).
+  // Si la categoría no está acá, se usa el comportamiento por defecto (camiones).
+  const MAQUINAS_CATEGORIA = {
+    palas: ["wa200", "xcmg"],
+  };
+  const ESPECIALES_OPCIONES = ["Auxilio - Galpón", "Perdida", "Desechada"];
+
   const EXCLUIR_MAQUINAS = ["pc1","pc2","pc3","pc4","pc5","wa200","xcmg","nisan","nissan","ranger","fiat","jd1","jd2","motoniveladora","carretón grande","carreton grande"];
-  const maquinasFiltradas = useMemo(() =>
-    maquinas.filter((m) => !EXCLUIR_MAQUINAS.includes((m.maquina || "").toLowerCase().trim())),
-    [maquinas]
-  );
+
+  const opcionesMaquina = useMemo(() => {
+    const permitidas = MAQUINAS_CATEGORIA[categoria];
+    if (permitidas) {
+      const reales = permitidas
+        .map((nombre) => maquinas.find((m) => (m.maquina || "").toLowerCase().trim() === nombre))
+        .filter(Boolean)
+        .map((m) => ({ value: m._id, label: m.maquina }));
+      return [...reales, ...ESPECIALES_OPCIONES.map((e) => ({ value: e, label: e }))];
+    }
+    // camiones (por defecto): opciones especiales primero, luego el resto de máquinas
+    const reales = maquinas
+      .filter((m) => !EXCLUIR_MAQUINAS.includes((m.maquina || "").toLowerCase().trim()))
+      .map((m) => ({ value: m._id, label: m.maquina }));
+    return [
+      { value: "Desechada", label: "Desechada" },
+      { value: "Auxilio - Galpón", label: "Auxilio - Galpón" },
+      { value: "Perdida", label: "Perdida" },
+      ...reales,
+    ];
+  }, [maquinas, categoria]);
 
   const exportarExcel = () => {
     const headers = ["Nombre cubierta", "Máquina", "Observaciones"];
@@ -494,11 +518,8 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
                 onChange={(e) => setFormNueva((p) => ({ ...p, maquina: e.target.value }))}
               >
                 <option value="">Seleccionar...</option>
-                <option value="Desechada">Desechada</option>
-                <option value="Auxilio - Galpón">Auxilio - Galpón</option>
-                <option value="Perdida">Perdida</option>
-                {maquinasFiltradas.map((m) => (
-                  <option key={m._id} value={m._id}>{m.maquina}</option>
+                {opcionesMaquina.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </Form.Select>
             </Form.Group>
@@ -557,11 +578,8 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
                     onChange={(e) => setFormEditar((p) => ({ ...p, maquina: e.target.value }))}
                   >
                     <option value="">Seleccionar...</option>
-                    <option value="Desechada">Desechada</option>
-                    <option value="Auxilio - Galpón">Auxilio - Galpón</option>
-                    <option value="Perdida">Perdida</option>
-                    {maquinasFiltradas.map((m) => (
-                      <option key={m._id} value={m._id}>{m.maquina}</option>
+                    {opcionesMaquina.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </Form.Select>
                 </td>
