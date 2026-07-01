@@ -117,10 +117,10 @@ export default function Pendientes() {
   };
 
   return (
-    <Container className="py-4">
+    <Container className="py-4 d-flex flex-column justify-content-center" style={{ minHeight: "80vh" }}>
       <h2 className="mb-1 fw-bold text-center">Pendientes</h2>
       <p className="text-muted mb-4 text-center">Seleccioná un responsable</p>
-      <Row xs={2} sm={3} md={3} lg={3} className="g-2 mx-auto justify-content-center" style={{ maxWidth: 560 }}>
+      <Row xs={2} sm={3} md={3} lg={3} className="g-4 mx-auto justify-content-center" style={{ maxWidth: 620 }}>
         {RESPONSABLES.map((r) => (
           <Col key={r.nombre}>
             <Card
