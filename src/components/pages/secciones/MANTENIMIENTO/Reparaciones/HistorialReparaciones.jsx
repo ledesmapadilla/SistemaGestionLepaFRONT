@@ -126,6 +126,9 @@ function HistorialReparaciones({ maquina, onVolver }) {
 
   const finalizarEdicion = async () => {
     const fila = filas.find((f) => f.id === editandoId);
+    if (fila && !(fila.reparacion || "").trim()) {
+      return Swal.fire({ icon: "warning", title: "Atención", text: "La reparación es obligatoria." });
+    }
     if (fila && !fila.parte) {
       return Swal.fire({ icon: "warning", title: "Atención", text: "La parte es obligatoria." });
     }
@@ -471,32 +474,32 @@ function HistorialReparaciones({ maquina, onVolver }) {
                     )}
                   </div>
                 ) : f.observaciones ? (
-                  <div className="d-flex align-items-center gap-1">
-                    <span className="text-truncate" style={{ minWidth: 0 }} title={f.observaciones}>
-                      {f.observaciones}
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="outline-secondary"
-                      className="py-0 px-1 flex-shrink-0"
-                      onClick={() => verObservacion(f.observaciones)}
-                    >
-                      Ver
-                    </Button>
-                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline-secondary"
+                    className="py-0 px-2"
+                    onClick={() => verObservacion(f.observaciones)}
+                  >
+                    Ver
+                  </Button>
                 ) : (
                   "-"
                 )}
               </td>
               <td>
                 <div className="d-flex justify-content-center">
-                  <input
-                    type="checkbox"
-                    checked={!!f.maquinaParada}
-                    disabled={!editando}
-                    onChange={(e) => editar(f.id, "maquinaParada", e.target.checked)}
-                    style={{ cursor: editando ? "pointer" : "not-allowed", accentColor: "#ff0000", width: 20, height: 20 }}
-                  />
+                  {editando ? (
+                    <input
+                      type="checkbox"
+                      checked={!!f.maquinaParada}
+                      onChange={(e) => editar(f.id, "maquinaParada", e.target.checked)}
+                      style={{ cursor: "pointer", accentColor: "#ff0000", width: 20, height: 20 }}
+                    />
+                  ) : f.maquinaParada ? (
+                    <i className="bi bi-check-square-fill" style={{ color: "#ff0000", fontSize: 20 }} />
+                  ) : (
+                    <i className="bi bi-square" style={{ color: "#adb5bd", fontSize: 20 }} />
+                  )}
                 </div>
               </td>
               <td>

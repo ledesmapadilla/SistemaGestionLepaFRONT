@@ -47,6 +47,7 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
     (reparacion?.repuestos || []).map((r) => ({ ...r, id: r.id || crypto.randomUUID() }))
   );
   const [editandoId, setEditandoId] = useState(null);
+  const [otroResp, setOtroResp] = useState(() => new Set()); // filas en modo "Otro" responsable
 
   // Guarda el estado actual de las filas en la base (guardado automático).
   const persistir = async (nuevasFilas) => {
@@ -78,13 +79,22 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
     await persistir(nuevas);
   };
   const finalizarEdicion = async () => {
+    const fila = filas.find((f) => f.id === editandoId);
+    if (fila) {
+      if (!(fila.repuesto || "").trim())
+        return Swal.fire({ icon: "warning", title: "Atención", text: "El repuesto es obligatorio." });
+      if (!(Number(fila.cantidad) > 0))
+        return Swal.fire({ icon: "warning", title: "Atención", text: "La cantidad es obligatoria." });
+      if (!(fila.responsable || "").trim())
+        return Swal.fire({ icon: "warning", title: "Atención", text: "El responsable es obligatorio." });
+    }
     setEditandoId(null);
     const res = await persistir(filas);
     if (res?.ok) {
       Swal.fire({
         position: "center",
         icon: "success",
-        title: "Cambios guardados",
+        title: "Repuesto guardado",
         showConfirmButton: false,
         timer: 1500,
         timerProgressBar: true,
@@ -172,12 +182,6 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
         </Button>
       </div>
 
-      <datalist id="responsables-repuestos">
-        {RESPONSABLES.map((r) => (
-          <option key={r} value={r} />
-        ))}
-      </datalist>
-
       <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
       <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
         <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
@@ -252,12 +256,41 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
               </td>
               <td>
                 {editando ? (
-                  <Form.Control
-                    size="sm"
-                    list="responsables-repuestos"
-                    value={f.responsable}
-                    onChange={(e) => editar(f.id, "responsable", e.target.value)}
-                  />
+                  <>
+                    <Form.Select
+                      size="sm"
+                      value={
+                        RESPONSABLES.includes(f.responsable)
+                          ? f.responsable
+                          : (f.responsable || otroResp.has(f.id)) ? "__otro__" : ""
+                      }
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v === "__otro__") {
+                          setOtroResp((prev) => new Set(prev).add(f.id));
+                          editar(f.id, "responsable", "");
+                        } else {
+                          setOtroResp((prev) => { const n = new Set(prev); n.delete(f.id); return n; });
+                          editar(f.id, "responsable", v);
+                        }
+                      }}
+                    >
+                      <option value="">Seleccionar...</option>
+                      {RESPONSABLES.map((r) => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                      <option value="__otro__">Otro...</option>
+                    </Form.Select>
+                    {(otroResp.has(f.id) || (f.responsable && !RESPONSABLES.includes(f.responsable))) && (
+                      <Form.Control
+                        size="sm"
+                        className="mt-1"
+                        placeholder="Nombre"
+                        value={f.responsable}
+                        onChange={(e) => editar(f.id, "responsable", e.target.value)}
+                      />
+                    )}
+                  </>
                 ) : (
                   f.responsable || "-"
                 )}
