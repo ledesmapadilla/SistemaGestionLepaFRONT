@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Container, Button, Table, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
-import AsyncButton from "../../../../shared/AsyncButton";
 
 const ESTADOS = ["Pedido", "Pendiente", "En proceso", "En taller", "Colocado"];
 const COLOR_ESTADO = {
@@ -49,6 +48,15 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
   );
   const [editandoId, setEditandoId] = useState(null);
 
+  // Guarda el estado actual de las filas en la base (guardado automático).
+  const persistir = async (nuevasFilas) => {
+    const res = await onGuardar(nuevasFilas);
+    if (!res?.ok) {
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudieron guardar los cambios" });
+    }
+    return res;
+  };
+
   const agregar = () => {
     const nueva = filaVacia();
     setFilas((p) => [...p, nueva]);
@@ -56,20 +64,25 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
   };
   const editar = (id, campo, valor) =>
     setFilas((p) => p.map((f) => (f.id === id ? { ...f, [campo]: valor } : f)));
-  const borrar = (id) => {
-    setFilas((p) => p.filter((f) => f.id !== id));
+  const borrar = async (id) => {
+    const nuevas = filas.filter((f) => f.id !== id);
+    setFilas(nuevas);
     setEditandoId((prev) => (prev === id ? null : prev));
+    await persistir(nuevas);
   };
-  const finalizarEdicion = () => {
+  const finalizarEdicion = async () => {
     setEditandoId(null);
-    Swal.fire({
-      position: "center",
-      icon: "success",
-      title: "Repuesto actualizado",
-      showConfirmButton: false,
-      timer: 1500,
-      timerProgressBar: true,
-    });
+    const res = await persistir(filas);
+    if (res?.ok) {
+      Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "Cambios guardados",
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+      });
+    }
   };
 
   const total = filas.reduce(
@@ -123,27 +136,6 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
     XLSXStyle.writeFile(wb, `Repuestos_${reparacion?.reparacion || ""}.xlsx`);
   };
 
-  const guardar = async () => {
-    const res = await onGuardar(filas);
-    if (res?.ok) {
-      Swal.fire({
-        position: "center",
-        icon: "success",
-        title: "Repuestos guardados",
-        showConfirmButton: false,
-        timer: 1500,
-        timerProgressBar: true,
-      });
-      onVolver();
-    } else {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No se pudieron guardar los repuestos",
-      });
-    }
-  };
-
   return (
     <Container className="py-4">
       <div
@@ -162,9 +154,6 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
           </small>
         </h4>
         <div className="d-flex gap-2 justify-content-end">
-          <AsyncButton variant="outline-success" size="sm" onClick={guardar}>
-            Guardar
-          </AsyncButton>
           <Button variant="outline-light" size="sm" onClick={exportarExcel}>
             Excel
           </Button>

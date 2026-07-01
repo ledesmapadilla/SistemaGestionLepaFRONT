@@ -4,7 +4,6 @@ import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
 import DetalleReparacion from "./DetalleReparacion";
 import DetalleRepuestos from "./DetalleRepuestos";
-import AsyncButton from "../../../../shared/AsyncButton";
 import {
   obtenerReparacionesPorMaquina,
   guardarReparaciones,
@@ -69,6 +68,15 @@ function HistorialReparaciones({ maquina, onVolver }) {
     else setCargando(false);
   }, [maquina?._id]);
 
+  // Guarda el estado actual de las filas en la base (guardado automático).
+  const persistir = async (nuevasFilas) => {
+    const res = await guardarReparaciones(maquina?._id, nuevasFilas);
+    if (!res?.ok) {
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudieron guardar los cambios" });
+    }
+    return res;
+  };
+
   const agregar = () => {
     const nueva = filaVacia();
     setFilas((p) => [...p, nueva]);
@@ -76,9 +84,11 @@ function HistorialReparaciones({ maquina, onVolver }) {
   };
   const editar = (id, campo, valor) =>
     setFilas((p) => p.map((f) => (f.id === id ? { ...f, [campo]: valor } : f)));
-  const borrar = (id) => {
-    setFilas((p) => p.filter((f) => f.id !== id));
+  const borrar = async (id) => {
+    const nuevas = filas.filter((f) => f.id !== id);
+    setFilas(nuevas);
     setEditandoId((prev) => (prev === id ? null : prev));
+    await persistir(nuevas);
   };
 
   const verObservacion = (texto) =>
@@ -89,34 +99,17 @@ function HistorialReparaciones({ maquina, onVolver }) {
       confirmButtonColor: "#6c757d",
     });
 
-  const finalizarEdicion = () => {
+  const finalizarEdicion = async () => {
     setEditandoId(null);
-    Swal.fire({
-      position: "center",
-      icon: "success",
-      title: "Reparación actualizada",
-      showConfirmButton: false,
-      timer: 1500,
-      timerProgressBar: true,
-    });
-  };
-
-  const guardar = async () => {
-    const res = await guardarReparaciones(maquina?._id, filas);
+    const res = await persistir(filas);
     if (res?.ok) {
       Swal.fire({
         position: "center",
         icon: "success",
-        title: "Reparaciones guardadas",
+        title: "Cambios guardados",
         showConfirmButton: false,
-        timer: 1800,
+        timer: 1500,
         timerProgressBar: true,
-      });
-    } else {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No se pudieron guardar las reparaciones",
       });
     }
   };
@@ -220,9 +213,6 @@ function HistorialReparaciones({ maquina, onVolver }) {
           <Button variant="outline-light" size="sm" onClick={exportarExcel}>
             Excel
           </Button>
-          <AsyncButton variant="outline-success" size="sm" onClick={guardar}>
-            Guardar
-          </AsyncButton>
           <Button variant="outline-success" size="sm" onClick={onVolver}>
             Volver
           </Button>
