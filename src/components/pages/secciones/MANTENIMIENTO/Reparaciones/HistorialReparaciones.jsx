@@ -422,13 +422,26 @@ function HistorialReparaciones({ maquina, onVolver }) {
                   </span>
                 )}
               </td>
-              <td className={editando ? "" : "text-start"} style={editando ? {} : { maxWidth: 220 }}>
+              <td className="text-start" style={{ maxWidth: 220 }}>
                 {editando ? (
-                  <Form.Control
-                    size="sm"
-                    value={f.observaciones || ""}
-                    onChange={(e) => editar(f.id, "observaciones", e.target.value)}
-                  />
+                  <div className="d-flex align-items-center gap-1">
+                    <Form.Control
+                      size="sm"
+                      value={f.observaciones || ""}
+                      onChange={(e) => editar(f.id, "observaciones", e.target.value)}
+                      style={{ minWidth: 0 }}
+                    />
+                    {f.observaciones && (
+                      <Button
+                        size="sm"
+                        variant="outline-secondary"
+                        className="py-0 px-1 flex-shrink-0"
+                        onClick={() => verObservacion(f.observaciones)}
+                      >
+                        Ver
+                      </Button>
+                    )}
+                  </div>
                 ) : f.observaciones ? (
                   <div className="d-flex align-items-center gap-1">
                     <span className="text-truncate" style={{ minWidth: 0 }} title={f.observaciones}>
