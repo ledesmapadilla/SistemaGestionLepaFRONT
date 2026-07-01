@@ -15,7 +15,7 @@ export default function Pendientes() {
     <Container className="py-4">
       <h2 className="mb-1 fw-bold text-center">Pendientes</h2>
       <p className="text-muted mb-4 text-center">Seleccioná un responsable</p>
-      <Row xs={2} sm={3} md={4} lg={6} className="g-3">
+      <Row xs={1} sm={2} md={3} lg={3} className="g-3">
         {RESPONSABLES.map((r) => (
           <Col key={r.nombre}>
             <Card
