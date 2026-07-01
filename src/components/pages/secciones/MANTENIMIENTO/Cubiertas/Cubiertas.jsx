@@ -267,12 +267,14 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
   // Si la categoría no está acá, se usa el comportamiento por defecto (camiones).
   const MAQUINAS_CATEGORIA = {
     palas: ["wa200", "xcmg"],
+    retropalas: ["jd1", "jd2"],
   };
   const ESPECIALES_OPCIONES = ["Auxilio - Galpón", "Perdida", "Desechada"];
   // Cantidad de cubiertas esperada por máquina, según categoría (para el resumen).
   // Los nombres se comparan en minúsculas; se incluyen variantes con/sin acento.
   const CUBIERTAS_ESPERADAS = {
     palas: { wa200: 4, xcmg: 4 },
+    retropalas: { jd1: 4, jd2: 4 },
     camiones: {
       "bateas 1": 8, "bateas 2": 8,
       "carreton chico": 8, "carretón chico": 8,

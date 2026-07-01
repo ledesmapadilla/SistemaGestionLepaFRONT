@@ -23,7 +23,7 @@ const tarjetas = [
   {
     titulo: "Retropalas",
     icono: "bi-tools",
-    ruta: "",
+    ruta: "/mantenimiento/cubiertas/retropalas",
     color: "#dc3545",
   },
 ];
