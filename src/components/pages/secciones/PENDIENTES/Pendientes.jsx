@@ -15,7 +15,7 @@ export default function Pendientes() {
     <Container className="py-4">
       <h2 className="mb-1 fw-bold text-center">Pendientes</h2>
       <p className="text-muted mb-4 text-center">Seleccioná un responsable</p>
-      <Row xs={1} sm={2} md={3} className="g-4">
+      <Row xs={2} sm={3} md={4} lg={6} className="g-3">
         {RESPONSABLES.map((r) => (
           <Col key={r.nombre}>
             <Card
@@ -30,16 +30,16 @@ export default function Pendientes() {
                 e.currentTarget.style.boxShadow = "";
               }}
             >
-              <Card.Body className="d-flex flex-column align-items-center text-center py-4">
+              <Card.Body className="d-flex flex-column align-items-center text-center py-3">
                 <div
-                  className="rounded-circle d-flex align-items-center justify-content-center mb-3"
-                  style={{ width: 64, height: 64, backgroundColor: r.color + "1a" }}
+                  className="rounded-circle d-flex align-items-center justify-content-center mb-2"
+                  style={{ width: 44, height: 44, backgroundColor: r.color + "1a" }}
                 >
-                  <i className="bi bi-person-fill fs-2" style={{ color: r.color }} />
+                  <i className="bi bi-person-fill fs-5" style={{ color: r.color }} />
                 </div>
-                <Card.Title className="fw-semibold mb-0">{r.nombre}</Card.Title>
+                <Card.Title className="fw-semibold mb-0" style={{ fontSize: "0.95rem" }}>{r.nombre}</Card.Title>
               </Card.Body>
-              <div style={{ height: 4, backgroundColor: r.color, borderRadius: "0 0 .375rem .375rem" }} />
+              <div style={{ height: 3, backgroundColor: r.color, borderRadius: "0 0 .375rem .375rem" }} />
             </Card>
           </Col>
         ))}

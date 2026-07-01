@@ -16,6 +16,14 @@
   color: var(--lepa-orange) !important;
 }
 
+/* Link Pendientes: letras blancas, hover naranja como el resto */
+.navbar-lepa .nav-link.pendientes-link {
+  color: #ffffff !important;
+}
+.navbar-lepa .nav-link.pendientes-link:hover {
+  color: var(--lepa-orange) !important;
+}
+
 /* Dropdown */
 .navbar-lepa .dropdown-menu {
   background-color: #ffffff;
