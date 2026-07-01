@@ -31,4 +31,5 @@ export const API = {
   chequesPropio: `${BASE}/api/cheques-propio`,
   dato931: `${BASE}/api/dato931`,
   datoImpuesto: `${BASE}/api/dato-impuesto`,
+  pendientesResponsable: `${BASE}/api/pendientes-responsable`,
 };

@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { Button, Card, Col, Container, Form, Modal, Row, Table } from "react-bootstrap";
+import { useState, useEffect } from "react";
+import { Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
+import Swal from "sweetalert2";
+import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/queriesPendientes";
 
 // Mismos responsables que el select de repuestos.
 const RESPONSABLES = [
@@ -25,18 +27,94 @@ const filaVacia = () => ({
 });
 
 export default function Pendientes() {
-  const [modalResp, setModalResp] = useState(null); // responsable abierto
-  const [tareasPorResp, setTareasPorResp] = useState({}); // { nombre: [filas] }
+  const [modalResp, setModalResp] = useState(null);   // responsable abierto
+  const [tareasPorResp, setTareasPorResp] = useState({});
+  const [editandoId, setEditandoId] = useState(null);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    const cargar = async () => {
+      try {
+        const res = await obtenerTodosPendientes();
+        if (res?.ok) {
+          const data = await res.json();
+          const mapa = {};
+          (Array.isArray(data) ? data : []).forEach((doc) => {
+            mapa[doc.responsable] = (doc.tareas || []).map((t) => ({
+              ...t,
+              id: t.id || crypto.randomUUID(),
+            }));
+          });
+          setTareasPorResp(mapa);
+        }
+      } catch (error) {
+        console.error("Error al cargar pendientes:", error);
+      } finally {
+        setCargando(false);
+      }
+    };
+    cargar();
+  }, []);
+
+  // Salir del modo edición con Esc
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") setEditandoId(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const tareas = modalResp ? tareasPorResp[modalResp.nombre] || [] : [];
 
   const setTareas = (nuevas) =>
     setTareasPorResp((prev) => ({ ...prev, [modalResp.nombre]: nuevas }));
 
-  const agregar = () => setTareas([...tareas, filaVacia()]);
+  // Guarda en la base las tareas del responsable (guardado automático).
+  const persistir = async (nuevas) => {
+    const res = await guardarPendientes(modalResp.nombre, nuevas);
+    if (!res?.ok) {
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudieron guardar los cambios" });
+    }
+    return res;
+  };
+
+  const abrir = (r) => { setModalResp(r); setEditandoId(null); };
+  const cerrar = () => { setModalResp(null); setEditandoId(null); };
+
+  const agregar = () => {
+    const nueva = filaVacia();
+    setTareas([...tareas, nueva]);
+    setEditandoId(nueva.id);
+  };
   const editar = (id, campo, valor) =>
     setTareas(tareas.map((t) => (t.id === id ? { ...t, [campo]: valor } : t)));
-  const borrar = (id) => setTareas(tareas.filter((t) => t.id !== id));
+
+  const finalizarEdicion = async () => {
+    const fila = tareas.find((t) => t.id === editandoId);
+    if (fila && !(fila.tarea || "").trim()) {
+      return Swal.fire({ icon: "warning", title: "Atención", text: "La tarea es obligatoria." });
+    }
+    setEditandoId(null);
+    const res = await persistir(tareas);
+    if (res?.ok) {
+      Swal.fire({ position: "center", icon: "success", title: "Guardado", showConfirmButton: false, timer: 1200, timerProgressBar: true });
+    }
+  };
+
+  const borrar = async (id) => {
+    const { isConfirmed } = await Swal.fire({
+      title: "¿Eliminar tarea?",
+      icon: "warning",
+      showCancelButton: true,
+      customClass: { confirmButton: "swal-btn-danger" },
+      confirmButtonText: "Sí, borrar",
+    });
+    if (!isConfirmed) return;
+    const nuevas = tareas.filter((t) => t.id !== id);
+    setTareas(nuevas);
+    setEditandoId((prev) => (prev === id ? null : prev));
+    await persistir(nuevas);
+    Swal.fire({ position: "center", icon: "success", title: "Tarea eliminada", showConfirmButton: false, timer: 1200, timerProgressBar: true });
+  };
 
   return (
     <Container className="py-4">
@@ -48,7 +126,7 @@ export default function Pendientes() {
             <Card
               className="h-100 shadow-sm border-0"
               style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
-              onClick={() => setModalResp(r)}
+              onClick={() => abrir(r)}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-4px)";
                 e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.15)";
@@ -74,7 +152,7 @@ export default function Pendientes() {
       </Row>
 
       {/* ── Modal de tareas del responsable ── */}
-      <Modal show={!!modalResp} onHide={() => setModalResp(null)} centered size="xl">
+      <Modal show={!!modalResp} onHide={cerrar} centered size="xl">
         <Modal.Header closeButton>
           <Modal.Title>Pendientes - {modalResp?.nombre}</Modal.Title>
         </Modal.Header>
@@ -84,6 +162,9 @@ export default function Pendientes() {
             <Button size="sm" variant="outline-primary" onClick={agregar}>Agregar tarea</Button>
           </div>
 
+          {cargando ? (
+            <Spinner animation="border" className="d-block mx-auto my-4" />
+          ) : (
           <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
             <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
               <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
@@ -93,7 +174,7 @@ export default function Pendientes() {
                   <th style={{ width: 90 }}>Días</th>
                   <th style={{ width: 150 }}>Estado</th>
                   <th style={{ width: 260 }}>Observaciones</th>
-                  <th style={{ width: 90 }}>Acciones</th>
+                  <th style={{ width: 150 }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -102,62 +183,68 @@ export default function Pendientes() {
                     <td colSpan={6} className="text-muted py-3">Sin tareas cargadas</td>
                   </tr>
                 ) : (
-                  tareas.map((t) => (
-                    <tr key={t.id}>
-                      <td>
-                        <Form.Control
-                          size="sm"
-                          type="date"
-                          value={t.fecha}
-                          onChange={(e) => editar(t.id, "fecha", e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <Form.Control
-                          size="sm"
-                          value={t.tarea}
-                          onChange={(e) => editar(t.id, "tarea", e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <Form.Control
-                          size="sm"
-                          type="number"
-                          value={t.dias}
-                          onChange={(e) => editar(t.id, "dias", e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <Form.Select
-                          size="sm"
-                          value={t.estado}
-                          style={{ color: COLOR_ESTADO[t.estado] || "#000", fontWeight: 600 }}
-                          onChange={(e) => editar(t.id, "estado", e.target.value)}
-                        >
-                          {ESTADOS.map((s) => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </Form.Select>
-                      </td>
-                      <td>
-                        <Form.Control
-                          size="sm"
-                          value={t.observaciones}
-                          onChange={(e) => editar(t.id, "observaciones", e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <Button size="sm" variant="outline-danger" onClick={() => borrar(t.id)}>Borrar</Button>
-                      </td>
-                    </tr>
-                  ))
+                  tareas.map((t) => {
+                    const editando = editandoId === t.id;
+                    return (
+                      <tr key={t.id}>
+                        <td>
+                          {editando ? (
+                            <Form.Control size="sm" type="date" value={t.fecha} onChange={(e) => editar(t.id, "fecha", e.target.value)} />
+                          ) : (
+                            t.fecha ? t.fecha.split("-").reverse().join("/") : "-"
+                          )}
+                        </td>
+                        <td className={editando ? "" : "text-start"}>
+                          {editando ? (
+                            <Form.Control size="sm" value={t.tarea} onChange={(e) => editar(t.id, "tarea", e.target.value)} />
+                          ) : (
+                            t.tarea || "-"
+                          )}
+                        </td>
+                        <td>
+                          {editando ? (
+                            <Form.Control size="sm" type="number" value={t.dias} onChange={(e) => editar(t.id, "dias", e.target.value)} />
+                          ) : (
+                            t.dias || "-"
+                          )}
+                        </td>
+                        <td>
+                          {editando ? (
+                            <Form.Select size="sm" value={t.estado} onChange={(e) => editar(t.id, "estado", e.target.value)}>
+                              {ESTADOS.map((s) => (<option key={s} value={s}>{s}</option>))}
+                            </Form.Select>
+                          ) : (
+                            <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
+                          )}
+                        </td>
+                        <td className={editando ? "" : "text-start"}>
+                          {editando ? (
+                            <Form.Control size="sm" value={t.observaciones} onChange={(e) => editar(t.id, "observaciones", e.target.value)} />
+                          ) : (
+                            t.observaciones || "-"
+                          )}
+                        </td>
+                        <td>
+                          <div className="d-flex gap-1 justify-content-center">
+                            {editando ? (
+                              <Button size="sm" variant="outline-success" onClick={finalizarEdicion}>Listo</Button>
+                            ) : (
+                              <Button size="sm" variant="outline-warning" onClick={() => setEditandoId(t.id)}>Editar</Button>
+                            )}
+                            <Button size="sm" variant="outline-danger" onClick={() => borrar(t.id)}>Borrar</Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </Table>
           </div>
+          )}
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
-          <Button variant="outline-secondary" onClick={() => setModalResp(null)}>Cerrar</Button>
+          <Button variant="outline-secondary" onClick={cerrar}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
     </Container>
