@@ -120,12 +120,12 @@ export default function Pendientes() {
     <Container className="py-4">
       <h2 className="mb-1 fw-bold text-center">Pendientes</h2>
       <p className="text-muted mb-4 text-center">Seleccioná un responsable</p>
-      <Row xs={1} sm={2} md={3} lg={3} className="g-3">
+      <Row xs={2} sm={3} md={3} lg={3} className="g-2 mx-auto justify-content-center" style={{ maxWidth: 560 }}>
         {RESPONSABLES.map((r) => (
           <Col key={r.nombre}>
             <Card
-              className="h-100 shadow-sm border-0 mx-auto"
-              style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s", maxWidth: "50%" }}
+              className="h-100 shadow-sm border-0"
+              style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
               onClick={() => abrir(r)}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-4px)";
