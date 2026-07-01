@@ -104,6 +104,15 @@ function Reparaciones() {
       <HistorialReparaciones
         maquina={maquinaSel}
         onVolver={() => setMaquinaSel(null)}
+        onCambio={(tieneActivas) =>
+          setAlertaMaquinas((prev) => {
+            const n = new Set(prev);
+            const id = String(maquinaSel._id);
+            if (tieneActivas) n.add(id);
+            else n.delete(id);
+            return n;
+          })
+        }
       />
     );
 

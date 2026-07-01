@@ -37,7 +37,7 @@ const filaVacia = () => ({
   observaciones: "",
 });
 
-function HistorialReparaciones({ maquina, onVolver }) {
+function HistorialReparaciones({ maquina, onVolver, onCambio }) {
   const [filas, setFilas] = useState([]);
   const [detalleSel, setDetalleSel] = useState(null);
   const [repuestosSel, setRepuestosSel] = useState(null);
@@ -75,6 +75,10 @@ function HistorialReparaciones({ maquina, onVolver }) {
     const res = await guardarReparaciones(maquina?._id, nuevasFilas);
     if (!res?.ok) {
       Swal.fire({ icon: "error", title: "Error", text: "No se pudieron guardar los cambios" });
+    } else if (onCambio) {
+      onCambio(
+        nuevasFilas.some((f) => f.estado === "Pendiente" || f.estado === "En proceso")
+      );
     }
     return res;
   };
@@ -273,7 +277,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
             size="sm"
             value={filtroEstado}
             onChange={(e) => setFiltroEstado(e.target.value)}
-            style={filtroEstado !== "" ? { backgroundImage: "none" } : {}}
+            style={{ minWidth: 0, ...(filtroEstado !== "" ? { backgroundImage: "none" } : {}) }}
           >
             <option value="activas">Pendientes y en proceso</option>
             <option value="Pendiente">Pendiente</option>
@@ -297,7 +301,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
             size="sm"
             value={filtroReparacion}
             onChange={(e) => setFiltroReparacion(e.target.value)}
-            style={filtroReparacion ? { backgroundImage: "none" } : {}}
+            style={{ minWidth: 0, ...(filtroReparacion ? { backgroundImage: "none" } : {}) }}
           >
             <option value="">Reparación (todas)</option>
             {reparacionesUnicas.map((r) => (
@@ -320,7 +324,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
             size="sm"
             value={filtroParte}
             onChange={(e) => setFiltroParte(e.target.value)}
-            style={filtroParte ? { backgroundImage: "none" } : {}}
+            style={{ minWidth: 0, ...(filtroParte ? { backgroundImage: "none" } : {}) }}
           >
             <option value="">Parte (todas)</option>
             {partesUnicas.map((p) => (
@@ -344,7 +348,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
         <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
           <tr>
             <th style={{ width: 140 }}>Fecha</th>
-            <th>Reparación</th>
+            <th style={{ width: 420, minWidth: 420 }}>Reparación</th>
             <th style={{ width: 80 }}>Detalle</th>
             <th style={{ width: 150 }}>Parte</th>
             <th style={{ width: 130 }}>Prioridad</th>
@@ -379,7 +383,7 @@ function HistorialReparaciones({ maquina, onVolver }) {
                   f.fecha ? f.fecha.split("-").reverse().join("/") : "-"
                 )}
               </td>
-              <td className={editando ? "" : "text-start"} style={editando ? {} : { maxWidth: 320 }}>
+              <td className="text-start" style={{ width: 420, maxWidth: 420 }}>
                 {editando ? (
                   <Form.Control
                     size="sm"
