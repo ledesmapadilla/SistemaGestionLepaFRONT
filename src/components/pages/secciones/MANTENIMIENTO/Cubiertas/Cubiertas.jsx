@@ -33,6 +33,9 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
   // Modal Listado
   const [showListado, setShowListado] = useState(false);
 
+  // Modal Resumen
+  const [showResumen, setShowResumen] = useState(false);
+
   // Modal Ver
   const [showVer, setShowVer]         = useState(false);
   const [registroVer, setRegistroVer] = useState(null);
@@ -265,6 +268,8 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
     palas: ["wa200", "xcmg"],
   };
   const ESPECIALES_OPCIONES = ["Auxilio - Galpón", "Perdida", "Desechada"];
+  // Cantidad de cubiertas esperada por máquina (para el resumen).
+  const CUBIERTAS_ESPERADAS = { wa200: 4, xcmg: 4 };
 
   const EXCLUIR_MAQUINAS = ["pc1","pc2","pc3","pc4","pc5","wa200","xcmg","nisan","nissan","ranger","fiat","jd1","jd2","motoniveladora","carretón grande","carreton grande"];
 
@@ -288,6 +293,51 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
       ...reales,
     ];
   }, [maquinas, categoria]);
+
+  // Resumen por máquina: cantidad de cubiertas asignadas actualmente, última
+  // fecha y alerta si WA200/XCMG no tienen la cantidad esperada de cubiertas.
+  const hayResumen = !!MAQUINAS_CATEGORIA[categoria];
+  const resumen = useMemo(() => {
+    const grupos = new Map();
+    const agregar = (label) => {
+      if (!grupos.has(label)) grupos.set(label, { maquina: label, cantidad: 0, fecha: "" });
+      return grupos.get(label);
+    };
+
+    registros.forEach((r) => {
+      const label = r.maquinaLabel || r.maquina?.maquina || "Sin asignar";
+      const g = agregar(label);
+      g.cantidad += 1;
+      if (r.fecha && r.fecha > g.fecha) g.fecha = r.fecha; // última (YYYY-MM-DD compara bien)
+    });
+
+    // Asegurar filas para las máquinas de la categoría aunque tengan 0 cubiertas.
+    (MAQUINAS_CATEGORIA[categoria] || []).forEach((nombre) => {
+      const m = maquinas.find((mq) => (mq.maquina || "").toLowerCase().trim() === nombre);
+      if (m) agregar(m.maquina);
+    });
+
+    return [...grupos.values()].map((g) => {
+      const norm = g.maquina.toLowerCase().trim();
+      const esperada = CUBIERTAS_ESPERADAS[norm];
+      let alerta = "";
+      if (esperada !== undefined) {
+        const diff = g.cantidad - esperada;
+        if (diff < 0) {
+          const n = Math.abs(diff);
+          alerta = n === 1 ? "Falta una cubierta" : `Faltan ${n} cubiertas`;
+        } else if (diff > 0) {
+          alerta = diff === 1 ? "Sobra una cubierta" : `Sobran ${diff} cubiertas`;
+        }
+      }
+      return { ...g, alerta };
+    }).sort((a, b) => {
+      // Máquinas con cantidad esperada primero (WA200, XCMG)
+      const pa = CUBIERTAS_ESPERADAS[a.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
+      const pb = CUBIERTAS_ESPERADAS[b.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
+      return pa - pb || a.maquina.localeCompare(b.maquina);
+    });
+  }, [registros, maquinas, categoria]);
 
   const exportarExcel = () => {
     const headers = ["Nombre cubierta", "Máquina", "Observaciones"];
@@ -335,6 +385,9 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
         <div className="d-flex gap-2">
           <Button size="sm" variant="outline-success" onClick={abrirAlta}>+ Alta de cubierta</Button>
           <Button size="sm" variant="outline-secondary" onClick={() => setShowListado(true)}>Listado cubiertas</Button>
+          {hayResumen && (
+            <Button size="sm" variant="outline-info" onClick={() => setShowResumen(true)}>Resumen</Button>
+          )}
         </div>
         <div className="d-flex gap-2">
           <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
@@ -487,6 +540,44 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={() => setShowListado(false)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ── Modal Resumen ── */}
+      <Modal show={showResumen} onHide={() => setShowResumen(false)} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Resumen - {titulo}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {resumen.length === 0 ? (
+            <p className="text-muted text-center">Sin cubiertas registradas.</p>
+          ) : (
+            <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
+              <Table striped bordered hover className="text-center align-middle mb-0" size="sm">
+                <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
+                  <tr>
+                    <th>Máquina</th>
+                    <th>Cantidad de cubiertas</th>
+                    <th>Fecha</th>
+                    <th>Observaciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resumen.map((g) => (
+                    <tr key={g.maquina}>
+                      <td>{g.maquina}</td>
+                      <td>{g.cantidad}</td>
+                      <td>{g.fecha ? new Date(g.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
+                      <td className={g.alerta ? "text-danger fw-semibold" : ""}>{g.alerta || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setShowResumen(false)}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
 
