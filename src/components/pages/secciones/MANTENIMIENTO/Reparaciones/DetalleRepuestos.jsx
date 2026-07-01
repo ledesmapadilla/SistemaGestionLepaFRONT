@@ -73,10 +73,26 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
   const editar = (id, campo, valor) =>
     setFilas((p) => p.map((f) => (f.id === id ? { ...f, [campo]: valor } : f)));
   const borrar = async (id) => {
+    const { isConfirmed } = await Swal.fire({
+      title: "¿Eliminar repuesto?",
+      icon: "warning",
+      showCancelButton: true,
+      customClass: { confirmButton: "swal-btn-danger" },
+      confirmButtonText: "Sí, borrar",
+    });
+    if (!isConfirmed) return;
     const nuevas = filas.filter((f) => f.id !== id);
     setFilas(nuevas);
     setEditandoId((prev) => (prev === id ? null : prev));
     await persistir(nuevas);
+    Swal.fire({
+      position: "center",
+      icon: "success",
+      title: "Repuesto eliminado",
+      showConfirmButton: false,
+      timer: 1500,
+      timerProgressBar: true,
+    });
   };
   const finalizarEdicion = async () => {
     const fila = filas.find((f) => f.id === editandoId);
