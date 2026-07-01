@@ -35,6 +35,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
 
   // Modal Resumen
   const [showResumen, setShowResumen] = useState(false);
+  const [detalleResumen, setDetalleResumen] = useState(null);
 
   // Modal Ver
   const [showVer, setShowVer]         = useState(false);
@@ -309,7 +310,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
   const resumen = useMemo(() => {
     const grupos = new Map();
     const agregar = (label) => {
-      if (!grupos.has(label)) grupos.set(label, { maquina: label, cantidad: 0, fecha: "" });
+      if (!grupos.has(label)) grupos.set(label, { maquina: label, cantidad: 0, fecha: "", items: [] });
       return grupos.get(label);
     };
 
@@ -318,6 +319,11 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
       const g = agregar(label);
       g.cantidad += 1;
       if (r.fecha && r.fecha > g.fecha) g.fecha = r.fecha; // última (YYYY-MM-DD compara bien)
+      g.items.push({
+        nombreCubierta: r.cubierta?.nombreCubierta || "-",
+        fecha:          r.fecha || "",
+        observaciones:  r.observaciones || "",
+      });
     });
 
     // Asegurar filas para las máquinas esperadas aunque tengan 0 cubiertas.
@@ -569,6 +575,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
                     <th>Cantidad de cubiertas</th>
                     <th>Fecha</th>
                     <th>Observaciones</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -578,6 +585,9 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
                       <td>{g.cantidad}</td>
                       <td>{g.fecha ? new Date(g.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
                       <td className={g.alerta ? "text-danger fw-semibold" : ""}>{g.alerta || "-"}</td>
+                      <td>
+                        <Button size="sm" variant="outline-success" onClick={() => setDetalleResumen(g)} disabled={g.cantidad === 0}>Ver</Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -587,6 +597,42 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={() => setShowResumen(false)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ── Modal Detalle del resumen (cubiertas de una máquina) ── */}
+      <Modal show={!!detalleResumen} onHide={() => setDetalleResumen(null)} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Cubiertas de {detalleResumen?.maquina || ""}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {!detalleResumen || detalleResumen.items.length === 0 ? (
+            <p className="text-muted text-center">Sin cubiertas asignadas.</p>
+          ) : (
+            <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
+              <Table striped bordered hover className="text-center align-middle mb-0" size="sm">
+                <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
+                  <tr>
+                    <th>Nombre cubierta</th>
+                    <th>Fecha</th>
+                    <th>Observaciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detalleResumen.items.map((it, i) => (
+                    <tr key={i}>
+                      <td>{it.nombreCubierta}</td>
+                      <td>{it.fecha ? new Date(it.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
+                      <td>{it.observaciones || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setDetalleResumen(null)}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
 
