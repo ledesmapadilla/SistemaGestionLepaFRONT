@@ -64,6 +64,7 @@ const GastosSemanales = lazy(() => import("./components/pages/secciones/PERSONAL
 const ServiceMaquinas = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/ServiceMaquinas/ServiceMaquinas.jsx"));
 const TableroControl = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/TableroControl/TableroControl.jsx"));
 const MantenimientoDashboard = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/MantenimientoDashboard.jsx"));
+const Pendientes = lazy(() => import("./components/pages/secciones/PENDIENTES/Pendientes.jsx"));
 const Baterias = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Baterias/Baterias.jsx"));
 const CubiertasDashboard = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Cubiertas/CubiertasDashboard.jsx"));
 const Cubiertas = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Cubiertas/Cubiertas.jsx"));
@@ -139,6 +140,7 @@ function App() {
                       <Route path="/service-maquinas" element={<ServiceMaquinas />} />
                       <Route path="/tablero-control" element={<TableroControl />} />
                       <Route path="/departamento-mantenimiento" element={<MantenimientoDashboard />} />
+                      <Route path="/pendientes" element={<Pendientes />} />
                       <Route path="/mantenimiento/baterias" element={<Baterias />} />
                       <Route path="/mantenimiento/cubiertas" element={<CubiertasDashboard />} />
                       <Route path="/mantenimiento/cubiertas/camiones" element={<Cubiertas categoria="camiones" titulo="Cubiertas camiones" />} />
