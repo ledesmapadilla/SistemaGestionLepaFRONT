@@ -17,7 +17,7 @@ const tarjetas = [
   {
     titulo: "Motoniveladora",
     icono: "bi-cone-striped",
-    ruta: "",
+    ruta: "/mantenimiento/cubiertas/motoniveladora",
     color: "#ffc107",
   },
   {

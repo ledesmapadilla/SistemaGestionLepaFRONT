@@ -144,6 +144,7 @@ function App() {
                       <Route path="/mantenimiento/cubiertas/camiones" element={<Cubiertas categoria="camiones" titulo="Cubiertas camiones" />} />
                       <Route path="/mantenimiento/cubiertas/palas" element={<Cubiertas categoria="palas" titulo="Cubiertas palas cargadoras" />} />
                       <Route path="/mantenimiento/cubiertas/retropalas" element={<Cubiertas categoria="retropalas" titulo="Cubiertas retropalas" />} />
+                      <Route path="/mantenimiento/cubiertas/motoniveladora" element={<Cubiertas categoria="motoniveladora" titulo="Cubiertas motoniveladora" />} />
                       <Route path="/mantenimiento/preventivo" element={<MantenimientoPreventivo />} />
                       <Route path="/mantenimiento/reparaciones" element={<Reparaciones />} />
                       <Route path="/mantenimiento/otra" element={<Otra />} />
