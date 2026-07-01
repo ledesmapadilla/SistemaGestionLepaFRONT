@@ -277,7 +277,7 @@ export default function Cubiertas() {
     const hoy = new Date();
     const fechaSerial = Math.round((Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
 
-    ws["A1"] = { v: "Cubiertas", t: "s", s: estTitulo };
+    ws["A1"] = { v: "Cubiertas camiones", t: "s", s: estTitulo };
     ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
     ws["A3"] = { v: "", t: "s" };
     headers.forEach((h, i) => { ws[`${cols[i]}4`] = { v: h, t: "s", s: estHeader }; });
@@ -293,8 +293,8 @@ export default function Cubiertas() {
     ws["!ref"] = `A1:C${lastRow}`;
     ws["!cols"] = [{ wch: 22 }, { wch: 22 }, { wch: 28 }];
 
-    XLSXStyle.utils.book_append_sheet(wb, ws, "Cubiertas");
-    XLSXStyle.writeFile(wb, "Cubiertas.xlsx");
+    XLSXStyle.utils.book_append_sheet(wb, ws, "Cubiertas camiones");
+    XLSXStyle.writeFile(wb, "Cubiertas camiones.xlsx");
   };
 
   if (cargando) return <Spinner animation="border" className="d-block mx-auto my-5" />;
@@ -302,7 +302,7 @@ export default function Cubiertas() {
   return (
     <div className="w-75 mx-auto my-2">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h6 className="mb-0">Cubiertas</h6>
+        <h6 className="mb-0">Cubiertas camiones</h6>
         <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
