@@ -3,14 +3,14 @@ import { Container, Button, Table, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
 
-const ESTADOS = ["Pedido", "Pendiente", "En proceso", "En taller", "Colocado"];
+const ESTADOS = ["Pedido", "Pendiente", "En taller", "Colocado"];
 const COLOR_ESTADO = {
   Pedido: "#0dcaf0",
   Pendiente: "#6c757d",
-  "En proceso": "#ffc107",
   "En taller": "#fd7e14",
   Colocado: "#198754",
 };
+const RESPONSABLES = ["Zamorano", "Mauricio", "Nelson", "Juan José", "Nacho", "Agustín"];
 
 const filaVacia = () => ({
   id: crypto.randomUUID(),
@@ -172,6 +172,12 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
         </Button>
       </div>
 
+      <datalist id="responsables-repuestos">
+        {RESPONSABLES.map((r) => (
+          <option key={r} value={r} />
+        ))}
+      </datalist>
+
       <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
       <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
         <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
@@ -248,6 +254,7 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
                 {editando ? (
                   <Form.Control
                     size="sm"
+                    list="responsables-repuestos"
                     value={f.responsable}
                     onChange={(e) => editar(f.id, "responsable", e.target.value)}
                   />
