@@ -272,7 +272,7 @@ function HistorialReparaciones({ maquina, onVolver, onCambio }) {
       ) : (
       <>
       <div className="d-flex gap-2 mb-3 w-75">
-        <div className="position-relative flex-fill">
+        <div className="position-relative flex-fill" style={{ minWidth: 0 }}>
           <Form.Select
             size="sm"
             value={filtroEstado}
@@ -296,7 +296,7 @@ function HistorialReparaciones({ maquina, onVolver, onCambio }) {
             </button>
           )}
         </div>
-        <div className="position-relative flex-fill">
+        <div className="position-relative flex-fill" style={{ minWidth: 0 }}>
           <Form.Select
             size="sm"
             value={filtroReparacion}
@@ -319,7 +319,7 @@ function HistorialReparaciones({ maquina, onVolver, onCambio }) {
             </button>
           )}
         </div>
-        <div className="position-relative flex-fill">
+        <div className="position-relative flex-fill" style={{ minWidth: 0 }}>
           <Form.Select
             size="sm"
             value={filtroParte}
