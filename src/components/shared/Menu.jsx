@@ -46,7 +46,7 @@ function Menu() {
 
         <Navbar.Collapse id="navbar-nav">
           <Nav className="ms-auto">
-            <Nav.Link as={Link} to="/pendientes" className="mx-2 pendientes-link">
+            <Nav.Link as={Link} to="/pendientes" className="mx-2">
               Pendientes
             </Nav.Link>
 

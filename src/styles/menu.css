@@ -16,19 +16,6 @@
   color: var(--lepa-orange) !important;
 }
 
-/* Link Pendientes: letras blancas sobre fondo destacado */
-.navbar-lepa .nav-link.pendientes-link {
-  color: #ffffff !important;
-  background-color: #8b4a4a;
-  border-radius: 6px;
-  padding-left: 0.9rem;
-  padding-right: 0.9rem;
-}
-.navbar-lepa .nav-link.pendientes-link:hover {
-  color: #ffffff !important;
-  background-color: #6e3a3a;
-}
-
 /* Dropdown */
 .navbar-lepa .dropdown-menu {
   background-color: #ffffff;
