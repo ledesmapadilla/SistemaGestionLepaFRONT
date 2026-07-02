@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/queriesPendientes";
@@ -15,7 +16,15 @@ const RESPONSABLES = [
 ];
 
 const ESTADOS = ["Pendiente", "En proceso", "Terminado"];
-const COLOR_ESTADO = { Pendiente: "#6c757d", "En proceso": "#ffc107", Terminado: "#198754" };
+const COLOR_ESTADO = {
+  Pendiente: "#6c757d",
+  "En proceso": "#ffc107",
+  Terminado: "#198754",
+  // Estados de repuestos
+  Pedido: "#0dcaf0",
+  "En taller": "#fd7e14",
+  Colocado: "#198754",
+};
 
 const hoy = () => new Date().toLocaleDateString("en-CA");
 
@@ -50,6 +59,7 @@ const filaVacia = () => ({
 });
 
 export default function Pendientes() {
+  const navigate = useNavigate();
   const [modalResp, setModalResp] = useState(null);   // responsable abierto
   const [tareasPorResp, setTareasPorResp] = useState({});
   // Reparaciones activas (pendiente / en proceso) que se muestran como tareas de Zamorano.
@@ -82,10 +92,13 @@ export default function Pendientes() {
           const derivadas = [];
           (Array.isArray(docs) ? docs : []).forEach((doc) => {
             const nombreMaq = doc.maquina?.maquina || "Máquina";
+            const maquinaId = doc.maquina?._id || null;
             (doc.reparaciones || []).forEach((r) => {
               if (r.estado === "Pendiente" || r.estado === "En proceso") {
                 derivadas.push({
-                  id: `rep-${doc.maquina?._id || nombreMaq}-${r.id}`,
+                  id: `rep-${maquinaId || nombreMaq}-${r.id}`,
+                  tipo: "reparacion",
+                  maquinaId,
                   fecha: r.fecha,
                   maquina: nombreMaq,
                   tarea: r.reparacion,
@@ -93,6 +106,22 @@ export default function Pendientes() {
                   observaciones: r.observaciones || "",
                 });
               }
+              // Repuestos a cargo de Zamorano que todavía no están colocados.
+              (r.repuestos || []).forEach((rep) => {
+                if (rep.responsable === "Zamorano" && rep.estado !== "Colocado") {
+                  derivadas.push({
+                    id: `repu-${maquinaId || nombreMaq}-${r.id}-${rep.id}`,
+                    tipo: "repuesto",
+                    maquinaId,
+                    reparacionId: r.id,
+                    fecha: r.fecha,
+                    maquina: nombreMaq,
+                    tarea: rep.repuesto,
+                    estado: rep.estado,
+                    observaciones: rep.observaciones || "",
+                  });
+                }
+              });
             });
           });
           setReparacionesZamorano(derivadas);
@@ -131,6 +160,12 @@ export default function Pendientes() {
 
   const abrir = (r) => { setModalResp(r); setEditandoId(null); };
   const cerrar = () => { setModalResp(null); setEditandoId(null); };
+
+  // Navega al módulo de reparaciones abriendo la máquina (y los repuestos) correspondientes.
+  const irAReparaciones = (t) =>
+    navigate("/mantenimiento/reparaciones", {
+      state: { maquinaId: t.maquinaId, repuestosDe: t.tipo === "repuesto" ? t.reparacionId : undefined },
+    });
 
   const agregar = () => {
     const nueva = filaVacia();
@@ -250,7 +285,15 @@ export default function Pendientes() {
                       <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
                     </td>
                     <td className="text-start">{t.observaciones || "-"}</td>
-                    <td><span className="badge bg-secondary">Reparación</span></td>
+                    <td>
+                      <Button
+                        size="sm"
+                        variant={t.tipo === "repuesto" ? "outline-info" : "outline-secondary"}
+                        onClick={() => irAReparaciones(t)}
+                      >
+                        {t.tipo === "repuesto" ? "Repuestos" : "Reparación"}
+                      </Button>
+                    </td>
                   </tr>
                 ))}
                 {tareas.length === 0 && filasDerivadas.length === 0 ? (

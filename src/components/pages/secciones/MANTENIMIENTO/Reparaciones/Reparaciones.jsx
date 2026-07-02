@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Container, Spinner } from "react-bootstrap";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas";
 import { obtenerTodasReparaciones } from "../../../../../helpers/queriesReparaciones";
@@ -50,9 +51,12 @@ const categoriaOrden = (m) => {
 };
 
 function Reparaciones() {
+  const location = useLocation();
+  const navState = location.state;
   const [maquinas, setMaquinas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [maquinaSel, setMaquinaSel] = useState(null);
+  const [repuestosInicial, setRepuestosInicial] = useState(navState?.repuestosDe || null);
   const [verPendientes, setVerPendientes] = useState(false);
   const [alertaMaquinas, setAlertaMaquinas] = useState(() => new Set());
 
@@ -65,16 +69,20 @@ function Reparaciones() {
         ]);
         if (resMaq?.ok) {
           const data = await resMaq.json();
-          setMaquinas(
-            [...data].sort((a, b) => {
-              const ca = categoriaOrden(a);
-              const cb = categoriaOrden(b);
-              if (ca !== cb) return ca - cb;
-              return (a.maquina || "").localeCompare(b.maquina || "", "es", {
-                numeric: true,
-              });
-            })
-          );
+          const ordenadas = [...data].sort((a, b) => {
+            const ca = categoriaOrden(a);
+            const cb = categoriaOrden(b);
+            if (ca !== cb) return ca - cb;
+            return (a.maquina || "").localeCompare(b.maquina || "", "es", {
+              numeric: true,
+            });
+          });
+          setMaquinas(ordenadas);
+          // Si venimos desde Pendientes, abrimos directamente la máquina indicada.
+          if (navState?.maquinaId) {
+            const destino = ordenadas.find((m) => String(m._id) === String(navState.maquinaId));
+            if (destino) setMaquinaSel(destino);
+          }
         }
         if (resRep?.ok) {
           const dataRep = await resRep.json();
@@ -103,7 +111,8 @@ function Reparaciones() {
     return (
       <HistorialReparaciones
         maquina={maquinaSel}
-        onVolver={() => setMaquinaSel(null)}
+        abrirRepuestosDe={repuestosInicial}
+        onVolver={() => { setMaquinaSel(null); setRepuestosInicial(null); }}
         onCambio={(tieneActivas) =>
           setAlertaMaquinas((prev) => {
             const n = new Set(prev);

@@ -37,7 +37,7 @@ const filaVacia = () => ({
   observaciones: "",
 });
 
-function HistorialReparaciones({ maquina, onVolver, onCambio }) {
+function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }) {
   const [filas, setFilas] = useState([]);
   const [detalleSel, setDetalleSel] = useState(null);
   const [repuestosSel, setRepuestosSel] = useState(null);
@@ -59,6 +59,10 @@ function HistorialReparaciones({ maquina, onVolver, onCambio }) {
             id: r.id || crypto.randomUUID(),
           }));
           setFilas(items);
+          // Si venimos desde Pendientes con un repuesto, abrimos su detalle.
+          if (abrirRepuestosDe && items.some((f) => f.id === abrirRepuestosDe)) {
+            setRepuestosSel(abrirRepuestosDe);
+          }
         }
       } catch (error) {
         console.error("Error al cargar reparaciones:", error);
@@ -68,7 +72,7 @@ function HistorialReparaciones({ maquina, onVolver, onCambio }) {
     };
     if (maquina?._id) cargar();
     else setCargando(false);
-  }, [maquina?._id]);
+  }, [maquina?._id, abrirRepuestosDe]);
 
   // Guarda el estado actual de las filas en la base (guardado automático).
   const persistir = async (nuevasFilas) => {
