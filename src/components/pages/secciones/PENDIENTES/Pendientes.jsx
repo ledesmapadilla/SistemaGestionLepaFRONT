@@ -170,8 +170,10 @@ export default function Pendientes() {
     return rows;
   }, [docsReparaciones]);
 
-  // Filas de reparaciones/repuestos del responsable abierto.
-  const filasDerivadas = modalResp ? derivadas.filter((d) => d.responsable === modalResp.nombre) : [];
+  // Filas de reparaciones/repuestos del responsable abierto (tolerante a espacios).
+  const filasDerivadas = modalResp
+    ? derivadas.filter((d) => (d.responsable || "").trim() === modalResp.nombre.trim())
+    : [];
 
   // Máquinas para el select al cargar una tarea (todas las tarjetas de Reparaciones).
   // Las camionetas (Fiat, Nissan, Ranger) van juntas al final del listado.
