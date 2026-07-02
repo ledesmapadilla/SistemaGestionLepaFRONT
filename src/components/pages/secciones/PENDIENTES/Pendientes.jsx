@@ -106,14 +106,6 @@ export default function Pendientes() {
         if (resReps?.ok) {
           const docs = await resReps.json();
           setDocsReparaciones(Array.isArray(docs) ? docs : []);
-          // DIAGNÓSTICO temporal: responsables/estados de repuestos hallados.
-          const resp = new Set();
-          (Array.isArray(docs) ? docs : []).forEach((d) =>
-            (d.reparaciones || []).forEach((r) =>
-              (r.repuestos || []).forEach((rp) => rp.responsable && resp.add(`${rp.responsable} — ${rp.estado}`))
-            )
-          );
-          console.log("[Pendientes] Repuestos (responsable — estado):", [...resp]);
         }
       } catch (error) {
         console.error("Error al cargar pendientes:", error);
@@ -182,6 +174,15 @@ export default function Pendientes() {
   const filasDerivadas = modalResp
     ? derivadas.filter((d) => (d.responsable || "").trim() === modalResp.nombre.trim())
     : [];
+
+  // Cantidad de tareas Pendiente + En proceso de un responsable (derivadas + manuales).
+  const contarPendientesEnProceso = (nombre) => {
+    const derivadasResp = derivadas.filter((d) => (d.responsable || "").trim() === nombre.trim());
+    const manuales = tareasPorResp[nombre] || [];
+    return [...derivadasResp, ...manuales].filter(
+      (t) => t.estado === "Pendiente" || t.estado === "En proceso"
+    ).length;
+  };
 
   // Máquinas para el select al cargar una tarea (todas las tarjetas de Reparaciones).
   // Las camionetas (Fiat, Nissan, Ranger) van juntas al final del listado.
@@ -339,6 +340,18 @@ export default function Pendientes() {
                   <i className="bi bi-person-fill fs-5" style={{ color: r.color }} />
                 </div>
                 <Card.Title className="fw-semibold mb-0" style={{ fontSize: "0.95rem" }}>{r.nombre}</Card.Title>
+                {(() => {
+                  const n = contarPendientesEnProceso(r.nombre);
+                  return (
+                    <span
+                      className="badge rounded-pill mt-1"
+                      title="Tareas pendientes o en proceso"
+                      style={{ backgroundColor: n > 0 ? r.color : "#adb5bd", fontSize: "0.75rem" }}
+                    >
+                      {n}
+                    </span>
+                  );
+                })()}
               </Card.Body>
               <div style={{ height: 3, backgroundColor: r.color, borderRadius: "0 0 .375rem .375rem" }} />
             </Card>
