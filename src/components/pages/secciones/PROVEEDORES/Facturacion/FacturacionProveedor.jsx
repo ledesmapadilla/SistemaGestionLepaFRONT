@@ -20,6 +20,10 @@ const formatoMoneda = (valor) => {
   return Number(valor).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 };
 
+// El total se guarda neto (sin iva); para X/B no lleva iva. Este helper devuelve el total con iva incluido.
+const totalFactura = (f) =>
+  !f ? null : (f.tipoFactura === "Factura X" || f.tipoFactura === "Factura B" ? f.total : f.total * 1.21);
+
 const formatearFecha = (fecha) => {
   if (!fecha) return "-";
   const p = fecha.split("-");
@@ -74,12 +78,14 @@ const FacturacionProveedor = () => {
       concepto: f.concepto,
       observaciones: f.observaciones || "",
       obra: f.obra || "",
-      total: f.total,
+      total: totalFactura(f),
     });
   };
 
   const guardarEdicion = async (data) => {
-    const respuesta = await editarFacturaProveedor(facturaEditar._id, data);
+    const ivaRate = (data.tipoFactura === "Factura X" || data.tipoFactura === "Factura B") ? 0 : 0.21;
+    const payload = { ...data, total: (parseFloat(data.total) || 0) / (1 + ivaRate) };
+    const respuesta = await editarFacturaProveedor(facturaEditar._id, payload);
     if (respuesta?.ok) {
       const resultado = await respuesta.json();
       setFacturas(facturas.map((f) =>
@@ -126,7 +132,7 @@ const FacturacionProveedor = () => {
       f.observaciones || "-",
       f.obra || "-",
       f.tipoFactura,
-      f.total,
+      totalFactura(f),
       labelEstado(f.estadoPago),
     ]);
 
@@ -261,7 +267,7 @@ const FacturacionProveedor = () => {
                   </td>
                   <td className="text-muted">{f.obra || "-"}</td>
                   <td>{f.tipoFactura}</td>
-                  <td>{formatoMoneda(f.total)}</td>
+                  <td>{formatoMoneda(totalFactura(f))}</td>
                   <td>{labelEstado(f.estadoPago)}</td>
                   <td className="d-flex gap-1 justify-content-center align-items-center">
                     <Button variant="outline-success" size="sm" onClick={() => setFacturaVerId(f._id)}>Ver</Button>
@@ -290,7 +296,7 @@ const FacturacionProveedor = () => {
             <span><strong>Concepto:</strong> {facturaVer?.concepto || "-"}</span>
             <span><strong>Observaciones:</strong> {facturaVer?.observaciones || "-"}</span>
             <span><strong>Obra:</strong> {facturaVer?.obra || "-"}</span>
-            <span><strong>Total:</strong> {formatoMoneda(facturaVer?.total)}</span>
+            <span><strong>Total:</strong> {formatoMoneda(totalFactura(facturaVer))}</span>
             <span><strong>Estado:</strong> {labelEstado(facturaVer?.estadoPago)}</span>
           </div>
         </Modal.Body>
@@ -403,7 +409,7 @@ const FacturacionProveedor = () => {
             <Row className="mb-3">
               <Col md={12}>
                 <Form.Group>
-                  <Form.Label>Total</Form.Label>
+                  <Form.Label>Total (iva incluido)</Form.Label>
                   <Form.Control
                     type="text"
                     value={editandoTotal ? inputTotal : formatoMoneda(watch("total") ?? 0)}
