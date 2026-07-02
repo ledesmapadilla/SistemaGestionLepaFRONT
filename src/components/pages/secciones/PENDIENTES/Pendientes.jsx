@@ -68,8 +68,8 @@ export default function Pendientes() {
   const [editandoId, setEditandoId] = useState(null);
   const [estadoDerivado, setEstadoDerivado] = useState("");
   const [cargando, setCargando] = useState(true);
-  // Filtros del modal.
-  const [filtroEstado, setFiltroEstado] = useState("");
+  // Filtros del modal. Por defecto se ven las activas (no terminadas/colocadas).
+  const [filtroEstado, setFiltroEstado] = useState("activas");
   const [filtroMaquina, setFiltroMaquina] = useState("");
   const [filtroTarea, setFiltroTarea] = useState("");
 
@@ -122,23 +122,21 @@ export default function Pendientes() {
       const nombreMaq = doc.maquina?.maquina || "Máquina";
       const maquinaId = doc.maquina?._id || null;
       (doc.reparaciones || []).forEach((r, ri) => {
-        if (r.estado === "Pendiente" || r.estado === "En proceso") {
-          derivadas.push({
-            id: `rep-${maquinaId || nombreMaq}-${r.id || ri}`,
-            tipo: "reparacion",
-            maquinaId,
-            reparacionId: r.id,
-            reparacionIndex: ri,
-            fecha: r.fecha,
-            maquina: nombreMaq,
-            tarea: r.reparacion,
-            estado: r.estado,
-            observaciones: r.observaciones || "",
-          });
-        }
-        // Repuestos a cargo de Zamorano que todavía no están colocados.
+        derivadas.push({
+          id: `rep-${maquinaId || nombreMaq}-${r.id || ri}`,
+          tipo: "reparacion",
+          maquinaId,
+          reparacionId: r.id,
+          reparacionIndex: ri,
+          fecha: r.fecha,
+          maquina: nombreMaq,
+          tarea: r.reparacion,
+          estado: r.estado,
+          observaciones: r.observaciones || "",
+        });
+        // Repuestos a cargo de Zamorano (cualquier estado; el filtro controla la vista).
         (r.repuestos || []).forEach((rep, pi) => {
-          if (rep.responsable === "Zamorano" && rep.estado !== "Colocado") {
+          if (rep.responsable === "Zamorano") {
             derivadas.push({
               id: `repu-${maquinaId || nombreMaq}-${r.id || ri}-${rep.id || pi}`,
               tipo: "repuesto",
@@ -164,12 +162,13 @@ export default function Pendientes() {
 
   // Opciones de los filtros (a partir de todas las filas del responsable abierto).
   const filasModal = [...filasDerivadas, ...tareas];
-  const estadosUnicos = [...new Set(filasModal.map((f) => f.estado).filter(Boolean))];
   const maquinasUnicas = [...new Set(filasModal.map((f) => f.maquina).filter(Boolean))].sort();
   const tareasUnicas = [...new Set(filasModal.map((f) => f.tarea).filter(Boolean))].sort();
 
+  const ESTADOS_TERMINALES = ["Terminado", "Colocado"];
   const coincideFiltro = (f) =>
-    (filtroEstado === "" || f.estado === filtroEstado) &&
+    (filtroEstado === "" ||
+      (filtroEstado === "activas" ? !ESTADOS_TERMINALES.includes(f.estado) : f.estado === filtroEstado)) &&
     (filtroMaquina === "" || f.maquina === filtroMaquina) &&
     (filtroTarea === "" || f.tarea === filtroTarea);
 
@@ -188,7 +187,7 @@ export default function Pendientes() {
     return res;
   };
 
-  const limpiarFiltros = () => { setFiltroEstado(""); setFiltroMaquina(""); setFiltroTarea(""); };
+  const limpiarFiltros = () => { setFiltroEstado("activas"); setFiltroMaquina(""); setFiltroTarea(""); };
   const abrir = (r) => { setModalResp(r); setEditandoId(null); limpiarFiltros(); };
   const cerrar = () => { setModalResp(null); setEditandoId(null); limpiarFiltros(); };
 
@@ -320,17 +319,23 @@ export default function Pendientes() {
 
           {!cargando && (
             <div className="d-flex gap-2 mb-3 flex-wrap">
-              <div className="position-relative" style={{ width: 180 }}>
+              <div className="position-relative" style={{ width: 200 }}>
                 <Form.Select
                   size="sm"
                   value={filtroEstado}
                   onChange={(e) => setFiltroEstado(e.target.value)}
-                  style={{ minWidth: 0, ...(filtroEstado ? { backgroundImage: "none" } : {}) }}
+                  style={{ minWidth: 0, ...(filtroEstado !== "" ? { backgroundImage: "none" } : {}) }}
                 >
-                  <option value="">Estado (todos)</option>
-                  {estadosUnicos.map((s) => (<option key={s} value={s}>{s}</option>))}
+                  <option value="activas">Pendientes y en proceso</option>
+                  <option value="Pedido">Pedido</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="En proceso">En proceso</option>
+                  <option value="En taller">En taller</option>
+                  <option value="Colocado">Colocado</option>
+                  <option value="Terminado">Terminado</option>
+                  <option value="">Todos</option>
                 </Form.Select>
-                {filtroEstado && (
+                {filtroEstado !== "" && (
                   <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroEstado("")}>✕</button>
                 )}
               </div>
