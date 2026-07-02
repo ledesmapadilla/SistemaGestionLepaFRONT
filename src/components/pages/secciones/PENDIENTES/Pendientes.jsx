@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/queriesPendientes";
-import { obtenerTodasReparaciones } from "../../../../helpers/queriesReparaciones";
+import { obtenerTodasReparaciones, guardarReparaciones } from "../../../../helpers/queriesReparaciones";
 
 // Mismos responsables que el select de repuestos.
 const RESPONSABLES = [
@@ -16,6 +16,7 @@ const RESPONSABLES = [
 ];
 
 const ESTADOS = ["Pendiente", "En proceso", "Terminado"];
+const ESTADOS_REPUESTO = ["Pedido", "Pendiente", "En taller", "Colocado"];
 const COLOR_ESTADO = {
   Pendiente: "#6c757d",
   "En proceso": "#ffc107",
@@ -62,9 +63,10 @@ export default function Pendientes() {
   const navigate = useNavigate();
   const [modalResp, setModalResp] = useState(null);   // responsable abierto
   const [tareasPorResp, setTareasPorResp] = useState({});
-  // Reparaciones activas (pendiente / en proceso) que se muestran como tareas de Zamorano.
-  const [reparacionesZamorano, setReparacionesZamorano] = useState([]);
+  // Docs de reparaciones por máquina (fuente de las filas derivadas de Zamorano).
+  const [docsReparaciones, setDocsReparaciones] = useState([]);
   const [editandoId, setEditandoId] = useState(null);
+  const [estadoDerivado, setEstadoDerivado] = useState("");
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
@@ -89,42 +91,7 @@ export default function Pendientes() {
 
         if (resReps?.ok) {
           const docs = await resReps.json();
-          const derivadas = [];
-          (Array.isArray(docs) ? docs : []).forEach((doc) => {
-            const nombreMaq = doc.maquina?.maquina || "Máquina";
-            const maquinaId = doc.maquina?._id || null;
-            (doc.reparaciones || []).forEach((r) => {
-              if (r.estado === "Pendiente" || r.estado === "En proceso") {
-                derivadas.push({
-                  id: `rep-${maquinaId || nombreMaq}-${r.id}`,
-                  tipo: "reparacion",
-                  maquinaId,
-                  fecha: r.fecha,
-                  maquina: nombreMaq,
-                  tarea: r.reparacion,
-                  estado: r.estado,
-                  observaciones: r.observaciones || "",
-                });
-              }
-              // Repuestos a cargo de Zamorano que todavía no están colocados.
-              (r.repuestos || []).forEach((rep) => {
-                if (rep.responsable === "Zamorano" && rep.estado !== "Colocado") {
-                  derivadas.push({
-                    id: `repu-${maquinaId || nombreMaq}-${r.id}-${rep.id}`,
-                    tipo: "repuesto",
-                    maquinaId,
-                    reparacionId: r.id,
-                    fecha: r.fecha,
-                    maquina: nombreMaq,
-                    tarea: rep.repuesto,
-                    estado: rep.estado,
-                    observaciones: rep.observaciones || "",
-                  });
-                }
-              });
-            });
-          });
-          setReparacionesZamorano(derivadas);
+          setDocsReparaciones(Array.isArray(docs) ? docs : []);
         }
       } catch (error) {
         console.error("Error al cargar pendientes:", error);
@@ -143,7 +110,50 @@ export default function Pendientes() {
   }, []);
 
   const tareas = modalResp ? tareasPorResp[modalResp.nombre] || [] : [];
-  // Reparaciones activas que se listan (solo lectura) en el modal de Zamorano.
+
+  // Reparaciones activas y repuestos a cargo de Zamorano derivados de los docs.
+  const reparacionesZamorano = useMemo(() => {
+    const derivadas = [];
+    docsReparaciones.forEach((doc) => {
+      const nombreMaq = doc.maquina?.maquina || "Máquina";
+      const maquinaId = doc.maquina?._id || null;
+      (doc.reparaciones || []).forEach((r) => {
+        if (r.estado === "Pendiente" || r.estado === "En proceso") {
+          derivadas.push({
+            id: `rep-${maquinaId || nombreMaq}-${r.id}`,
+            tipo: "reparacion",
+            maquinaId,
+            reparacionId: r.id,
+            fecha: r.fecha,
+            maquina: nombreMaq,
+            tarea: r.reparacion,
+            estado: r.estado,
+            observaciones: r.observaciones || "",
+          });
+        }
+        // Repuestos a cargo de Zamorano que todavía no están colocados.
+        (r.repuestos || []).forEach((rep) => {
+          if (rep.responsable === "Zamorano" && rep.estado !== "Colocado") {
+            derivadas.push({
+              id: `repu-${maquinaId || nombreMaq}-${r.id}-${rep.id}`,
+              tipo: "repuesto",
+              maquinaId,
+              reparacionId: r.id,
+              repuestoId: rep.id,
+              fecha: r.fecha,
+              maquina: nombreMaq,
+              tarea: rep.repuesto,
+              estado: rep.estado,
+              observaciones: rep.observaciones || "",
+            });
+          }
+        });
+      });
+    });
+    return derivadas;
+  }, [docsReparaciones]);
+
+  // Reparaciones/repuestos que se listan en el modal de Zamorano.
   const filasDerivadas = modalResp?.nombre === "Zamorano" ? reparacionesZamorano : [];
 
   const setTareas = (nuevas) =>
@@ -166,6 +176,33 @@ export default function Pendientes() {
     navigate("/mantenimiento/reparaciones", {
       state: { maquinaId: t.maquinaId, repuestosDe: t.tipo === "repuesto" ? t.reparacionId : undefined },
     });
+
+  const editarDerivado = (t) => { setEditandoId(t.id); setEstadoDerivado(t.estado); };
+
+  // Guarda el nuevo estado de la fila derivada en la reparación o repuesto de origen.
+  const guardarDerivado = async (t) => {
+    const nuevosDocs = docsReparaciones.map((doc) => {
+      if (String(doc.maquina?._id) !== String(t.maquinaId)) return doc;
+      const reparaciones = (doc.reparaciones || []).map((r) => {
+        if (r.id !== t.reparacionId) return r;
+        if (t.tipo === "reparacion") return { ...r, estado: estadoDerivado };
+        const repuestos = (r.repuestos || []).map((rep) =>
+          rep.id === t.repuestoId ? { ...rep, estado: estadoDerivado } : rep
+        );
+        return { ...r, repuestos };
+      });
+      return { ...doc, reparaciones };
+    });
+    setDocsReparaciones(nuevosDocs);
+    setEditandoId(null);
+    const docAfectado = nuevosDocs.find((d) => String(d.maquina?._id) === String(t.maquinaId));
+    const res = await guardarReparaciones(t.maquinaId, docAfectado?.reparaciones || []);
+    if (res?.ok) {
+      Swal.fire({ position: "center", icon: "success", title: "Estado actualizado", showConfirmButton: false, timer: 1200, timerProgressBar: true });
+    } else {
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar el estado" });
+    }
+  };
 
   const agregar = () => {
     const nueva = filaVacia();
@@ -282,17 +319,32 @@ export default function Pendientes() {
                     <td className="text-start">{t.tarea || "-"}</td>
                     <td>{diasPendiente(t.fecha)}</td>
                     <td>
-                      <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
+                      {editandoId === t.id ? (
+                        <Form.Select size="sm" value={estadoDerivado} onChange={(e) => setEstadoDerivado(e.target.value)}>
+                          {(t.tipo === "repuesto" ? ESTADOS_REPUESTO : ESTADOS).map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </Form.Select>
+                      ) : (
+                        <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
+                      )}
                     </td>
                     <td className="text-start">{t.observaciones || "-"}</td>
                     <td>
-                      <Button
-                        size="sm"
-                        variant={t.tipo === "repuesto" ? "outline-info" : "outline-secondary"}
-                        onClick={() => irAReparaciones(t)}
-                      >
-                        {t.tipo === "repuesto" ? "Repuestos" : "Reparación"}
-                      </Button>
+                      <div className="d-flex gap-1 justify-content-center align-items-center">
+                        {editandoId === t.id ? (
+                          <Button size="sm" variant="outline-success" onClick={() => guardarDerivado(t)}>Listo</Button>
+                        ) : (
+                          <Button size="sm" variant="outline-warning" onClick={() => editarDerivado(t)}>Editar</Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant={t.tipo === "repuesto" ? "outline-info" : "outline-secondary"}
+                          onClick={() => irAReparaciones(t)}
+                        >
+                          {t.tipo === "repuesto" ? "Repuestos" : "Reparación"}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
