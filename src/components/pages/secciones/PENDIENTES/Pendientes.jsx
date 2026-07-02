@@ -106,6 +106,14 @@ export default function Pendientes() {
         if (resReps?.ok) {
           const docs = await resReps.json();
           setDocsReparaciones(Array.isArray(docs) ? docs : []);
+          // DIAGNÓSTICO temporal: responsables/estados de repuestos hallados.
+          const resp = new Set();
+          (Array.isArray(docs) ? docs : []).forEach((d) =>
+            (d.reparaciones || []).forEach((r) =>
+              (r.repuestos || []).forEach((rp) => rp.responsable && resp.add(`${rp.responsable} — ${rp.estado}`))
+            )
+          );
+          console.log("[Pendientes] Repuestos (responsable — estado):", [...resp]);
         }
       } catch (error) {
         console.error("Error al cargar pendientes:", error);
