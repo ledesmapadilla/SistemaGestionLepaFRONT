@@ -43,6 +43,7 @@ const diasPendiente = (fecha, fechaTerminado) => {
 const filaVacia = () => ({
   id: crypto.randomUUID(),
   fecha: hoy(),
+  maquina: "",
   tarea: "",
   estado: "Pendiente",
   observaciones: "",
@@ -86,7 +87,8 @@ export default function Pendientes() {
                 derivadas.push({
                   id: `rep-${doc.maquina?._id || nombreMaq}-${r.id}`,
                   fecha: r.fecha,
-                  tarea: `${nombreMaq}: ${r.reparacion}`,
+                  maquina: nombreMaq,
+                  tarea: r.reparacion,
                   estado: r.estado,
                   observaciones: r.observaciones || "",
                 });
@@ -229,6 +231,7 @@ export default function Pendientes() {
               <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                 <tr>
                   <th style={{ width: 150 }}>Fecha</th>
+                  <th style={{ width: 160 }}>Máquina</th>
                   <th>Tarea</th>
                   <th style={{ width: 120 }}>Días pendiente</th>
                   <th style={{ width: 150 }}>Estado</th>
@@ -240,6 +243,7 @@ export default function Pendientes() {
                 {filasDerivadas.map((t) => (
                   <tr key={t.id} style={{ backgroundColor: "#fbfbf3" }}>
                     <td>{t.fecha ? t.fecha.split("-").reverse().join("/") : "-"}</td>
+                    <td>{t.maquina || "-"}</td>
                     <td className="text-start">{t.tarea || "-"}</td>
                     <td>{diasPendiente(t.fecha)}</td>
                     <td>
@@ -251,7 +255,7 @@ export default function Pendientes() {
                 ))}
                 {tareas.length === 0 && filasDerivadas.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-muted py-3">Sin tareas cargadas</td>
+                    <td colSpan={7} className="text-muted py-3">Sin tareas cargadas</td>
                   </tr>
                 ) : (
                   tareas.map((t) => {
@@ -263,6 +267,13 @@ export default function Pendientes() {
                             <Form.Control size="sm" type="date" value={t.fecha} onChange={(e) => editar(t.id, "fecha", e.target.value)} />
                           ) : (
                             t.fecha ? t.fecha.split("-").reverse().join("/") : "-"
+                          )}
+                        </td>
+                        <td>
+                          {editando ? (
+                            <Form.Control size="sm" value={t.maquina || ""} onChange={(e) => editar(t.id, "maquina", e.target.value)} />
+                          ) : (
+                            t.maquina || "-"
                           )}
                         </td>
                         <td className={editando ? "" : "text-start"}>
