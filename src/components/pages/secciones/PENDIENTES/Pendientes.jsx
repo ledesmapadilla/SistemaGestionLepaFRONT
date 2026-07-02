@@ -333,12 +333,7 @@ export default function Pendientes() {
   return (
     <Container className="py-4 d-flex flex-column justify-content-center" style={{ minHeight: "80vh" }}>
       <h2 className="mb-1 fw-bold text-center">Tareas pendientes</h2>
-      <p className="text-muted mb-2 text-center">Seleccioná un responsable</p>
-      <div className="text-center mb-4">
-        <Button variant="outline-primary" size="sm" onClick={() => navigate("/pendientes/resumen")}>
-          Ver resumen de todos
-        </Button>
-      </div>
+      <p className="text-muted mb-4 text-center">Seleccioná un responsable</p>
       <Row xs={2} sm={3} md={3} lg={3} className="g-4 mx-auto justify-content-center" style={{ maxWidth: 620 }}>
         {RESPONSABLES.map((r) => (
           <Col key={r.nombre}>
@@ -380,6 +375,34 @@ export default function Pendientes() {
             </Card>
           </Col>
         ))}
+
+        {/* Tarjeta de acceso al resumen general */}
+        <Col key="resumen">
+          <Card
+            className="h-100 shadow-sm border-0"
+            style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
+            onClick={() => navigate("/pendientes/resumen")}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.15)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "";
+            }}
+          >
+            <Card.Body className="d-flex flex-column align-items-center text-center py-3">
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center mb-2"
+                style={{ width: 44, height: 44, backgroundColor: "#49505722" }}
+              >
+                <span className="fw-bold fs-5" style={{ color: "#495057" }}>R</span>
+              </div>
+              <Card.Title className="fw-semibold mb-0" style={{ fontSize: "0.95rem" }}>Resumen</Card.Title>
+            </Card.Body>
+            <div style={{ height: 3, backgroundColor: "#495057", borderRadius: "0 0 .375rem .375rem" }} />
+          </Card>
+        </Col>
       </Row>
 
       {/* ── Modal de tareas del responsable ── */}
