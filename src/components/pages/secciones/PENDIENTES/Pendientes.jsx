@@ -67,6 +67,7 @@ export default function Pendientes() {
   const [docsReparaciones, setDocsReparaciones] = useState([]);
   const [editandoId, setEditandoId] = useState(null);
   const [estadoDerivado, setEstadoDerivado] = useState("");
+  const [otraMaquina, setOtraMaquina] = useState(() => new Set()); // tareas manuales con máquina "Otra"
   const [cargando, setCargando] = useState(true);
   // Filtros del modal. Por defecto se ven las activas (no terminadas/colocadas).
   const [filtroEstado, setFiltroEstado] = useState("activas");
@@ -159,6 +160,9 @@ export default function Pendientes() {
 
   // Reparaciones/repuestos que se listan en el modal de Zamorano.
   const filasDerivadas = modalResp?.nombre === "Zamorano" ? reparacionesZamorano : [];
+
+  // Máquinas que figuran en reparaciones (para el select al cargar una tarea).
+  const maquinasReparaciones = [...new Set(docsReparaciones.map((d) => d.maquina?.maquina).filter(Boolean))].sort();
 
   // Opciones de los filtros (a partir de todas las filas del responsable abierto).
   const filasModal = [...filasDerivadas, ...tareas];
@@ -451,7 +455,39 @@ export default function Pendientes() {
                         </td>
                         <td>
                           {editando ? (
-                            <Form.Control size="sm" value={t.maquina || ""} onChange={(e) => editar(t.id, "maquina", e.target.value)} />
+                            <>
+                              <Form.Select
+                                size="sm"
+                                value={
+                                  maquinasReparaciones.includes(t.maquina)
+                                    ? t.maquina
+                                    : (t.maquina || otraMaquina.has(t.id)) ? "__otra__" : ""
+                                }
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  if (v === "__otra__") {
+                                    setOtraMaquina((prev) => new Set(prev).add(t.id));
+                                    editar(t.id, "maquina", "");
+                                  } else {
+                                    setOtraMaquina((prev) => { const n = new Set(prev); n.delete(t.id); return n; });
+                                    editar(t.id, "maquina", v);
+                                  }
+                                }}
+                              >
+                                <option value="">Seleccionar...</option>
+                                {maquinasReparaciones.map((m) => (<option key={m} value={m}>{m}</option>))}
+                                <option value="__otra__">Otra...</option>
+                              </Form.Select>
+                              {(otraMaquina.has(t.id) || (t.maquina && !maquinasReparaciones.includes(t.maquina))) && (
+                                <Form.Control
+                                  size="sm"
+                                  className="mt-1"
+                                  placeholder="Nombre de máquina"
+                                  value={t.maquina || ""}
+                                  onChange={(e) => editar(t.id, "maquina", e.target.value)}
+                                />
+                              )}
+                            </>
                           ) : (
                             t.maquina || "-"
                           )}
