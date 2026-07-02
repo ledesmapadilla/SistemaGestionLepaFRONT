@@ -13,6 +13,31 @@ const hoy = new Date().toLocaleDateString("en-CA");
 const formatoMoneda = (valor) =>
   Number(valor).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 
+// Deja lo que el usuario escribe en formato "entero,decimales" (coma decimal, sin separadores de miles).
+const limpiarMonto = (val) => {
+  let s = String(val).replace(/[^\d.,]/g, "");
+  if (s.includes(",")) {
+    s = s.replace(/\./g, "");                       // hay coma → los puntos son miles
+  } else if (s.endsWith(".")) {
+    s = s.slice(0, -1).replace(/\./g, "") + ",";    // punto final tecleado = decimal
+  } else {
+    s = s.replace(/\./g, "");                        // puntos internos = miles
+  }
+  const [ent, dec = ""] = s.split(",");
+  const entLimpio = ent.replace(/\D/g, "");
+  return s.includes(",") ? `${entLimpio},${dec.replace(/\D/g, "").slice(0, 2)}` : entLimpio;
+};
+
+// Formatea en vivo el valor limpio a "$ 1.500,50" para mostrar en el input mientras se escribe.
+const formatoMonedaInput = (clean) => {
+  if (clean === "" || clean == null) return "";
+  const s = String(clean);
+  const [entero, decimal] = s.split(",");
+  const entLimpio = entero.replace(/\D/g, "");
+  const entFmt = entLimpio === "" ? "0" : Number(entLimpio).toLocaleString("es-AR");
+  return s.includes(",") ? `$ ${entFmt},${(decimal ?? "").slice(0, 2)}` : `$ ${entFmt}`;
+};
+
 const NuevaFacturaProveedor = () => {
   const navigate = useNavigate();
   const {
@@ -28,7 +53,6 @@ const NuevaFacturaProveedor = () => {
   const [todasFacturas, setTodasFacturas] = useState([]);
   const [numerosExistentes, setNumerosExistentes] = useState([]);
   const [loadingDatos, setLoadingDatos] = useState(true);
-  const [editandoTotal, setEditandoTotal] = useState(false);
 
   const tipoFactura = watch("tipoFactura");
   const totalRaw = watch("total");
@@ -209,11 +233,10 @@ const NuevaFacturaProveedor = () => {
               <Form.Label>Total factura (iva {ivaRate === 0 ? "0%" : "21%"})</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="0.00"
-                value={editandoTotal ? (totalRaw ?? "") : (totalRaw ? formatoMoneda(Number(totalRaw)) : "")}
-                onFocus={(e) => { setEditandoTotal(true); const el = e.target; setTimeout(() => el.select(), 0); }}
-                onChange={(e) => setValue("total", e.target.value, { shouldValidate: true })}
-                onBlur={() => setEditandoTotal(false)}
+                placeholder="$ 0"
+                value={formatoMonedaInput(totalRaw)}
+                onFocus={(e) => { const el = e.target; setTimeout(() => el.select(), 0); }}
+                onChange={(e) => setValue("total", limpiarMonto(e.target.value), { shouldValidate: true })}
                 onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
                 isInvalid={!!errors.total}
                 style={{ textAlign: "center", borderColor: "#ffc107", boxShadow: "none" }}
