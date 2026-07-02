@@ -194,7 +194,7 @@ export default function Pendientes() {
   const coincideFiltro = (f) =>
     (filtroEstado === "" ||
       (filtroEstado === "activas"
-        ? f.estado === "Pendiente" || f.estado === "En proceso"
+        ? f.estado !== "Terminado" && f.estado !== "Colocado"
         : f.estado === filtroEstado)) &&
     (filtroMaquina === "" || f.maquina === filtroMaquina) &&
     (filtroTarea === "" || f.tarea === filtroTarea);
@@ -356,7 +356,7 @@ export default function Pendientes() {
                   onChange={(e) => setFiltroEstado(e.target.value)}
                   style={{ minWidth: 0, ...(filtroEstado !== "" ? { backgroundImage: "none" } : {}) }}
                 >
-                  <option value="activas">Pendientes y en proceso</option>
+                  <option value="activas">Activas (sin terminar)</option>
                   <option value="Pedido">Pedido</option>
                   <option value="Pendiente">Pendiente</option>
                   <option value="En proceso">En proceso</option>
