@@ -4,6 +4,7 @@ import { Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from "
 import Swal from "sweetalert2";
 import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/queriesPendientes";
 import { obtenerTodasReparaciones, guardarReparaciones } from "../../../../helpers/queriesReparaciones";
+import { listarMaquinas } from "../../../../helpers/queriesMaquinas";
 
 // Mismos responsables que el select de repuestos.
 const RESPONSABLES = [
@@ -65,6 +66,8 @@ export default function Pendientes() {
   const [tareasPorResp, setTareasPorResp] = useState({});
   // Docs de reparaciones por máquina (fuente de las filas derivadas de Zamorano).
   const [docsReparaciones, setDocsReparaciones] = useState([]);
+  // Todas las máquinas (mismas tarjetas que Mantenimiento > Reparaciones).
+  const [maquinas, setMaquinas] = useState([]);
   const [editandoId, setEditandoId] = useState(null);
   const [estadoDerivado, setEstadoDerivado] = useState("");
   const [otraMaquina, setOtraMaquina] = useState(() => new Set()); // tareas manuales con máquina "Otra"
@@ -77,10 +80,16 @@ export default function Pendientes() {
   useEffect(() => {
     const cargar = async () => {
       try {
-        const [resPend, resReps] = await Promise.all([
+        const [resPend, resReps, resMaq] = await Promise.all([
           obtenerTodosPendientes(),
           obtenerTodasReparaciones(),
+          listarMaquinas(),
         ]);
+
+        if (resMaq?.ok) {
+          const dataMaq = await resMaq.json();
+          setMaquinas(Array.isArray(dataMaq) ? dataMaq : []);
+        }
 
         if (resPend?.ok) {
           const data = await resPend.json();
@@ -161,8 +170,9 @@ export default function Pendientes() {
   // Reparaciones/repuestos que se listan en el modal de Zamorano.
   const filasDerivadas = modalResp?.nombre === "Zamorano" ? reparacionesZamorano : [];
 
-  // Máquinas que figuran en reparaciones (para el select al cargar una tarea).
-  const maquinasReparaciones = [...new Set(docsReparaciones.map((d) => d.maquina?.maquina).filter(Boolean))].sort();
+  // Máquinas para el select al cargar una tarea (todas las tarjetas de Reparaciones).
+  const maquinasReparaciones = [...new Set(maquinas.map((m) => m.maquina).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
 
   // Opciones de los filtros (a partir de todas las filas del responsable abierto).
   const filasModal = [...filasDerivadas, ...tareas];
