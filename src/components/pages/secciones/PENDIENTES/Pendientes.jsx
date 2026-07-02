@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/queriesPendientes";
+import { obtenerTodasReparaciones } from "../../../../helpers/queriesReparaciones";
 
 // Mismos responsables que el select de repuestos.
 const RESPONSABLES = [
@@ -50,15 +51,21 @@ const filaVacia = () => ({
 export default function Pendientes() {
   const [modalResp, setModalResp] = useState(null);   // responsable abierto
   const [tareasPorResp, setTareasPorResp] = useState({});
+  // Reparaciones activas (pendiente / en proceso) que se muestran como tareas de Zamorano.
+  const [reparacionesZamorano, setReparacionesZamorano] = useState([]);
   const [editandoId, setEditandoId] = useState(null);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     const cargar = async () => {
       try {
-        const res = await obtenerTodosPendientes();
-        if (res?.ok) {
-          const data = await res.json();
+        const [resPend, resReps] = await Promise.all([
+          obtenerTodosPendientes(),
+          obtenerTodasReparaciones(),
+        ]);
+
+        if (resPend?.ok) {
+          const data = await resPend.json();
           const mapa = {};
           (Array.isArray(data) ? data : []).forEach((doc) => {
             mapa[doc.responsable] = (doc.tareas || []).map((t) => ({
@@ -67,6 +74,26 @@ export default function Pendientes() {
             }));
           });
           setTareasPorResp(mapa);
+        }
+
+        if (resReps?.ok) {
+          const docs = await resReps.json();
+          const derivadas = [];
+          (Array.isArray(docs) ? docs : []).forEach((doc) => {
+            const nombreMaq = doc.maquina?.maquina || "Máquina";
+            (doc.reparaciones || []).forEach((r) => {
+              if (r.estado === "Pendiente" || r.estado === "En proceso") {
+                derivadas.push({
+                  id: `rep-${doc.maquina?._id || nombreMaq}-${r.id}`,
+                  fecha: r.fecha,
+                  tarea: `${nombreMaq}: ${r.reparacion}`,
+                  estado: r.estado,
+                  observaciones: r.observaciones || "",
+                });
+              }
+            });
+          });
+          setReparacionesZamorano(derivadas);
         }
       } catch (error) {
         console.error("Error al cargar pendientes:", error);
@@ -85,6 +112,8 @@ export default function Pendientes() {
   }, []);
 
   const tareas = modalResp ? tareasPorResp[modalResp.nombre] || [] : [];
+  // Reparaciones activas que se listan (solo lectura) en el modal de Zamorano.
+  const filasDerivadas = modalResp?.nombre === "Zamorano" ? reparacionesZamorano : [];
 
   const setTareas = (nuevas) =>
     setTareasPorResp((prev) => ({ ...prev, [modalResp.nombre]: nuevas }));
@@ -208,7 +237,19 @@ export default function Pendientes() {
                 </tr>
               </thead>
               <tbody>
-                {tareas.length === 0 ? (
+                {filasDerivadas.map((t) => (
+                  <tr key={t.id} style={{ backgroundColor: "#fbfbf3" }}>
+                    <td>{t.fecha ? t.fecha.split("-").reverse().join("/") : "-"}</td>
+                    <td className="text-start">{t.tarea || "-"}</td>
+                    <td>{diasPendiente(t.fecha)}</td>
+                    <td>
+                      <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
+                    </td>
+                    <td className="text-start">{t.observaciones || "-"}</td>
+                    <td><span className="badge bg-secondary">Reparación</span></td>
+                  </tr>
+                ))}
+                {tareas.length === 0 && filasDerivadas.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-muted py-3">Sin tareas cargadas</td>
                   </tr>
