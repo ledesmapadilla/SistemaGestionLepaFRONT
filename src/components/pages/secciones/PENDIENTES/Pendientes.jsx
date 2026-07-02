@@ -125,16 +125,18 @@ export default function Pendientes() {
 
   const tareas = modalResp ? tareasPorResp[modalResp.nombre] || [] : [];
 
-  // Reparaciones activas y repuestos a cargo de Zamorano derivados de los docs.
-  const reparacionesZamorano = useMemo(() => {
-    const derivadas = [];
+  // Filas derivadas de reparaciones: las reparaciones se asignan solo a Zamorano;
+  // los repuestos se asignan a su responsable (Zamorano, Nelson, etc.).
+  const derivadas = useMemo(() => {
+    const rows = [];
     docsReparaciones.forEach((doc) => {
       const nombreMaq = doc.maquina?.maquina || "Máquina";
       const maquinaId = doc.maquina?._id || null;
       (doc.reparaciones || []).forEach((r, ri) => {
-        derivadas.push({
+        rows.push({
           id: `rep-${maquinaId || nombreMaq}-${r.id || ri}`,
           tipo: "reparacion",
+          responsable: "Zamorano",
           maquinaId,
           reparacionId: r.id,
           reparacionIndex: ri,
@@ -144,12 +146,13 @@ export default function Pendientes() {
           estado: r.estado,
           observaciones: r.observaciones || "",
         });
-        // Repuestos a cargo de Zamorano (cualquier estado; el filtro controla la vista).
+        // Repuestos: van a la tarjeta de su responsable (cualquier estado; el filtro controla la vista).
         (r.repuestos || []).forEach((rep, pi) => {
-          if (rep.responsable === "Zamorano") {
-            derivadas.push({
+          if (rep.responsable) {
+            rows.push({
               id: `repu-${maquinaId || nombreMaq}-${r.id || ri}-${rep.id || pi}`,
               tipo: "repuesto",
+              responsable: rep.responsable,
               maquinaId,
               reparacionId: r.id,
               reparacionIndex: ri,
@@ -164,11 +167,11 @@ export default function Pendientes() {
         });
       });
     });
-    return derivadas;
+    return rows;
   }, [docsReparaciones]);
 
-  // Reparaciones/repuestos que se listan en el modal de Zamorano.
-  const filasDerivadas = modalResp?.nombre === "Zamorano" ? reparacionesZamorano : [];
+  // Filas de reparaciones/repuestos del responsable abierto.
+  const filasDerivadas = modalResp ? derivadas.filter((d) => d.responsable === modalResp.nombre) : [];
 
   // Máquinas para el select al cargar una tarea (todas las tarjetas de Reparaciones).
   // Las camionetas (Fiat, Nissan, Ranger) van juntas al final del listado.
