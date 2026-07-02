@@ -171,8 +171,17 @@ export default function Pendientes() {
   const filasDerivadas = modalResp?.nombre === "Zamorano" ? reparacionesZamorano : [];
 
   // Máquinas para el select al cargar una tarea (todas las tarjetas de Reparaciones).
+  // Las camionetas (Fiat, Nissan, Ranger) van juntas al final del listado.
+  const CAMIONETAS = ["Fiat", "Nissan", "Ranger"];
   const maquinasReparaciones = [...new Set(maquinas.map((m) => m.maquina).filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+    .sort((a, b) => {
+      const ca = CAMIONETAS.indexOf(a);
+      const cb = CAMIONETAS.indexOf(b);
+      if (ca !== -1 && cb !== -1) return ca - cb;
+      if (ca !== -1) return 1;
+      if (cb !== -1) return -1;
+      return a.localeCompare(b, "es", { numeric: true });
+    });
 
   // Opciones de los filtros (a partir de todas las filas del responsable abierto).
   const filasModal = [...filasDerivadas, ...tareas];
