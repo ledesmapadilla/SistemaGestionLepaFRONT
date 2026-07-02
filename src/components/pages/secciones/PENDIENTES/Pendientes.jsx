@@ -165,10 +165,11 @@ export default function Pendientes() {
   const maquinasUnicas = [...new Set(filasModal.map((f) => f.maquina).filter(Boolean))].sort();
   const tareasUnicas = [...new Set(filasModal.map((f) => f.tarea).filter(Boolean))].sort();
 
-  const ESTADOS_TERMINALES = ["Terminado", "Colocado"];
   const coincideFiltro = (f) =>
     (filtroEstado === "" ||
-      (filtroEstado === "activas" ? !ESTADOS_TERMINALES.includes(f.estado) : f.estado === filtroEstado)) &&
+      (filtroEstado === "activas"
+        ? f.estado === "Pendiente" || f.estado === "En proceso"
+        : f.estado === filtroEstado)) &&
     (filtroMaquina === "" || f.maquina === filtroMaquina) &&
     (filtroTarea === "" || f.tarea === filtroTarea);
 
@@ -196,6 +197,9 @@ export default function Pendientes() {
     navigate("/mantenimiento/reparaciones", {
       state: { maquinaId: t.maquinaId, repuestosDe: t.tipo === "repuesto" ? t.reparacionId : undefined },
     });
+
+  const verObservacion = (texto) =>
+    Swal.fire({ title: "Observaciones", text: texto, confirmButtonText: "Cerrar", confirmButtonColor: "#6c757d" });
 
   const editarDerivado = (t) => { setEditandoId(t.id); setEstadoDerivado(t.estado); };
 
@@ -382,7 +386,7 @@ export default function Pendientes() {
                   <th>Tarea</th>
                   <th style={{ width: 85 }}>Días pendiente</th>
                   <th style={{ width: 110 }}>Estado</th>
-                  <th style={{ width: 260 }}>Observaciones</th>
+                  <th style={{ width: 80 }}>Obs.</th>
                   <th style={{ width: 150 }}>Acciones</th>
                 </tr>
               </thead>
@@ -404,7 +408,13 @@ export default function Pendientes() {
                         <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
                       )}
                     </td>
-                    <td className="text-start">{t.observaciones || "-"}</td>
+                    <td>
+                      {t.observaciones ? (
+                        <Button size="sm" variant="outline-secondary" className="py-0 px-2" onClick={() => verObservacion(t.observaciones)}>Ver</Button>
+                      ) : (
+                        <span className="text-muted">-</span>
+                      )}
+                    </td>
                     <td>
                       <div className="d-flex gap-1 justify-content-center align-items-center">
                         {editandoId === t.id ? (
@@ -463,11 +473,13 @@ export default function Pendientes() {
                             <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
                           )}
                         </td>
-                        <td className={editando ? "" : "text-start"}>
+                        <td>
                           {editando ? (
                             <Form.Control size="sm" value={t.observaciones} onChange={(e) => editar(t.id, "observaciones", e.target.value)} />
+                          ) : t.observaciones ? (
+                            <Button size="sm" variant="outline-secondary" className="py-0 px-2" onClick={() => verObservacion(t.observaciones)}>Ver</Button>
                           ) : (
-                            t.observaciones || "-"
+                            <span className="text-muted">-</span>
                           )}
                         </td>
                         <td>
