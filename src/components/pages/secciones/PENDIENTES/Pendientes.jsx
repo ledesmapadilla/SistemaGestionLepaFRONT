@@ -121,13 +121,14 @@ export default function Pendientes() {
     docsReparaciones.forEach((doc) => {
       const nombreMaq = doc.maquina?.maquina || "Máquina";
       const maquinaId = doc.maquina?._id || null;
-      (doc.reparaciones || []).forEach((r) => {
+      (doc.reparaciones || []).forEach((r, ri) => {
         if (r.estado === "Pendiente" || r.estado === "En proceso") {
           derivadas.push({
-            id: `rep-${maquinaId || nombreMaq}-${r.id}`,
+            id: `rep-${maquinaId || nombreMaq}-${r.id || ri}`,
             tipo: "reparacion",
             maquinaId,
             reparacionId: r.id,
+            reparacionIndex: ri,
             fecha: r.fecha,
             maquina: nombreMaq,
             tarea: r.reparacion,
@@ -136,14 +137,15 @@ export default function Pendientes() {
           });
         }
         // Repuestos a cargo de Zamorano que todavía no están colocados.
-        (r.repuestos || []).forEach((rep) => {
+        (r.repuestos || []).forEach((rep, pi) => {
           if (rep.responsable === "Zamorano" && rep.estado !== "Colocado") {
             derivadas.push({
-              id: `repu-${maquinaId || nombreMaq}-${r.id}-${rep.id}`,
+              id: `repu-${maquinaId || nombreMaq}-${r.id || ri}-${rep.id || pi}`,
               tipo: "repuesto",
               maquinaId,
               reparacionId: r.id,
-              repuestoId: rep.id,
+              reparacionIndex: ri,
+              repuestoIndex: pi,
               fecha: r.fecha,
               maquina: nombreMaq,
               tarea: rep.repuesto,
@@ -202,11 +204,13 @@ export default function Pendientes() {
   const guardarDerivado = async (t) => {
     const nuevosDocs = docsReparaciones.map((doc) => {
       if (String(doc.maquina?._id) !== String(t.maquinaId)) return doc;
-      const reparaciones = (doc.reparaciones || []).map((r) => {
-        if (r.id !== t.reparacionId) return r;
+      const reparaciones = (doc.reparaciones || []).map((r, ri) => {
+        if (ri !== t.reparacionIndex) return r;
+        // Reparación: cambia el estado de la reparación.
         if (t.tipo === "reparacion") return { ...r, estado: estadoDerivado };
-        const repuestos = (r.repuestos || []).map((rep) =>
-          rep.id === t.repuestoId ? { ...rep, estado: estadoDerivado } : rep
+        // Repuesto: cambia SOLO el estado del repuesto, no el de la reparación.
+        const repuestos = (r.repuestos || []).map((rep, pi) =>
+          pi === t.repuestoIndex ? { ...rep, estado: estadoDerivado } : rep
         );
         return { ...r, repuestos };
       });
