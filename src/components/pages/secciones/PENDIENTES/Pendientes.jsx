@@ -17,11 +17,32 @@ const ESTADOS = ["Pendiente", "En proceso", "Terminado"];
 const COLOR_ESTADO = { Pendiente: "#6c757d", "En proceso": "#ffc107", Terminado: "#198754" };
 
 const hoy = () => new Date().toLocaleDateString("en-CA");
+
+const parseFechaLocal = (f) => {
+  const [y, m, d] = f.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+
+// Días desde que se generó la tarea (fecha). Suma hasta hoy mientras no esté
+// terminada; si tiene fechaTerminado, el conteo se congela en esa fecha.
+const diasPendiente = (fecha, fechaTerminado) => {
+  if (!fecha) return "-";
+  const inicio = parseFechaLocal(fecha);
+  let fin;
+  if (fechaTerminado) {
+    fin = parseFechaLocal(fechaTerminado);
+  } else {
+    const a = new Date();
+    fin = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+  }
+  const diff = Math.floor((fin - inicio) / 86400000);
+  return diff < 0 ? 0 : diff;
+};
+
 const filaVacia = () => ({
   id: crypto.randomUUID(),
   fecha: hoy(),
   tarea: "",
-  dias: "",
   estado: "Pendiente",
   observaciones: "",
 });
@@ -86,7 +107,16 @@ export default function Pendientes() {
     setEditandoId(nueva.id);
   };
   const editar = (id, campo, valor) =>
-    setTareas(tareas.map((t) => (t.id === id ? { ...t, [campo]: valor } : t)));
+    setTareas(tareas.map((t) => {
+      if (t.id !== id) return t;
+      const actualizada = { ...t, [campo]: valor };
+      // Al pasar a "Terminado" se congela el conteo guardando la fecha; si se
+      // reabre la tarea, se limpia para que vuelva a sumar.
+      if (campo === "estado") {
+        actualizada.fechaTerminado = valor === "Terminado" ? (t.fechaTerminado || hoy()) : "";
+      }
+      return actualizada;
+    }));
 
   const finalizarEdicion = async () => {
     const fila = tareas.find((t) => t.id === editandoId);
@@ -171,7 +201,7 @@ export default function Pendientes() {
                 <tr>
                   <th style={{ width: 150 }}>Fecha</th>
                   <th>Tarea</th>
-                  <th style={{ width: 90 }}>Días</th>
+                  <th style={{ width: 120 }}>Días pendiente</th>
                   <th style={{ width: 150 }}>Estado</th>
                   <th style={{ width: 260 }}>Observaciones</th>
                   <th style={{ width: 150 }}>Acciones</th>
@@ -201,13 +231,7 @@ export default function Pendientes() {
                             t.tarea || "-"
                           )}
                         </td>
-                        <td>
-                          {editando ? (
-                            <Form.Control size="sm" type="number" value={t.dias} onChange={(e) => editar(t.id, "dias", e.target.value)} />
-                          ) : (
-                            t.dias || "-"
-                          )}
-                        </td>
+                        <td>{diasPendiente(t.fecha, t.fechaTerminado)}</td>
                         <td>
                           {editando ? (
                             <Form.Select size="sm" value={t.estado} onChange={(e) => editar(t.id, "estado", e.target.value)}>
