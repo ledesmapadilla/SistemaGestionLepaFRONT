@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
@@ -71,6 +71,8 @@ export default function Pendientes() {
   const [editandoId, setEditandoId] = useState(null);
   const [estadoDerivado, setEstadoDerivado] = useState("");
   const [otraMaquina, setOtraMaquina] = useState(() => new Set()); // tareas manuales con máquina "Otra"
+  const [nuevas, setNuevas] = useState(() => new Set()); // tareas manuales nuevas sin guardar
+  const cancelarRef = useRef(() => {});
   const [cargando, setCargando] = useState(true);
   // Filtros del modal. Por defecto se ven las activas (no terminadas/colocadas).
   const [filtroEstado, setFiltroEstado] = useState("activas");
@@ -116,9 +118,9 @@ export default function Pendientes() {
     cargar();
   }, []);
 
-  // Salir del modo edición con Esc
+  // Salir del modo edición con Esc (descartando la fila nueva incompleta).
   useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") setEditandoId(null); };
+    const onKey = (e) => { if (e.key === "Escape") cancelarRef.current(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
@@ -225,9 +227,19 @@ export default function Pendientes() {
     return res;
   };
 
+  // Si la fila en edición es nueva y sin guardar, la descarta (evita que quede
+  // una tarea incompleta —p. ej. sin máquina— y se persista en el próximo guardado).
+  const descartarSiNueva = () => {
+    if (editandoId && nuevas.has(editandoId)) {
+      setTareas(tareas.filter((t) => t.id !== editandoId));
+      setNuevas((prev) => { const n = new Set(prev); n.delete(editandoId); return n; });
+    }
+  };
+  cancelarRef.current = () => { descartarSiNueva(); setEditandoId(null); };
+
   const limpiarFiltros = () => { setFiltroEstado("activas"); setFiltroMaquina(""); setFiltroTarea(""); };
   const abrir = (r) => { setModalResp(r); setEditandoId(null); limpiarFiltros(); };
-  const cerrar = () => { setModalResp(null); setEditandoId(null); limpiarFiltros(); };
+  const cerrar = () => { descartarSiNueva(); setModalResp(null); setEditandoId(null); limpiarFiltros(); };
 
   // Navega al módulo de reparaciones abriendo la máquina (y los repuestos) correspondientes.
   const irAReparaciones = (t) =>
@@ -271,6 +283,7 @@ export default function Pendientes() {
     const nueva = filaVacia();
     setTareas([...tareas, nueva]);
     setEditandoId(nueva.id);
+    setNuevas((prev) => new Set(prev).add(nueva.id));
   };
   const editar = (id, campo, valor) =>
     setTareas(tareas.map((t) => {
@@ -285,7 +298,8 @@ export default function Pendientes() {
     }));
 
   const finalizarEdicion = async () => {
-    const fila = tareas.find((t) => t.id === editandoId);
+    const id = editandoId;
+    const fila = tareas.find((t) => t.id === id);
     if (fila && !(fila.tarea || "").trim()) {
       return Swal.fire({ icon: "warning", title: "Atención", text: "La tarea es obligatoria." });
     }
@@ -293,6 +307,7 @@ export default function Pendientes() {
       return Swal.fire({ icon: "warning", title: "Atención", text: "La máquina es obligatoria." });
     }
     setEditandoId(null);
+    setNuevas((prev) => { const n = new Set(prev); n.delete(id); return n; });
     const res = await persistir(tareas);
     if (res?.ok) {
       Swal.fire({ position: "center", icon: "success", title: "Guardado", showConfirmButton: false, timer: 1200, timerProgressBar: true });

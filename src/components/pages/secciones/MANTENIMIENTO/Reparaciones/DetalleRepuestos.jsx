@@ -48,6 +48,7 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
   );
   const [editandoId, setEditandoId] = useState(null);
   const [otroResp, setOtroResp] = useState(() => new Set()); // filas en modo "Otro" responsable
+  const [nuevas, setNuevas] = useState(() => new Set()); // filas nuevas sin guardar todavía
 
   // Guarda el estado actual de las filas en la base (guardado automático).
   const persistir = async (nuevasFilas) => {
@@ -69,6 +70,7 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
     const nueva = filaVacia();
     setFilas((p) => [...p, nueva]);
     setEditandoId(nueva.id);
+    setNuevas((prev) => new Set(prev).add(nueva.id));
   };
   const editar = (id, campo, valor) =>
     setFilas((p) => p.map((f) => (f.id === id ? { ...f, [campo]: valor } : f)));
@@ -95,7 +97,8 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
     });
   };
   const finalizarEdicion = async () => {
-    const fila = filas.find((f) => f.id === editandoId);
+    const id = editandoId;
+    const fila = filas.find((f) => f.id === id);
     if (fila) {
       if (!(fila.repuesto || "").trim())
         return Swal.fire({ icon: "warning", title: "Atención", text: "El repuesto es obligatorio." });
@@ -104,13 +107,15 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
       if (!(fila.responsable || "").trim())
         return Swal.fire({ icon: "warning", title: "Atención", text: "El responsable es obligatorio." });
     }
+    const esNueva = nuevas.has(id);
     setEditandoId(null);
     const res = await persistir(filas);
     if (res?.ok) {
+      setNuevas((prev) => { const n = new Set(prev); n.delete(id); return n; });
       Swal.fire({
         position: "center",
         icon: "success",
-        title: "Repuesto guardado",
+        title: esNueva ? "Repuesto guardado" : "Repuesto editado",
         showConfirmButton: false,
         timer: 1500,
         timerProgressBar: true,
