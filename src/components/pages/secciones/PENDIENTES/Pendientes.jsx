@@ -68,6 +68,10 @@ export default function Pendientes() {
   const [editandoId, setEditandoId] = useState(null);
   const [estadoDerivado, setEstadoDerivado] = useState("");
   const [cargando, setCargando] = useState(true);
+  // Filtros del modal.
+  const [filtroEstado, setFiltroEstado] = useState("");
+  const [filtroMaquina, setFiltroMaquina] = useState("");
+  const [filtroTarea, setFiltroTarea] = useState("");
 
   useEffect(() => {
     const cargar = async () => {
@@ -156,6 +160,20 @@ export default function Pendientes() {
   // Reparaciones/repuestos que se listan en el modal de Zamorano.
   const filasDerivadas = modalResp?.nombre === "Zamorano" ? reparacionesZamorano : [];
 
+  // Opciones de los filtros (a partir de todas las filas del responsable abierto).
+  const filasModal = [...filasDerivadas, ...tareas];
+  const estadosUnicos = [...new Set(filasModal.map((f) => f.estado).filter(Boolean))];
+  const maquinasUnicas = [...new Set(filasModal.map((f) => f.maquina).filter(Boolean))].sort();
+  const tareasUnicas = [...new Set(filasModal.map((f) => f.tarea).filter(Boolean))].sort();
+
+  const coincideFiltro = (f) =>
+    (filtroEstado === "" || f.estado === filtroEstado) &&
+    (filtroMaquina === "" || f.maquina === filtroMaquina) &&
+    (filtroTarea === "" || f.tarea === filtroTarea);
+
+  const derivadasFiltradas = filasDerivadas.filter((f) => f.id === editandoId || coincideFiltro(f));
+  const tareasFiltradas = tareas.filter((f) => f.id === editandoId || coincideFiltro(f));
+
   const setTareas = (nuevas) =>
     setTareasPorResp((prev) => ({ ...prev, [modalResp.nombre]: nuevas }));
 
@@ -168,8 +186,9 @@ export default function Pendientes() {
     return res;
   };
 
-  const abrir = (r) => { setModalResp(r); setEditandoId(null); };
-  const cerrar = () => { setModalResp(null); setEditandoId(null); };
+  const limpiarFiltros = () => { setFiltroEstado(""); setFiltroMaquina(""); setFiltroTarea(""); };
+  const abrir = (r) => { setModalResp(r); setEditandoId(null); limpiarFiltros(); };
+  const cerrar = () => { setModalResp(null); setEditandoId(null); limpiarFiltros(); };
 
   // Navega al módulo de reparaciones abriendo la máquina (y los repuestos) correspondientes.
   const irAReparaciones = (t) =>
@@ -295,6 +314,53 @@ export default function Pendientes() {
             <Button size="sm" variant="outline-primary" onClick={agregar}>Agregar tarea</Button>
           </div>
 
+          {!cargando && (
+            <div className="d-flex gap-2 mb-3 flex-wrap">
+              <div className="position-relative" style={{ width: 180 }}>
+                <Form.Select
+                  size="sm"
+                  value={filtroEstado}
+                  onChange={(e) => setFiltroEstado(e.target.value)}
+                  style={{ minWidth: 0, ...(filtroEstado ? { backgroundImage: "none" } : {}) }}
+                >
+                  <option value="">Estado (todos)</option>
+                  {estadosUnicos.map((s) => (<option key={s} value={s}>{s}</option>))}
+                </Form.Select>
+                {filtroEstado && (
+                  <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroEstado("")}>✕</button>
+                )}
+              </div>
+              <div className="position-relative" style={{ width: 200 }}>
+                <Form.Select
+                  size="sm"
+                  value={filtroMaquina}
+                  onChange={(e) => setFiltroMaquina(e.target.value)}
+                  style={{ minWidth: 0, ...(filtroMaquina ? { backgroundImage: "none" } : {}) }}
+                >
+                  <option value="">Máquina (todas)</option>
+                  {maquinasUnicas.map((m) => (<option key={m} value={m}>{m}</option>))}
+                </Form.Select>
+                {filtroMaquina && (
+                  <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroMaquina("")}>✕</button>
+                )}
+              </div>
+              <div className="position-relative" style={{ width: 280 }}>
+                <Form.Select
+                  size="sm"
+                  value={filtroTarea}
+                  onChange={(e) => setFiltroTarea(e.target.value)}
+                  style={{ minWidth: 0, ...(filtroTarea ? { backgroundImage: "none" } : {}) }}
+                >
+                  <option value="">Tarea (todas)</option>
+                  {tareasUnicas.map((t) => (<option key={t} value={t}>{t}</option>))}
+                </Form.Select>
+                {filtroTarea && (
+                  <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroTarea("")}>✕</button>
+                )}
+              </div>
+            </div>
+          )}
+
           {cargando ? (
             <Spinner animation="border" className="d-block mx-auto my-4" />
           ) : (
@@ -302,17 +368,17 @@ export default function Pendientes() {
             <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
               <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                 <tr>
-                  <th style={{ width: 150 }}>Fecha</th>
-                  <th style={{ width: 160 }}>Máquina</th>
+                  <th style={{ width: 95 }}>Fecha</th>
+                  <th style={{ width: 110 }}>Máquina</th>
                   <th>Tarea</th>
-                  <th style={{ width: 120 }}>Días pendiente</th>
-                  <th style={{ width: 150 }}>Estado</th>
+                  <th style={{ width: 85 }}>Días pendiente</th>
+                  <th style={{ width: 110 }}>Estado</th>
                   <th style={{ width: 260 }}>Observaciones</th>
                   <th style={{ width: 150 }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {filasDerivadas.map((t) => (
+                {derivadasFiltradas.map((t) => (
                   <tr key={t.id} style={{ backgroundColor: "#fbfbf3" }}>
                     <td>{t.fecha ? t.fecha.split("-").reverse().join("/") : "-"}</td>
                     <td>{t.maquina || "-"}</td>
@@ -348,12 +414,12 @@ export default function Pendientes() {
                     </td>
                   </tr>
                 ))}
-                {tareas.length === 0 && filasDerivadas.length === 0 ? (
+                {tareasFiltradas.length === 0 && derivadasFiltradas.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-muted py-3">Sin tareas cargadas</td>
                   </tr>
                 ) : (
-                  tareas.map((t) => {
+                  tareasFiltradas.map((t) => {
                     const editando = editandoId === t.id;
                     return (
                       <tr key={t.id}>
