@@ -289,6 +289,9 @@ export default function Pendientes() {
     if (fila && !(fila.tarea || "").trim()) {
       return Swal.fire({ icon: "warning", title: "Atención", text: "La tarea es obligatoria." });
     }
+    if (fila && !(fila.maquina || "").trim()) {
+      return Swal.fire({ icon: "warning", title: "Atención", text: "La máquina es obligatoria." });
+    }
     setEditandoId(null);
     const res = await persistir(tareas);
     if (res?.ok) {
