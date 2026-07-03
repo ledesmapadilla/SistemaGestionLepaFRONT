@@ -9,9 +9,9 @@ export default function PendientesModalHost() {
   const ctx = usePendientesModal();
   if (!ctx) return null;
   return (
-    <Modal show={ctx.abierto} onHide={ctx.cerrar} fullscreen scrollable>
+    <Modal show={ctx.abierto} onHide={ctx.cerrar} size="xl" centered scrollable>
       <Modal.Header closeButton className="py-2" />
-      <Modal.Body className="p-0">
+      <Modal.Body>
         <Suspense fallback={<div className="text-center py-5"><Spinner animation="border" /></div>}>
           {ctx.abierto && <Pendientes />}
         </Suspense>

@@ -397,7 +397,7 @@ export default function Pendientes() {
   };
 
   return (
-    <Container className="py-4 d-flex flex-column justify-content-center" style={{ minHeight: "80vh" }}>
+    <Container className="py-2">
       <h2 className="mb-1 fw-bold text-center">Tareas pendientes</h2>
       <p className="text-muted mb-4 text-center">Seleccioná un responsable</p>
       <Row xs={2} sm={3} md={3} lg={3} className="g-4 mx-auto justify-content-center" style={{ maxWidth: 620 }}>
