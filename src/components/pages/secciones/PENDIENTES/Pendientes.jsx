@@ -241,19 +241,12 @@ export default function Pendientes() {
       return (b.fecha || "").localeCompare(a.fecha || "");
     });
 
-  const verResumenDetalle = (f) =>
-    Swal.fire({
-      title: f.tarea || "Detalle",
-      html: `<div style="text-align:left">
-        <b>Responsable:</b> ${f.responsable}<br/>
-        <b>Máquina:</b> ${f.maquina || "-"}<br/>
-        <b>Fecha:</b> ${f.fecha ? f.fecha.split("-").reverse().join("/") : "-"}<br/>
-        <b>Estado:</b> ${f.estado || "-"}<br/>
-        <b>Observaciones:</b> ${f.observaciones || "-"}
-      </div>`,
-      confirmButtonText: "Cerrar",
-      confirmButtonColor: "#6c757d",
-    });
+  // Desde el resumen, "Ver" abre la planilla de pendientes del responsable de esa fila.
+  const irAPlanillaResumen = (f) => {
+    const r = RESPONSABLES.find((x) => x.nombre === f.responsable);
+    setShowResumen(false);
+    if (r) abrir(r);
+  };
 
   // Máquinas para el select al cargar una tarea (todas las tarjetas de Reparaciones).
   // Las camionetas (Fiat, Nissan, Ranger) van juntas al final del listado.
@@ -723,7 +716,7 @@ export default function Pendientes() {
                 <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroRespR("")}>✕</button>
               )}
             </div>
-            <div className="position-relative" style={{ width: 200 }}>
+            <div className="position-relative" style={{ width: 270 }}>
               <Form.Select
                 size="sm"
                 value={filtroEstadoR}
@@ -787,7 +780,7 @@ export default function Pendientes() {
                         <td className="text-start">{f.tarea || "-"}</td>
                         <td>{diasPendiente(f.fecha, f.fechaTerminado)}</td>
                         <td>
-                          <Button size="sm" variant="outline-info" className="py-0 px-2" onClick={() => verResumenDetalle(f)}>Ver</Button>
+                          <Button size="sm" variant="outline-info" className="py-0 px-2" onClick={() => irAPlanillaResumen(f)}>Ver</Button>
                         </td>
                       </tr>
                     );
