@@ -23,6 +23,7 @@ import Menu from "./components/shared/Menu";
 import BotonAnteojos from "./components/shared/BotonAnteojos";
 import BotonFoco from "./components/shared/BotonFoco";
 import PendientesModalHost from "./components/shared/PendientesModalHost";
+import ResumenModal from "./components/shared/ResumenModal";
 import { PendientesModalProvider } from "./context/PendientesModalContext";
 
 const Inicio = lazy(() => import("./components/pages/Inicio"));
@@ -189,6 +190,7 @@ function App() {
                   <BotonAnteojos />
                   <BotonFoco />
                   <PendientesModalHost />
+                  <ResumenModal />
                 </PendientesModalProvider>
               }
             />

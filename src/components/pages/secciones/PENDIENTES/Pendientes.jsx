@@ -80,11 +80,6 @@ export default function Pendientes() {
   const [filtroEstado, setFiltroEstado] = useState("activas");
   const [filtroMaquina, setFiltroMaquina] = useState("");
   const [filtroTarea, setFiltroTarea] = useState("");
-  // Modal resumen (todos los responsables juntos) y sus filtros.
-  const [showResumen, setShowResumen] = useState(false);
-  const [filtroRespR, setFiltroRespR] = useState("");
-  const [filtroEstadoR, setFiltroEstadoR] = useState("activas");
-  const [filtroMaquinaR, setFiltroMaquinaR] = useState("");
 
   useEffect(() => {
     const cargar = async () => {
@@ -132,11 +127,13 @@ export default function Pendientes() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Si se abrió con el botón de anteojos, mostrar directo el resumen.
+  // Si se abrió desde el resumen para un responsable, abrir su planilla directo.
   useEffect(() => {
-    if (pendientesModal?.resumenPendiente) {
-      setShowResumen(true);
-      pendientesModal.consumirResumen();
+    const nombre = pendientesModal?.respInicial;
+    if (nombre) {
+      const r = RESPONSABLES.find((x) => x.nombre === nombre);
+      if (r) abrir(r);
+      pendientesModal.consumirResp();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -200,63 +197,6 @@ export default function Pendientes() {
     return [...derivadasResp, ...manuales].filter(
       (t) => t.estado === "Pendiente" || t.estado === "En proceso"
     ).length;
-  };
-
-  // Resumen: todas las tareas de todos los responsables (derivadas + manuales).
-  const filasResumen = useMemo(() => {
-    const rows = derivadas.map((d) => ({
-      responsable: d.responsable,
-      tipo: d.tipo === "reparacion" ? "Reparación" : "Repuesto",
-      fecha: d.fecha,
-      maquina: d.maquina,
-      tarea: d.tarea,
-      estado: d.estado,
-      observaciones: d.observaciones,
-    }));
-    Object.entries(tareasPorResp).forEach(([resp, ts]) => {
-      (ts || []).forEach((t) =>
-        rows.push({
-          responsable: resp,
-          tipo: "Tarea",
-          fecha: t.fecha,
-          maquina: t.maquina || "",
-          tarea: t.tarea,
-          estado: t.estado,
-          observaciones: t.observaciones || "",
-          fechaTerminado: t.fechaTerminado || "",
-        })
-      );
-    });
-    return rows;
-  }, [derivadas, tareasPorResp]);
-
-  const ordenResp = (nombre) => {
-    const i = RESPONSABLES.findIndex((r) => r.nombre === nombre);
-    return i === -1 ? 99 : i;
-  };
-
-  const maquinasResumen = [...new Set(filasResumen.map((f) => f.maquina).filter(Boolean))].sort();
-  const filasResumenFiltradas = filasResumen
-    .filter(
-      (f) =>
-        (filtroRespR === "" || f.responsable === filtroRespR) &&
-        (filtroEstadoR === "" ||
-          (filtroEstadoR === "activas"
-            ? ["Pedido", "Pendiente", "En proceso"].includes(f.estado)
-            : f.estado === filtroEstadoR)) &&
-        (filtroMaquinaR === "" || f.maquina === filtroMaquinaR)
-    )
-    .sort((a, b) => {
-      const dr = ordenResp(a.responsable) - ordenResp(b.responsable);
-      if (dr !== 0) return dr;
-      return (b.fecha || "").localeCompare(a.fecha || "");
-    });
-
-  // Desde el resumen, "Ver" abre la planilla de pendientes del responsable de esa fila.
-  const irAPlanillaResumen = (f) => {
-    const r = RESPONSABLES.find((x) => x.nombre === f.responsable);
-    setShowResumen(false);
-    if (r) abrir(r);
   };
 
   // Máquinas para el select al cargar una tarea (todas las tarjetas de Reparaciones).
@@ -456,7 +396,7 @@ export default function Pendientes() {
           <Card
             className="h-100 shadow-sm border-0"
             style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
-            onClick={() => setShowResumen(true)}
+            onClick={() => pendientesModal?.abrirResumen()}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "translateY(-4px)";
               e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.15)";
@@ -708,105 +648,6 @@ export default function Pendientes() {
         </Modal.Footer>
       </Modal>
 
-      {/* ── Modal resumen (todos los responsables) ── */}
-      <Modal show={showResumen} onHide={() => setShowResumen(false)} centered size="xl">
-        <Modal.Header closeButton>
-          <Modal.Title>Resumen de tareas pendientes</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="d-flex gap-2 mb-3 flex-wrap">
-            <div className="position-relative" style={{ width: 180 }}>
-              <Form.Select
-                size="sm"
-                value={filtroRespR}
-                onChange={(e) => setFiltroRespR(e.target.value)}
-                style={{ minWidth: 0, ...(filtroRespR !== "" ? { backgroundImage: "none" } : {}) }}
-              >
-                <option value="">Responsable (todos)</option>
-                {RESPONSABLES.map((r) => (<option key={r.nombre} value={r.nombre}>{r.nombre}</option>))}
-              </Form.Select>
-              {filtroRespR !== "" && (
-                <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroRespR("")}>✕</button>
-              )}
-            </div>
-            <div className="position-relative" style={{ width: 270 }}>
-              <Form.Select
-                size="sm"
-                value={filtroEstadoR}
-                onChange={(e) => setFiltroEstadoR(e.target.value)}
-                style={{ minWidth: 0, ...(filtroEstadoR !== "" ? { backgroundImage: "none" } : {}) }}
-              >
-                <option value="activas">Pedido / Pendiente / En proceso</option>
-                <option value="Pedido">Pedido</option>
-                <option value="Pendiente">Pendiente</option>
-                <option value="En proceso">En proceso</option>
-                <option value="En taller">En taller</option>
-                <option value="Colocado">Colocado</option>
-                <option value="Terminado">Terminado</option>
-                <option value="">Todos</option>
-              </Form.Select>
-              {filtroEstadoR !== "" && (
-                <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroEstadoR("")}>✕</button>
-              )}
-            </div>
-            <div className="position-relative" style={{ width: 200 }}>
-              <Form.Select
-                size="sm"
-                value={filtroMaquinaR}
-                onChange={(e) => setFiltroMaquinaR(e.target.value)}
-                style={{ minWidth: 0, ...(filtroMaquinaR !== "" ? { backgroundImage: "none" } : {}) }}
-              >
-                <option value="">Máquina (todas)</option>
-                {maquinasResumen.map((m) => (<option key={m} value={m}>{m}</option>))}
-              </Form.Select>
-              {filtroMaquinaR !== "" && (
-                <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroMaquinaR("")}>✕</button>
-              )}
-            </div>
-          </div>
-
-          <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
-            <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
-              <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
-                <tr>
-                  <th style={{ width: 130 }}>Responsable</th>
-                  <th style={{ width: 100 }}>Tipo</th>
-                  <th style={{ width: 120 }}>Máquina</th>
-                  <th>Tarea</th>
-                  <th style={{ width: 85 }}>Días pendiente</th>
-                  <th style={{ width: 70 }}>Ver</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filasResumenFiltradas.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-muted py-3">Sin tareas</td>
-                  </tr>
-                ) : (
-                  filasResumenFiltradas.map((f, idx) => {
-                    const color = RESPONSABLES.find((r) => r.nombre === f.responsable)?.color || "#6c757d";
-                    return (
-                      <tr key={idx}>
-                        <td style={{ color, fontWeight: 600 }}>{f.responsable}</td>
-                        <td className="text-muted">{f.tipo}</td>
-                        <td>{f.maquina || "-"}</td>
-                        <td className="text-start">{f.tarea || "-"}</td>
-                        <td>{diasPendiente(f.fecha, f.fechaTerminado)}</td>
-                        <td>
-                          <Button size="sm" variant="outline-success" className="py-0 px-2" onClick={() => irAPlanillaResumen(f)}>Ver</Button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </Table>
-          </div>
-        </Modal.Body>
-        <Modal.Footer className="justify-content-center">
-          <Button variant="outline-secondary" onClick={() => setShowResumen(false)}>Cerrar</Button>
-        </Modal.Footer>
-      </Modal>
     </Container>
   );
 }
