@@ -132,6 +132,15 @@ export default function Pendientes() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Si se abrió con el botón de anteojos, mostrar directo el resumen.
+  useEffect(() => {
+    if (pendientesModal?.resumenPendiente) {
+      setShowResumen(true);
+      pendientesModal.consumirResumen();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const tareas = modalResp ? tareasPorResp[modalResp.nombre] || [] : [];
 
   // Filas derivadas de reparaciones: las reparaciones se asignan solo a Zamorano;

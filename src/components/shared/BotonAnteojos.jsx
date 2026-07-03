@@ -1,12 +1,15 @@
-// Botón flotante redondo (blanco) con ícono de anteojos de sol.
-// La funcionalidad se define más adelante.
+// Botón flotante (pestaña lateral derecha) con ícono de anteojos de sol.
+// Abre el resumen de tareas pendientes.
+import { usePendientesModal } from "../../context/PendientesModalContext";
+
 export default function BotonAnteojos() {
+  const pendientesModal = usePendientesModal();
   return (
     <button
       type="button"
-      title="Anteojos"
-      aria-label="Anteojos"
-      onClick={() => {}}
+      title="Resumen de pendientes"
+      aria-label="Resumen de pendientes"
+      onClick={() => pendientesModal?.abrirResumen()}
       style={{
         position: "fixed",
         top: "50%",

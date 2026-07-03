@@ -1,15 +1,17 @@
 // Botón flotante (pestaña lateral izquierda) con ícono de foco encendido:
-// bombilla negra con rayas alrededor simulando la luz.
-// La funcionalidad se define más adelante.
+// bombilla negra con rayas alrededor simulando la luz. Abre Tareas Pendientes.
+import { usePendientesModal } from "../../context/PendientesModalContext";
+
 const RAYOS = [-75, -45, -15, 15, 45, 75];
 
 export default function BotonFoco() {
+  const pendientesModal = usePendientesModal();
   return (
     <button
       type="button"
-      title="Foco"
-      aria-label="Foco"
-      onClick={() => {}}
+      title="Tareas pendientes"
+      aria-label="Tareas pendientes"
+      onClick={() => pendientesModal?.abrir()}
       style={{
         position: "fixed",
         top: "50%",
