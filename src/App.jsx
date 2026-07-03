@@ -20,6 +20,7 @@ import RutaProtegida from "./components/shared/RutaProtegida";
 import Login from "./components/pages/Login";
 import Footer from "./components/shared/Footer";
 import Menu from "./components/shared/Menu";
+import BotonAnteojos from "./components/shared/BotonAnteojos";
 
 const Inicio = lazy(() => import("./components/pages/Inicio"));
 const Error404 = lazy(() => import("./components/pages/Error404"));
@@ -184,6 +185,7 @@ function App() {
                     </ChunkErrorBoundary>
                   </main>
                   <Footer />
+                  <BotonAnteojos />
                 </>
               }
             />

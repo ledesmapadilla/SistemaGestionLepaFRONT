@@ -780,7 +780,7 @@ export default function Pendientes() {
                         <td className="text-start">{f.tarea || "-"}</td>
                         <td>{diasPendiente(f.fecha, f.fechaTerminado)}</td>
                         <td>
-                          <Button size="sm" variant="outline-info" className="py-0 px-2" onClick={() => irAPlanillaResumen(f)}>Ver</Button>
+                          <Button size="sm" variant="outline-success" className="py-0 px-2" onClick={() => irAPlanillaResumen(f)}>Ver</Button>
                         </td>
                       </tr>
                     );
