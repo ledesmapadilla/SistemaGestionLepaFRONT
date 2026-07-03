@@ -1,5 +1,8 @@
-// Botón flotante (pestaña lateral izquierda) con ícono de foco encendido.
+// Botón flotante (pestaña lateral izquierda) con ícono de foco encendido:
+// bombilla negra con rayas alrededor simulando la luz.
 // La funcionalidad se define más adelante.
+const RAYOS = [-75, -45, -15, 15, 45, 75];
+
 export default function BotonFoco() {
   return (
     <button
@@ -26,7 +29,34 @@ export default function BotonFoco() {
         zIndex: 1040,
       }}
     >
-      <i className="bi bi-lightbulb-fill" style={{ fontSize: "1.6rem", color: "#ffc107" }} />
+      <span
+        style={{
+          position: "relative",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 34,
+          height: 34,
+        }}
+      >
+        {/* Rayas de luz alrededor de la parte superior de la bombilla */}
+        {RAYOS.map((deg) => (
+          <span
+            key={deg}
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              width: 2,
+              height: 6,
+              backgroundColor: "#212529",
+              borderRadius: 2,
+              transform: `translate(-50%, -50%) rotate(${deg}deg) translateY(-16px)`,
+            }}
+          />
+        ))}
+        <i className="bi bi-lightbulb-fill" style={{ fontSize: "1.4rem", color: "#212529" }} />
+      </span>
     </button>
   );
 }

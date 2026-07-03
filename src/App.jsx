@@ -22,6 +22,8 @@ import Footer from "./components/shared/Footer";
 import Menu from "./components/shared/Menu";
 import BotonAnteojos from "./components/shared/BotonAnteojos";
 import BotonFoco from "./components/shared/BotonFoco";
+import PendientesModalHost from "./components/shared/PendientesModalHost";
+import { PendientesModalProvider } from "./context/PendientesModalContext";
 
 const Inicio = lazy(() => import("./components/pages/Inicio"));
 const Error404 = lazy(() => import("./components/pages/Error404"));
@@ -66,7 +68,6 @@ const GastosSemanales = lazy(() => import("./components/pages/secciones/PERSONAL
 const ServiceMaquinas = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/ServiceMaquinas/ServiceMaquinas.jsx"));
 const TableroControl = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/TableroControl/TableroControl.jsx"));
 const MantenimientoDashboard = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/MantenimientoDashboard.jsx"));
-const Pendientes = lazy(() => import("./components/pages/secciones/PENDIENTES/Pendientes.jsx"));
 const Baterias = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Baterias/Baterias.jsx"));
 const CubiertasDashboard = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Cubiertas/CubiertasDashboard.jsx"));
 const Cubiertas = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Cubiertas/Cubiertas.jsx"));
@@ -112,7 +113,7 @@ function App() {
             <Route
               path="*"
               element={
-                <>
+                <PendientesModalProvider>
                   <Menu />
                   <main className="container-fluid px-0 pt-5 mt-5">
                     <ChunkErrorBoundary>
@@ -142,7 +143,6 @@ function App() {
                       <Route path="/service-maquinas" element={<ServiceMaquinas />} />
                       <Route path="/tablero-control" element={<TableroControl />} />
                       <Route path="/departamento-mantenimiento" element={<MantenimientoDashboard />} />
-                      <Route path="/pendientes" element={<Pendientes />} />
                       <Route path="/mantenimiento/baterias" element={<Baterias />} />
                       <Route path="/mantenimiento/cubiertas" element={<CubiertasDashboard />} />
                       <Route path="/mantenimiento/cubiertas/camiones" element={<Cubiertas categoria="camiones" titulo="Cubiertas camiones" />} />
@@ -188,7 +188,8 @@ function App() {
                   <Footer />
                   <BotonAnteojos />
                   <BotonFoco />
-                </>
+                  <PendientesModalHost />
+                </PendientesModalProvider>
               }
             />
           </Route>

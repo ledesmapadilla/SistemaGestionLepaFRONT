@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/queriesPendientes";
 import { obtenerTodasReparaciones, guardarReparaciones } from "../../../../helpers/queriesReparaciones";
 import { listarMaquinas } from "../../../../helpers/queriesMaquinas";
+import { usePendientesModal } from "../../../../context/PendientesModalContext";
 
 // Mismos responsables que el select de repuestos.
 const RESPONSABLES = [
@@ -62,6 +63,7 @@ const filaVacia = () => ({
 
 export default function Pendientes() {
   const navigate = useNavigate();
+  const pendientesModal = usePendientesModal();
   const [modalResp, setModalResp] = useState(null);   // responsable abierto
   const [tareasPorResp, setTareasPorResp] = useState({});
   // Docs de reparaciones por máquina (fuente de las filas derivadas de Zamorano).
@@ -304,10 +306,12 @@ export default function Pendientes() {
   const cerrar = () => { descartarSiNueva(); setModalResp(null); setEditandoId(null); limpiarFiltros(); };
 
   // Navega al módulo de reparaciones abriendo la máquina (y los repuestos) correspondientes.
-  const irAReparaciones = (t) =>
+  const irAReparaciones = (t) => {
+    pendientesModal?.cerrar();
     navigate("/mantenimiento/reparaciones", {
       state: { maquinaId: t.maquinaId, repuestosDe: t.tipo === "repuesto" ? t.reparacionId : undefined },
     });
+  };
 
   const verObservacion = (texto) =>
     Swal.fire({ title: "Observaciones", text: texto, confirmButtonText: "Cerrar", confirmButtonColor: "#6c757d" });
