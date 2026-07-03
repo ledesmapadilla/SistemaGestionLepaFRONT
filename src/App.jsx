@@ -21,6 +21,7 @@ import Login from "./components/pages/Login";
 import Footer from "./components/shared/Footer";
 import Menu from "./components/shared/Menu";
 import BotonAnteojos from "./components/shared/BotonAnteojos";
+import BotonFoco from "./components/shared/BotonFoco";
 
 const Inicio = lazy(() => import("./components/pages/Inicio"));
 const Error404 = lazy(() => import("./components/pages/Error404"));
@@ -186,6 +187,7 @@ function App() {
                   </main>
                   <Footer />
                   <BotonAnteojos />
+                  <BotonFoco />
                 </>
               }
             />
