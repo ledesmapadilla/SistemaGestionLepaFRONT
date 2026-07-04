@@ -72,7 +72,6 @@ export default function Pendientes() {
   const [maquinas, setMaquinas] = useState([]);
   const [editandoId, setEditandoId] = useState(null);
   const [derivadoEdit, setDerivadoEdit] = useState({}); // borrador de edición de fila derivada
-  const [otraMaquina, setOtraMaquina] = useState(() => new Set()); // tareas manuales con máquina "Otra"
   const [nuevas, setNuevas] = useState(() => new Set()); // tareas manuales nuevas sin guardar
   const cancelarRef = useRef(() => {});
   const [cargando, setCargando] = useState(true);
@@ -535,7 +534,7 @@ export default function Pendientes() {
                   <th style={{ width: 85 }}>Días pendiente</th>
                   <th style={{ width: 110 }}>Estado</th>
                   <th style={{ width: 80 }}>Obs.</th>
-                  <th style={{ width: 180 }}>Acciones</th>
+                  <th style={{ width: 230 }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -580,7 +579,7 @@ export default function Pendientes() {
                       )}
                     </td>
                     <td>
-                      <div className="d-flex gap-1 justify-content-center align-items-center flex-wrap">
+                      <div className="d-flex gap-1 justify-content-center align-items-center flex-nowrap text-nowrap">
                         {enEdicion ? (
                           <Button size="sm" variant="outline-success" onClick={() => guardarDerivado(t)}>Listo</Button>
                         ) : (
@@ -617,39 +616,15 @@ export default function Pendientes() {
                         </td>
                         <td>
                           {editando ? (
-                            <>
-                              <Form.Select
-                                size="sm"
-                                value={
-                                  maquinasReparaciones.includes(t.maquina)
-                                    ? t.maquina
-                                    : (t.maquina || otraMaquina.has(t.id)) ? "__otra__" : ""
-                                }
-                                onChange={(e) => {
-                                  const v = e.target.value;
-                                  if (v === "__otra__") {
-                                    setOtraMaquina((prev) => new Set(prev).add(t.id));
-                                    editar(t.id, "maquina", "");
-                                  } else {
-                                    setOtraMaquina((prev) => { const n = new Set(prev); n.delete(t.id); return n; });
-                                    editar(t.id, "maquina", v);
-                                  }
-                                }}
-                              >
-                                <option value="">Seleccionar...</option>
-                                {maquinasReparaciones.map((m) => (<option key={m} value={m}>{m}</option>))}
-                                <option value="__otra__">Otra...</option>
-                              </Form.Select>
-                              {(otraMaquina.has(t.id) || (t.maquina && !maquinasReparaciones.includes(t.maquina))) && (
-                                <Form.Control
-                                  size="sm"
-                                  className="mt-1"
-                                  placeholder="Nombre de máquina"
-                                  value={t.maquina || ""}
-                                  onChange={(e) => editar(t.id, "maquina", e.target.value)}
-                                />
-                              )}
-                            </>
+                            <Form.Select
+                              size="sm"
+                              value={t.maquina || ""}
+                              onChange={(e) => editar(t.id, "maquina", e.target.value)}
+                            >
+                              <option value="">Seleccionar...</option>
+                              {maquinasReparaciones.map((m) => (<option key={m} value={m}>{m}</option>))}
+                              <option value="Otra">Otra</option>
+                            </Form.Select>
                           ) : (
                             t.maquina || "-"
                           )}
