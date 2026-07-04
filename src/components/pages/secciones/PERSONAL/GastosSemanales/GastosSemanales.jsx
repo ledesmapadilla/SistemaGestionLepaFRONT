@@ -699,6 +699,24 @@ const GastosSemanales = () => {
     );
     const nombresPersonalDB = new Set(personalVisible.map((p) => normNombre(p.nombre)));
 
+    const jornalMap = {};
+    const semanalMap = {};
+    const cantJornalesMap = {};
+    personalVisible.forEach((p) => {
+      const ultimo = p.semanal?.length ? p.semanal[p.semanal.length - 1] : null;
+      const semanal = ultimo ? ultimo.valor : 0;
+      const cant = ultimo ? Number(ultimo.cantJornales || 0) : 0;
+      jornalMap[normNombre(p.nombre)] = cant > 0 ? semanal / cant : 0;
+      semanalMap[normNombre(p.nombre)] = semanal;
+      cantJornalesMap[normNombre(p.nombre)] = cant;
+    });
+
+    // Quien trabaja 5 días o menos no trabaja sábados: ese día no se computa.
+    const noTrabajaSabado = (nombre) => {
+      const c = cantJornalesMap[normNombre(nombre)] || 0;
+      return c > 0 && c <= 5;
+    };
+
     const ausenciasMap = {};
     const tieneRegistro = new Set(); // `${normNombre}|${dKey}` con registro de asistencia
     diasSemana.forEach((d, idx) => {
@@ -710,6 +728,7 @@ const GastosSemanales = () => {
         if (!r.personal) return;
         const k = normNombre(r.personal);
         tieneRegistro.add(`${k}|${dKey}`);
+        if (esSabado && noTrabajaSabado(r.personal)) return; // no trabaja sábados
         if (!ausenciasMap[k]) ausenciasMap[k] = 0;
         if (r.ausente) ausenciasMap[k] += esSabado ? 0.5 : 1;
         if (r.mediaFalta) ausenciasMap[k] += 0.5;
@@ -724,23 +743,12 @@ const GastosSemanales = () => {
       personalVisible.forEach((p) => {
         if (p.activo === false && p.fechaDesactivado && dKey >= p.fechaDesactivado) {
           const k = normNombre(p.nombre);
+          if (esSabado && noTrabajaSabado(p.nombre)) return; // no trabaja sábados
           if (!tieneRegistro.has(`${k}|${dKey}`)) {
             ausenciasMap[k] = (ausenciasMap[k] || 0) + (esSabado ? 0.5 : 1);
           }
         }
       });
-    });
-
-    const jornalMap = {};
-    const semanalMap = {};
-    const cantJornalesMap = {};
-    personalVisible.forEach((p) => {
-      const ultimo = p.semanal?.length ? p.semanal[p.semanal.length - 1] : null;
-      const semanal = ultimo ? ultimo.valor : 0;
-      const cant = ultimo ? Number(ultimo.cantJornales || 0) : 0;
-      jornalMap[normNombre(p.nombre)] = cant > 0 ? semanal / cant : 0;
-      semanalMap[normNombre(p.nombre)] = semanal;
-      cantJornalesMap[normNombre(p.nombre)] = cant;
     });
 
     // Suma de la Dif. horaria de la semana (9h - jornada real) por persona.
@@ -754,6 +762,7 @@ const GastosSemanales = () => {
       doc.registros.forEach((r) => {
         if (!r.personal || r.ausente || r.mediaFalta) return;
         if (r.personal.toLowerCase().includes("zamorano")) return;
+        if (esSabado && noTrabajaSabado(r.personal)) return; // no trabaja sábados
         const dm = difMinDia(r.entra, r.sale, esSabado);
         if (dm == null) return;
         const k = normNombre(r.personal);
@@ -768,6 +777,7 @@ const GastosSemanales = () => {
       if (!doc?.registros) return;
       const reg = doc.registros.find((r) => r.personal?.toLowerCase().includes("zamorano"));
       if (!reg) return;
+      if (esSabado && noTrabajaSabado(reg.personal)) return; // no trabaja sábados
       if (reg.ausente) {
         zamoranoMins += esSabado ? 240 : 480;
       } else if (reg.mediaFalta) {
@@ -1164,6 +1174,9 @@ const GastosSemanales = () => {
             }, 0);
             const regGasto = registros.find((x) => normNombre(x.personal) === normNombre(verPersonal || ""));
             const montoDif = regGasto ? difMonto({ ...regGasto, difMin: totalDifMin }) : 0;
+            // Trabaja 5 días o menos => no trabaja sábados (fila gris).
+            const cantJornalesVer = Number(regGasto?.cantJornales) || 0;
+            const noTrabajaSabadoVer = cantJornalesVer > 0 && cantJornalesVer <= 5;
             let totalHorometroStr = null;
             if (esZamoranoPerson) {
               const totalMins = regsModal.reduce((s, reg, idx) => {
@@ -1201,11 +1214,13 @@ const GastosSemanales = () => {
                 <tbody>
                   {diasModal.map((d, idx) => {
                     const label = `${DIAS[d.getDay()]} ${formatFecha(d)}`;
+                    const grisSabado = d.getDay() === 6 && noTrabajaSabadoVer;
+                    const estiloFila = grisSabado ? { opacity: 0.5, filter: "grayscale(1)" } : undefined;
                     const reg = regsModal[idx];
                     if (!reg) return (
-                      <tr key={idx}>
+                      <tr key={idx} style={estiloFila} title={grisSabado ? "No trabaja sábados" : undefined}>
                         <td>{label}</td>
-                        <td colSpan={8} className="text-muted">Sin registro</td>
+                        <td colSpan={8} className="text-muted">{grisSabado ? "No trabaja" : "Sin registro"}</td>
                       </tr>
                     );
                     const esZamorano = reg.personal?.toLowerCase().includes("zamorano");
@@ -1213,7 +1228,7 @@ const GastosSemanales = () => {
                     const colorEstado = reg.ausente ? "#dc3545" : reg.mediaFalta ? "#ffc107" : "#198754";
                     const difDia = esZamorano || reg.ausente || reg.mediaFalta ? null : difMinDia(reg.entra, reg.sale, d.getDay() === 6);
                     return (
-                      <tr key={idx}>
+                      <tr key={idx} style={estiloFila} title={grisSabado ? "No trabaja sábados" : undefined}>
                         <td>{label}</td>
                         <td style={{ color: colorEstado, fontWeight: 600 }}>{estado}</td>
                         <td>{reg.entra || "-"}</td>
