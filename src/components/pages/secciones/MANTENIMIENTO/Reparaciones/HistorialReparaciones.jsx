@@ -8,7 +8,7 @@ import {
   obtenerReparacionesPorMaquina,
   guardarReparaciones,
 } from "../../../../../helpers/queriesReparaciones";
-import { obtenerTodosPendientes } from "../../../../../helpers/queriesPendientes";
+import { obtenerTodosPendientes, guardarPendientes } from "../../../../../helpers/queriesPendientes";
 
 const PARTES = [
   "Motor",
@@ -40,7 +40,8 @@ const filaVacia = () => ({
 
 function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }) {
   const [filas, setFilas] = useState([]);
-  const [pendientesMaquina, setPendientesMaquina] = useState([]); // tareas de Pendientes de esta máquina (solo lectura)
+  const [docsPendientes, setDocsPendientes] = useState([]); // docs de Pendientes (para editar/borrar sus tareas)
+  const [pendEdit, setPendEdit] = useState({}); // borrador de edición de tarea de pendientes
   const [detalleSel, setDetalleSel] = useState(null);
   const [repuestosSel, setRepuestosSel] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -69,26 +70,10 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
             setRepuestosSel(abrirRepuestosDe);
           }
         }
-        // Tareas manuales de Pendientes asignadas a esta máquina.
+        // Docs de Pendientes (para mostrar/editar/borrar sus tareas por máquina).
         if (resPend?.ok) {
           const docs = await resPend.json();
-          const nombreMaq = (maquina?.maquina || "").trim().toLowerCase();
-          const tareas = [];
-          (Array.isArray(docs) ? docs : []).forEach((doc) => {
-            (doc.tareas || []).forEach((t) => {
-              if ((t.maquina || "").trim().toLowerCase() === nombreMaq) {
-                tareas.push({
-                  id: `pend-${doc.responsable}-${t.id}`,
-                  fecha: t.fecha || "",
-                  reparacion: t.tarea || "",
-                  estado: t.estado || "",
-                  observaciones: t.observaciones || "",
-                  responsable: doc.responsable,
-                });
-              }
-            });
-          });
-          setPendientesMaquina(tareas);
+          setDocsPendientes(Array.isArray(docs) ? docs : []);
         }
       } catch (error) {
         console.error("Error al cargar reparaciones:", error);
@@ -212,6 +197,74 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
     [filas, filtroReparacion, filtroParte, filtroEstado, editandoId]
   );
 
+  // Tareas de Pendientes asignadas a esta máquina (derivadas de los docs).
+  const pendientesMaquina = useMemo(() => {
+    const nombreMaq = (maquina?.maquina || "").trim().toLowerCase();
+    const rows = [];
+    docsPendientes.forEach((doc) => {
+      (doc.tareas || []).forEach((t) => {
+        if ((t.maquina || "").trim().toLowerCase() === nombreMaq) {
+          rows.push({
+            id: `pend-${doc.responsable}-${t.id}`,
+            taskId: t.id,
+            responsable: doc.responsable,
+            fecha: t.fecha || "",
+            reparacion: t.tarea || "",
+            estado: t.estado || "",
+            observaciones: t.observaciones || "",
+          });
+        }
+      });
+    });
+    return rows;
+  }, [docsPendientes, maquina?.maquina]);
+
+  const editarPendiente = (t) => {
+    setEditandoId(t.id);
+    setPendEdit({ fecha: t.fecha || "", reparacion: t.reparacion || "", estado: t.estado || "", observaciones: t.observaciones || "" });
+  };
+
+  const persistirPendientes = async (nuevosDocs, responsable, titulo) => {
+    setDocsPendientes(nuevosDocs);
+    const doc = nuevosDocs.find((d) => d.responsable === responsable);
+    const res = await guardarPendientes(responsable, doc?.tareas || []);
+    if (res?.ok) {
+      Swal.fire({ position: "center", icon: "success", title: titulo, showConfirmButton: false, timer: 1200, timerProgressBar: true });
+    } else {
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudieron guardar los cambios" });
+    }
+    return res;
+  };
+
+  const guardarPendiente = async (t) => {
+    const nuevosDocs = docsPendientes.map((doc) => {
+      if (doc.responsable !== t.responsable) return doc;
+      const tareas = (doc.tareas || []).map((task) =>
+        task.id === t.taskId ? { ...task, fecha: pendEdit.fecha, tarea: pendEdit.reparacion, estado: pendEdit.estado, observaciones: pendEdit.observaciones } : task
+      );
+      return { ...doc, tareas };
+    });
+    setEditandoId(null);
+    await persistirPendientes(nuevosDocs, t.responsable, "Guardado");
+  };
+
+  const borrarPendiente = async (t) => {
+    const { isConfirmed } = await Swal.fire({
+      title: "¿Eliminar tarea?",
+      icon: "warning",
+      showCancelButton: true,
+      customClass: { confirmButton: "swal-btn-danger" },
+      confirmButtonText: "Sí, borrar",
+    });
+    if (!isConfirmed) return;
+    const nuevosDocs = docsPendientes.map((doc) => {
+      if (doc.responsable !== t.responsable) return doc;
+      return { ...doc, tareas: (doc.tareas || []).filter((task) => task.id !== t.taskId) };
+    });
+    setEditandoId((prev) => (prev === t.id ? null : prev));
+    await persistirPendientes(nuevosDocs, t.responsable, "Tarea eliminada");
+  };
+
   // Nombres de reparaciones ya cargadas (para no duplicar tareas de Pendientes).
   const nombresReparaciones = useMemo(
     () => new Set(filas.map((f) => (f.reparacion || "").trim().toLowerCase()).filter(Boolean)),
@@ -227,13 +280,14 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
         ? []
         : pendientesMaquina.filter(
             (t) =>
-              !nombresReparaciones.has((t.reparacion || "").trim().toLowerCase()) &&
-              (filtroEstado === "" ||
-                (filtroEstado === "activas"
-                  ? t.estado === "Pendiente" || t.estado === "En proceso"
-                  : t.estado === filtroEstado))
+              t.id === editandoId ||
+              (!nombresReparaciones.has((t.reparacion || "").trim().toLowerCase()) &&
+                (filtroEstado === "" ||
+                  (filtroEstado === "activas"
+                    ? t.estado === "Pendiente" || t.estado === "En proceso"
+                    : t.estado === filtroEstado)))
           ),
-    [pendientesMaquina, nombresReparaciones, filtroReparacion, filtroParte, filtroEstado]
+    [pendientesMaquina, nombresReparaciones, filtroReparacion, filtroParte, filtroEstado, editandoId]
   );
 
   const exportarExcel = () => {
@@ -421,28 +475,61 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
               </td>
             </tr>
           )}
-          {pendientesFiltradas.map((t) => (
+          {pendientesFiltradas.map((t) => {
+            const editandoPend = editandoId === t.id;
+            return (
             <tr key={t.id} style={{ backgroundColor: "#eef4fb" }}>
-              <td>{t.fecha ? t.fecha.split("-").reverse().join("/") : "-"}</td>
-              <td className="text-start" style={{ wordBreak: "break-word" }}>{t.reparacion || "-"}</td>
+              <td>
+                {editandoPend ? (
+                  <Form.Control type="date" size="sm" value={pendEdit.fecha || ""} onChange={(e) => setPendEdit((p) => ({ ...p, fecha: e.target.value }))} />
+                ) : (
+                  t.fecha ? t.fecha.split("-").reverse().join("/") : "-"
+                )}
+              </td>
+              <td className="text-start" style={{ wordBreak: "break-word" }}>
+                {editandoPend ? (
+                  <Form.Control size="sm" value={pendEdit.reparacion || ""} onChange={(e) => setPendEdit((p) => ({ ...p, reparacion: e.target.value }))} />
+                ) : (
+                  <>
+                    <span className="badge bg-info text-dark me-1" title="Tarea cargada en Pendientes">P</span>
+                    {t.reparacion || "-"}
+                  </>
+                )}
+              </td>
               <td>-</td>
               <td>-</td>
               <td>-</td>
               <td>
-                <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
+                {editandoPend ? (
+                  <Form.Select size="sm" value={pendEdit.estado} onChange={(e) => setPendEdit((p) => ({ ...p, estado: e.target.value }))}>
+                    {ESTADOS.map((s) => (<option key={s} value={s}>{s}</option>))}
+                  </Form.Select>
+                ) : (
+                  <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
+                )}
               </td>
               <td className="text-start">
-                {t.observaciones ? (
+                {editandoPend ? (
+                  <Form.Control size="sm" value={pendEdit.observaciones || ""} onChange={(e) => setPendEdit((p) => ({ ...p, observaciones: e.target.value }))} />
+                ) : t.observaciones ? (
                   <Button size="sm" variant="outline-secondary" className="py-0 px-2" onClick={() => verObservacion(t.observaciones)}>Ver</Button>
                 ) : "-"}
               </td>
               <td>-</td>
               <td>-</td>
               <td>
-                <span className="badge bg-info text-dark" title="Tarea cargada en Pendientes">Pendiente · {t.responsable}</span>
+                <div className="d-flex gap-1 justify-content-center align-items-center flex-wrap">
+                  {editandoPend ? (
+                    <Button size="sm" variant="outline-success" onClick={() => guardarPendiente(t)}>Listo</Button>
+                  ) : (
+                    <Button size="sm" variant="outline-warning" onClick={() => editarPendiente(t)}>Editar</Button>
+                  )}
+                  <Button size="sm" variant="outline-danger" onClick={() => borrarPendiente(t)}>Borrar</Button>
+                </div>
               </td>
             </tr>
-          ))}
+            );
+          })}
           {filasFiltradas.map((f) => {
             const editando = editandoId === f.id;
             return (
