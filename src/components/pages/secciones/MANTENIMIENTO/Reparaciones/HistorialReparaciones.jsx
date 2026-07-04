@@ -212,20 +212,28 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
     [filas, filtroReparacion, filtroParte, filtroEstado, editandoId]
   );
 
+  // Nombres de reparaciones ya cargadas (para no duplicar tareas de Pendientes).
+  const nombresReparaciones = useMemo(
+    () => new Set(filas.map((f) => (f.reparacion || "").trim().toLowerCase()).filter(Boolean)),
+    [filas]
+  );
+
   // Tareas de Pendientes de esta máquina, respetando el filtro de estado.
-  // Se ocultan si hay filtro por reparación o por parte (no aplican a ellas).
+  // Se ocultan si hay filtro por reparación o por parte (no aplican a ellas), y
+  // se descartan las que ya existen como reparación (mismo nombre).
   const pendientesFiltradas = useMemo(
     () =>
       filtroReparacion || filtroParte
         ? []
         : pendientesMaquina.filter(
             (t) =>
-              filtroEstado === "" ||
-              (filtroEstado === "activas"
-                ? t.estado === "Pendiente" || t.estado === "En proceso"
-                : t.estado === filtroEstado)
+              !nombresReparaciones.has((t.reparacion || "").trim().toLowerCase()) &&
+              (filtroEstado === "" ||
+                (filtroEstado === "activas"
+                  ? t.estado === "Pendiente" || t.estado === "En proceso"
+                  : t.estado === filtroEstado))
           ),
-    [pendientesMaquina, filtroReparacion, filtroParte, filtroEstado]
+    [pendientesMaquina, nombresReparaciones, filtroReparacion, filtroParte, filtroEstado]
   );
 
   const exportarExcel = () => {
@@ -389,20 +397,20 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
           )}
         </div>
       </div>
-      <div style={{ maxHeight: "65vh", overflowY: "auto", overflowX: "auto" }}>
-      <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
+      <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+      <Table striped bordered hover size="sm" className="text-center align-middle mb-0" style={{ tableLayout: "fixed", width: "100%" }}>
         <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
           <tr>
-            <th style={{ width: 140, minWidth: 120 }}>Fecha</th>
-            <th style={{ width: 360, minWidth: 300 }}>Reparación</th>
-            <th style={{ width: 80, minWidth: 70 }}>Detalle</th>
-            <th style={{ width: 160, minWidth: 150 }}>Parte</th>
-            <th style={{ width: 150, minWidth: 140 }}>Prioridad</th>
-            <th style={{ width: 160, minWidth: 150 }}>Estado</th>
-            <th style={{ width: 280, minWidth: 240 }}>Observaciones</th>
-            <th style={{ width: 120, minWidth: 110 }}>Máquina parada</th>
-            <th style={{ width: 90, minWidth: 80 }}>Repuestos</th>
-            <th style={{ width: 160, minWidth: 150 }}>Acciones</th>
+            <th style={{ width: "9%" }}>Fecha</th>
+            <th style={{ width: "20%" }}>Reparación</th>
+            <th style={{ width: "5%" }}>Detalle</th>
+            <th style={{ width: "10%" }}>Parte</th>
+            <th style={{ width: "9%" }}>Prioridad</th>
+            <th style={{ width: "10%" }}>Estado</th>
+            <th style={{ width: "13%" }}>Observaciones</th>
+            <th style={{ width: "7%" }}>Máquina parada</th>
+            <th style={{ width: "5%" }}>Repuestos</th>
+            <th style={{ width: "12%" }}>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -416,14 +424,14 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
           {pendientesFiltradas.map((t) => (
             <tr key={t.id} style={{ backgroundColor: "#eef4fb" }}>
               <td>{t.fecha ? t.fecha.split("-").reverse().join("/") : "-"}</td>
-              <td className="text-start"><div className="text-truncate" title={t.reparacion}>{t.reparacion || "-"}</div></td>
+              <td className="text-start" style={{ wordBreak: "break-word" }}>{t.reparacion || "-"}</td>
               <td>-</td>
               <td>-</td>
               <td>-</td>
               <td>
                 <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
               </td>
-              <td className="text-start" style={{ maxWidth: 280 }}>
+              <td className="text-start">
                 {t.observaciones ? (
                   <Button size="sm" variant="outline-secondary" className="py-0 px-2" onClick={() => verObservacion(t.observaciones)}>Ver</Button>
                 ) : "-"}
@@ -451,7 +459,7 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
                   f.fecha ? f.fecha.split("-").reverse().join("/") : "-"
                 )}
               </td>
-              <td className="text-start" style={{ width: 360, maxWidth: 360 }}>
+              <td className="text-start" style={{ wordBreak: "break-word" }}>
                 {editando ? (
                   <Form.Control
                     size="sm"
@@ -459,7 +467,7 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
                     onChange={(e) => editar(f.id, "reparacion", e.target.value)}
                   />
                 ) : (
-                  <div className="text-truncate" title={f.reparacion}>{f.reparacion || "-"}</div>
+                  f.reparacion || "-"
                 )}
               </td>
               <td>
@@ -584,7 +592,7 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
                 </Button>
               </td>
               <td>
-                <div className="d-flex gap-1 justify-content-center align-items-center">
+                <div className="d-flex gap-1 justify-content-center align-items-center flex-wrap">
                   {editando ? (
                     <Button size="sm" variant="outline-success" onClick={finalizarEdicion}>
                       Listo
