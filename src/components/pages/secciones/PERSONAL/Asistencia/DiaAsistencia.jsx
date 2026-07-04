@@ -60,6 +60,22 @@ const DiaAsistencia = () => {
     [keyDia, listaPersonal]
   );
 
+  // Días semanales de cada persona (último valor de semanal.cantJornales).
+  // Los que trabajan 5 días o menos no trabajan sábados.
+  const cantJornalesPorNombre = useMemo(() => {
+    const m = {};
+    listaPersonal.forEach((p) => {
+      const ult = p.semanal?.length ? p.semanal[p.semanal.length - 1] : null;
+      m[(p.nombre || "").trim().toLowerCase()] = ult ? Number(ult.cantJornales || 0) : 0;
+    });
+    return m;
+  }, [listaPersonal]);
+
+  const noTrabajaSabado = (nombre) => {
+    const cant = cantJornalesPorNombre[(nombre || "").trim().toLowerCase()] || 0;
+    return esSabado && cant > 0 && cant <= 5;
+  };
+
   // Borrador inicial derivado de los datos cargados (sin efectos). Las ediciones
   // del usuario se guardan en `edits`; mientras no edite, se ve el inicial.
   const borradorInicial = useMemo(() => {
@@ -284,8 +300,14 @@ const DiaAsistencia = () => {
           <tbody>
             {borrador.filter((fila) =>
               !busquedaPersona || (fila.personal || "").toLowerCase().includes(busquedaPersona.toLowerCase())
-            ).map((fila) => (
-              <tr key={fila.id}>
+            ).map((fila) => {
+              const sinSabado = noTrabajaSabado(fila.personal);
+              return (
+              <tr
+                key={fila.id}
+                title={sinSabado ? "No trabaja sábados" : undefined}
+                style={sinSabado ? { opacity: 0.5, filter: "grayscale(1)", pointerEvents: "none" } : undefined}
+              >
                 <td>
                   {fila.personalLibre ? (
                     <Form.Control
@@ -473,7 +495,8 @@ const DiaAsistencia = () => {
                   />
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </Table>
 
