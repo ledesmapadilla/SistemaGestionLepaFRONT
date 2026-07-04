@@ -248,6 +248,40 @@ export default function Pendientes() {
     return res;
   };
 
+  // Si la tarea está vinculada a una reparación (reparacionId), copia sus campos
+  // comunes a esa reparación y guarda su máquina (sincronización interna).
+  const sincronizarReparacionDesdeTarea = async (tarea) => {
+    if (!tarea?.reparacionId) return;
+    let maquinaAfectada = null;
+    const nuevosDocs = docsReparaciones.map((doc) => {
+      const reparaciones = (doc.reparaciones || []).map((r) => {
+        if (r.id === tarea.reparacionId) {
+          maquinaAfectada = doc.maquina?._id;
+          return { ...r, fecha: tarea.fecha, reparacion: tarea.tarea, estado: tarea.estado, observaciones: tarea.observaciones };
+        }
+        return r;
+      });
+      return { ...doc, reparaciones };
+    });
+    if (!maquinaAfectada) return;
+    setDocsReparaciones(nuevosDocs);
+    const doc = nuevosDocs.find((d) => String(d.maquina?._id) === String(maquinaAfectada));
+    await guardarReparaciones(maquinaAfectada, doc?.reparaciones || []);
+  };
+
+  // Inverso: si una reparación está vinculada a una tarea, sincroniza la tarea.
+  const sincronizarTareaDesdeReparacion = async (rep) => {
+    if (!rep?.pendResp || !rep?.pendTaskId) return;
+    const tareasResp = tareasPorResp[rep.pendResp] || [];
+    const nuevas = tareasResp.map((task) =>
+      task.id === rep.pendTaskId
+        ? { ...task, fecha: rep.fecha, tarea: rep.reparacion, estado: rep.estado, observaciones: rep.observaciones }
+        : task
+    );
+    setTareasPorResp((prev) => ({ ...prev, [rep.pendResp]: nuevas }));
+    await guardarPendientes(rep.pendResp, nuevas);
+  };
+
   // Si la fila en edición es nueva y sin guardar, la descarta (evita que quede
   // una tarea incompleta —p. ej. sin máquina— y se persista en el próximo guardado).
   const descartarSiNueva = () => {
@@ -349,6 +383,11 @@ export default function Pendientes() {
     });
     setEditandoId(null);
     await persistirDocsReparaciones(nuevosDocs, t.maquinaId, "Guardado");
+    // Si la reparación editada está vinculada a una tarea de Pendientes, sincronizarla.
+    if (t.tipo === "reparacion") {
+      const docAf = nuevosDocs.find((d) => String(d.maquina?._id) === String(t.maquinaId));
+      await sincronizarTareaDesdeReparacion(docAf?.reparaciones?.[t.reparacionIndex]);
+    }
   };
 
   // Borra la reparación (o el repuesto) de origen.
@@ -408,6 +447,8 @@ export default function Pendientes() {
     setEditandoId(null);
     setNuevas((prev) => { const n = new Set(prev); n.delete(id); return n; });
     const res = await persistir(tareas);
+    // Si la tarea está vinculada a una reparación, sincronizarla.
+    await sincronizarReparacionDesdeTarea(fila);
     if (res?.ok) {
       Swal.fire({ position: "center", icon: "success", title: "Guardado", showConfirmButton: false, timer: 1200, timerProgressBar: true });
     }

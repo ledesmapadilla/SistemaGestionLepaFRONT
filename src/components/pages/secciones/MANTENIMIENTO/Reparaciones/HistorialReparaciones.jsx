@@ -153,6 +153,8 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
     }
     setEditandoId(null);
     const res = await persistir(filas);
+    // Si la reparación está vinculada a una tarea de Pendientes, sincronizarla.
+    await sincronizarPendienteDesdeReparacion(fila);
     if (res?.ok) {
       Swal.fire({
         position: "center",
@@ -244,6 +246,24 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
     return res;
   };
 
+  // Si la reparación está vinculada a una tarea de Pendientes, copia sus campos
+  // comunes y guarda el doc de Pendientes (sin aviso, es sincronización interna).
+  const sincronizarPendienteDesdeReparacion = async (fila) => {
+    if (!fila?.pendResp || !fila?.pendTaskId) return;
+    const nuevosDocs = docsPendientes.map((doc) => {
+      if (doc.responsable !== fila.pendResp) return doc;
+      const tareas = (doc.tareas || []).map((task) =>
+        task.id === fila.pendTaskId
+          ? { ...task, fecha: fila.fecha, tarea: fila.reparacion, estado: fila.estado, observaciones: fila.observaciones }
+          : task
+      );
+      return { ...doc, tareas };
+    });
+    setDocsPendientes(nuevosDocs);
+    const doc = nuevosDocs.find((d) => d.responsable === fila.pendResp);
+    await guardarPendientes(fila.pendResp, doc?.tareas || []);
+  };
+
   // Al guardar, la tarea de Pendientes se crea como reparación completa en la
   // máquina y ADEMÁS se mantiene en Pendientes (queda en ambos lados).
   const guardarPendiente = async (t) => {
@@ -252,8 +272,9 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
     if (!pendEdit.parte)
       return Swal.fire({ icon: "warning", title: "Atención", text: "La parte es obligatoria." });
 
+    const repId = crypto.randomUUID();
     const nuevaRep = {
-      id: crypto.randomUUID(),
+      id: repId,
       fecha: pendEdit.fecha,
       reparacion: pendEdit.reparacion,
       descripcion: "",
@@ -263,14 +284,16 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
       maquinaParada: !!pendEdit.maquinaParada,
       observaciones: pendEdit.observaciones || "",
       repuestos: [],
+      pendResp: t.responsable,   // vínculo con la tarea de Pendientes
+      pendTaskId: t.taskId,
     };
     const nuevasFilas = [...filas, nuevaRep];
 
-    // Mantener la tarea en Pendientes con sus campos comunes actualizados.
+    // Mantener la tarea en Pendientes con sus campos comunes actualizados y vinculada.
     const nuevosDocs = docsPendientes.map((doc) => {
       if (doc.responsable !== t.responsable) return doc;
       const tareas = (doc.tareas || []).map((task) =>
-        task.id === t.taskId ? { ...task, fecha: pendEdit.fecha, tarea: pendEdit.reparacion, estado: pendEdit.estado, observaciones: pendEdit.observaciones } : task
+        task.id === t.taskId ? { ...task, fecha: pendEdit.fecha, tarea: pendEdit.reparacion, estado: pendEdit.estado, observaciones: pendEdit.observaciones, reparacionId: repId } : task
       );
       return { ...doc, tareas };
     });
