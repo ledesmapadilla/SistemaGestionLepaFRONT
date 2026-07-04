@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
+import XLSXStyle from "xlsx-js-style";
 import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/queriesPendientes";
 import { obtenerTodasReparaciones, guardarReparaciones } from "../../../../helpers/queriesReparaciones";
 import { listarMaquinas } from "../../../../helpers/queriesMaquinas";
@@ -219,7 +220,7 @@ export default function Pendientes() {
   const coincideFiltro = (f) =>
     (filtroEstado === "" ||
       (filtroEstado === "activas"
-        ? f.estado !== "Terminado" && f.estado !== "Colocado"
+        ? ["Pedido", "Pendiente", "En proceso"].includes(f.estado)
         : f.estado === filtroEstado)) &&
     (filtroMaquina === "" || f.maquina === filtroMaquina) &&
     (filtroTarea === "" || f.tarea === filtroTarea);
@@ -263,6 +264,45 @@ export default function Pendientes() {
 
   const verObservacion = (texto) =>
     Swal.fire({ title: "Observaciones", text: texto, confirmButtonText: "Cerrar", confirmButtonColor: "#6c757d" });
+
+  // Exporta a Excel las tareas visibles del responsable abierto.
+  const exportarExcelPendientes = () => {
+    const nombre = modalResp?.nombre || "";
+    const filas = [...derivadasFiltradas, ...tareasFiltradas];
+    const headers = ["Fecha", "Máquina", "Tarea", "Días pendiente", "Estado", "Observaciones"];
+    const cols = ["A", "B", "C", "D", "E", "F"];
+    const centerAlign = { horizontal: "center", vertical: "center" };
+    const leftAlign = { horizontal: "left", vertical: "center" };
+
+    const ws = {};
+    ws["A1"] = { v: `TAREAS PENDIENTES - ${nombre.toUpperCase()}`, t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+    ws["A2"] = { v: `Fecha: ${new Date().toLocaleDateString("es-AR")}`, t: "s", s: { alignment: leftAlign } };
+    headers.forEach((h, i) => {
+      ws[`${cols[i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
+    });
+    filas.forEach((f, idx) => {
+      const row = idx + 4;
+      const vals = [
+        f.fecha ? f.fecha.split("-").reverse().join("/") : "-",
+        f.maquina || "-",
+        f.tarea || "-",
+        diasPendiente(f.fecha, f.fechaTerminado),
+        f.estado || "-",
+        f.observaciones || "-",
+      ];
+      vals.forEach((v, i) => {
+        ws[`${cols[i]}${row}`] = { v: v ?? "-", t: typeof v === "number" ? "n" : "s", s: { alignment: i === 2 || i === 5 ? leftAlign : centerAlign } };
+      });
+    });
+
+    ws["!ref"] = `A1:F${filas.length + 3}`;
+    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
+    ws["!cols"] = [{ wch: 12 }, { wch: 16 }, { wch: 34 }, { wch: 14 }, { wch: 14 }, { wch: 30 }];
+
+    const libro = XLSXStyle.utils.book_new();
+    XLSXStyle.utils.book_append_sheet(libro, ws, "Pendientes");
+    XLSXStyle.writeFile(libro, `Pendientes_${nombre}.xlsx`);
+  };
 
   const editarDerivado = (t) => {
     setEditandoId(t.id);
@@ -465,19 +505,22 @@ export default function Pendientes() {
         <Modal.Body>
           <div className="d-flex justify-content-between align-items-center mb-3">
             <span className="text-muted">Fecha: {new Date().toLocaleDateString("es-AR")}</span>
-            <Button size="sm" variant="outline-primary" onClick={agregar}>Agregar tarea</Button>
+            <div className="d-flex gap-2">
+              <Button size="sm" variant="outline-light" onClick={exportarExcelPendientes}>Excel</Button>
+              <Button size="sm" variant="outline-primary" onClick={agregar}>Agregar tarea</Button>
+            </div>
           </div>
 
           {!cargando && (
             <div className="d-flex gap-2 mb-3 flex-wrap">
-              <div className="position-relative" style={{ width: 200 }}>
+              <div className="position-relative" style={{ width: 270 }}>
                 <Form.Select
                   size="sm"
                   value={filtroEstado}
                   onChange={(e) => setFiltroEstado(e.target.value)}
                   style={{ minWidth: 0, ...(filtroEstado !== "" ? { backgroundImage: "none" } : {}) }}
                 >
-                  <option value="activas">Activas (sin terminar)</option>
+                  <option value="activas">Pedido / Pendiente / En proceso</option>
                   <option value="Pedido">Pedido</option>
                   <option value="Pendiente">Pendiente</option>
                   <option value="En proceso">En proceso</option>

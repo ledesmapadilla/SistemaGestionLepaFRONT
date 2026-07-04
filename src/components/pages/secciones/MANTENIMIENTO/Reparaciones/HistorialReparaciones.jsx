@@ -347,20 +347,20 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
           )}
         </div>
       </div>
-      <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+      <div style={{ maxHeight: "65vh", overflowY: "auto", overflowX: "auto" }}>
       <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
         <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
           <tr>
-            <th style={{ width: 140 }}>Fecha</th>
-            <th style={{ width: 420, minWidth: 420 }}>Reparación</th>
-            <th style={{ width: 80 }}>Detalle</th>
-            <th style={{ width: 150 }}>Parte</th>
-            <th style={{ width: 130 }}>Prioridad</th>
-            <th style={{ width: 140 }}>Estado</th>
-            <th style={{ width: 220 }}>Observaciones</th>
-            <th style={{ width: 120 }}>Máquina parada</th>
-            <th style={{ width: 90 }}>Repuestos</th>
-            <th style={{ width: 160 }}>Acciones</th>
+            <th style={{ width: 140, minWidth: 120 }}>Fecha</th>
+            <th style={{ width: 360, minWidth: 300 }}>Reparación</th>
+            <th style={{ width: 80, minWidth: 70 }}>Detalle</th>
+            <th style={{ width: 160, minWidth: 150 }}>Parte</th>
+            <th style={{ width: 150, minWidth: 140 }}>Prioridad</th>
+            <th style={{ width: 160, minWidth: 150 }}>Estado</th>
+            <th style={{ width: 280, minWidth: 240 }}>Observaciones</th>
+            <th style={{ width: 120, minWidth: 110 }}>Máquina parada</th>
+            <th style={{ width: 90, minWidth: 80 }}>Repuestos</th>
+            <th style={{ width: 160, minWidth: 150 }}>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -387,7 +387,7 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
                   f.fecha ? f.fecha.split("-").reverse().join("/") : "-"
                 )}
               </td>
-              <td className="text-start" style={{ width: 420, maxWidth: 420 }}>
+              <td className="text-start" style={{ width: 360, maxWidth: 360 }}>
                 {editando ? (
                   <Form.Control
                     size="sm"
