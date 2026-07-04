@@ -71,7 +71,7 @@ export default function Pendientes() {
   // Todas las máquinas (mismas tarjetas que Mantenimiento > Reparaciones).
   const [maquinas, setMaquinas] = useState([]);
   const [editandoId, setEditandoId] = useState(null);
-  const [estadoDerivado, setEstadoDerivado] = useState("");
+  const [derivadoEdit, setDerivadoEdit] = useState({}); // borrador de edición de fila derivada
   const [otraMaquina, setOtraMaquina] = useState(() => new Set()); // tareas manuales con máquina "Otra"
   const [nuevas, setNuevas] = useState(() => new Set()); // tareas manuales nuevas sin guardar
   const cancelarRef = useRef(() => {});
@@ -265,33 +265,71 @@ export default function Pendientes() {
   const verObservacion = (texto) =>
     Swal.fire({ title: "Observaciones", text: texto, confirmButtonText: "Cerrar", confirmButtonColor: "#6c757d" });
 
-  const editarDerivado = (t) => { setEditandoId(t.id); setEstadoDerivado(t.estado); };
+  const editarDerivado = (t) => {
+    setEditandoId(t.id);
+    setDerivadoEdit({ fecha: t.fecha || "", tarea: t.tarea || "", estado: t.estado, observaciones: t.observaciones || "" });
+  };
 
-  // Guarda el nuevo estado de la fila derivada en la reparación o repuesto de origen.
+  // Persiste los docs de reparaciones de la máquina afectada y avisa.
+  const persistirDocsReparaciones = async (nuevosDocs, maquinaId, titulo) => {
+    setDocsReparaciones(nuevosDocs);
+    const docAfectado = nuevosDocs.find((d) => String(d.maquina?._id) === String(maquinaId));
+    const res = await guardarReparaciones(maquinaId, docAfectado?.reparaciones || []);
+    if (res?.ok) {
+      Swal.fire({ position: "center", icon: "success", title: titulo, showConfirmButton: false, timer: 1200, timerProgressBar: true });
+    } else {
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudieron guardar los cambios" });
+    }
+    return res;
+  };
+
+  // Guarda todos los campos editados en la reparación o repuesto de origen.
   const guardarDerivado = async (t) => {
     const nuevosDocs = docsReparaciones.map((doc) => {
       if (String(doc.maquina?._id) !== String(t.maquinaId)) return doc;
       const reparaciones = (doc.reparaciones || []).map((r, ri) => {
         if (ri !== t.reparacionIndex) return r;
-        // Reparación: cambia el estado de la reparación.
-        if (t.tipo === "reparacion") return { ...r, estado: estadoDerivado };
-        // Repuesto: cambia SOLO el estado del repuesto, no el de la reparación.
+        if (t.tipo === "reparacion") {
+          // Reparación: fecha, nombre (tarea), estado y observaciones.
+          return { ...r, fecha: derivadoEdit.fecha, reparacion: derivadoEdit.tarea, estado: derivadoEdit.estado, observaciones: derivadoEdit.observaciones };
+        }
+        // Repuesto: nombre (tarea), estado y observaciones (la fecha es la de la reparación).
         const repuestos = (r.repuestos || []).map((rep, pi) =>
-          pi === t.repuestoIndex ? { ...rep, estado: estadoDerivado } : rep
+          pi === t.repuestoIndex ? { ...rep, repuesto: derivadoEdit.tarea, estado: derivadoEdit.estado, observaciones: derivadoEdit.observaciones } : rep
         );
         return { ...r, repuestos };
       });
       return { ...doc, reparaciones };
     });
-    setDocsReparaciones(nuevosDocs);
     setEditandoId(null);
-    const docAfectado = nuevosDocs.find((d) => String(d.maquina?._id) === String(t.maquinaId));
-    const res = await guardarReparaciones(t.maquinaId, docAfectado?.reparaciones || []);
-    if (res?.ok) {
-      Swal.fire({ position: "center", icon: "success", title: "Estado actualizado", showConfirmButton: false, timer: 1200, timerProgressBar: true });
-    } else {
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar el estado" });
-    }
+    await persistirDocsReparaciones(nuevosDocs, t.maquinaId, "Guardado");
+  };
+
+  // Borra la reparación (o el repuesto) de origen.
+  const borrarDerivado = async (t) => {
+    const { isConfirmed } = await Swal.fire({
+      title: t.tipo === "repuesto" ? "¿Eliminar repuesto?" : "¿Eliminar reparación?",
+      icon: "warning",
+      showCancelButton: true,
+      customClass: { confirmButton: "swal-btn-danger" },
+      confirmButtonText: "Sí, borrar",
+      cancelButtonText: "Cancelar",
+    });
+    if (!isConfirmed) return;
+    const nuevosDocs = docsReparaciones.map((doc) => {
+      if (String(doc.maquina?._id) !== String(t.maquinaId)) return doc;
+      let reparaciones;
+      if (t.tipo === "reparacion") {
+        reparaciones = (doc.reparaciones || []).filter((r, ri) => ri !== t.reparacionIndex);
+      } else {
+        reparaciones = (doc.reparaciones || []).map((r, ri) =>
+          ri !== t.reparacionIndex ? r : { ...r, repuestos: (r.repuestos || []).filter((rep, pi) => pi !== t.repuestoIndex) }
+        );
+      }
+      return { ...doc, reparaciones };
+    });
+    setEditandoId((prev) => (prev === t.id ? null : prev));
+    await persistirDocsReparaciones(nuevosDocs, t.maquinaId, t.tipo === "repuesto" ? "Repuesto eliminado" : "Reparación eliminada");
   };
 
   const agregar = () => {
@@ -497,19 +535,33 @@ export default function Pendientes() {
                   <th style={{ width: 85 }}>Días pendiente</th>
                   <th style={{ width: 110 }}>Estado</th>
                   <th style={{ width: 80 }}>Obs.</th>
-                  <th style={{ width: 150 }}>Acciones</th>
+                  <th style={{ width: 180 }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {derivadasFiltradas.map((t) => (
+                {derivadasFiltradas.map((t) => {
+                  const enEdicion = editandoId === t.id;
+                  return (
                   <tr key={t.id} style={{ backgroundColor: "#fbfbf3" }}>
-                    <td>{t.fecha ? t.fecha.split("-").reverse().join("/") : "-"}</td>
+                    <td>
+                      {enEdicion && t.tipo === "reparacion" ? (
+                        <Form.Control size="sm" type="date" value={derivadoEdit.fecha || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, fecha: e.target.value }))} />
+                      ) : (
+                        t.fecha ? t.fecha.split("-").reverse().join("/") : "-"
+                      )}
+                    </td>
                     <td>{t.maquina || "-"}</td>
-                    <td className="text-start">{t.tarea || "-"}</td>
+                    <td className="text-start">
+                      {enEdicion ? (
+                        <Form.Control size="sm" value={derivadoEdit.tarea || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, tarea: e.target.value }))} />
+                      ) : (
+                        t.tarea || "-"
+                      )}
+                    </td>
                     <td>{diasPendiente(t.fecha)}</td>
                     <td>
-                      {editandoId === t.id ? (
-                        <Form.Select size="sm" value={estadoDerivado} onChange={(e) => setEstadoDerivado(e.target.value)}>
+                      {enEdicion ? (
+                        <Form.Select size="sm" value={derivadoEdit.estado} onChange={(e) => setDerivadoEdit((p) => ({ ...p, estado: e.target.value }))}>
                           {(t.tipo === "repuesto" ? ESTADOS_REPUESTO : ESTADOS).map((s) => (
                             <option key={s} value={s}>{s}</option>
                           ))}
@@ -519,19 +571,22 @@ export default function Pendientes() {
                       )}
                     </td>
                     <td>
-                      {t.observaciones ? (
+                      {enEdicion ? (
+                        <Form.Control size="sm" value={derivadoEdit.observaciones || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, observaciones: e.target.value }))} />
+                      ) : t.observaciones ? (
                         <Button size="sm" variant="outline-secondary" className="py-0 px-2" onClick={() => verObservacion(t.observaciones)}>Ver</Button>
                       ) : (
                         <span className="text-muted">-</span>
                       )}
                     </td>
                     <td>
-                      <div className="d-flex gap-1 justify-content-center align-items-center">
-                        {editandoId === t.id ? (
+                      <div className="d-flex gap-1 justify-content-center align-items-center flex-wrap">
+                        {enEdicion ? (
                           <Button size="sm" variant="outline-success" onClick={() => guardarDerivado(t)}>Listo</Button>
                         ) : (
                           <Button size="sm" variant="outline-warning" onClick={() => editarDerivado(t)}>Editar</Button>
                         )}
+                        <Button size="sm" variant="outline-danger" onClick={() => borrarDerivado(t)}>Borrar</Button>
                         <Button
                           size="sm"
                           variant={t.tipo === "repuesto" ? "outline-info" : "outline-secondary"}
@@ -542,7 +597,8 @@ export default function Pendientes() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
                 {tareasFiltradas.length === 0 && derivadasFiltradas.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-muted py-3">Sin tareas cargadas</td>
