@@ -8,6 +8,7 @@ import {
   obtenerReparacionesPorMaquina,
   guardarReparaciones,
 } from "../../../../../helpers/queriesReparaciones";
+import { obtenerTodosPendientes } from "../../../../../helpers/queriesPendientes";
 
 const PARTES = [
   "Motor",
@@ -39,6 +40,7 @@ const filaVacia = () => ({
 
 function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }) {
   const [filas, setFilas] = useState([]);
+  const [pendientesMaquina, setPendientesMaquina] = useState([]); // tareas de Pendientes de esta máquina (solo lectura)
   const [detalleSel, setDetalleSel] = useState(null);
   const [repuestosSel, setRepuestosSel] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -51,7 +53,10 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
     const cargar = async () => {
       setCargando(true);
       try {
-        const res = await obtenerReparacionesPorMaquina(maquina?._id);
+        const [res, resPend] = await Promise.all([
+          obtenerReparacionesPorMaquina(maquina?._id),
+          obtenerTodosPendientes(),
+        ]);
         if (res?.ok) {
           const data = await res.json();
           const items = (data?.reparaciones || []).map((r) => ({
@@ -63,6 +68,27 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
           if (abrirRepuestosDe && items.some((f) => f.id === abrirRepuestosDe)) {
             setRepuestosSel(abrirRepuestosDe);
           }
+        }
+        // Tareas manuales de Pendientes asignadas a esta máquina.
+        if (resPend?.ok) {
+          const docs = await resPend.json();
+          const nombreMaq = (maquina?.maquina || "").trim().toLowerCase();
+          const tareas = [];
+          (Array.isArray(docs) ? docs : []).forEach((doc) => {
+            (doc.tareas || []).forEach((t) => {
+              if ((t.maquina || "").trim().toLowerCase() === nombreMaq) {
+                tareas.push({
+                  id: `pend-${doc.responsable}-${t.id}`,
+                  fecha: t.fecha || "",
+                  reparacion: t.tarea || "",
+                  estado: t.estado || "",
+                  observaciones: t.observaciones || "",
+                  responsable: doc.responsable,
+                });
+              }
+            });
+          });
+          setPendientesMaquina(tareas);
         }
       } catch (error) {
         console.error("Error al cargar reparaciones:", error);
@@ -184,6 +210,22 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
                 : f.estado === filtroEstado)))
       ),
     [filas, filtroReparacion, filtroParte, filtroEstado, editandoId]
+  );
+
+  // Tareas de Pendientes de esta máquina, respetando el filtro de estado.
+  // Se ocultan si hay filtro por reparación o por parte (no aplican a ellas).
+  const pendientesFiltradas = useMemo(
+    () =>
+      filtroReparacion || filtroParte
+        ? []
+        : pendientesMaquina.filter(
+            (t) =>
+              filtroEstado === "" ||
+              (filtroEstado === "activas"
+                ? t.estado === "Pendiente" || t.estado === "En proceso"
+                : t.estado === filtroEstado)
+          ),
+    [pendientesMaquina, filtroReparacion, filtroParte, filtroEstado]
   );
 
   const exportarExcel = () => {
@@ -364,13 +406,35 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
           </tr>
         </thead>
         <tbody>
-          {filasFiltradas.length === 0 && (
+          {filasFiltradas.length === 0 && pendientesFiltradas.length === 0 && (
             <tr>
               <td colSpan={10} className="text-muted py-3">
                 Sin reparaciones cargadas
               </td>
             </tr>
           )}
+          {pendientesFiltradas.map((t) => (
+            <tr key={t.id} style={{ backgroundColor: "#eef4fb" }}>
+              <td>{t.fecha ? t.fecha.split("-").reverse().join("/") : "-"}</td>
+              <td className="text-start"><div className="text-truncate" title={t.reparacion}>{t.reparacion || "-"}</div></td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>
+                <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
+              </td>
+              <td className="text-start" style={{ maxWidth: 280 }}>
+                {t.observaciones ? (
+                  <Button size="sm" variant="outline-secondary" className="py-0 px-2" onClick={() => verObservacion(t.observaciones)}>Ver</Button>
+                ) : "-"}
+              </td>
+              <td>-</td>
+              <td>-</td>
+              <td>
+                <span className="badge bg-info text-dark" title="Tarea cargada en Pendientes">Pendiente · {t.responsable}</span>
+              </td>
+            </tr>
+          ))}
           {filasFiltradas.map((f) => {
             const editando = editandoId === f.id;
             return (
