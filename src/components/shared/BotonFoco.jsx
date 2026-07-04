@@ -20,7 +20,7 @@ export default function BotonFoco() {
         width: "48px",
         height: "64px",
         borderRadius: "0 16px 16px 0",
-        backgroundColor: "#fff",
+        backgroundColor: "#f1f3f5",
         border: "1px solid #dee2e6",
         borderLeft: "none",
         boxShadow: "3px 4px 12px rgba(0,0,0,0.2)",
@@ -51,13 +51,13 @@ export default function BotonFoco() {
               left: "50%",
               width: 2,
               height: 6,
-              backgroundColor: "#6c757d",
+              backgroundColor: "#212529",
               borderRadius: 2,
               transform: `translate(-50%, -50%) rotate(${deg}deg) translateY(-16px)`,
             }}
           />
         ))}
-        <i className="bi bi-lightbulb-fill" style={{ fontSize: "1.4rem", color: "#6c757d" }} />
+        <i className="bi bi-lightbulb-fill" style={{ fontSize: "1.4rem", color: "#212529" }} />
       </span>
     </button>
   );

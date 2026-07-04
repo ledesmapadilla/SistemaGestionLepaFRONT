@@ -18,7 +18,7 @@ export default function BotonAnteojos() {
         width: "48px",
         height: "64px",
         borderRadius: "16px 0 0 16px",
-        backgroundColor: "#fff",
+        backgroundColor: "#f1f3f5",
         border: "1px solid #dee2e6",
         borderRight: "none",
         boxShadow: "-3px 4px 12px rgba(0,0,0,0.2)",
@@ -29,7 +29,7 @@ export default function BotonAnteojos() {
         zIndex: 1040,
       }}
     >
-      <i className="bi bi-sunglasses" style={{ fontSize: "1.6rem", color: "#6c757d" }} />
+      <i className="bi bi-sunglasses" style={{ fontSize: "1.6rem", color: "#212529" }} />
     </button>
   );
 }
