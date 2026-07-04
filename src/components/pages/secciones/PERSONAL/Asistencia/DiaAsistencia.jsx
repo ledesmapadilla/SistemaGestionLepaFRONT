@@ -280,6 +280,12 @@ const DiaAsistencia = () => {
         </div>
       </div>
 
+      <div className="mb-2" style={{ fontSize: "0.82rem" }}>
+        <span style={{ color: "#dc3545", fontWeight: 600 }}>Dif. (+)</span>: resta hs
+        {"  ·  "}
+        <span style={{ color: "#198754", fontWeight: 600 }}>Dif. (−)</span>: suma hs
+      </div>
+
       <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "65vh" }}>
         <Table striped bordered hover className="text-center align-middle mb-3">
           <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
