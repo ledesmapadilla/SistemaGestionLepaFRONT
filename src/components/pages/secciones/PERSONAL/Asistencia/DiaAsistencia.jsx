@@ -280,7 +280,7 @@ const DiaAsistencia = () => {
         </div>
       </div>
 
-      <div className="mb-2" style={{ fontSize: "0.82rem", marginLeft: 680 }}>
+      <div className="mb-2" style={{ fontSize: "0.82rem", marginLeft: 560 }}>
         <span style={{ color: "#dc3545", fontWeight: 600 }}>Dif. (+)</span>: resta hs
         {"  ·  "}
         <span style={{ color: "#198754", fontWeight: 600 }}>Dif. (−)</span>: suma hs
