@@ -14,7 +14,7 @@ export default function BotonFoco() {
       onClick={() => pendientesModal?.abrir()}
       style={{
         position: "fixed",
-        top: "50%",
+        top: "75%",
         transform: "translateY(-50%)",
         left: 0,
         width: "48px",

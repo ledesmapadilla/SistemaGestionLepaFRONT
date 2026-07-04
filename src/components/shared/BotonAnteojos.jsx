@@ -12,7 +12,7 @@ export default function BotonAnteojos() {
       onClick={() => pendientesModal?.abrirResumen()}
       style={{
         position: "fixed",
-        top: "50%",
+        top: "25%",
         transform: "translateY(-50%)",
         right: 0,
         width: "48px",
