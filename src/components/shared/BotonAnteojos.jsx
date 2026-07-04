@@ -29,7 +29,7 @@ export default function BotonAnteojos() {
         zIndex: 1040,
       }}
     >
-      <i className="bi bi-sunglasses" style={{ fontSize: "1.6rem", color: "#212529" }} />
+      <i className="bi bi-sunglasses" style={{ fontSize: "1.6rem", color: "#6c757d" }} />
     </button>
   );
 }

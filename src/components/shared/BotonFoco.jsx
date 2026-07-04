@@ -51,13 +51,13 @@ export default function BotonFoco() {
               left: "50%",
               width: 2,
               height: 6,
-              backgroundColor: "#212529",
+              backgroundColor: "#6c757d",
               borderRadius: 2,
               transform: `translate(-50%, -50%) rotate(${deg}deg) translateY(-16px)`,
             }}
           />
         ))}
-        <i className="bi bi-lightbulb-fill" style={{ fontSize: "1.4rem", color: "#212529" }} />
+        <i className="bi bi-lightbulb-fill" style={{ fontSize: "1.4rem", color: "#6c757d" }} />
       </span>
     </button>
   );

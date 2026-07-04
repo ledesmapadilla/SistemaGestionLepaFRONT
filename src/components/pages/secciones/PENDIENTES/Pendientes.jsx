@@ -402,12 +402,14 @@ export default function Pendientes() {
       return { ...doc, reparaciones };
     });
     setEditandoId(null);
-    await persistirDocsReparaciones(nuevosDocs, t.maquinaId, "Guardado");
-    // Si la reparación editada está vinculada a una tarea de Pendientes, sincronizarla.
-    if (t.tipo === "reparacion") {
-      const docAf = nuevosDocs.find((d) => String(d.maquina?._id) === String(t.maquinaId));
-      await sincronizarTareaDesdeReparacion(docAf?.reparaciones?.[t.reparacionIndex], t.maquina);
-    }
+    const docAf = nuevosDocs.find((d) => String(d.maquina?._id) === String(t.maquinaId));
+    // Guardado y sincronización (si la reparación está vinculada a una tarea) en paralelo.
+    await Promise.all([
+      persistirDocsReparaciones(nuevosDocs, t.maquinaId, "Guardado"),
+      t.tipo === "reparacion"
+        ? sincronizarTareaDesdeReparacion(docAf?.reparaciones?.[t.reparacionIndex], t.maquina)
+        : Promise.resolve(),
+    ]);
   };
 
   // Borra la reparación (o el repuesto) de origen.
@@ -466,9 +468,11 @@ export default function Pendientes() {
     }
     setEditandoId(null);
     setNuevas((prev) => { const n = new Set(prev); n.delete(id); return n; });
-    const res = await persistir(tareas);
-    // Si la tarea está vinculada a una reparación, sincronizarla.
-    await sincronizarReparacionDesdeTarea(fila);
+    // Guardado y sincronización en paralelo.
+    const [res] = await Promise.all([
+      persistir(tareas),
+      sincronizarReparacionDesdeTarea(fila),
+    ]);
     if (res?.ok) {
       Swal.fire({ position: "center", icon: "success", title: "Guardado", showConfirmButton: false, timer: 1200, timerProgressBar: true });
     }

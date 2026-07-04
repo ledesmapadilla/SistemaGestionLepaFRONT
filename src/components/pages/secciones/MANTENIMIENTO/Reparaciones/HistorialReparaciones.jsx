@@ -152,9 +152,11 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
       return Swal.fire({ icon: "warning", title: "Atención", text: "La parte es obligatoria." });
     }
     setEditandoId(null);
-    const res = await persistir(filas);
-    // Si la reparación está vinculada a una tarea de Pendientes, sincronizarla.
-    await sincronizarPendienteDesdeReparacion(fila);
+    // El guardado y la sincronización van en paralelo (2 llamadas independientes).
+    const [res] = await Promise.all([
+      persistir(filas),
+      sincronizarPendienteDesdeReparacion(fila),
+    ]);
     if (res?.ok) {
       Swal.fire({
         position: "center",
