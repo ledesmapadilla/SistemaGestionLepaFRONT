@@ -221,7 +221,15 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
 
   const editarPendiente = (t) => {
     setEditandoId(t.id);
-    setPendEdit({ fecha: t.fecha || "", reparacion: t.reparacion || "", estado: t.estado || "", observaciones: t.observaciones || "" });
+    setPendEdit({
+      fecha: t.fecha || "",
+      reparacion: t.reparacion || "",
+      parte: "",
+      prioridad: "Normal",
+      estado: t.estado || "Pendiente",
+      maquinaParada: false,
+      observaciones: t.observaciones || "",
+    });
   };
 
   const persistirPendientes = async (nuevosDocs, responsable, titulo) => {
@@ -236,7 +244,29 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
     return res;
   };
 
+  // Al guardar, la tarea de Pendientes se crea como reparación completa en la
+  // máquina y ADEMÁS se mantiene en Pendientes (queda en ambos lados).
   const guardarPendiente = async (t) => {
+    if (!(pendEdit.reparacion || "").trim())
+      return Swal.fire({ icon: "warning", title: "Atención", text: "La reparación es obligatoria." });
+    if (!pendEdit.parte)
+      return Swal.fire({ icon: "warning", title: "Atención", text: "La parte es obligatoria." });
+
+    const nuevaRep = {
+      id: crypto.randomUUID(),
+      fecha: pendEdit.fecha,
+      reparacion: pendEdit.reparacion,
+      descripcion: "",
+      parte: pendEdit.parte || "",
+      prioridad: pendEdit.prioridad || "Normal",
+      estado: pendEdit.estado,
+      maquinaParada: !!pendEdit.maquinaParada,
+      observaciones: pendEdit.observaciones || "",
+      repuestos: [],
+    };
+    const nuevasFilas = [...filas, nuevaRep];
+
+    // Mantener la tarea en Pendientes con sus campos comunes actualizados.
     const nuevosDocs = docsPendientes.map((doc) => {
       if (doc.responsable !== t.responsable) return doc;
       const tareas = (doc.tareas || []).map((task) =>
@@ -244,8 +274,19 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
       );
       return { ...doc, tareas };
     });
+
+    setFilas(nuevasFilas);
+    setDocsPendientes(nuevosDocs);
     setEditandoId(null);
-    await persistirPendientes(nuevosDocs, t.responsable, "Guardado");
+
+    const docPend = nuevosDocs.find((d) => d.responsable === t.responsable);
+    const [resRep] = await Promise.all([
+      persistir(nuevasFilas),
+      guardarPendientes(t.responsable, docPend?.tareas || []),
+    ]);
+    if (resRep?.ok) {
+      Swal.fire({ position: "center", icon: "success", title: "Guardado como reparación", showConfirmButton: false, timer: 1500, timerProgressBar: true });
+    }
   };
 
   const borrarPendiente = async (t) => {
@@ -497,8 +538,21 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
                 )}
               </td>
               <td>-</td>
-              <td>-</td>
-              <td>-</td>
+              <td>
+                {editandoPend ? (
+                  <Form.Select size="sm" value={pendEdit.parte} onChange={(e) => setPendEdit((p) => ({ ...p, parte: e.target.value }))}>
+                    <option value="">—</option>
+                    {PARTES.map((p) => (<option key={p} value={p}>{p}</option>))}
+                  </Form.Select>
+                ) : "-"}
+              </td>
+              <td>
+                {editandoPend ? (
+                  <Form.Select size="sm" value={pendEdit.prioridad} onChange={(e) => setPendEdit((p) => ({ ...p, prioridad: e.target.value }))}>
+                    {PRIORIDADES.map((p) => (<option key={p} value={p}>{p}</option>))}
+                  </Form.Select>
+                ) : "-"}
+              </td>
               <td>
                 {editandoPend ? (
                   <Form.Select size="sm" value={pendEdit.estado} onChange={(e) => setPendEdit((p) => ({ ...p, estado: e.target.value }))}>
@@ -515,7 +569,18 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
                   <Button size="sm" variant="outline-secondary" className="py-0 px-2" onClick={() => verObservacion(t.observaciones)}>Ver</Button>
                 ) : "-"}
               </td>
-              <td>-</td>
+              <td>
+                {editandoPend ? (
+                  <div className="d-flex justify-content-center">
+                    <input
+                      type="checkbox"
+                      checked={!!pendEdit.maquinaParada}
+                      onChange={(e) => setPendEdit((p) => ({ ...p, maquinaParada: e.target.checked }))}
+                      style={{ cursor: "pointer", accentColor: "#ff0000", width: 20, height: 20 }}
+                    />
+                  </div>
+                ) : "-"}
+              </td>
               <td>-</td>
               <td>
                 <div className="d-flex gap-1 justify-content-center align-items-center flex-wrap">
