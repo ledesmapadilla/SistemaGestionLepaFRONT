@@ -798,8 +798,11 @@ const GastosSemanales = () => {
       const key = normNombre(nombre);
       if (nombre.toLowerCase().includes("zamorano")) {
         const semanal = semanalMap[key] || 0;
+        // Valor hora = semanal / horas reales de la semana (cantJornales × 8h por jornada).
+        // 5 días → /40, 5.5 días → /44, etc.
+        const horasSemana = (cantJornalesMap[key] || 0) * 8;
         const horas = zamoranoMins / 60;
-        return Math.round(horas * (semanal / 44));
+        return horasSemana > 0 ? Math.round(horas * (semanal / horasSemana)) : 0;
       }
       const jornal = jornalMap[key] || 0;
       const ausencias = ausenciasMap[key] || 0;
