@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { Container, Spinner } from "react-bootstrap";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas";
 import { obtenerTodasReparaciones } from "../../../../../helpers/queriesReparaciones";
+import { obtenerTodosPendientes } from "../../../../../helpers/queriesPendientes";
 import HistorialReparaciones from "./HistorialReparaciones";
 import Pendientes from "./Pendientes";
 
@@ -63,10 +64,13 @@ function Reparaciones() {
   useEffect(() => {
     const cargar = async () => {
       try {
-        const [resMaq, resRep] = await Promise.all([
+        const [resMaq, resRep, resPend] = await Promise.all([
           listarMaquinas(),
           obtenerTodasReparaciones(),
+          obtenerTodosPendientes(),
         ]);
+
+        const idPorNombre = {};
         if (resMaq?.ok) {
           const data = await resMaq.json();
           const ordenadas = [...data].sort((a, b) => {
@@ -78,23 +82,38 @@ function Reparaciones() {
             });
           });
           setMaquinas(ordenadas);
+          ordenadas.forEach((m) => { idPorNombre[(m.maquina || "").trim().toLowerCase()] = String(m._id); });
           // Si venimos desde Pendientes, abrimos directamente la máquina indicada.
           if (navState?.maquinaId) {
             const destino = ordenadas.find((m) => String(m._id) === String(navState.maquinaId));
             if (destino) setMaquinaSel(destino);
           }
         }
+
+        // Alertas (triángulo amarillo): máquinas con reparaciones activas o con
+        // tareas de Pendientes (Pendiente / En proceso).
+        const ids = new Set();
         if (resRep?.ok) {
           const dataRep = await resRep.json();
-          const ids = new Set();
           (Array.isArray(dataRep) ? dataRep : []).forEach((doc) => {
             const tiene = (doc.reparaciones || []).some(
               (r) => r.estado === "Pendiente" || r.estado === "En proceso"
             );
             if (tiene) ids.add(String(doc.maquina?._id || doc.maquina));
           });
-          setAlertaMaquinas(ids);
         }
+        if (resPend?.ok) {
+          const docsPend = await resPend.json();
+          (Array.isArray(docsPend) ? docsPend : []).forEach((doc) => {
+            (doc.tareas || []).forEach((t) => {
+              if (t.estado === "Pendiente" || t.estado === "En proceso") {
+                const id = idPorNombre[(t.maquina || "").trim().toLowerCase()];
+                if (id) ids.add(id);
+              }
+            });
+          });
+        }
+        setAlertaMaquinas(ids);
       } catch (error) {
         console.error("Error al cargar máquinas:", error);
       } finally {
