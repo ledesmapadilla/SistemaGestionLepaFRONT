@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Modal, Button, Table, Form, Spinner } from "react-bootstrap";
+import XLSXStyle from "xlsx-js-style";
 import { usePendientesModal } from "../../context/PendientesModalContext";
 import { obtenerTodosPendientes } from "../../helpers/queriesPendientes";
 import { obtenerTodasReparaciones } from "../../helpers/queriesReparaciones";
@@ -162,10 +163,51 @@ export default function ResumenModal() {
     </button>
   );
 
+  // Formato estándar de Excel del proyecto: fila 1 título mergeado, fila 2 fecha
+  // bajo el título, fila 3 encabezados en negrita, fila 4+ datos.
+  const exportarExcel = () => {
+    const headers = ["Responsable", "Tipo", "Fecha", "Máquina", "Tarea", "Días pendiente", "Estado"];
+    const cols = ["A", "B", "C", "D", "E", "F", "G"];
+    const centerAlign = { horizontal: "center", vertical: "center" };
+    const leftAlign = { horizontal: "left", vertical: "center" };
+
+    const ws = {};
+    ws["A1"] = { v: "RESUMEN DE TAREAS PENDIENTES", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+    ws["A2"] = { v: `Fecha: ${new Date().toLocaleDateString("es-AR")}`, t: "s", s: { alignment: leftAlign } };
+    headers.forEach((h, i) => {
+      ws[`${cols[i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
+    });
+    filasFiltradas.forEach((f, idx) => {
+      const row = idx + 4;
+      const vals = [
+        f.responsable,
+        f.tipo,
+        f.fecha ? f.fecha.split("-").reverse().join("/") : "-",
+        f.maquina || "-",
+        f.tarea || "-",
+        diasPendiente(f.fecha, f.fechaTerminado),
+        f.estado || "-",
+      ];
+      vals.forEach((v, i) => {
+        ws[`${cols[i]}${row}`] = { v: v ?? "-", t: typeof v === "number" ? "n" : "s", s: { alignment: i === 4 ? leftAlign : centerAlign } };
+      });
+    });
+
+    ws["!ref"] = `A1:G${filasFiltradas.length + 3}`;
+    ws["!cols"] = [{ wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 34 }, { wch: 14 }, { wch: 14 }];
+
+    const libro = XLSXStyle.utils.book_new();
+    XLSXStyle.utils.book_append_sheet(libro, ws, "Resumen pendientes");
+    XLSXStyle.writeFile(libro, "Resumen_Tareas_Pendientes.xlsx");
+  };
+
   return (
     <Modal show={abierto} onHide={() => ctx?.cerrarResumen()} size="xl" centered scrollable>
       <Modal.Header closeButton>
-        <Modal.Title>Resumen de tareas pendientes</Modal.Title>
+        <div className="d-flex align-items-center gap-3 w-100" style={{ marginRight: 24 }}>
+          <Modal.Title>Resumen de tareas pendientes</Modal.Title>
+          <Button variant="outline-light" size="sm" className="ms-auto" onClick={exportarExcel}>Excel</Button>
+        </div>
       </Modal.Header>
       <Modal.Body>
         <div className="d-flex gap-2 mb-3 flex-wrap">

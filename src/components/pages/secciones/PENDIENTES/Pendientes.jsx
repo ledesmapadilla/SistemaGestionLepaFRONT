@@ -20,6 +20,14 @@ const RESPONSABLES = [
 
 const ESTADOS = ["Pendiente", "En proceso", "Terminado"];
 const ESTADOS_REPUESTO = ["Pedido", "Pendiente", "En taller", "Colocado"];
+
+// Estilo estándar del proyecto para el botón ✕ que limpia un select de filtro.
+const estiloX = {
+  position: "absolute", right: "10px", top: "50%",
+  transform: "translateY(-50%)", cursor: "pointer",
+  color: "#fff", fontSize: "14px", fontWeight: "900",
+  zIndex: 5, userSelect: "none",
+};
 const COLOR_ESTADO = {
   Pendiente: "#6c757d",
   "En proceso": "#ffc107",
@@ -296,7 +304,6 @@ export default function Pendientes() {
     });
 
     ws["!ref"] = `A1:F${filas.length + 3}`;
-    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
     ws["!cols"] = [{ wch: 12 }, { wch: 16 }, { wch: 34 }, { wch: 14 }, { wch: 14 }, { wch: 30 }];
 
     const libro = XLSXStyle.utils.book_new();
@@ -498,7 +505,7 @@ export default function Pendientes() {
       </Row>
 
       {/* ── Modal de tareas del responsable ── */}
-      <Modal show={!!modalResp} onHide={cerrar} centered size="xl">
+      <Modal show={!!modalResp} onHide={cerrar} centered size="xl" scrollable>
         <Modal.Header closeButton>
           <Modal.Title>Pendientes - {modalResp?.nombre}</Modal.Title>
         </Modal.Header>
@@ -530,7 +537,7 @@ export default function Pendientes() {
                   <option value="">Todos</option>
                 </Form.Select>
                 {filtroEstado !== "" && (
-                  <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroEstado("")}>✕</button>
+                  <span onClick={() => setFiltroEstado("")} style={estiloX}>✕</span>
                 )}
               </div>
               <div className="position-relative" style={{ width: 200 }}>
@@ -544,7 +551,7 @@ export default function Pendientes() {
                   {maquinasUnicas.map((m) => (<option key={m} value={m}>{m}</option>))}
                 </Form.Select>
                 {filtroMaquina && (
-                  <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroMaquina("")}>✕</button>
+                  <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>
                 )}
               </div>
               <div className="position-relative" style={{ width: 280 }}>
@@ -558,7 +565,7 @@ export default function Pendientes() {
                   {tareasUnicas.map((t) => (<option key={t} value={t}>{t}</option>))}
                 </Form.Select>
                 {filtroTarea && (
-                  <button type="button" className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-1 p-0 border-0 fw-bold" aria-label="Limpiar" onClick={() => setFiltroTarea("")}>✕</button>
+                  <span onClick={() => setFiltroTarea("")} style={estiloX}>✕</span>
                 )}
               </div>
             </div>
