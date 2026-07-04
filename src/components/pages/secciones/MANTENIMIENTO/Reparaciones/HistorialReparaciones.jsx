@@ -246,22 +246,33 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
     return res;
   };
 
-  // Si la reparación está vinculada a una tarea de Pendientes, copia sus campos
-  // comunes y guarda el doc de Pendientes (sin aviso, es sincronización interna).
+  // Sincroniza la(s) tarea(s) de Pendientes vinculadas a esta reparación. Empareja
+  // por vínculo (pendResp/pendTaskId) o, si no lo tiene, por máquina + nombre.
   const sincronizarPendienteDesdeReparacion = async (fila) => {
-    if (!fila?.pendResp || !fila?.pendTaskId) return;
+    if (!fila) return;
+    const nombreMaq = (maquina?.maquina || "").trim().toLowerCase();
+    const nombreRep = (fila.reparacion || "").trim().toLowerCase();
+    const afectados = new Set();
     const nuevosDocs = docsPendientes.map((doc) => {
-      if (doc.responsable !== fila.pendResp) return doc;
-      const tareas = (doc.tareas || []).map((task) =>
-        task.id === fila.pendTaskId
-          ? { ...task, fecha: fila.fecha, tarea: fila.reparacion, estado: fila.estado, observaciones: fila.observaciones }
-          : task
-      );
+      const tareas = (doc.tareas || []).map((task) => {
+        const porVinculo = fila.pendResp && fila.pendTaskId && doc.responsable === fila.pendResp && task.id === fila.pendTaskId;
+        const porNombre = (task.maquina || "").trim().toLowerCase() === nombreMaq && (task.tarea || "").trim().toLowerCase() === nombreRep;
+        if (porVinculo || porNombre) {
+          afectados.add(doc.responsable);
+          return { ...task, fecha: fila.fecha, tarea: fila.reparacion, estado: fila.estado, observaciones: fila.observaciones };
+        }
+        return task;
+      });
       return { ...doc, tareas };
     });
+    if (afectados.size === 0) return;
     setDocsPendientes(nuevosDocs);
-    const doc = nuevosDocs.find((d) => d.responsable === fila.pendResp);
-    await guardarPendientes(fila.pendResp, doc?.tareas || []);
+    await Promise.all(
+      [...afectados].map((resp) => {
+        const doc = nuevosDocs.find((d) => d.responsable === resp);
+        return guardarPendientes(resp, doc?.tareas || []);
+      })
+    );
   };
 
   // Al guardar, la tarea de Pendientes se crea como reparación completa en la
