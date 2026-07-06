@@ -166,9 +166,15 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
       const res = await crearRegistroCubierta(payload);
       if (res?.ok) {
         const data = await res.json();
-        setRegistros((prev) => [data.registro, ...prev]);
+        const nuevos = [data.registro, ...registros];
+        setRegistros(nuevos);
         cerrarNueva();
-        Swal.fire({ icon: "success", title: "Cubierta registrada", timer: 1500, showConfirmButton: false });
+        const advertencia = alertaCantidadMaquina(nuevos, data.registro?.maquina?.maquina);
+        if (advertencia) {
+          Swal.fire({ icon: "warning", title: "Cubierta registrada", html: `Registro guardado.<br><span style="color:#dc3545;font-weight:600;">⚠️ ${advertencia}</span>` });
+        } else {
+          Swal.fire({ icon: "success", title: "Cubierta registrada", timer: 1500, showConfirmButton: false });
+        }
       } else {
         const err = await res.json().catch(() => ({}));
         Swal.fire("Error", err.msg || "No se pudo guardar el registro.", "error");
@@ -207,9 +213,24 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
       const res = await editarRegistroCubierta(registroEditar._id, payloadEdit);
       if (res?.ok) {
         const data = await res.json();
-        setRegistros((prev) => prev.map((r) => r._id === registroEditar._id ? data.registro : r));
+        const nuevos = registros.map((r) => r._id === registroEditar._id ? data.registro : r);
+        setRegistros(nuevos);
         cerrarEditar();
-        Swal.fire({ icon: "success", title: "Registro actualizado", timer: 1500, showConfirmButton: false });
+        // Chequear la máquina destino y, si cambió, también la de origen (le sacamos una cubierta).
+        const advertencias = [];
+        const destino = data.registro?.maquina?.maquina;
+        const advDestino = alertaCantidadMaquina(nuevos, destino);
+        if (advDestino) advertencias.push(advDestino);
+        const origen = registroEditar.maquina?.maquina;
+        if (origen && origen.toLowerCase().trim() !== (destino || "").toLowerCase().trim()) {
+          const advOrigen = alertaCantidadMaquina(nuevos, origen);
+          if (advOrigen) advertencias.push(advOrigen);
+        }
+        if (advertencias.length > 0) {
+          Swal.fire({ icon: "warning", title: "Registro actualizado", html: `Cambio guardado.<br><span style="color:#dc3545;font-weight:600;">⚠️ ${advertencias.join("<br>⚠️ ")}</span>` });
+        } else {
+          Swal.fire({ icon: "success", title: "Registro actualizado", timer: 1500, showConfirmButton: false });
+        }
       } else {
         const err = await res.json().catch(() => ({}));
         Swal.fire("Error", err.msg || "No se pudo actualizar el registro.", "error");
@@ -284,6 +305,28 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
     },
   };
   const esperadasCat = CUBIERTAS_ESPERADAS[categoria] || {};
+
+  // Devuelve un texto de advertencia si `maquinaNombre` no tiene la cantidad de
+  // cubiertas esperada (según la categoría), calculado sobre `registrosArr`.
+  // "" si la máquina no tiene cantidad esperada definida o si está OK.
+  const alertaCantidadMaquina = (registrosArr, maquinaNombre) => {
+    const norm = (maquinaNombre || "").toLowerCase().trim();
+    if (!norm) return "";
+    const esperada = esperadasCat[norm];
+    if (esperada === undefined) return "";
+    const cantidad = registrosArr.filter((r) => {
+      const label = (r.maquinaLabel || r.maquina?.maquina || "").toLowerCase().trim();
+      return label === norm;
+    }).length;
+    const diff = cantidad - esperada;
+    if (diff === 0) return "";
+    const detalle = `(tiene ${cantidad}, debería tener ${esperada})`;
+    if (diff < 0) {
+      const n = Math.abs(diff);
+      return `A ${maquinaNombre} le ${n === 1 ? "falta 1 cubierta" : `faltan ${n} cubiertas`} ${detalle}.`;
+    }
+    return `A ${maquinaNombre} le ${diff === 1 ? "sobra 1 cubierta" : `sobran ${diff} cubiertas`} ${detalle}.`;
+  };
 
   const EXCLUIR_MAQUINAS = ["pc1","pc2","pc3","pc4","pc5","wa200","xcmg","nisan","nissan","ranger","fiat","jd1","jd2","motoniveladora","carretón grande","carreton grande"];
 
