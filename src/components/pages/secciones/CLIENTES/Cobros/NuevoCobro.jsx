@@ -72,6 +72,10 @@ const NuevoCobro = () => {
         if (facturasResult.status === "fulfilled") {
           setTodasFacturas(
             facturasResult.value.filter((f) => {
+              // Una factura anulada por Nota de Crédito no se cobra.
+              if (f.estadoPago === "Anulada") return false;
+              // Una Nota de Crédito no es cobrable.
+              if (f.tipoFactura === "Nota de Crédito") return false;
               const saldo = totalConIva(f) - (mapa[f._id] || 0);
               return saldo > 0.01;
             })

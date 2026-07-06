@@ -148,7 +148,15 @@ const CobrosTabla = () => {
   }, [cobros]);
 
   const cobrosFiltrados = useMemo(
-    () => [...cobros].reverse().filter((c) => {
+    () => [...cobros]
+      // Últimos cobros arriba, más viejos abajo (por fecha; desempate por carga).
+      .sort((a, b) => {
+        const fa = (a.fecha || "").substring(0, 10);
+        const fb = (b.fecha || "").substring(0, 10);
+        if (fa !== fb) return fb.localeCompare(fa);
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      })
+      .filter((c) => {
       const coincideCliente = filtroCliente === "" || c.cliente?.toLowerCase().includes(filtroCliente.toLowerCase());
       const coincideMedio =
         filtroMedio === "" ||

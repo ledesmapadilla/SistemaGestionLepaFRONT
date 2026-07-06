@@ -69,7 +69,11 @@ const EditarCobro = () => {
           const idsEnCobro = new Set((cobro?.pagos || []).map((p) => p.factura?._id ?? p.factura));
           setTodasFacturas(
             facturasResult.value.filter((f) => {
-              if (idsEnCobro.has(f._id)) return true;
+              if (idsEnCobro.has(f._id)) return true; // ya está en este cobro
+              // Una factura anulada por Nota de Crédito no se cobra.
+              if (f.estadoPago === "Anulada") return false;
+              // Una Nota de Crédito no es cobrable.
+              if (f.tipoFactura === "Nota de Crédito") return false;
               return (totalConIva(f) - (mapa[f._id] || 0)) > 0.01;
             })
           );
