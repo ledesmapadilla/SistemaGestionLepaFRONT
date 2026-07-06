@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Table, Spinner, Button } from "react-bootstrap";
-import Swal from "sweetalert2";
 import { listarRemitos, recalcularEstadosRemitos } from "../../../../../helpers/queriesRemitos";
 import { useNavigate } from "react-router-dom";
 import XLSXStyle from "xlsx-js-style";
@@ -13,6 +12,11 @@ const RemitosXClientes = () => {
 
   const cargarDatos = async () => {
     try {
+      // Corrige automáticamente los remitos que quedaron "Sin facturar" con saldo
+      // < $1 (diferencias de centavos) antes de armar la lista. Silencioso: si
+      // falla no bloquea la carga.
+      try { await recalcularEstadosRemitos(); } catch { /* no bloquear la carga */ }
+
       const remitos = await listarRemitos();
 
       const agrupado = remitos.reduce((acc, remito) => {
@@ -114,15 +118,6 @@ const RemitosXClientes = () => {
     <div className="w-50 mx-auto my-2">
       <h6 className="text-center mb-3">Remitos sin facturar</h6>
       <div className="d-flex justify-content-end gap-2 mb-3">
-        <Button size="sm" variant="outline-warning" onClick={async () => {
-          try {
-            const res = await recalcularEstadosRemitos();
-            Swal.fire({ icon: "success", title: `Corregido`, text: `${res.corregidos} remito(s) actualizado(s)`, timer: 2500, showConfirmButton: false });
-            if (res.corregidos > 0) cargarDatos();
-          } catch {
-            Swal.fire({ icon: "error", title: "Error", text: "No se pudo corregir" });
-          }
-        }}>Corregir estados</Button>
         <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
         <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
       </div>
