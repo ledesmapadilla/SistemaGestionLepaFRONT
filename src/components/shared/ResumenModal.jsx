@@ -265,7 +265,7 @@ export default function ResumenModal() {
                     const color = RESPONSABLES.find((r) => r.nombre === f.responsable)?.color || "#6c757d";
                     return (
                       <tr key={idx}>
-                        <td style={{ color, fontWeight: 600 }}>{f.responsable}</td>
+                        <td style={{ color }}>{f.responsable}</td>
                         <td className="text-muted">{f.tipo}</td>
                         <td>{f.maquina || "-"}</td>
                         <td className="text-start">{f.tarea || "-"}</td>
