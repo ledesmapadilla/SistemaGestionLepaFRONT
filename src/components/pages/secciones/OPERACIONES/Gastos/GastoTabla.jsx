@@ -6,6 +6,7 @@ import {
 } from "../../../../../helpers/queriesGastos.js";
 import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos.js";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
+import { valorSemanalVigente } from "../../../../../helpers/semanalUtils.js";
 import { Table, Button, Modal, Spinner } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -156,12 +157,23 @@ const GastoTabla = () => {
                 cantidad: 0,
                 totalCalculado: 0,
                 costosHora: [],
+                fallbackTotal: 0,
               };
             }
 
             const costoHora = Number(item.costoHoraPersonal || 0);
             if (costoHora > 0) {
               agrupado[key].costosHora.push(costoHora);
+            } else {
+              // Remito viejo sin costoHoraPersonal: fallback con el semanal vigente
+              // a la fecha del ítem (no el último), para no alterar gastos pasados.
+              const emp = personalDB.find(
+                (p) => p.nombre.trim().toLowerCase() === item.personal.trim().toLowerCase()
+              );
+              const precioSemanal = valorSemanalVigente(emp?.semanal, item.fecha || remito.fecha);
+              const divisor = esServicio ? 5.5 : 44;
+              const valorUnitario = precioSemanal > 0 ? precioSemanal / divisor : 0;
+              agrupado[key].fallbackTotal += (esServicio ? 1 : Number(item.cantidad || 0)) * valorUnitario;
             }
 
             if (esServicio) {
@@ -179,22 +191,15 @@ const GastoTabla = () => {
       // Mapeamos el objeto agrupado a un array
       const arrayMaquinistas = Object.values(agrupado).map((dato) => {
         const costosUnicos = [...new Set(dato.costosHora)];
-        const divisor = dato.tipo === 'servicio' ? 5.5 : 44;
 
         let precio;
         let precioVarios = false;
 
         if (costosUnicos.length === 0) {
-          // Sin costoHoraPersonal (remitos anteriores al campo) → fallback PersonalDB
-          const empleadoEncontrado = personalDB.find(
-            (p) => p.nombre.trim().toLowerCase() === dato.nombre.trim().toLowerCase()
-          );
-          const semanalVal = empleadoEncontrado?.semanal;
-          const precioSemanal = Array.isArray(semanalVal) && semanalVal.length
-            ? Number(semanalVal[semanalVal.length - 1].valor || 0)
-            : Number(semanalVal || 0);
-          precio = precioSemanal > 0 ? precioSemanal / divisor : 0;
-          dato.totalCalculado = dato.cantidad * precio;
+          // Sin costoHoraPersonal (remitos anteriores al campo) → fallback ya
+          // acumulado por ítem con el semanal vigente a su fecha.
+          dato.totalCalculado = dato.fallbackTotal;
+          precio = dato.cantidad > 0 ? dato.fallbackTotal / dato.cantidad : 0;
         } else if (costosUnicos.length === 1) {
           // Todos los items tienen el mismo costoHoraPersonal
           precio = dato.tipo === 'servicio' ? costosUnicos[0] * 8 : costosUnicos[0];

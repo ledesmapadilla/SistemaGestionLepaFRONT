@@ -7,6 +7,7 @@ import { obtenerGastoSemanalPorSemana, guardarGastoSemanal } from "../../../../.
 import { obtenerCuentaCorrienteProveedor } from "../../../../../helpers/queriesCuentaCorrienteProveedor.js";
 import { crearPagoEfectivoProveedor, borrarPagoProveedor } from "../../../../../helpers/queriesPagosProveedores.js";
 import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
+import { semanalVigente } from "../../../../../helpers/semanalUtils.js";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
 import XLSXStyle from "xlsx-js-style";
 import Swal from "sweetalert2";
@@ -703,9 +704,9 @@ const GastosSemanales = () => {
     const semanalMap = {};
     const cantJornalesMap = {};
     personalVisible.forEach((p) => {
-      const ultimo = p.semanal?.length ? p.semanal[p.semanal.length - 1] : null;
-      const semanal = ultimo ? ultimo.valor : 0;
-      const cant = ultimo ? Number(ultimo.cantJornales || 0) : 0;
+      const vigente = semanalVigente(p.semanal, sabadoKey);
+      const semanal = vigente ? vigente.valor : 0;
+      const cant = vigente ? Number(vigente.cantJornales || 0) : 0;
       jornalMap[normNombre(p.nombre)] = cant > 0 ? semanal / cant : 0;
       semanalMap[normNombre(p.nombre)] = semanal;
       cantJornalesMap[normNombre(p.nombre)] = cant;
@@ -820,7 +821,7 @@ const GastosSemanales = () => {
     };
 
     const filaDePersonal = (p) => {
-      const semanal = p.semanal?.length ? p.semanal[p.semanal.length - 1].valor : 0;
+      const semanal = semanalVigente(p.semanal, sabadoKey)?.valor || 0;
       const k = normNombre(p.nombre);
       const base = { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[k] || 0, cantJornales: cantJornalesMap[k] || 0 };
       base.extras = conExtraDif(base, sabadoKey);
@@ -833,10 +834,12 @@ const GastosSemanales = () => {
       return base;
     };
 
+    // Valor vigente en la semana vista (no el último cargado): así una semana ya
+    // guardada, al recalcularse, toma el semanal que correspondía a esa fecha.
     const semanalActualMap = {};
     personalVisible.forEach((p) => {
-      const ultimo = p.semanal?.length ? p.semanal[p.semanal.length - 1] : null;
-      semanalActualMap[normNombre(p.nombre)] = ultimo ? ultimo.valor : null;
+      const vigente = semanalVigente(p.semanal, sabadoKey);
+      semanalActualMap[normNombre(p.nombre)] = vigente ? vigente.valor : null;
     });
 
     // Elimina filas repetidas de la misma persona (por nombre normalizado),

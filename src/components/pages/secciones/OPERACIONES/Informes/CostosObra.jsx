@@ -7,6 +7,7 @@ import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos.js";
 import { listarGastosPorObra } from "../../../../../helpers/queriesGastos.js";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { listarAceites } from "../../../../../helpers/queriesAceites.js";
+import { valorSemanalVigente } from "../../../../../helpers/semanalUtils.js";
 import "../../../../../styles/verRemitos.css";
 import CostoObraTabla from "./CostoObraTabla"; 
 
@@ -153,37 +154,24 @@ const CostosObra = () => {
         }, 0);
       }, 0);
 
-      const agrupado = {}; 
-      remitos.forEach((remito) => {
-        if(remito.items) {
-            remito.items.forEach((item) => {
-                if (item.personal) {
-                    const esServicio = item.servicio && item.servicio !== "";
-                    const tipo = esServicio ? "servicio" : "maquina";
-                    const key = `${item.personal}-${tipo}`;
-                    if (!agrupado[key]) agrupado[key] = { nombre: item.personal, tipo: tipo, cantidad: 0 };
-                    
-                    if (esServicio) agrupado[key].cantidad += 1; 
-                    else agrupado[key].cantidad += Number(item.cantidad || 0); 
-                }
-            });
-        }
-      });
-
+      // Costo de personal por ítem, usando el semanal vigente a la fecha del
+      // remito: un aumento posterior no debe alterar el costo de una obra pasada.
       let totalPersonalCalculado = 0;
-      Object.values(agrupado).forEach((dato) => {
-        const empleadoEncontrado = personalDB.find(
-          (p) => p.nombre.trim().toLowerCase() === dato.nombre.trim().toLowerCase()
-        );
-        if (empleadoEncontrado) {
-            const semanalVal = empleadoEncontrado.semanal;
-            const precioSemanal = Array.isArray(semanalVal) && semanalVal.length
-              ? Number(semanalVal[semanalVal.length - 1].valor || 0)
-              : Number(semanalVal || 0);
-            const divisor = dato.tipo === 'servicio' ? 5.5 : 44;
-            const valorUnitario = precioSemanal > 0 ? precioSemanal / divisor : 0;
-            totalPersonalCalculado += (dato.cantidad * valorUnitario);
-        }
+      remitos.forEach((remito) => {
+        if (!remito.items) return;
+        remito.items.forEach((item) => {
+          if (!item.personal) return;
+          const empleadoEncontrado = personalDB.find(
+            (p) => p.nombre.trim().toLowerCase() === item.personal.trim().toLowerCase()
+          );
+          if (!empleadoEncontrado) return;
+          const esServicio = item.servicio && item.servicio !== "";
+          const divisor = esServicio ? 5.5 : 44;
+          const precioSemanal = valorSemanalVigente(empleadoEncontrado.semanal, item.fecha || remito.fecha);
+          const valorUnitario = precioSemanal > 0 ? precioSemanal / divisor : 0;
+          const cantidad = esServicio ? 1 : Number(item.cantidad || 0);
+          totalPersonalCalculado += cantidad * valorUnitario;
+        });
       });
 
       const totalManoObraManual = gastosArray

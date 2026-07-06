@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
 import { guardarAsistencia as guardarAsistenciaAPI } from "../../../../../helpers/queriesAsistencia.js";
 import { calcularHorometroZamorano } from "../../../../../helpers/horometroUtils.js";
+import { semanalVigente } from "../../../../../helpers/semanalUtils.js";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
 
 const MESES = [
@@ -65,11 +66,12 @@ const DiaAsistencia = () => {
   const cantJornalesPorNombre = useMemo(() => {
     const m = {};
     listaPersonal.forEach((p) => {
-      const ult = p.semanal?.length ? p.semanal[p.semanal.length - 1] : null;
-      m[(p.nombre || "").trim().toLowerCase()] = ult ? Number(ult.cantJornales || 0) : 0;
+      // Vigente al día que se está viendo, no el último cargado.
+      const vig = semanalVigente(p.semanal, keyDia);
+      m[(p.nombre || "").trim().toLowerCase()] = vig ? Number(vig.cantJornales || 0) : 0;
     });
     return m;
-  }, [listaPersonal]);
+  }, [listaPersonal, keyDia]);
 
   const noTrabajaSabado = (nombre) => {
     const cant = cantJornalesPorNombre[(nombre || "").trim().toLowerCase()] || 0;
