@@ -457,8 +457,8 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
             ) : (
               registrosFiltrados.map((r) => (
                 <tr key={r._id}>
-                  <td style={r.maquinaLabel === "Desechada" ? { textDecoration: "line-through", textDecorationColor: "red", textDecorationThickness: "2px", color: "white" } : r.maquinaLabel === "Perdida" ? { textDecoration: "line-through", textDecorationColor: "#ffc107", textDecorationThickness: "2px", color: "white" } : {}}>{r.cubierta?.nombreCubierta || "-"}</td>
-                  <td style={r.maquinaLabel === "Desechada" ? { textDecoration: "line-through", textDecorationColor: "red", textDecorationThickness: "2px", color: "white" } : r.maquinaLabel === "Perdida" ? { textDecoration: "line-through", textDecorationColor: "#ffc107", textDecorationThickness: "2px", color: "white" } : {}}>{r.maquinaLabel || r.maquina?.maquina || "-"}</td>
+                  <td style={r.maquinaLabel === "Desechada" ? { textDecoration: "line-through", textDecorationColor: "red", textDecorationThickness: "1px", color: "white" } : r.maquinaLabel === "Perdida" ? { textDecoration: "line-through", textDecorationColor: "#ffc107", textDecorationThickness: "2px", color: "white" } : {}}>{r.cubierta?.nombreCubierta || "-"}</td>
+                  <td style={r.maquinaLabel === "Desechada" ? { textDecoration: "line-through", textDecorationColor: "red", textDecorationThickness: "1px", color: "white" } : r.maquinaLabel === "Perdida" ? { textDecoration: "line-through", textDecorationColor: "#ffc107", textDecorationThickness: "2px", color: "white" } : {}}>{r.maquinaLabel || r.maquina?.maquina || "-"}</td>
                   <td>{r.observaciones || "-"}</td>
                   <td>
                     <div className="d-flex gap-1 justify-content-center">
