@@ -21,6 +21,9 @@ const CuentaCorriente = () => {
   const [loading, setLoading] = useState(true);
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroObra, setFiltroObra] = useState("");
+  // Switch de la vista resumen: true = clientes con deuda (saldo > 0),
+  // false = sin deuda (saldo <= 0).
+  const [soloConDeuda, setSoloConDeuda] = useState(true);
 
   useEffect(() => {
     const cargar = async () => {
@@ -57,6 +60,12 @@ const CuentaCorriente = () => {
       return { cliente: c, debito, credito, saldo: saldo || 0 };
     });
   }, [todos, clientes]);
+
+  // Resumen filtrado por el switch con deuda / sin deuda.
+  const resumenFiltrado = useMemo(
+    () => resumenPorCliente.filter((r) => (soloConDeuda ? r.saldo > 0 : r.saldo <= 0)),
+    [resumenPorCliente, soloConDeuda]
+  );
 
   // Movimientos filtrados (vista con cliente seleccionado)
   const movFiltrados = useMemo(() => {
@@ -97,12 +106,12 @@ const CuentaCorriente = () => {
     const fechaHoy = new Date().toLocaleDateString("es-AR");
     if (!filtroCliente) {
       const ws = {};
-      ws["A1"] = { v: "CUENTA CORRIENTE — Todos los clientes", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+      ws["A1"] = { v: `CUENTA CORRIENTE — Clientes ${soloConDeuda ? "con deuda" : "sin deuda"}`, t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
       ws["A2"] = { v: `Fecha: ${fechaHoy}`, t: "s", s: { font: { sz: 11 }, alignment: leftAlign } };
       ["Cliente", "Facturado", "Cobrado", "Saldo"].forEach((h, i) => {
         ws[`${["A","B","C","D"][i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
       });
-      resumenPorCliente.forEach((r, ri) => {
+      resumenFiltrado.forEach((r, ri) => {
         const fila = [r.cliente, r.debito, r.credito, r.saldo];
         fila.forEach((val, ci) => {
           const isCurrency = ci > 0;
@@ -113,10 +122,10 @@ const CuentaCorriente = () => {
           };
         });
       });
-      ws["!ref"] = `A1:D${resumenPorCliente.length + 3}`;
+      ws["!ref"] = `A1:D${resumenFiltrado.length + 3}`;
       ws["!cols"] = [{ wch: 28 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
       XLSXStyle.utils.book_append_sheet(libro, ws, "Resumen");
-      XLSXStyle.writeFile(libro, "CuentaCorriente_Todos.xlsx");
+      XLSXStyle.writeFile(libro, `CuentaCorriente_${soloConDeuda ? "ConDeuda" : "SinDeuda"}.xlsx`);
       return;
     }
 
@@ -155,7 +164,7 @@ const CuentaCorriente = () => {
       <h6 className="text-center mb-1">Cuenta Corriente Cliente</h6>
       <div className="d-flex justify-content-end align-items-center mb-1">
         <div className="d-flex gap-2">
-          {(filtroCliente ? movConSaldo.length : resumenPorCliente.length) > 0 && (
+          {(filtroCliente ? movConSaldo.length : resumenFiltrado.length) > 0 && (
             <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
           )}
           <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
@@ -184,6 +193,23 @@ const CuentaCorriente = () => {
             </div>
           </div>
 
+          {!filtroCliente && (
+            <div className="d-flex align-items-center gap-2">
+              <Form.Label className="mb-0 text-nowrap" style={{ width: "55px" }}>Deuda</Form.Label>
+              <div className="d-flex align-items-center gap-2">
+                <span style={{ fontSize: "0.85rem" }} className={soloConDeuda ? "fw-semibold" : "text-muted"}>Con deuda</span>
+                <Form.Check
+                  type="switch"
+                  id="switch-deuda"
+                  className="mb-0"
+                  checked={!soloConDeuda}
+                  onChange={(e) => setSoloConDeuda(!e.target.checked)}
+                />
+                <span style={{ fontSize: "0.85rem" }} className={!soloConDeuda ? "fw-semibold" : "text-muted"}>Sin deuda</span>
+              </div>
+            </div>
+          )}
+
           {filtroCliente && (
             <div className="d-flex align-items-center gap-2">
               <Form.Label className="mb-0 text-nowrap" style={{ width: "55px" }}>Obra</Form.Label>
@@ -208,13 +234,13 @@ const CuentaCorriente = () => {
         </div>
 
         {/* Totales — centro */}
-        {!loading && (filtroCliente ? movConSaldo.length : resumenPorCliente.length) > 0 ? (() => {
+        {!loading && (filtroCliente ? movConSaldo.length : resumenFiltrado.length) > 0 ? (() => {
           const totFact = filtroCliente
             ? totalDebitos
-            : resumenPorCliente.reduce((s, r) => s + r.debito, 0);
+            : resumenFiltrado.reduce((s, r) => s + r.debito, 0);
           const totCob = filtroCliente
             ? totalCreditos
-            : resumenPorCliente.reduce((s, r) => s + r.credito, 0);
+            : resumenFiltrado.reduce((s, r) => s + r.credito, 0);
           const totSaldo = Math.round((totFact - totCob) * 100) / 100 || 0;
           return (
             <div className="d-flex gap-3">
@@ -246,8 +272,8 @@ const CuentaCorriente = () => {
         </div>
       ) : !filtroCliente ? (
         // Vista resumen: una fila por cliente
-        resumenPorCliente.length === 0 ? (
-          <p className="text-muted">Sin movimientos.</p>
+        resumenFiltrado.length === 0 ? (
+          <p className="text-muted">{soloConDeuda ? "Sin clientes con deuda." : "Sin clientes sin deuda."}</p>
         ) : (
           <div style={{ maxHeight: "calc(100vh - 260px)", overflowY: "auto" }}>
             <Table striped bordered hover className="text-center align-middle">
@@ -261,7 +287,7 @@ const CuentaCorriente = () => {
                 </tr>
               </thead>
               <tbody>
-                {resumenPorCliente.map((r) => (
+                {resumenFiltrado.map((r) => (
                   <tr key={r.cliente}>
                     <td className="text-start fw-semibold">{r.cliente}</td>
                     <td>{formatoMoneda(r.debito)}</td>
