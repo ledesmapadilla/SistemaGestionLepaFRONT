@@ -146,10 +146,10 @@ function App() {
                       <Route path="/departamento-mantenimiento" element={<MantenimientoDashboard />} />
                       <Route path="/mantenimiento/baterias" element={<Baterias />} />
                       <Route path="/mantenimiento/cubiertas" element={<CubiertasDashboard />} />
-                      <Route path="/mantenimiento/cubiertas/camiones" element={<Cubiertas categoria="camiones" titulo="Cubiertas camiones" />} />
-                      <Route path="/mantenimiento/cubiertas/palas" element={<Cubiertas categoria="palas" titulo="Cubiertas palas cargadoras" />} />
-                      <Route path="/mantenimiento/cubiertas/retropalas" element={<Cubiertas categoria="retropalas" titulo="Cubiertas retropalas" />} />
-                      <Route path="/mantenimiento/cubiertas/motoniveladora" element={<Cubiertas categoria="motoniveladora" titulo="Cubiertas motoniveladora" />} />
+                      <Route path="/mantenimiento/cubiertas/camiones" element={<Cubiertas categoria="camiones" titulo="Cubiertas camiones - 295 x 22.5" />} />
+                      <Route path="/mantenimiento/cubiertas/palas" element={<Cubiertas categoria="palas" titulo="Cubiertas palas cargadoras - 17.5 x 25" />} />
+                      <Route path="/mantenimiento/cubiertas/retropalas" element={<Cubiertas categoria="retropalas" titulo="Cubiertas retropalas - 19.5 x 24 (trasera) - 1100 x 16 (delantera)" />} />
+                      <Route path="/mantenimiento/cubiertas/motoniveladora" element={<Cubiertas categoria="motoniveladora" titulo="Cubiertas motoniveladora - 14.00 x 24" />} />
                       <Route path="/mantenimiento/preventivo" element={<MantenimientoPreventivo />} />
                       <Route path="/mantenimiento/reparaciones" element={<Reparaciones />} />
                       <Route path="/mantenimiento/otra" element={<Otra />} />
