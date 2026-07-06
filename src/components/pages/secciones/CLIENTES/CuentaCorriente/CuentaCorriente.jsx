@@ -21,8 +21,8 @@ const CuentaCorriente = () => {
   const [loading, setLoading] = useState(true);
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroObra, setFiltroObra] = useState("");
-  // Switch de la vista resumen: true = clientes con deuda (saldo > 0),
-  // false = sin deuda (saldo <= 0).
+  // Switch de la vista resumen: true = solo clientes con deuda (saldo > 0),
+  // false = todos los clientes.
   const [soloConDeuda, setSoloConDeuda] = useState(true);
 
   useEffect(() => {
@@ -61,9 +61,9 @@ const CuentaCorriente = () => {
     });
   }, [todos, clientes]);
 
-  // Resumen filtrado por el switch con deuda / sin deuda.
+  // Resumen filtrado por el switch: con deuda (saldo > 0) o todos.
   const resumenFiltrado = useMemo(
-    () => resumenPorCliente.filter((r) => (soloConDeuda ? r.saldo > 0 : r.saldo <= 0)),
+    () => (soloConDeuda ? resumenPorCliente.filter((r) => r.saldo > 0) : resumenPorCliente),
     [resumenPorCliente, soloConDeuda]
   );
 
@@ -106,7 +106,7 @@ const CuentaCorriente = () => {
     const fechaHoy = new Date().toLocaleDateString("es-AR");
     if (!filtroCliente) {
       const ws = {};
-      ws["A1"] = { v: `CUENTA CORRIENTE — Clientes ${soloConDeuda ? "con deuda" : "sin deuda"}`, t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+      ws["A1"] = { v: `CUENTA CORRIENTE — ${soloConDeuda ? "Clientes con deuda" : "Todos los clientes"}`, t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
       ws["A2"] = { v: `Fecha: ${fechaHoy}`, t: "s", s: { font: { sz: 11 }, alignment: leftAlign } };
       ["Cliente", "Facturado", "Cobrado", "Saldo"].forEach((h, i) => {
         ws[`${["A","B","C","D"][i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
@@ -125,7 +125,7 @@ const CuentaCorriente = () => {
       ws["!ref"] = `A1:D${resumenFiltrado.length + 3}`;
       ws["!cols"] = [{ wch: 28 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
       XLSXStyle.utils.book_append_sheet(libro, ws, "Resumen");
-      XLSXStyle.writeFile(libro, `CuentaCorriente_${soloConDeuda ? "ConDeuda" : "SinDeuda"}.xlsx`);
+      XLSXStyle.writeFile(libro, `CuentaCorriente_${soloConDeuda ? "ConDeuda" : "Todos"}.xlsx`);
       return;
     }
 
@@ -205,7 +205,7 @@ const CuentaCorriente = () => {
                   checked={!soloConDeuda}
                   onChange={(e) => setSoloConDeuda(!e.target.checked)}
                 />
-                <span style={{ fontSize: "0.85rem" }} className={!soloConDeuda ? "fw-semibold" : "text-muted"}>Sin deuda</span>
+                <span style={{ fontSize: "0.85rem" }} className={!soloConDeuda ? "fw-semibold" : "text-muted"}>Todos</span>
               </div>
             </div>
           )}
@@ -273,7 +273,7 @@ const CuentaCorriente = () => {
       ) : !filtroCliente ? (
         // Vista resumen: una fila por cliente
         resumenFiltrado.length === 0 ? (
-          <p className="text-muted">{soloConDeuda ? "Sin clientes con deuda." : "Sin clientes sin deuda."}</p>
+          <p className="text-muted">{soloConDeuda ? "Sin clientes con deuda." : "Sin movimientos."}</p>
         ) : (
           <div style={{ maxHeight: "calc(100vh - 260px)", overflowY: "auto" }}>
             <Table striped bordered hover className="text-center align-middle">
