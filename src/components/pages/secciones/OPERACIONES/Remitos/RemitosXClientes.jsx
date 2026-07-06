@@ -35,8 +35,15 @@ const RemitosXClientes = () => {
 
           const saldoRemito = totalRemito - (remito.montoFacturado || 0);
 
+          // Remito automático de precio cerrado/global sin precio definido
+          // (total 0): se cuenta igual hasta que se facture.
+          const esGlobalSinPrecio =
+            totalRemito < 1 &&
+            (remito.montoFacturado || 0) < 1 &&
+            (remito.items || []).some((i) => i.servicio === "Precio de la obra");
+
           // Ignorar remitos cuyo saldo real es menor a $1 (ya facturados con centavos de diferencia)
-          if (saldoRemito < 1) return acc;
+          if (saldoRemito < 1 && !esGlobalSinPrecio) return acc;
 
           if (!acc[razonSocial]) {
             acc[razonSocial] = {
@@ -53,8 +60,9 @@ const RemitosXClientes = () => {
         return acc;
       }, {});
 
-      // 4. Convertimos a array, excluyendo clientes sin monto pendiente
-      const resultadoFinal = Object.values(agrupado).filter((c) => c.monto > 0);
+      // 4. Convertimos a array. Se incluyen los clientes con al menos un remito
+      // pendiente contado (monto > 0 o remito global sin precio con monto 0).
+      const resultadoFinal = Object.values(agrupado).filter((c) => c.cantidadRemitos > 0);
 
       setDatosAgrupados(resultadoFinal);
     } catch (error) {

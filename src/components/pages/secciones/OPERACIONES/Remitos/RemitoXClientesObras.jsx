@@ -38,7 +38,14 @@ const RemitosXClientesObras = () => {
 
             const saldoRemito = totalRemito - (remito.montoFacturado || 0);
 
-            if (saldoRemito < 1) return acc;
+            // Remito automático de precio cerrado/global sin precio definido
+            // (total 0): se muestra igual hasta que se facture.
+            const esGlobalSinPrecio =
+              totalRemito < 1 &&
+              (remito.montoFacturado || 0) < 1 &&
+              (remito.items || []).some((i) => i.servicio === "Precio de la obra");
+
+            if (saldoRemito < 1 && !esGlobalSinPrecio) return acc;
 
             const nombreObra = remito.obra?.nombreobra || "Obra sin nombre";
 
