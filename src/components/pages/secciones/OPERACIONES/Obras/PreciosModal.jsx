@@ -21,7 +21,9 @@ const MAQUINA_A_PRECIO = {
 };
 
 // Lista de grupos únicos para el dropdown de Alquiler
-const MAQUINAS_ALQUILER = [...new Set(Object.values(MAQUINA_A_PRECIO))];
+const MAQUINAS_ALQUILER = [...new Set(Object.values(MAQUINA_A_PRECIO))].filter(
+  (maquina) => maquina !== "Viaje batea"
+);
 
 const MAQUINA_A_UNIDAD = {
   PC200: "Horas",
