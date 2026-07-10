@@ -567,7 +567,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                                   style={{ color: f.marcado === 1 ? "#ffc107" : undefined }}
                                 />
                                 {f.marcado === 2 && (
-                                  <span style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 1, background: "#ffc107", pointerEvents: "none" }} />
+                                  <span style={{ position: "absolute", left: 0, right: 0, top: "50%", height: "1.5px", background: "#ffc107", pointerEvents: "none" }} />
                                 )}
                               </div>
                             </div>
@@ -578,7 +578,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                             >
                               {f.proveedor}
                               {f.marcado === 2 && (
-                                <span style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 1, background: "#ffc107", pointerEvents: "none" }} />
+                                <span style={{ position: "absolute", left: 0, right: 0, top: "50%", height: "1.5px", background: "#ffc107", pointerEvents: "none" }} />
                               )}
                             </span>
                           )}
@@ -1049,7 +1049,7 @@ const GastosSemanales = () => {
                         >
                           {r.personal}
                           {r.marcado === 2 && (
-                            <span style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 1, background: "#ffc107", pointerEvents: "none" }} />
+                            <span style={{ position: "absolute", left: 0, right: 0, top: "50%", height: "1.5px", background: "#ffc107", pointerEvents: "none" }} />
                           )}
                         </span>
                       )}
