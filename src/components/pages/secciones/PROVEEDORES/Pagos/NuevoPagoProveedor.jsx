@@ -81,6 +81,7 @@ const NuevoPagoProveedor = () => {
         if (facturasResult.status === "fulfilled") {
           setTodasFacturas(
             facturasResult.value.filter((f) => {
+              if (f.tipoFactura === "Nota de Crédito") return false;
               const saldo = totalFactura(f) - (mapa[f._id?.toString()] || 0);
               return saldo > 0.01;
             })
