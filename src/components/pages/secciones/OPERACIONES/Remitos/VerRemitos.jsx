@@ -200,12 +200,12 @@ const VerRemitos = () => {
   const remitosFiltrados = filtroRemito ? remitos.filter((r) => String(r.remito).includes(filtroRemito)) : remitos;
 
   const exportarExcel = () => {
-    const headers = ["N° Remito", "Fecha", "Maquinista", "$/hs Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Gasoil (lts)"];
-    const cols = ["A","B","C","D","E","F","G","H","I","J","K","L"];
+    const headers = ["N° Remito", "Fecha", "Maquinista", "$/hs Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Gasoil (lts)", "Observaciones"];
+    const cols = ["A","B","C","D","E","F","G","H","I","J","K","L","M"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
-    const colWidths = [12, 12, 18, 14, 16, 16, 10, 10, 14, 14, 14, 12];
+    const colWidths = [12, 12, 18, 14, 16, 16, 10, 10, 14, 14, 14, 12, 24];
 
     const filas = remitos.flatMap((remito) =>
       remito.items.map((item) => [
@@ -221,6 +221,7 @@ const VerRemitos = () => {
         item.cantidad * item.precioUnitario,
         remito.estado,
         item.gasoil || "-",
+        item.observaciones || "-",
       ])
     );
 
