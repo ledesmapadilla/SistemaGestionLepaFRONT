@@ -299,6 +299,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
     retropalas: { jd1: 4, jd2: 4 },
     motoniveladora: { motoniveladora: 6 },
     camiones: {
+      "batea 1": 8, "batea 2": 8,
       "bateas 1": 8, "bateas 2": 8,
       "carreton chico": 8, "carretón chico": 8,
       eiq: 6, etx: 6,
