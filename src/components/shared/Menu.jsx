@@ -48,14 +48,6 @@ function Menu() {
 
         <Navbar.Collapse id="navbar-nav">
           <Nav className="ms-auto">
-            <Nav.Link
-              className="mx-2 pendientes-link"
-              style={{ cursor: "pointer" }}
-              onClick={() => pendientesModal?.abrir()}
-            >
-              Pendientes
-            </Nav.Link>
-
             <NavDropdown
               title="Operaciones"
               id="nav-dropdown"
