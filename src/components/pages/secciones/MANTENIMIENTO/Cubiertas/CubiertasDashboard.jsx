@@ -14,17 +14,24 @@ const IconoRetropala = ({ color, className }) => (
     width="1em"
     height="1em"
   >
-    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-    <path d="M4 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-    <path d="M13 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
-    <path d="M13 19l-9 0" />
-    <path d="M4 15l9 0" />
-    <path d="M8.5 15l-1.5 -5" />
-    <path d="M12 15l2 -8" />
-    <path d="M15 7l3 2" />
-    <path d="M15 7l1.5 -1.5" />
-    <path d="M18 9l3 1" />
-    <path d="M19 14l2 -3" />
+    {/* Rueda Trasera (Grande) */}
+    <circle cx="5.5" cy="15.5" r="3.5" />
+    <circle cx="5.5" cy="15.5" r="1" />
+
+    {/* Rueda Delantera (Chica) */}
+    <circle cx="13.5" cy="17.2" r="1.8" />
+
+    {/* Chasis y Cabina estilo John Deere */}
+    <path d="M 5.5 12 L 5.5 7 L 10.5 7 L 12.5 11 L 15.5 12 L 15.5 15.5" />
+    <path d="M 5.5 15.5 L 13.5 15.5" />
+
+    {/* Brazo y Pala Delantera (Cargadora) */}
+    <path d="M 11 12 L 16.5 14.5 L 18.5 18.5" />
+    <polygon points="18.5,18.5 21.5,18.5 21,15.5 18,15.5" fill={color + "33"} />
+
+    {/* Brazo y Pala Trasera (Retroexcavadora) */}
+    <path d="M 3.5 14.5 L 1 10 L 5 4.5 L 8.5 8.5" />
+    <polygon points="8.5,8.5 7.5,11 6,10 7,8" fill={color + "33"} />
   </svg>
 );
 
