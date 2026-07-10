@@ -85,7 +85,7 @@ const VariablesTabla = ({
             ) : (
               variables.map((v) => (
                 <tr key={v._id}>
-                  <td className="fw-bold">{v.variable}</td>
+                  <td>{v.variable}</td>
                   <td>
                     {Number(ultimoValor(v)).toLocaleString("es-AR", {
                       style: "currency",
