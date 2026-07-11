@@ -472,7 +472,7 @@ const EntregaEPP = () => {
             <tbody>
               {personalFiltrado.map((p) => (
                 <tr key={p._id}>
-                  <td className="text-start fw-semibold ps-3">
+                  <td className="text-start ps-3">
                     {p.nombre}
                   </td>
                   <td>

@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
-import { Container, Table, Button, Spinner, Form, Badge } from "react-bootstrap";
+import { Container, Table, Button, Spinner, Form } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { obtenerEntregasEPP } from "../../../../../helpers/queriesEntregaEPP.js";
 import Swal from "sweetalert2";
+import XLSXStyle from "xlsx-js-style";
 
 const ResumenEPP = () => {
   const navigate = useNavigate();
@@ -79,11 +80,89 @@ const ResumenEPP = () => {
     navigate("/personal/entrega-epp", { state: { desde, hasta } });
   };
 
+  // Exportar resumen a Excel
+  const exportarResumenExcel = () => {
+    if (personal.length === 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Atención",
+        text: "No hay registros para exportar.",
+      });
+      return;
+    }
+
+    const titulo = `Resumen de Entregas EPP`;
+    const rangoFechas = `Periodo: ${desde.split("-").reverse().join("/")} al ${hasta.split("-").reverse().join("/")}`;
+    const fechaReporte = `Fecha de Reporte: ${new Date().toLocaleDateString("es-AR")}`;
+    const headers = ["Personal", "Camisa", "Pantalón", "Botines", "Otros"];
+
+    const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
+    const estIzquierda = { alignment: { horizontal: "left", vertical: "center" } };
+    const estHeader = { font: { bold: true }, alignment: { horizontal: "center", vertical: "center" } };
+    const estTitulo = { font: { bold: true, sz: 14 }, alignment: { horizontal: "left", vertical: "center" } };
+    const estSubt = { alignment: { horizontal: "left", vertical: "center" } };
+
+    const wb = XLSXStyle.utils.book_new();
+    const ws = {};
+
+    // Títulos
+    ws["A1"] = { v: titulo, t: "s", s: estTitulo };
+    ws["A2"] = { v: rangoFechas, t: "s", s: estSubt };
+    ws["A3"] = { v: fechaReporte, t: "s", s: estSubt };
+
+    // Headers (fila 5)
+    const cols = "ABCDE";
+    headers.forEach((h, i) => {
+      ws[`${cols[i]}5`] = { v: h, t: "s", s: estHeader };
+    });
+
+    // Filas (a partir de la 6)
+    personal.forEach((p, rowIdx) => {
+      const excelRow = rowIdx + 6;
+      const nombreNorm = (p.nombre || "").trim().toLowerCase();
+      const epps = mapaEntregados[nombreNorm] || { camisa: false, pantalon: false, botines: false, otros: false };
+
+      const vals = [
+        p.nombre,
+        epps.camisa ? "✓" : "-",
+        epps.pantalon ? "✓" : "-",
+        epps.botines ? "✓" : "-",
+        epps.otros ? "✓" : "-"
+      ];
+
+      vals.forEach((v, i) => {
+        const est = (i === 0) ? estIzquierda : estCentro;
+        ws[`${cols[i]}${excelRow}`] = { v: v ?? "", t: "s", s: est };
+      });
+    });
+
+    const lastRow = personal.length + 5;
+    ws["!ref"] = `A1:E${lastRow}`;
+    ws["!cols"] = [{ wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
+
+    XLSXStyle.utils.book_append_sheet(wb, ws, "Resumen EPP");
+
+    const nombreArchivo = `Resumen_EPP_${desde}_al_${hasta}.xlsx`;
+    XLSXStyle.writeFile(wb, nombreArchivo);
+  };
+
   return (
     <Container className="mt-4 w-50">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Resumen de Entregas EPP <small className="text-muted" style={{ fontSize: "1rem", fontWeight: 400 }}>Estado de EPP Entregados por Fecha</small></h2>
-        <Button variant="outline-success" onClick={volver}>Volver</Button>
+        <h2 className="mb-0">Resumen de Entregas EPP</h2>
+        <div className="d-flex align-items-center gap-2">
+          <Button
+            variant="outline-light"
+            size="sm"
+            onClick={exportarResumenExcel}
+            disabled={personal.length === 0 || loading}
+          >
+            Excel
+          </Button>
+          <Button variant="outline-success" size="sm" onClick={volver}>
+            Volver
+          </Button>
+        </div>
       </div>
 
       <div className="d-flex align-items-end gap-3 mb-4 p-3 bg-dark rounded" style={{ border: "1px solid #495057" }}>
@@ -143,7 +222,7 @@ const ResumenEPP = () => {
 
                 return (
                   <tr key={p._id}>
-                    <td className="text-start fw-semibold ps-3">{p.nombre}</td>
+                    <td className="text-start ps-3">{p.nombre}</td>
                     <td>{renderCheck(epps.camisa)}</td>
                     <td>{renderCheck(epps.pantalon)}</td>
                     <td>{renderCheck(epps.botines)}</td>
