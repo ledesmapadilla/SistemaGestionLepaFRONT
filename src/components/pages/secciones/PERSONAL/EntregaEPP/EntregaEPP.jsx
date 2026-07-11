@@ -179,13 +179,21 @@ const EntregaEPP = () => {
       return;
     }
 
-    // Validar cantidad
+    // Validar cantidad y observaciones para "otros"
     for (const item of seleccionados) {
       if (!item.cantidad || item.cantidad < 1) {
         Swal.fire({
           icon: "warning",
           title: "Atención",
           text: `La cantidad para ${item.label} debe ser al menos 1.`,
+        });
+        return;
+      }
+      if (item.epp === "otros" && (!item.observaciones || !item.observaciones.trim())) {
+        Swal.fire({
+          icon: "warning",
+          title: "Atención",
+          text: 'Debe especificar qué elemento está entregando en las observaciones de "Otros".',
         });
         return;
       }
@@ -473,7 +481,7 @@ const EntregaEPP = () => {
                         <Form.Control
                           size="sm"
                           type="text"
-                          placeholder="Detalle..."
+                          required={row.seleccionado && row.epp === "otros"}
                           disabled={!row.seleccionado || submitting}
                           value={row.observaciones}
                           onChange={(e) => handleRowChange(idx, "observaciones", e.target.value)}
