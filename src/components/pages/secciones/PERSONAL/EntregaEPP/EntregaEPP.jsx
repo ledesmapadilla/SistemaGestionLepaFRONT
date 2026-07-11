@@ -404,9 +404,9 @@ const EntregaEPP = () => {
         <h2 className="mb-0">Entrega de EPP</h2>
       </div>
 
-      <div className="d-flex justify-content-between align-items-end mb-3 p-3 bg-dark rounded" style={{ border: "1px solid #495057" }}>
-        <div className="d-flex flex-column gap-2">
-          {/* Fila 1: Botón y fechas */}
+      <div className="d-flex flex-column gap-2 mb-3 p-3 bg-dark rounded" style={{ border: "1px solid #495057" }}>
+        {/* Fila 1: Botones/Fechas a la izq y Buscador a la der */}
+        <div className="d-flex justify-content-between align-items-end">
           <div className="d-flex align-items-end gap-2">
             <Button variant="outline-success" size="sm" onClick={irAResumen} className="mb-0">
               Entregado
@@ -432,44 +432,45 @@ const EntregaEPP = () => {
               />
             </Form.Group>
           </div>
-          {/* Fila 2: Switch inactivos */}
-          <div className="d-flex align-items-center gap-2 mt-1">
-            <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={!mostrarInactivos ? "fw-semibold" : "text-muted"}>Sin inactivos</span>
-            <Form.Check
-              type="switch"
-              id="switch-inactivos-epp"
-              className="mb-0"
-              checked={mostrarInactivos}
-              onChange={(e) => setMostrarInactivos(e.target.checked)}
-            />
-            <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={mostrarInactivos ? "fw-semibold" : "text-muted"}>Todos</span>
+
+          <div className="d-flex align-items-center gap-3">
+            <div className="position-relative" style={{ width: "220px" }}>
+              <Form.Control
+                size="sm"
+                type="text"
+                placeholder="Buscar por nombre..."
+                value={filtro}
+                onChange={(e) => setFiltro(e.target.value)}
+                style={{ paddingRight: "30px" }}
+              />
+              {filtro && (
+                <button
+                  type="button"
+                  className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-2 p-0 border-0 fw-bold"
+                  aria-label="Limpiar"
+                  onClick={() => setFiltro("")}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <div className="text-muted" style={{ fontSize: "0.9rem" }}>
+              Total: {personalFiltrado.length} personas
+            </div>
           </div>
         </div>
 
-        <div className="d-flex align-items-center gap-3">
-          <div className="position-relative" style={{ width: "220px" }}>
-            <Form.Control
-              size="sm"
-              type="text"
-              placeholder="Buscar por nombre..."
-              value={filtro}
-              onChange={(e) => setFiltro(e.target.value)}
-              style={{ paddingRight: "30px" }}
-            />
-            {filtro && (
-              <button
-                type="button"
-                className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-2 p-0 border-0 fw-bold"
-                aria-label="Limpiar"
-                onClick={() => setFiltro("")}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-          <div className="text-muted" style={{ fontSize: "0.9rem" }}>
-            Total: {personalFiltrado.length} personas
-          </div>
+        {/* Fila 2: Switch inactivos */}
+        <div className="d-flex align-items-center gap-2 mt-1">
+          <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={!mostrarInactivos ? "fw-semibold" : "text-muted"}>Sin inactivos</span>
+          <Form.Check
+            type="switch"
+            id="switch-inactivos-epp"
+            className="mb-0"
+            checked={mostrarInactivos}
+            onChange={(e) => setMostrarInactivos(e.target.checked)}
+          />
+          <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={mostrarInactivos ? "fw-semibold" : "text-muted"}>Todos</span>
         </div>
       </div>
 
