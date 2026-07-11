@@ -19,6 +19,8 @@ const CuentaCorriente = () => {
   const navigate = useNavigate();
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [todosCliente, setTodosCliente] = useState([]);
+  const [loadingCliente, setLoadingCliente] = useState(false);
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroObra, setFiltroObra] = useState("");
   // Switch de la vista resumen: true = solo clientes con deuda (saldo > 0),
@@ -39,16 +41,35 @@ const CuentaCorriente = () => {
     cargar();
   }, []);
 
+  useEffect(() => {
+    const cargarDetalle = async () => {
+      if (!filtroCliente) {
+        setTodosCliente([]);
+        return;
+      }
+      setLoadingCliente(true);
+      try {
+        const data = await obtenerCuentaCorriente(filtroCliente);
+        setTodosCliente(data || []);
+      } catch (error) {
+        console.error("Error al cargar cuenta corriente de cliente:", error);
+        setTodosCliente([]);
+      } finally {
+        setLoadingCliente(false);
+      }
+    };
+    cargarDetalle();
+  }, [filtroCliente]);
+
   const clientes = useMemo(() => {
     return [...new Set(todos.map((m) => m.cliente).filter(Boolean))].sort();
   }, [todos]);
 
   const obrasDisponibles = useMemo(() => {
     if (!filtroCliente) return [];
-    const base = todos.filter((m) => m.cliente === filtroCliente);
-    const obras = base.flatMap((m) => m.obras || []).filter(Boolean);
+    const obras = todosCliente.flatMap((m) => m.obras || []).filter(Boolean);
     return [...new Set(obras)].sort();
-  }, [todos, filtroCliente]);
+  }, [todosCliente, filtroCliente]);
 
   // Resumen por cliente (vista sin filtro)
   const resumenPorCliente = useMemo(() => {
@@ -69,11 +90,11 @@ const CuentaCorriente = () => {
 
   // Movimientos filtrados (vista con cliente seleccionado)
   const movFiltrados = useMemo(() => {
-    let lista = todos.filter((m) => m.cliente === filtroCliente);
+    let lista = todosCliente;
     if (filtroObra) lista = lista.filter((m) => (m.obras || []).includes(filtroObra));
     // Orden cronológico ascendente para calcular el saldo acumulado correctamente
     return [...lista].sort((a, b) => (a.fecha || "").localeCompare(b.fecha || ""));
-  }, [todos, filtroCliente, filtroObra]);
+  }, [todosCliente, filtroObra]);
 
   // Saldo acumulado calculado de más viejo a más reciente, luego se muestra al revés
   const movConSaldo = useMemo(() => {
@@ -304,6 +325,10 @@ const CuentaCorriente = () => {
             </Table>
           </div>
         )
+      ) : loadingCliente ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" />
+        </div>
       ) : (
         // Vista detalle: movimientos del cliente seleccionado
         movConSaldo.length === 0 ? (
