@@ -125,6 +125,9 @@ function Menu() {
               <NavDropdown.Item as={Link} to="/personal/gastos-semanales">
                 Gastos Semanales
               </NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/personal/entrega-epp">
+                Entrega de EPP
+              </NavDropdown.Item>
             </NavDropdown>
 
             <NavDropdown title="ALTAS" id="nav-dropdown" className="mx-2">
