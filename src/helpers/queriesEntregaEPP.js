@@ -15,9 +15,13 @@ export const registrarEntregaEPP = async (datos) => {
   }
 };
 
-export const obtenerEntregasEPP = async (personal = "") => {
+export const obtenerEntregasEPP = async (personal = "", desde = "", hasta = "") => {
   try {
-    const query = personal ? `?personal=${encodeURIComponent(personal)}` : "";
+    const params = new URLSearchParams();
+    if (personal) params.append("personal", personal);
+    if (desde) params.append("desde", desde);
+    if (hasta) params.append("hasta", hasta);
+    const query = params.toString() ? `?${params.toString()}` : "";
     return await authFetch(`${eppBackend}${query}`);
   } catch (error) {
     console.error("Error al obtener entregas de EPP:", error);

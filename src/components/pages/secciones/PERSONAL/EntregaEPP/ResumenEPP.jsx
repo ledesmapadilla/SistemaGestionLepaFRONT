@@ -22,25 +22,34 @@ const ResumenEPP = () => {
   const [entregas, setEntregas] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Cargar lista de personal una sola vez al montar
   useEffect(() => {
-    const cargarDatos = async () => {
-      setLoading(true);
+    const cargarPersonal = async () => {
       try {
-        const [resPersonal, resEntregas] = await Promise.all([
-          listarPersonal(),
-          obtenerEntregasEPP()
-        ]);
-
+        const resPersonal = await listarPersonal();
         if (resPersonal && resPersonal.ok) {
           const dataP = await resPersonal.json();
           setPersonal(dataP.sort((a, b) => a.nombre.localeCompare(b.nombre)));
         }
+      } catch (error) {
+        console.error("Error al cargar personal:", error);
+      }
+    };
+    cargarPersonal();
+  }, []);
+
+  // Cargar entregas filtradas cuando cambien desde o hasta
+  useEffect(() => {
+    const cargarEntregas = async () => {
+      setLoading(true);
+      try {
+        const resEntregas = await obtenerEntregasEPP("", desde, hasta);
         if (resEntregas && resEntregas.ok) {
           const dataE = await resEntregas.json();
           setEntregas(dataE || []);
         }
       } catch (error) {
-        console.error("Error al cargar datos del resumen:", error);
+        console.error("Error al cargar entregas:", error);
         Swal.fire({
           icon: "error",
           title: "Error",
@@ -50,17 +59,8 @@ const ResumenEPP = () => {
         setLoading(false);
       }
     };
-
-    cargarDatos();
-  }, []);
-
-  // Entregas filtradas por fecha
-  const entregasFiltradas = useMemo(() => {
-    return entregas.filter((e) => {
-      const f = e.fecha;
-      return f >= desde && f <= hasta;
-    });
-  }, [entregas, desde, hasta]);
+    cargarEntregas();
+  }, [desde, hasta]);
 
   // Personal filtrado (activos/todos)
   const personalFiltrado = useMemo(() => {
@@ -70,7 +70,7 @@ const ResumenEPP = () => {
   // Mapa de entregas: { "nombre de personal": { camisa: true, pantalon: true, ... } }
   const mapaEntregados = useMemo(() => {
     const mapa = {};
-    entregasFiltradas.forEach((ent) => {
+    entregas.forEach((ent) => {
       const nombreNorm = (ent.personal || "").trim().toLowerCase();
       if (!mapa[nombreNorm]) {
         mapa[nombreNorm] = { camisa: false, pantalon: false, botines: false, otros: false };
@@ -80,7 +80,7 @@ const ResumenEPP = () => {
       }
     });
     return mapa;
-  }, [entregasFiltradas]);
+  }, [entregas]);
 
   const volver = () => {
     navigate("/personal/entrega-epp", { state: { desde, hasta, mostrarInactivos } });
