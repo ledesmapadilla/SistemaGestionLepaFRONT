@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Container, Table, Button, Spinner, Form, Badge, Modal } from "react-bootstrap";
+import { useNavigate, useLocation } from "react-router-dom";
 import { listarPersonal, editarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { registrarEntregaEPP, obtenerEntregasEPP, borrarEntregaEPP } from "../../../../../helpers/queriesEntregaEPP.js";
 import Swal from "sweetalert2";
@@ -7,9 +8,22 @@ import XLSXStyle from "xlsx-js-style";
 import "../../../../../styles/clientes.css";
 
 const EntregaEPP = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const primerDiaAnio = new Date(new Date().getFullYear(), 0, 1).toLocaleDateString("en-CA");
+  const hoy = new Date().toLocaleDateString("en-CA");
+
+  const [desde, setDesde] = useState(location.state?.desde || primerDiaAnio);
+  const [hasta, setHasta] = useState(location.state?.hasta || hoy);
+
   const [personal, setPersonal] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState("");
+
+  const irAResumen = () => {
+    navigate("/personal/entrega-epp/entregados", { state: { desde, hasta } });
+  };
 
   // Estados para el modal de Nueva Entrega
   const [showNuevaEntregaModal, setShowNuevaEntregaModal] = useState(false);
@@ -387,29 +401,53 @@ const EntregaEPP = () => {
         <h2>Entrega de EPP <small className="text-muted" style={{ fontSize: "1rem", fontWeight: 400 }}>Control de Elementos de Protección Personal</small></h2>
       </div>
 
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <div className="position-relative" style={{ width: "300px" }}>
+      <div className="d-flex justify-content-between align-items-center mb-3 p-3 bg-dark rounded" style={{ border: "1px solid #495057" }}>
+        <div className="d-flex align-items-center gap-2">
+          <Button variant="outline-success" size="sm" onClick={irAResumen}>
+            Entregado
+          </Button>
+          <span className="text-muted ms-2" style={{ fontSize: "0.85rem", fontWeight: 600 }}>desde</span>
           <Form.Control
             size="sm"
-            type="text"
-            placeholder="Buscar por nombre..."
-            value={filtro}
-            onChange={(e) => setFiltro(e.target.value)}
-            style={{ paddingRight: "30px" }}
+            type="date"
+            value={desde}
+            onChange={(e) => setDesde(e.target.value)}
+            style={{ width: "135px", fontSize: "0.85rem" }}
           />
-          {filtro && (
-            <button
-              type="button"
-              className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-2 p-0 border-0 fw-bold"
-              aria-label="Limpiar"
-              onClick={() => setFiltro("")}
-            >
-              ✕
-            </button>
-          )}
+          <span className="text-muted" style={{ fontSize: "0.85rem", fontWeight: 600 }}>hasta</span>
+          <Form.Control
+            size="sm"
+            type="date"
+            value={hasta}
+            onChange={(e) => setHasta(e.target.value)}
+            style={{ width: "135px", fontSize: "0.85rem" }}
+          />
         </div>
-        <div className="text-muted" style={{ fontSize: "0.9rem" }}>
-          Total: {personalFiltrado.length} personas
+
+        <div className="d-flex align-items-center gap-3">
+          <div className="position-relative" style={{ width: "220px" }}>
+            <Form.Control
+              size="sm"
+              type="text"
+              placeholder="Buscar por nombre..."
+              value={filtro}
+              onChange={(e) => setFiltro(e.target.value)}
+              style={{ paddingRight: "30px" }}
+            />
+            {filtro && (
+              <button
+                type="button"
+                className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-2 p-0 border-0 fw-bold"
+                aria-label="Limpiar"
+                onClick={() => setFiltro("")}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <div className="text-muted" style={{ fontSize: "0.9rem" }}>
+            Total: {personalFiltrado.length} personas
+          </div>
         </div>
       </div>
 
