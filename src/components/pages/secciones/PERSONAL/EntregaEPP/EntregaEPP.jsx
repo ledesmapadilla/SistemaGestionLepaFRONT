@@ -396,32 +396,36 @@ const EntregaEPP = () => {
   );
 
   return (
-    <Container className="mt-4 w-75">
+    <Container className="mt-4 w-60">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Entrega de EPP <small className="text-muted" style={{ fontSize: "1rem", fontWeight: 400 }}>Control de Elementos de Protección Personal</small></h2>
       </div>
 
-      <div className="d-flex justify-content-between align-items-center mb-3 p-3 bg-dark rounded" style={{ border: "1px solid #495057" }}>
-        <div className="d-flex align-items-center gap-2">
-          <Button variant="outline-success" size="sm" onClick={irAResumen}>
+      <div className="d-flex justify-content-between align-items-end mb-3 p-3 bg-dark rounded" style={{ border: "1px solid #495057" }}>
+        <div className="d-flex align-items-end gap-2">
+          <Button variant="outline-success" size="sm" onClick={irAResumen} className="mb-0">
             Entregado
           </Button>
-          <span className="text-muted ms-2" style={{ fontSize: "0.85rem", fontWeight: 600 }}>desde</span>
-          <Form.Control
-            size="sm"
-            type="date"
-            value={desde}
-            onChange={(e) => setDesde(e.target.value)}
-            style={{ width: "135px", fontSize: "0.85rem" }}
-          />
-          <span className="text-muted" style={{ fontSize: "0.85rem", fontWeight: 600 }}>hasta</span>
-          <Form.Control
-            size="sm"
-            type="date"
-            value={hasta}
-            onChange={(e) => setHasta(e.target.value)}
-            style={{ width: "135px", fontSize: "0.85rem" }}
-          />
+          <Form.Group className="mb-0 ms-2">
+            <Form.Label className="text-muted mb-1" style={{ fontSize: "0.85rem", display: "block" }}>desde</Form.Label>
+            <Form.Control
+              size="sm"
+              type="date"
+              value={desde}
+              onChange={(e) => setDesde(e.target.value)}
+              style={{ width: "135px", fontSize: "0.85rem" }}
+            />
+          </Form.Group>
+          <Form.Group className="mb-0">
+            <Form.Label className="text-muted mb-1" style={{ fontSize: "0.85rem", display: "block" }}>hasta</Form.Label>
+            <Form.Control
+              size="sm"
+              type="date"
+              value={hasta}
+              onChange={(e) => setHasta(e.target.value)}
+              style={{ width: "135px", fontSize: "0.85rem" }}
+            />
+          </Form.Group>
         </div>
 
         <div className="d-flex align-items-center gap-3">

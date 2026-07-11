@@ -80,7 +80,7 @@ const ResumenEPP = () => {
   };
 
   return (
-    <Container className="mt-4 w-75">
+    <Container className="mt-4 w-60">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Resumen de Entregas EPP <small className="text-muted" style={{ fontSize: "1rem", fontWeight: 400 }}>Estado de EPP Entregados por Fecha</small></h2>
         <Button variant="outline-success" onClick={volver}>Volver</Button>
@@ -122,7 +122,6 @@ const ResumenEPP = () => {
             <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
               <tr>
                 <th style={{ minWidth: "220px" }}>Personal</th>
-                <th style={{ width: "100px" }}>Estado</th>
                 <th style={{ width: "120px" }}>Camisa</th>
                 <th style={{ width: "120px" }}>Pantalón</th>
                 <th style={{ width: "120px" }}>Botines</th>
@@ -145,13 +144,6 @@ const ResumenEPP = () => {
                 return (
                   <tr key={p._id}>
                     <td className="text-start fw-semibold ps-3">{p.nombre}</td>
-                    <td>
-                      {p.activo !== false ? (
-                        <Badge bg="success">Activo</Badge>
-                      ) : (
-                        <Badge bg="danger">Inactivo</Badge>
-                      )}
-                    </td>
                     <td>{renderCheck(epps.camisa)}</td>
                     <td>{renderCheck(epps.pantalon)}</td>
                     <td>{renderCheck(epps.botines)}</td>
@@ -161,7 +153,7 @@ const ResumenEPP = () => {
               })}
               {personal.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-muted py-3">
+                  <td colSpan={5} className="text-muted py-3">
                     No se encontraron registros de personal.
                   </td>
                 </tr>
