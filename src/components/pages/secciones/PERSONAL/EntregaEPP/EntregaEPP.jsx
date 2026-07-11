@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Container, Table, Button, Spinner, Form, Badge, Modal } from "react-bootstrap";
-import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
+import { listarPersonal, editarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { registrarEntregaEPP } from "../../../../../helpers/queriesEntregaEPP.js";
 import Swal from "sweetalert2";
 import "../../../../../styles/clientes.css";
@@ -23,6 +23,18 @@ const EntregaEPP = () => {
     { epp: "otros", label: "Otros", seleccionado: false, talle: "", cantidad: 1, observaciones: "" }
   ]);
   const [submitting, setSubmitting] = useState(false);
+
+  // Estados para el modal de Talles
+  const [showTallesModal, setShowTallesModal] = useState(false);
+  const [personIdTalles, setPersonIdTalles] = useState("");
+  const [nombreTalles, setNombreTalles] = useState("");
+  const [formTalles, setFormTalles] = useState({
+    camisa: "",
+    pantalon: "",
+    botines: "",
+    otros: ""
+  });
+  const [submittingTalles, setSubmittingTalles] = useState(false);
 
   useEffect(() => {
     const cargarPersonal = async () => {
@@ -63,16 +75,16 @@ const EntregaEPP = () => {
     });
   };
 
-  const handleAbrirNuevaEntrega = (nombre) => {
-    setPersonalSeleccionado(nombre);
+  const handleAbrirNuevaEntrega = (p) => {
+    setPersonalSeleccionado(p.nombre);
     setFormNuevaEntrega({
       fecha: new Date().toLocaleDateString("en-CA")
     });
     setEppRows([
-      { epp: "camisa", label: "Camisa", seleccionado: false, talle: "", cantidad: 1, observaciones: "" },
-      { epp: "pantalon", label: "Pantalón", seleccionado: false, talle: "", cantidad: 1, observaciones: "" },
-      { epp: "botines", label: "Botines", seleccionado: false, talle: "", cantidad: 1, observaciones: "" },
-      { epp: "otros", label: "Otros", seleccionado: false, talle: "", cantidad: 1, observaciones: "" }
+      { epp: "camisa", label: "Camisa", seleccionado: false, talle: p.talles?.camisa || "", cantidad: 1, observaciones: "" },
+      { epp: "pantalon", label: "Pantalón", seleccionado: false, talle: p.talles?.pantalon || "", cantidad: 1, observaciones: "" },
+      { epp: "botines", label: "Botines", seleccionado: false, talle: p.talles?.botines || "", cantidad: 1, observaciones: "" },
+      { epp: "otros", label: "Otros", seleccionado: false, talle: p.talles?.otros || "", cantidad: 1, observaciones: "" }
     ]);
     setShowNuevaEntregaModal(true);
   };
@@ -159,6 +171,61 @@ const EntregaEPP = () => {
     }
   };
 
+  // Funciones para el modal de Talles
+  const handleAbrirTalles = (p) => {
+    setPersonIdTalles(p._id);
+    setNombreTalles(p.nombre);
+    setFormTalles({
+      camisa: p.talles?.camisa || "",
+      pantalon: p.talles?.pantalon || "",
+      botines: p.talles?.botines || "",
+      otros: p.talles?.otros || ""
+    });
+    setShowTallesModal(true);
+  };
+
+  const handleSubmitTalles = async (e) => {
+    e.preventDefault();
+    setSubmittingTalles(true);
+    try {
+      const response = await editarPersonal(personIdTalles, {
+        talles: formTalles
+      });
+
+      if (response && response.ok) {
+        // Actualizar lista localmente
+        setPersonal((prev) =>
+          prev.map((item) =>
+            item._id === personIdTalles ? { ...item, talles: formTalles } : item
+          )
+        );
+        Swal.fire({
+          icon: "success",
+          title: "Talles guardados",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        setShowTallesModal(false);
+      } else {
+        const errorData = await response?.json().catch(() => null);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: errorData?.msg || "No se pudieron guardar los talles.",
+        });
+      }
+    } catch (error) {
+      console.error("Error al guardar talles:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Ocurrió un error inesperado al guardar los talles.",
+      });
+    } finally {
+      setSubmittingTalles(false);
+    }
+  };
+
   const personalFiltrado = personal.filter((p) =>
     (p.nombre || "").toLowerCase().includes(filtro.toLowerCase())
   );
@@ -232,9 +299,16 @@ const EntregaEPP = () => {
                         Historial
                       </Button>
                       <Button
+                        variant="outline-warning"
+                        size="sm"
+                        onClick={() => handleAbrirTalles(p)}
+                      >
+                        Talles
+                      </Button>
+                      <Button
                         variant="outline-success"
                         size="sm"
-                        onClick={() => handleAbrirNuevaEntrega(p.nombre)}
+                        onClick={() => handleAbrirNuevaEntrega(p)}
                       >
                         Nueva Entrega
                       </Button>
@@ -353,6 +427,72 @@ const EntregaEPP = () => {
             </Button>
             <Button variant="outline-success" type="submit" disabled={submitting}>
               {submitting ? "Guardando..." : "Guardar"}
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
+      {/* Modal para Talles de EPP */}
+      <Modal show={showTallesModal} onHide={() => !submittingTalles && setShowTallesModal(false)} centered>
+        <Modal.Header closeButton={!submittingTalles}>
+          <Modal.Title style={{ fontSize: "1.2rem" }}>Talles de EPP - {nombreTalles}</Modal.Title>
+        </Modal.Header>
+        <Form onSubmit={handleSubmitTalles}>
+          <Modal.Body>
+            <Form.Group className="mb-3" controlId="talleCamisa">
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Talle de Camisa</Form.Label>
+              <Form.Control
+                size="sm"
+                type="text"
+                placeholder="Ej: M, L, XL, 42..."
+                value={formTalles.camisa}
+                onChange={(e) => setFormTalles({ ...formTalles, camisa: e.target.value })}
+                disabled={submittingTalles}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="tallePantalon">
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Talle de Pantalón</Form.Label>
+              <Form.Control
+                size="sm"
+                type="text"
+                placeholder="Ej: 42, 44, M..."
+                value={formTalles.pantalon}
+                onChange={(e) => setFormTalles({ ...formTalles, pantalon: e.target.value })}
+                disabled={submittingTalles}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="talleBotines">
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Talle de Botines</Form.Label>
+              <Form.Control
+                size="sm"
+                type="text"
+                placeholder="Ej: 40, 41, 42..."
+                value={formTalles.botines}
+                onChange={(e) => setFormTalles({ ...formTalles, botines: e.target.value })}
+                disabled={submittingTalles}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="talleOtros">
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Talle / Medidas de Otros</Form.Label>
+              <Form.Control
+                size="sm"
+                type="text"
+                placeholder="Ej: Lentes estándar, Guantes G..."
+                value={formTalles.otros}
+                onChange={(e) => setFormTalles({ ...formTalles, otros: e.target.value })}
+                disabled={submittingTalles}
+              />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="outline-secondary" onClick={() => setShowTallesModal(false)} disabled={submittingTalles}>
+              Cancelar
+            </Button>
+            <Button variant="outline-success" type="submit" disabled={submittingTalles}>
+              {submittingTalles ? "Guardando..." : "Guardar"}
             </Button>
           </Modal.Footer>
         </Form>
