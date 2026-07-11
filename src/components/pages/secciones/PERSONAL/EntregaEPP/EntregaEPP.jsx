@@ -135,8 +135,7 @@ const EntregaEPP = () => {
         Swal.fire({
           icon: "success",
           title: "Entrega registrada",
-          text: `Se registraron las entregas de EPP para ${personalSeleccionado} correctamente.`,
-          timer: 2200,
+          timer: 1500,
           showConfirmButton: false,
         });
         setShowNuevaEntregaModal(false);
