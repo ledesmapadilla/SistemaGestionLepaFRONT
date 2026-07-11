@@ -32,4 +32,5 @@ export const API = {
   dato931: `${BASE}/api/dato931`,
   datoImpuesto: `${BASE}/api/dato-impuesto`,
   pendientesResponsable: `${BASE}/api/pendientes-responsable`,
+  entregaEPP: `${BASE}/api/entrega-epp`,
 };

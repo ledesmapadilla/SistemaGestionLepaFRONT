@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Container, Table, Button, Spinner, Form, Badge } from "react-bootstrap";
+import { Container, Table, Button, Spinner, Form, Badge, Modal } from "react-bootstrap";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
+import { registrarEntregaEPP } from "../../../../../helpers/queriesEntregaEPP.js";
 import Swal from "sweetalert2";
 import "../../../../../styles/clientes.css";
 
@@ -8,6 +9,18 @@ const EntregaEPP = () => {
   const [personal, setPersonal] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState("");
+
+  // Estados para el modal de Nueva Entrega
+  const [showNuevaEntregaModal, setShowNuevaEntregaModal] = useState(false);
+  const [personalSeleccionado, setPersonalSeleccionado] = useState("");
+  const [formNuevaEntrega, setFormNuevaEntrega] = useState({
+    fecha: new Date().toLocaleDateString("en-CA"), // YYYY-MM-DD local
+    epp: "camisa",
+    talle: "",
+    cantidad: 1,
+    observaciones: ""
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const cargarPersonal = async () => {
@@ -48,13 +61,54 @@ const EntregaEPP = () => {
     });
   };
 
-  const handleNuevaEntrega = (nombre) => {
-    Swal.fire({
-      title: `Nueva Entrega de EPP - ${nombre}`,
-      text: "Sección en desarrollo. Aquí se registrará una nueva entrega.",
-      icon: "info",
-      confirmButtonColor: "#3085d6",
+  const handleAbrirNuevaEntrega = (nombre) => {
+    setPersonalSeleccionado(nombre);
+    setFormNuevaEntrega({
+      fecha: new Date().toLocaleDateString("en-CA"),
+      epp: "camisa",
+      talle: "",
+      cantidad: 1,
+      observaciones: ""
     });
+    setShowNuevaEntregaModal(true);
+  };
+
+  const handleSubmitNuevaEntrega = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const response = await registrarEntregaEPP({
+        personal: personalSeleccionado,
+        ...formNuevaEntrega
+      });
+
+      if (response && response.ok) {
+        Swal.fire({
+          icon: "success",
+          title: "Entrega registrada",
+          text: `Se registró la entrega de EPP para ${personalSeleccionado} correctamente.`,
+          timer: 2200,
+          showConfirmButton: false,
+        });
+        setShowNuevaEntregaModal(false);
+      } else {
+        const errorData = await response?.json().catch(() => null);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: errorData?.msg || "No se pudo registrar la entrega de EPP.",
+        });
+      }
+    } catch (error) {
+      console.error("Error al registrar entrega de EPP:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Ocurrió un error inesperado al registrar la entrega.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const personalFiltrado = personal.filter((p) =>
@@ -132,7 +186,7 @@ const EntregaEPP = () => {
                       <Button
                         variant="outline-success"
                         size="sm"
-                        onClick={() => handleNuevaEntrega(p.nombre)}
+                        onClick={() => handleAbrirNuevaEntrega(p.nombre)}
                       >
                         Nueva Entrega
                       </Button>
@@ -151,6 +205,84 @@ const EntregaEPP = () => {
           </Table>
         </div>
       )}
+
+      {/* Modal para Nueva Entrega de EPP */}
+      <Modal show={showNuevaEntregaModal} onHide={() => !submitting && setShowNuevaEntregaModal(false)} centered>
+        <Modal.Header closeButton={!submitting}>
+          <Modal.Title style={{ fontSize: "1.2rem" }}>Nueva Entrega de EPP - {personalSeleccionado}</Modal.Title>
+        </Modal.Header>
+        <Form onSubmit={handleSubmitNuevaEntrega}>
+          <Modal.Body>
+            <Form.Group className="mb-3" controlId="fecha">
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Fecha</Form.Label>
+              <Form.Control
+                type="date"
+                required
+                value={formNuevaEntrega.fecha}
+                onChange={(e) => setFormNuevaEntrega({ ...formNuevaEntrega, fecha: e.target.value })}
+                disabled={submitting}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="epp">
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>EPP</Form.Label>
+              <Form.Select
+                value={formNuevaEntrega.epp}
+                onChange={(e) => setFormNuevaEntrega({ ...formNuevaEntrega, epp: e.target.value })}
+                disabled={submitting}
+              >
+                <option value="camisa">Camisa</option>
+                <option value="pantalon">Pantalón</option>
+                <option value="botines">Botines</option>
+                <option value="otros">Otros</option>
+              </Form.Select>
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="talle">
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Talle</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Ej: M, 42, 43, XL..."
+                value={formNuevaEntrega.talle}
+                onChange={(e) => setFormNuevaEntrega({ ...formNuevaEntrega, talle: e.target.value })}
+                disabled={submitting}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="cantidad">
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Cantidad</Form.Label>
+              <Form.Control
+                type="number"
+                min="1"
+                required
+                value={formNuevaEntrega.cantidad}
+                onChange={(e) => setFormNuevaEntrega({ ...formNuevaEntrega, cantidad: parseInt(e.target.value) || 1 })}
+                disabled={submitting}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="observaciones">
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Observaciones</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                placeholder="Detalles u observaciones..."
+                value={formNuevaEntrega.observaciones}
+                onChange={(e) => setFormNuevaEntrega({ ...formNuevaEntrega, observaciones: e.target.value })}
+                disabled={submitting}
+              />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="outline-secondary" onClick={() => setShowNuevaEntregaModal(false)} disabled={submitting}>
+              Cancelar
+            </Button>
+            <Button variant="outline-success" type="submit" disabled={submitting}>
+              {submitting ? "Guardando..." : "Guardar"}
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
     </Container>
   );
 };
