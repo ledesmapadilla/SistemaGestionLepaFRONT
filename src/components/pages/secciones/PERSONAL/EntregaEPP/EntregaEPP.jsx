@@ -460,7 +460,7 @@ const EntregaEPP = () => {
           <Spinner animation="border" />
         </div>
       ) : (
-        <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "65vh" }}>
+        <div style={{ overflowX: "auto" }}>
           <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
             <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
               <tr>
