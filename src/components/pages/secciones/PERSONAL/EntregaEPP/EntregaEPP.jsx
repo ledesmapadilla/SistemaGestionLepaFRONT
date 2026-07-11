@@ -396,7 +396,7 @@ const EntregaEPP = () => {
   );
 
   return (
-    <Container className="mt-4 w-60">
+    <Container className="mt-4" style={{ width: "55%" }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">Entrega de EPP</h2>
       </div>
