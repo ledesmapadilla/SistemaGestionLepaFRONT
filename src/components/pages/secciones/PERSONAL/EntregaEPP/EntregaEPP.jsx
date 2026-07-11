@@ -24,15 +24,14 @@ const EntregaEPP = () => {
   ]);
   const [submitting, setSubmitting] = useState(false);
 
-  // Estados para el modal de Talles
+  // Estados para el modal de Talles (se remueve 'otros')
   const [showTallesModal, setShowTallesModal] = useState(false);
   const [personIdTalles, setPersonIdTalles] = useState("");
   const [nombreTalles, setNombreTalles] = useState("");
   const [formTalles, setFormTalles] = useState({
     camisa: "",
     pantalon: "",
-    botines: "",
-    otros: ""
+    botines: ""
   });
   const [submittingTalles, setSubmittingTalles] = useState(false);
 
@@ -84,7 +83,7 @@ const EntregaEPP = () => {
       { epp: "camisa", label: "Camisa", seleccionado: false, talle: p.talles?.camisa || "", cantidad: 1, observaciones: "" },
       { epp: "pantalon", label: "Pantalón", seleccionado: false, talle: p.talles?.pantalon || "", cantidad: 1, observaciones: "" },
       { epp: "botines", label: "Botines", seleccionado: false, talle: p.talles?.botines || "", cantidad: 1, observaciones: "" },
-      { epp: "otros", label: "Otros", seleccionado: false, talle: p.talles?.otros || "", cantidad: 1, observaciones: "" }
+      { epp: "otros", label: "Otros", seleccionado: false, talle: "", cantidad: 1, observaciones: "" }
     ]);
     setShowNuevaEntregaModal(true);
   };
@@ -136,7 +135,7 @@ const EntregaEPP = () => {
         personal: personalSeleccionado,
         fecha: formNuevaEntrega.fecha,
         epp: item.epp,
-        talle: item.talle || "",
+        talle: item.epp !== "otros" ? (item.talle || "") : "",
         cantidad: item.cantidad,
         observaciones: item.observaciones || ""
       }));
@@ -178,8 +177,7 @@ const EntregaEPP = () => {
     setFormTalles({
       camisa: p.talles?.camisa || "",
       pantalon: p.talles?.pantalon || "",
-      botines: p.talles?.botines || "",
-      otros: p.talles?.otros || ""
+      botines: p.talles?.botines || ""
     });
     setShowTallesModal(true);
   };
@@ -273,7 +271,7 @@ const EntregaEPP = () => {
               <tr>
                 <th style={{ minWidth: "250px" }}>Personal</th>
                 <th style={{ minWidth: "120px" }}>Estado</th>
-                <th style={{ minWidth: "220px" }}>Acciones</th>
+                <th style={{ width: "320px" }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -290,27 +288,29 @@ const EntregaEPP = () => {
                     )}
                   </td>
                   <td>
-                    <div className="d-flex gap-2 justify-content-center align-items-center">
+                    <div className="d-flex justify-content-between align-items-center px-2">
+                      <div className="d-flex gap-2">
+                        <Button
+                          variant="outline-info"
+                          size="sm"
+                          onClick={() => handleHistorial(p.nombre)}
+                        >
+                          Historial
+                        </Button>
+                        <Button
+                          variant="outline-success"
+                          size="sm"
+                          onClick={() => handleAbrirNuevaEntrega(p)}
+                        >
+                          Nueva Entrega
+                        </Button>
+                      </div>
                       <Button
-                        variant="outline-info"
-                        size="sm"
-                        onClick={() => handleHistorial(p.nombre)}
-                      >
-                        Historial
-                      </Button>
-                      <Button
-                        variant="outline-warning"
+                        variant="outline-primary"
                         size="sm"
                         onClick={() => handleAbrirTalles(p)}
                       >
                         Talles
-                      </Button>
-                      <Button
-                        variant="outline-success"
-                        size="sm"
-                        onClick={() => handleAbrirNuevaEntrega(p)}
-                      >
-                        Nueva Entrega
                       </Button>
                     </div>
                   </td>
@@ -354,7 +354,7 @@ const EntregaEPP = () => {
                   <tr>
                     <th style={{ minWidth: "100px" }}>Elemento</th>
                     <th style={{ width: "80px" }}>Entregar</th>
-                    <th style={{ width: "90px" }}>Talle</th>
+                    <th style={{ width: "70px" }}>Talle</th>
                     <th style={{ width: "80px" }}>Cant</th>
                     <th>Observaciones</th>
                   </tr>
@@ -382,15 +382,18 @@ const EntregaEPP = () => {
                         </div>
                       </td>
                       <td>
-                        <Form.Control
-                          size="sm"
-                          type="text"
-                          placeholder="Talle..."
-                          disabled={!row.seleccionado || submitting}
-                          value={row.talle}
-                          onChange={(e) => handleRowChange(idx, "talle", e.target.value)}
-                          style={{ fontSize: "0.82rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
-                        />
+                        {row.epp !== "otros" ? (
+                          <Form.Control
+                            size="sm"
+                            type="text"
+                            disabled={!row.seleccionado || submitting}
+                            value={row.talle}
+                            onChange={(e) => handleRowChange(idx, "talle", e.target.value)}
+                            style={{ fontSize: "0.82rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
+                          />
+                        ) : (
+                          <span className="text-muted">-</span>
+                        )}
                       </td>
                       <td>
                         <Form.Control
@@ -438,51 +441,39 @@ const EntregaEPP = () => {
           <Modal.Title style={{ fontSize: "1.2rem" }}>Talles de EPP - {nombreTalles}</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmitTalles}>
-          <Modal.Body>
-            <Form.Group className="mb-3" controlId="talleCamisa">
-              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Talle de Camisa</Form.Label>
+          <Modal.Body className="d-flex flex-column align-items-center">
+            <Form.Group className="mb-3 w-100" controlId="talleCamisa" style={{ maxWidth: "120px" }}>
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Camisa</Form.Label>
               <Form.Control
                 size="sm"
                 type="text"
-                placeholder="Ej: M, L, XL, 42..."
+                className="text-center"
                 value={formTalles.camisa}
                 onChange={(e) => setFormTalles({ ...formTalles, camisa: e.target.value })}
                 disabled={submittingTalles}
               />
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="tallePantalon">
-              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Talle de Pantalón</Form.Label>
+            <Form.Group className="mb-3 w-100" controlId="tallePantalon" style={{ maxWidth: "120px" }}>
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Pantalón</Form.Label>
               <Form.Control
                 size="sm"
                 type="text"
-                placeholder="Ej: 42, 44, M..."
+                className="text-center"
                 value={formTalles.pantalon}
                 onChange={(e) => setFormTalles({ ...formTalles, pantalon: e.target.value })}
                 disabled={submittingTalles}
               />
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="talleBotines">
-              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Talle de Botines</Form.Label>
+            <Form.Group className="mb-3 w-100" controlId="talleBotines" style={{ maxWidth: "120px" }}>
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Botines</Form.Label>
               <Form.Control
                 size="sm"
                 type="text"
-                placeholder="Ej: 40, 41, 42..."
+                className="text-center"
                 value={formTalles.botines}
                 onChange={(e) => setFormTalles({ ...formTalles, botines: e.target.value })}
-                disabled={submittingTalles}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="talleOtros">
-              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Talle / Medidas de Otros</Form.Label>
-              <Form.Control
-                size="sm"
-                type="text"
-                placeholder="Ej: Lentes estándar, Guantes G..."
-                value={formTalles.otros}
-                onChange={(e) => setFormTalles({ ...formTalles, otros: e.target.value })}
                 disabled={submittingTalles}
               />
             </Form.Group>
