@@ -402,6 +402,9 @@ const EntregaEPP = () => {
     <Container className="mt-4" style={{ width: "55%" }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">Entrega de EPP</h2>
+        <Button variant="outline-success" size="sm" onClick={() => navigate(-1)}>
+          Volver
+        </Button>
       </div>
 
       <div className="d-flex flex-column gap-2 mb-3 p-3 bg-dark rounded" style={{ border: "1px solid #495057" }}>
