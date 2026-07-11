@@ -68,14 +68,27 @@ const EntregaEPP = () => {
       </div>
 
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <Form.Control
-          type="text"
-          placeholder="Buscar personal..."
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
-          style={{ maxWidth: "300px" }}
-        />
-        <div className="text-muted">
+        <div className="position-relative" style={{ width: "300px" }}>
+          <Form.Control
+            size="sm"
+            type="text"
+            placeholder="Buscar por nombre..."
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+            style={{ paddingRight: "30px" }}
+          />
+          {filtro && (
+            <button
+              type="button"
+              className="btn btn-sm text-warning position-absolute top-50 translate-middle-y end-0 me-2 p-0 border-0 fw-bold"
+              aria-label="Limpiar"
+              onClick={() => setFiltro("")}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        <div className="text-muted" style={{ fontSize: "0.9rem" }}>
           Total: {personalFiltrado.length} personas
         </div>
       </div>
