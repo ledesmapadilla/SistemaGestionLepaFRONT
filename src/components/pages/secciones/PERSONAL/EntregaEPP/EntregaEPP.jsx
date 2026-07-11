@@ -135,6 +135,7 @@ const EntregaEPP = () => {
             timer: 1500,
             showConfirmButton: false,
           });
+          setShowHistorialModal(false);
         } else {
           Swal.fire({
             icon: "error",
