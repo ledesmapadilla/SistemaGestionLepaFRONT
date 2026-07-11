@@ -695,9 +695,16 @@ const GastosSemanales = () => {
     const sabado = new Date(fechaLunes);
     sabado.setDate(sabado.getDate() + 5);
     const sabadoKey = toKey(sabado);
-    const personalVisible = personal.filter((p) =>
-      !p.createdAt || p.createdAt.slice(0, 10) <= sabadoKey
-    );
+    const lunesKey = toKey(fechaLunes);
+    const personalVisible = personal.filter((p) => {
+      if (p.createdAt && p.createdAt.slice(0, 10) > sabadoKey) {
+        return false;
+      }
+      if (p.activo === false && p.fechaDesactivado && p.fechaDesactivado < lunesKey) {
+        return false;
+      }
+      return true;
+    });
     const nombresPersonalDB = new Set(personalVisible.map((p) => normNombre(p.nombre)));
 
     const jornalMap = {};
@@ -854,6 +861,17 @@ const GastosSemanales = () => {
       });
     };
 
+    const inactivosExcluidos = new Set(
+      personal
+        .filter((p) => p.activo === false && p.fechaDesactivado && p.fechaDesactivado < lunesKey)
+        .map((p) => normNombre(p.nombre))
+    );
+
+    const tieneAlgunaAsistencia = (nombre) => {
+      const k = normNombre(nombre);
+      return Array.from(tieneRegistro).some((x) => x.startsWith(`${k}|`));
+    };
+
     if (gastoDoc?.registros?.length) {
       const existentes = gastoDoc.registros.map((r) => {
         const semanalActual = semanalActualMap[normNombre(r.personal)];
@@ -869,14 +887,27 @@ const GastosSemanales = () => {
         fila.extras = conExtraDif(fila, sabadoKey);
         return fila;
       });
-      const nombresExistentes = new Set(existentes.map((r) => normNombre(r.personal)));
+
+      const existentesFiltrados = existentes.filter((r) => {
+        const k = normNombre(r.personal);
+        if (inactivosExcluidos.has(k)) {
+          const extrasManuales = (r.extras || []).filter((e) => e.auto !== AUTO_DIF);
+          if (tieneAlgunaAsistencia(r.personal) || extrasManuales.length > 0 || r.pagado > 0 || r.observaciones) {
+            return true;
+          }
+          return false;
+        }
+        return true;
+      });
+
+      const nombresExistentes = new Set(existentesFiltrados.map((r) => normNombre(r.personal)));
       const nuevosDePersonal = personalVisible
         .filter((p) => !nombresExistentes.has(normNombre(p.nombre)))
         .map(filaDePersonal);
       const nuevosDeAsistencia = soloEnAsistencia
         .filter((n) => !nombresExistentes.has(normNombre(n)))
         .map(filaSoloAsistencia);
-      setRegistros(dedupPorNombre([...existentes, ...nuevosDePersonal, ...nuevosDeAsistencia]));
+      setRegistros(dedupPorNombre([...existentesFiltrados, ...nuevosDePersonal, ...nuevosDeAsistencia]));
     } else {
       const filasPersonal = personalVisible.map(filaDePersonal);
       const filasAsistencia = soloEnAsistencia.map(filaSoloAsistencia);
