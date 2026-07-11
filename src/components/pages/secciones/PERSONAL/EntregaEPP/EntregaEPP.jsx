@@ -396,9 +396,9 @@ const EntregaEPP = () => {
   );
 
   return (
-    <Container className="mt-4 w-50">
+    <Container className="mt-4 w-60">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Entrega de EPP <small className="text-muted" style={{ fontSize: "1rem", fontWeight: 400 }}>Control de Elementos de Protección Personal</small></h2>
+        <h2 className="mb-0">Entrega de EPP</h2>
       </div>
 
       <div className="d-flex justify-content-between align-items-end mb-3 p-3 bg-dark rounded" style={{ border: "1px solid #495057" }}>

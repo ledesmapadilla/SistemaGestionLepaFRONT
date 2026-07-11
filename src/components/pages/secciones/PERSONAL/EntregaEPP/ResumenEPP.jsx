@@ -147,7 +147,7 @@ const ResumenEPP = () => {
   };
 
   return (
-    <Container className="mt-4 w-50">
+    <Container className="mt-4 w-60">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">Resumen de Entregas EPP</h2>
         <div className="d-flex align-items-center gap-2">
