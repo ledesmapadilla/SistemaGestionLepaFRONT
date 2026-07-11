@@ -405,31 +405,35 @@ const EntregaEPP = () => {
       </div>
 
       <div className="d-flex justify-content-between align-items-end mb-3 p-3 bg-dark rounded" style={{ border: "1px solid #495057" }}>
-        <div className="d-flex align-items-end gap-2">
-          <Button variant="outline-success" size="sm" onClick={irAResumen} className="mb-0">
-            Entregado
-          </Button>
-          <Form.Group className="mb-0 ms-2">
-            <Form.Label className="text-muted mb-1" style={{ fontSize: "0.85rem", display: "block" }}>desde</Form.Label>
-            <Form.Control
-              size="sm"
-              type="date"
-              value={desde}
-              onChange={(e) => setDesde(e.target.value)}
-              style={{ width: "135px", fontSize: "0.85rem" }}
-            />
-          </Form.Group>
-          <Form.Group className="mb-0">
-            <Form.Label className="text-muted mb-1" style={{ fontSize: "0.85rem", display: "block" }}>hasta</Form.Label>
-            <Form.Control
-              size="sm"
-              type="date"
-              value={hasta}
-              onChange={(e) => setHasta(e.target.value)}
-              style={{ width: "135px", fontSize: "0.85rem" }}
-            />
-          </Form.Group>
-          <div className="d-flex align-items-center gap-2 ms-3 mb-1" style={{ height: "31px" }}>
+        <div className="d-flex flex-column gap-2">
+          {/* Fila 1: Botón y fechas */}
+          <div className="d-flex align-items-end gap-2">
+            <Button variant="outline-success" size="sm" onClick={irAResumen} className="mb-0">
+              Entregado
+            </Button>
+            <Form.Group className="mb-0 ms-2">
+              <Form.Label className="text-muted mb-1" style={{ fontSize: "0.85rem", display: "block" }}>desde</Form.Label>
+              <Form.Control
+                size="sm"
+                type="date"
+                value={desde}
+                onChange={(e) => setDesde(e.target.value)}
+                style={{ width: "135px", fontSize: "0.85rem" }}
+              />
+            </Form.Group>
+            <Form.Group className="mb-0">
+              <Form.Label className="text-muted mb-1" style={{ fontSize: "0.85rem", display: "block" }}>hasta</Form.Label>
+              <Form.Control
+                size="sm"
+                type="date"
+                value={hasta}
+                onChange={(e) => setHasta(e.target.value)}
+                style={{ width: "135px", fontSize: "0.85rem" }}
+              />
+            </Form.Group>
+          </div>
+          {/* Fila 2: Switch inactivos */}
+          <div className="d-flex align-items-center gap-2 mt-1">
             <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={!mostrarInactivos ? "fw-semibold" : "text-muted"}>Sin inactivos</span>
             <Form.Check
               type="switch"
