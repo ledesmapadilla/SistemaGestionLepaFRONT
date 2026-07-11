@@ -15,11 +15,14 @@ const EntregaEPP = () => {
   const [personalSeleccionado, setPersonalSeleccionado] = useState("");
   const [formNuevaEntrega, setFormNuevaEntrega] = useState({
     fecha: new Date().toLocaleDateString("en-CA"), // YYYY-MM-DD local
-    epp: "camisa",
-    talle: "",
-    cantidad: 1,
     observaciones: ""
   });
+  const [eppRows, setEppRows] = useState([
+    { epp: "camisa", label: "Camisa", seleccionado: false, talle: "", cantidad: 1 },
+    { epp: "pantalon", label: "Pantalón", seleccionado: false, talle: "", cantidad: 1 },
+    { epp: "botines", label: "Botines", seleccionado: false, talle: "", cantidad: 1 },
+    { epp: "otros", label: "Otros", seleccionado: false, talle: "", cantidad: 1 }
+  ]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -65,28 +68,76 @@ const EntregaEPP = () => {
     setPersonalSeleccionado(nombre);
     setFormNuevaEntrega({
       fecha: new Date().toLocaleDateString("en-CA"),
-      epp: "camisa",
-      talle: "",
-      cantidad: 1,
       observaciones: ""
     });
+    setEppRows([
+      { epp: "camisa", label: "Camisa", seleccionado: false, talle: "", cantidad: 1 },
+      { epp: "pantalon", label: "Pantalón", seleccionado: false, talle: "", cantidad: 1 },
+      { epp: "botines", label: "Botines", seleccionado: false, talle: "", cantidad: 1 },
+      { epp: "otros", label: "Otros", seleccionado: false, talle: "", cantidad: 1 }
+    ]);
     setShowNuevaEntregaModal(true);
+  };
+
+  const handleToggleRow = (idx) => {
+    setEppRows((prev) =>
+      prev.map((row, i) =>
+        i === idx ? { ...row, seleccionado: !row.seleccionado } : row
+      )
+    );
+  };
+
+  const handleRowChange = (idx, field, value) => {
+    setEppRows((prev) =>
+      prev.map((row, i) =>
+        i === idx ? { ...row, [field]: value } : row
+      )
+    );
   };
 
   const handleSubmitNuevaEntrega = async (e) => {
     e.preventDefault();
+
+    const seleccionados = eppRows.filter((r) => r.seleccionado);
+    if (seleccionados.length === 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Atención",
+        text: "Debe seleccionar al menos un elemento para entregar.",
+      });
+      return;
+    }
+
+    // Validar cantidad
+    for (const item of seleccionados) {
+      if (!item.cantidad || item.cantidad < 1) {
+        Swal.fire({
+          icon: "warning",
+          title: "Atención",
+          text: `La cantidad para ${item.label} debe ser al menos 1.`,
+        });
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
-      const response = await registrarEntregaEPP({
+      const payload = seleccionados.map((item) => ({
         personal: personalSeleccionado,
-        ...formNuevaEntrega
-      });
+        fecha: formNuevaEntrega.fecha,
+        epp: item.epp,
+        talle: item.talle || "",
+        cantidad: item.cantidad,
+        observaciones: formNuevaEntrega.observaciones || ""
+      }));
+
+      const response = await registrarEntregaEPP(payload);
 
       if (response && response.ok) {
         Swal.fire({
           icon: "success",
           title: "Entrega registrada",
-          text: `Se registró la entrega de EPP para ${personalSeleccionado} correctamente.`,
+          text: `Se registraron las entregas de EPP para ${personalSeleccionado} correctamente.`,
           timer: 2200,
           showConfirmButton: false,
         });
@@ -207,14 +258,14 @@ const EntregaEPP = () => {
       )}
 
       {/* Modal para Nueva Entrega de EPP */}
-      <Modal show={showNuevaEntregaModal} onHide={() => !submitting && setShowNuevaEntregaModal(false)} centered>
+      <Modal show={showNuevaEntregaModal} onHide={() => !submitting && setShowNuevaEntregaModal(false)} size="lg" centered>
         <Modal.Header closeButton={!submitting}>
           <Modal.Title style={{ fontSize: "1.2rem" }}>Nueva Entrega de EPP - {personalSeleccionado}</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmitNuevaEntrega}>
           <Modal.Body>
             <Form.Group className="mb-3" controlId="fecha">
-              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Fecha</Form.Label>
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Fecha de Entrega</Form.Label>
               <Form.Control
                 type="date"
                 required
@@ -224,49 +275,72 @@ const EntregaEPP = () => {
               />
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="epp">
-              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>EPP</Form.Label>
-              <Form.Select
-                value={formNuevaEntrega.epp}
-                onChange={(e) => setFormNuevaEntrega({ ...formNuevaEntrega, epp: e.target.value })}
-                disabled={submitting}
-              >
-                <option value="camisa">Camisa</option>
-                <option value="pantalon">Pantalón</option>
-                <option value="botines">Botines</option>
-                <option value="otros">Otros</option>
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="talle">
-              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Talle</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Ej: M, 42, 43, XL..."
-                value={formNuevaEntrega.talle}
-                onChange={(e) => setFormNuevaEntrega({ ...formNuevaEntrega, talle: e.target.value })}
-                disabled={submitting}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="cantidad">
-              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Cantidad</Form.Label>
-              <Form.Control
-                type="number"
-                min="1"
-                required
-                value={formNuevaEntrega.cantidad}
-                onChange={(e) => setFormNuevaEntrega({ ...formNuevaEntrega, cantidad: parseInt(e.target.value) || 1 })}
-                disabled={submitting}
-              />
-            </Form.Group>
+            <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600, display: "block" }}>Elementos a Entregar</Form.Label>
+            <div className="table-responsive mb-3" style={{ border: "1px solid #495057", borderRadius: "4px" }}>
+              <Table striped bordered hover size="sm" className="text-center align-middle mb-0" style={{ background: "#212529" }}>
+                <thead className="table-dark">
+                  <tr>
+                    <th style={{ width: "60px" }}>Entregar</th>
+                    <th>Elemento</th>
+                    <th>Talle</th>
+                    <th style={{ width: "100px" }}>Cantidad</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {eppRows.map((row, idx) => (
+                    <tr key={row.epp}>
+                      <td>
+                        <span
+                          onClick={() => !submitting && handleToggleRow(idx)}
+                          style={{
+                            cursor: submitting ? "default" : "pointer",
+                            fontSize: 20,
+                            color: row.seleccionado ? "#198754" : "#495057",
+                            userSelect: "none",
+                            lineHeight: 1
+                          }}
+                        >
+                          ●
+                        </span>
+                      </td>
+                      <td className="text-start fw-semibold ps-3" style={{ color: row.seleccionado ? "#dee2e6" : "#6c757d" }}>
+                        {row.label}
+                      </td>
+                      <td>
+                        <Form.Control
+                          size="sm"
+                          type="text"
+                          placeholder="Talle..."
+                          disabled={!row.seleccionado || submitting}
+                          value={row.talle}
+                          onChange={(e) => handleRowChange(idx, "talle", e.target.value)}
+                          style={{ fontSize: "0.85rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
+                        />
+                      </td>
+                      <td>
+                        <Form.Control
+                          size="sm"
+                          type="number"
+                          min="1"
+                          required={row.seleccionado}
+                          disabled={!row.seleccionado || submitting}
+                          value={row.cantidad}
+                          onChange={(e) => handleRowChange(idx, "cantidad", parseInt(e.target.value) || 1)}
+                          style={{ fontSize: "0.85rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
 
             <Form.Group className="mb-3" controlId="observaciones">
-              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Observaciones</Form.Label>
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Observaciones Generales</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
-                placeholder="Detalles u observaciones..."
+                placeholder="Detalles u observaciones de la entrega..."
                 value={formNuevaEntrega.observaciones}
                 onChange={(e) => setFormNuevaEntrega({ ...formNuevaEntrega, observaciones: e.target.value })}
                 disabled={submitting}
