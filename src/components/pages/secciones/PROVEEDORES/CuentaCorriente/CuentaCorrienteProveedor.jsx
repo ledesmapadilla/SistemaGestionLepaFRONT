@@ -27,7 +27,7 @@ const CuentaCorrienteProveedor = () => {
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroProveedor, setFiltroProveedor] = useState("");
-  const [filtroDeuda, setFiltroDeuda] = useState("");
+  const [soloConDeuda, setSoloConDeuda] = useState(true);
 
   useEffect(() => {
     const cargar = async () => {
@@ -57,10 +57,11 @@ const CuentaCorrienteProveedor = () => {
   }, [todos, proveedores]);
 
   const resumenFiltrado = useMemo(() => {
-    if (filtroDeuda === "con") return resumenPorProveedor.filter((r) => r.saldo > 0.01);
-    if (filtroDeuda === "sin") return resumenPorProveedor.filter((r) => r.saldo <= 0.01);
+    if (soloConDeuda) {
+      return resumenPorProveedor.filter((r) => r.saldo > 0.01 || r.saldo < -0.01);
+    }
     return resumenPorProveedor;
-  }, [resumenPorProveedor, filtroDeuda]);
+  }, [resumenPorProveedor, soloConDeuda]);
 
   const movFiltrados = useMemo(() => {
     if (!filtroProveedor) return [];
@@ -87,7 +88,7 @@ const CuentaCorrienteProveedor = () => {
 
     if (!filtroProveedor) {
       const ws = {};
-      ws["A1"] = { v: "CUENTA CORRIENTE — Todos los proveedores", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
+      ws["A1"] = { v: `CUENTA CORRIENTE — ${soloConDeuda ? "Proveedores con deuda" : "Todos los proveedores"}`, t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
       ws["A2"] = { v: new Date().toLocaleDateString("es-AR"), t: "s", s: { alignment: leftAlign } };
       ["Proveedor", "A pagar", "Pagado", "Saldo"].forEach((h, i) => {
         ws[`${["A","B","C","D"][i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
@@ -106,7 +107,7 @@ const CuentaCorrienteProveedor = () => {
       ws["!ref"] = `A1:D${resumenFiltrado.length + 3}`;
       ws["!cols"] = [{ wch: 30 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
       XLSXStyle.utils.book_append_sheet(libro, ws, "Resumen");
-      XLSXStyle.writeFile(libro, "CuentaCorriente_Proveedores_Todos.xlsx");
+      XLSXStyle.writeFile(libro, `CuentaCorriente_Proveedores_${soloConDeuda ? "ConDeuda" : "Todos"}.xlsx`);
       return;
     }
 
@@ -173,19 +174,16 @@ const CuentaCorrienteProveedor = () => {
             )}
           </div>
           {!filtroProveedor && (
-            <div style={{ position: "relative", width: "180px" }}>
-              <Form.Select
-                value={filtroDeuda}
-                onChange={(e) => setFiltroDeuda(e.target.value)}
-                style={filtroDeuda ? { backgroundImage: "none", height: "34px" } : { height: "34px" }}
-              >
-                <option value="">Estado</option>
-                <option value="con">Con deuda</option>
-                <option value="sin">Sin deuda</option>
-              </Form.Select>
-              {filtroDeuda && (
-                <span onClick={() => setFiltroDeuda("")} style={estiloX}>✕</span>
-              )}
+            <div className="d-flex align-items-center gap-2 ms-2">
+              <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={soloConDeuda ? "fw-semibold" : "text-muted"}>Con deuda</span>
+              <Form.Check
+                type="switch"
+                id="switch-deuda-prov"
+                className="mb-0"
+                checked={!soloConDeuda}
+                onChange={(e) => setSoloConDeuda(!e.target.checked)}
+              />
+              <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={!soloConDeuda ? "fw-semibold" : "text-muted"}>Todos</span>
             </div>
           )}
         </div>
