@@ -160,7 +160,7 @@ const PagosProveedoresTabla = () => {
 
   return (
     <Container className="py-4">
-      <h6 className="text-center mb-2">Pagos a Proveedores</h6>
+      <h6 className="text-center mb-2">Pagos a Proveedores <small className="text-muted">(iva incluido)</small></h6>
       <div className="d-flex justify-content-end align-items-center mb-3">
         <div className="d-flex gap-2">
           <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
