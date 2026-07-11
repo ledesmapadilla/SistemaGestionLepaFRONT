@@ -16,6 +16,7 @@ const ResumenEPP = () => {
 
   const [desde, setDesde] = useState(location.state?.desde || primerDiaAnio);
   const [hasta, setHasta] = useState(location.state?.hasta || hoy);
+  const [mostrarInactivos, setMostrarInactivos] = useState(location.state?.mostrarInactivos || false);
 
   const [personal, setPersonal] = useState([]);
   const [entregas, setEntregas] = useState([]);
@@ -61,6 +62,11 @@ const ResumenEPP = () => {
     });
   }, [entregas, desde, hasta]);
 
+  // Personal filtrado (activos/todos)
+  const personalFiltrado = useMemo(() => {
+    return personal.filter((p) => mostrarInactivos || p.activo !== false);
+  }, [personal, mostrarInactivos]);
+
   // Mapa de entregas: { "nombre de personal": { camisa: true, pantalon: true, ... } }
   const mapaEntregados = useMemo(() => {
     const mapa = {};
@@ -77,12 +83,12 @@ const ResumenEPP = () => {
   }, [entregasFiltradas]);
 
   const volver = () => {
-    navigate("/personal/entrega-epp", { state: { desde, hasta } });
+    navigate("/personal/entrega-epp", { state: { desde, hasta, mostrarInactivos } });
   };
 
   // Exportar resumen a Excel
   const exportarResumenExcel = () => {
-    if (personal.length === 0) {
+    if (personalFiltrado.length === 0) {
       Swal.fire({
         icon: "warning",
         title: "Atención",
@@ -117,7 +123,7 @@ const ResumenEPP = () => {
     });
 
     // Filas (a partir de la 6)
-    personal.forEach((p, rowIdx) => {
+    personalFiltrado.forEach((p, rowIdx) => {
       const excelRow = rowIdx + 6;
       const nombreNorm = (p.nombre || "").trim().toLowerCase();
       const epps = mapaEntregados[nombreNorm] || { camisa: false, pantalon: false, botines: false, otros: false };
@@ -136,7 +142,7 @@ const ResumenEPP = () => {
       });
     });
 
-    const lastRow = personal.length + 5;
+    const lastRow = personalFiltrado.length + 5;
     ws["!ref"] = `A1:E${lastRow}`;
     ws["!cols"] = [{ wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
 
@@ -155,7 +161,7 @@ const ResumenEPP = () => {
             variant="outline-light"
             size="sm"
             onClick={exportarResumenExcel}
-            disabled={personal.length === 0 || loading}
+            disabled={personalFiltrado.length === 0 || loading}
           >
             Excel
           </Button>
@@ -186,8 +192,20 @@ const ResumenEPP = () => {
           />
         </Form.Group>
 
+        <div className="d-flex align-items-center gap-2 ms-3" style={{ height: "31px" }}>
+          <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={!mostrarInactivos ? "fw-semibold" : "text-muted"}>Sin inactivos</span>
+          <Form.Check
+            type="switch"
+            id="switch-inactivos-resumen"
+            className="mb-0"
+            checked={mostrarInactivos}
+            onChange={(e) => setMostrarInactivos(e.target.checked)}
+          />
+          <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={mostrarInactivos ? "fw-semibold" : "text-muted"}>Todos</span>
+        </div>
+
         <div className="text-muted ms-auto" style={{ fontSize: "0.9rem" }}>
-          Total Personal: {personal.length}
+          Total Personal: {personalFiltrado.length}
         </div>
       </div>
 
@@ -208,7 +226,7 @@ const ResumenEPP = () => {
               </tr>
             </thead>
             <tbody>
-              {personal.map((p) => {
+              {personalFiltrado.map((p) => {
                 const nombreNorm = (p.nombre || "").trim().toLowerCase();
                 const epps = mapaEntregados[nombreNorm] || { camisa: false, pantalon: false, botines: false, otros: false };
 
@@ -230,7 +248,7 @@ const ResumenEPP = () => {
                   </tr>
                 );
               })}
-              {personal.length === 0 && (
+              {personalFiltrado.length === 0 && (
                 <tr>
                   <td colSpan={5} className="text-muted py-3">
                     No se encontraron registros de personal.

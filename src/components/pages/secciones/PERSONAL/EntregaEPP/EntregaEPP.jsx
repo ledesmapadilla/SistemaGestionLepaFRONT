@@ -16,13 +16,14 @@ const EntregaEPP = () => {
 
   const [desde, setDesde] = useState(location.state?.desde || primerDiaAnio);
   const [hasta, setHasta] = useState(location.state?.hasta || hoy);
+  const [mostrarInactivos, setMostrarInactivos] = useState(location.state?.mostrarInactivos || false);
 
   const [personal, setPersonal] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState("");
 
   const irAResumen = () => {
-    navigate("/personal/entrega-epp/entregados", { state: { desde, hasta } });
+    navigate("/personal/entrega-epp/entregados", { state: { desde, hasta, mostrarInactivos } });
   };
 
   // Estados para el modal de Nueva Entrega
@@ -391,9 +392,11 @@ const EntregaEPP = () => {
     XLSXStyle.writeFile(wb, nombreArchivo);
   };
 
-  const personalFiltrado = personal.filter((p) =>
-    (p.nombre || "").toLowerCase().includes(filtro.toLowerCase())
-  );
+  const personalFiltrado = personal.filter((p) => {
+    const coincideNombre = (p.nombre || "").toLowerCase().includes(filtro.toLowerCase());
+    const coincideActivo = mostrarInactivos || p.activo !== false;
+    return coincideNombre && coincideActivo;
+  });
 
   return (
     <Container className="mt-4" style={{ width: "55%" }}>
@@ -426,6 +429,17 @@ const EntregaEPP = () => {
               style={{ width: "135px", fontSize: "0.85rem" }}
             />
           </Form.Group>
+          <div className="d-flex align-items-center gap-2 ms-3 mb-1" style={{ height: "31px" }}>
+            <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={!mostrarInactivos ? "fw-semibold" : "text-muted"}>Sin inactivos</span>
+            <Form.Check
+              type="switch"
+              id="switch-inactivos-epp"
+              className="mb-0"
+              checked={mostrarInactivos}
+              onChange={(e) => setMostrarInactivos(e.target.checked)}
+            />
+            <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={mostrarInactivos ? "fw-semibold" : "text-muted"}>Todos</span>
+          </div>
         </div>
 
         <div className="d-flex align-items-center gap-3">
