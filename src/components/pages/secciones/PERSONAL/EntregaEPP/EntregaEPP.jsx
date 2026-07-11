@@ -653,7 +653,17 @@ const EntregaEPP = () => {
       {/* Modal para Historial de EPP */}
       <Modal show={showHistorialModal} onHide={() => setShowHistorialModal(false)} size="lg" centered>
         <Modal.Header closeButton>
-          <Modal.Title style={{ fontSize: "1.2rem" }}>Historial de EPP - {personalHistorial}</Modal.Title>
+          <div className="d-flex align-items-center justify-content-between w-100 me-3">
+            <Modal.Title style={{ fontSize: "1.2rem" }} className="mb-0">Historial de EPP - {personalHistorial}</Modal.Title>
+            <Button
+              variant="outline-light"
+              size="sm"
+              onClick={exportarHistorialExcel}
+              disabled={historial.length === 0 || loadingHistorial}
+            >
+              Excel
+            </Button>
+          </div>
         </Modal.Header>
         <Modal.Body>
           {loadingHistorial ? (
@@ -715,14 +725,7 @@ const EntregaEPP = () => {
             </div>
           )}
         </Modal.Body>
-        <Modal.Footer className="d-flex justify-content-between">
-          <Button
-            variant="outline-success"
-            onClick={exportarHistorialExcel}
-            disabled={historial.length === 0 || loadingHistorial}
-          >
-            Exportar a Excel
-          </Button>
+        <Modal.Footer>
           <Button variant="outline-secondary" onClick={() => setShowHistorialModal(false)}>
             Cerrar
           </Button>
