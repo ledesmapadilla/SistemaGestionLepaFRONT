@@ -26,6 +26,8 @@ const CuentaCorrienteProveedor = () => {
   const navigate = useNavigate();
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [todosProveedor, setTodosProveedor] = useState([]);
+  const [loadingProveedor, setLoadingProveedor] = useState(false);
   const [filtroProveedor, setFiltroProveedor] = useState("");
   const [soloConDeuda, setSoloConDeuda] = useState(true);
 
@@ -42,6 +44,26 @@ const CuentaCorrienteProveedor = () => {
     };
     cargar();
   }, []);
+
+  useEffect(() => {
+    const cargarDetalle = async () => {
+      if (!filtroProveedor) {
+        setTodosProveedor([]);
+        return;
+      }
+      setLoadingProveedor(true);
+      try {
+        const data = await obtenerCuentaCorrienteProveedor(filtroProveedor);
+        setTodosProveedor(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error al cargar cuenta corriente de proveedor:", error);
+        setTodosProveedor([]);
+      } finally {
+        setLoadingProveedor(false);
+      }
+    };
+    cargarDetalle();
+  }, [filtroProveedor]);
 
   const proveedores = useMemo(() => {
     return [...new Set(todos.map((m) => m.proveedor).filter(Boolean))].sort();
@@ -64,9 +86,8 @@ const CuentaCorrienteProveedor = () => {
   }, [resumenPorProveedor, soloConDeuda]);
 
   const movFiltrados = useMemo(() => {
-    if (!filtroProveedor) return [];
-    return todos.filter((m) => m.proveedor === filtroProveedor);
-  }, [todos, filtroProveedor]);
+    return todosProveedor;
+  }, [todosProveedor]);
 
   const movConSaldo = useMemo(() => {
     let saldoAcum = 0;
@@ -257,6 +278,10 @@ const CuentaCorrienteProveedor = () => {
             </Table>
           </div>
         )
+      ) : loadingProveedor ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" />
+        </div>
       ) : (
         movConSaldo.length === 0 ? (
           <p className="text-muted">Sin movimientos para este proveedor.</p>
