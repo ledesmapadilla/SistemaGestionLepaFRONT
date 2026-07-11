@@ -3,6 +3,7 @@ import { Container, Table, Button, Spinner, Form, Badge, Modal } from "react-boo
 import { listarPersonal, editarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { registrarEntregaEPP, obtenerEntregasEPP, borrarEntregaEPP } from "../../../../../helpers/queriesEntregaEPP.js";
 import Swal from "sweetalert2";
+import XLSXStyle from "xlsx-js-style";
 import "../../../../../styles/clientes.css";
 
 const EntregaEPP = () => {
@@ -306,6 +307,74 @@ const EntregaEPP = () => {
     } finally {
       setSubmittingTalles(false);
     }
+  };
+
+  // Exportar historial de EPP a Excel
+  const exportarHistorialExcel = () => {
+    if (historial.length === 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Atención",
+        text: "No hay entregas para exportar.",
+      });
+      return;
+    }
+
+    const titulo = `Historial de EPP - ${personalHistorial}`;
+    const fechaReporte = `Fecha de Reporte: ${new Date().toLocaleDateString("es-AR")}`;
+    const headers = ["Fecha", "Elemento", "Talle", "Cantidad", "Observaciones"];
+
+    const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
+    const estIzquierda = { alignment: { horizontal: "left", vertical: "center" } };
+    const estHeader = { font: { bold: true }, alignment: { horizontal: "center", vertical: "center" } };
+    const estTitulo = { font: { bold: true, sz: 14 }, alignment: { horizontal: "left", vertical: "center" } };
+    const estFecha = { alignment: { horizontal: "left", vertical: "center" } };
+
+    const wb = XLSXStyle.utils.book_new();
+    const ws = {};
+
+    // Títulos
+    ws["A1"] = { v: titulo, t: "s", s: estTitulo };
+    ws["A2"] = { v: fechaReporte, t: "s", s: estFecha };
+
+    // Headers
+    const cols = "ABCDE";
+    headers.forEach((h, i) => {
+      ws[`${cols[i]}3`] = { v: h, t: "s", s: estHeader };
+    });
+
+    // Filas
+    historial.forEach((row, rowIdx) => {
+      const excelRow = rowIdx + 4;
+      const labelEPP = {
+        camisa: "Camisa",
+        pantalon: "Pantalón",
+        botines: "Botines",
+        otros: "Otros"
+      }[row.epp] || row.epp;
+
+      const vals = [
+        row.fecha ? row.fecha.split("-").reverse().join("/") : "-",
+        labelEPP,
+        row.talle || "-",
+        row.cantidad,
+        row.observaciones || "-"
+      ];
+
+      vals.forEach((v, i) => {
+        const est = (i === 4) ? estIzquierda : estCentro;
+        ws[`${cols[i]}${excelRow}`] = { v: v ?? "", t: typeof v === "number" ? "n" : "s", s: est };
+      });
+    });
+
+    const lastRow = historial.length + 3;
+    ws["!ref"] = `A1:E${lastRow}`;
+    ws["!cols"] = [{ wch: 15 }, { wch: 18 }, { wch: 12 }, { wch: 10 }, { wch: 35 }];
+
+    XLSXStyle.utils.book_append_sheet(wb, ws, "Historial EPP");
+
+    const nombreArchivo = `EPP_${personalHistorial.replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`;
+    XLSXStyle.writeFile(wb, nombreArchivo);
   };
 
   const personalFiltrado = personal.filter((p) =>
@@ -646,7 +715,14 @@ const EntregaEPP = () => {
             </div>
           )}
         </Modal.Body>
-        <Modal.Footer>
+        <Modal.Footer className="d-flex justify-content-between">
+          <Button
+            variant="outline-success"
+            onClick={exportarHistorialExcel}
+            disabled={historial.length === 0 || loadingHistorial}
+          >
+            Exportar a Excel
+          </Button>
           <Button variant="outline-secondary" onClick={() => setShowHistorialModal(false)}>
             Cerrar
           </Button>
