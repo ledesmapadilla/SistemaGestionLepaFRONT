@@ -182,7 +182,7 @@ const CuentaCorriente = () => {
 
   return (
     <div className="w-75 mx-auto my-2">
-      <h6 className="text-center mb-1">Cuenta Corriente Cliente</h6>
+      <h6 className="text-center mb-1">Cuenta Corriente Cliente <small className="text-muted">(iva incluido)</small></h6>
       <div className="d-flex justify-content-end align-items-center mb-1">
         <div className="d-flex gap-2">
           {(filtroCliente ? movConSaldo.length : resumenFiltrado.length) > 0 && (
