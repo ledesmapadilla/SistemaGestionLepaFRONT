@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Container, Table, Button, Spinner, Form, Badge, Modal } from "react-bootstrap";
 import { listarPersonal, editarPersonal } from "../../../../../helpers/queriesPersonal.js";
-import { registrarEntregaEPP } from "../../../../../helpers/queriesEntregaEPP.js";
+import { registrarEntregaEPP, obtenerEntregasEPP, borrarEntregaEPP } from "../../../../../helpers/queriesEntregaEPP.js";
 import Swal from "sweetalert2";
 import "../../../../../styles/clientes.css";
 
@@ -35,6 +35,12 @@ const EntregaEPP = () => {
   });
   const [submittingTalles, setSubmittingTalles] = useState(false);
 
+  // Estados para el modal de Historial
+  const [showHistorialModal, setShowHistorialModal] = useState(false);
+  const [personalHistorial, setPersonalHistorial] = useState("");
+  const [historial, setHistorial] = useState([]);
+  const [loadingHistorial, setLoadingHistorial] = useState(false);
+
   useEffect(() => {
     const cargarPersonal = async () => {
       setLoading(true);
@@ -65,13 +71,69 @@ const EntregaEPP = () => {
     cargarPersonal();
   }, []);
 
-  const handleHistorial = (nombre) => {
-    Swal.fire({
-      title: `Historial de EPP - ${nombre}`,
-      text: "Sección en desarrollo. Aquí se mostrará el historial de entregas.",
-      icon: "info",
-      confirmButtonColor: "#3085d6",
+  const handleAbrirHistorial = async (nombre) => {
+    setPersonalHistorial(nombre);
+    setShowHistorialModal(true);
+    setLoadingHistorial(true);
+    try {
+      const response = await obtenerEntregasEPP(nombre);
+      if (response && response.ok) {
+        const data = await response.json();
+        setHistorial(data || []);
+      } else {
+        setHistorial([]);
+      }
+    } catch (error) {
+      console.error("Error cargando historial de EPP:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo cargar el historial de entregas.",
+      });
+    } finally {
+      setLoadingHistorial(false);
+    }
+  };
+
+  const handleBorrarEntrega = async (id) => {
+    const result = await Swal.fire({
+      title: "¿Eliminar registro de entrega?",
+      text: "Esta acción no se puede deshacer.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc3545",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Sí, borrar",
+      cancelButtonText: "Cancelar",
     });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await borrarEntregaEPP(id);
+        if (response && response.ok) {
+          setHistorial((prev) => prev.filter((item) => item._id !== id));
+          Swal.fire({
+            icon: "success",
+            title: "Registro eliminado",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "No se pudo eliminar el registro.",
+          });
+        }
+      } catch (error) {
+        console.error("Error al borrar entrega:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Ocurrió un error inesperado al eliminar.",
+        });
+      }
+    }
   };
 
   const handleAbrirNuevaEntrega = (p) => {
@@ -293,7 +355,7 @@ const EntregaEPP = () => {
                         <Button
                           variant="outline-info"
                           size="sm"
-                          onClick={() => handleHistorial(p.nombre)}
+                          onClick={() => handleAbrirHistorial(p.nombre)}
                         >
                           Historial
                         </Button>
@@ -487,6 +549,78 @@ const EntregaEPP = () => {
             </Button>
           </Modal.Footer>
         </Form>
+      </Modal>
+
+      {/* Modal para Historial de EPP */}
+      <Modal show={showHistorialModal} onHide={() => setShowHistorialModal(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title style={{ fontSize: "1.2rem" }}>Historial de EPP - {personalHistorial}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {loadingHistorial ? (
+            <div className="d-flex justify-content-center my-4">
+              <Spinner animation="border" />
+            </div>
+          ) : (
+            <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
+              <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
+                <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Elemento</th>
+                    <th>Talle</th>
+                    <th>Cant</th>
+                    <th>Observaciones</th>
+                    <th style={{ width: "60px" }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historial.map((row) => {
+                    const labelEPP = {
+                      camisa: "Camisa",
+                      pantalon: "Pantalón",
+                      botines: "Botines",
+                      otros: "Otros"
+                    }[row.epp] || row.epp;
+
+                    return (
+                      <tr key={row._id}>
+                        <td className="text-nowrap">{row.fecha ? row.fecha.split("-").reverse().join("/") : "-"}</td>
+                        <td className="fw-semibold">{labelEPP}</td>
+                        <td>{row.talle || "-"}</td>
+                        <td>{row.cantidad}</td>
+                        <td className="text-start ps-3" style={{ fontSize: "0.85rem" }}>
+                          {row.observaciones || "-"}
+                        </td>
+                        <td>
+                          <span
+                            onClick={() => handleBorrarEntrega(row._id)}
+                            style={{ cursor: "pointer", color: "#dc3545", fontWeight: 900, fontSize: 16, userSelect: "none" }}
+                            title="Eliminar registro"
+                          >
+                            ✕
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {historial.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="text-muted py-3">
+                        No hay entregas registradas para este operario.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setShowHistorialModal(false)}>
+            Cerrar
+          </Button>
+        </Modal.Footer>
       </Modal>
     </Container>
   );
