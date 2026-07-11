@@ -490,7 +490,7 @@ const EntregaEPP = () => {
                           style={{ fontSize: "0.82rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
                         />
                         {validationErrors[`cant_${row.epp}`] && (
-                          <div className="text-danger text-start mt-1 fw-bold" style={{ fontSize: "0.75rem" }}>
+                          <div className="text-danger text-start mt-1" style={{ fontSize: "0.75rem" }}>
                             {validationErrors[`cant_${row.epp}`]}
                           </div>
                         )}
@@ -505,7 +505,7 @@ const EntregaEPP = () => {
                           style={{ fontSize: "0.82rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
                         />
                         {validationErrors[`obs_${row.epp}`] && (
-                          <div className="text-danger text-start mt-1 fw-bold" style={{ fontSize: "0.75rem" }}>
+                          <div className="text-danger text-start mt-1" style={{ fontSize: "0.75rem" }}>
                             {validationErrors[`obs_${row.epp}`]}
                           </div>
                         )}
