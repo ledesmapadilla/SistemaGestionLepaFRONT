@@ -471,7 +471,7 @@ const EntregaEPP = () => {
                             size="sm"
                             type="text"
                             disabled={!row.seleccionado || submitting}
-                            value={row.talle}
+                            value={row.seleccionado ? row.talle : ""}
                             onChange={(e) => handleRowChange(idx, "talle", e.target.value)}
                             style={{ fontSize: "0.82rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
                           />
