@@ -80,7 +80,7 @@ const ResumenEPP = () => {
   };
 
   return (
-    <Container className="mt-4 w-60">
+    <Container className="mt-4 w-50">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Resumen de Entregas EPP <small className="text-muted" style={{ fontSize: "1rem", fontWeight: 400 }}>Estado de EPP Entregados por Fecha</small></h2>
         <Button variant="outline-success" onClick={volver}>Volver</Button>
