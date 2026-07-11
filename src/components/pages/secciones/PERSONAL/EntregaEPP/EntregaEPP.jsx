@@ -14,14 +14,13 @@ const EntregaEPP = () => {
   const [showNuevaEntregaModal, setShowNuevaEntregaModal] = useState(false);
   const [personalSeleccionado, setPersonalSeleccionado] = useState("");
   const [formNuevaEntrega, setFormNuevaEntrega] = useState({
-    fecha: new Date().toLocaleDateString("en-CA"), // YYYY-MM-DD local
-    observaciones: ""
+    fecha: new Date().toLocaleDateString("en-CA") // YYYY-MM-DD local
   });
   const [eppRows, setEppRows] = useState([
-    { epp: "camisa", label: "Camisa", seleccionado: false, talle: "", cantidad: 1 },
-    { epp: "pantalon", label: "Pantalón", seleccionado: false, talle: "", cantidad: 1 },
-    { epp: "botines", label: "Botines", seleccionado: false, talle: "", cantidad: 1 },
-    { epp: "otros", label: "Otros", seleccionado: false, talle: "", cantidad: 1 }
+    { epp: "camisa", label: "Camisa", seleccionado: false, talle: "", cantidad: 1, observaciones: "" },
+    { epp: "pantalon", label: "Pantalón", seleccionado: false, talle: "", cantidad: 1, observaciones: "" },
+    { epp: "botines", label: "Botines", seleccionado: false, talle: "", cantidad: 1, observaciones: "" },
+    { epp: "otros", label: "Otros", seleccionado: false, talle: "", cantidad: 1, observaciones: "" }
   ]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -67,14 +66,13 @@ const EntregaEPP = () => {
   const handleAbrirNuevaEntrega = (nombre) => {
     setPersonalSeleccionado(nombre);
     setFormNuevaEntrega({
-      fecha: new Date().toLocaleDateString("en-CA"),
-      observaciones: ""
+      fecha: new Date().toLocaleDateString("en-CA")
     });
     setEppRows([
-      { epp: "camisa", label: "Camisa", seleccionado: false, talle: "", cantidad: 1 },
-      { epp: "pantalon", label: "Pantalón", seleccionado: false, talle: "", cantidad: 1 },
-      { epp: "botines", label: "Botines", seleccionado: false, talle: "", cantidad: 1 },
-      { epp: "otros", label: "Otros", seleccionado: false, talle: "", cantidad: 1 }
+      { epp: "camisa", label: "Camisa", seleccionado: false, talle: "", cantidad: 1, observaciones: "" },
+      { epp: "pantalon", label: "Pantalón", seleccionado: false, talle: "", cantidad: 1, observaciones: "" },
+      { epp: "botines", label: "Botines", seleccionado: false, talle: "", cantidad: 1, observaciones: "" },
+      { epp: "otros", label: "Otros", seleccionado: false, talle: "", cantidad: 1, observaciones: "" }
     ]);
     setShowNuevaEntregaModal(true);
   };
@@ -128,7 +126,7 @@ const EntregaEPP = () => {
         epp: item.epp,
         talle: item.talle || "",
         cantidad: item.cantidad,
-        observaciones: formNuevaEntrega.observaciones || ""
+        observaciones: item.observaciones || ""
       }));
 
       const response = await registrarEntregaEPP(payload);
@@ -264,9 +262,10 @@ const EntregaEPP = () => {
         </Modal.Header>
         <Form onSubmit={handleSubmitNuevaEntrega}>
           <Modal.Body>
-            <Form.Group className="mb-3" controlId="fecha">
-              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Fecha de Entrega</Form.Label>
+            <Form.Group className="mb-3" controlId="fecha" style={{ maxWidth: "160px" }}>
+              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Fecha</Form.Label>
               <Form.Control
+                size="sm"
                 type="date"
                 required
                 value={formNuevaEntrega.fecha}
@@ -276,35 +275,38 @@ const EntregaEPP = () => {
             </Form.Group>
 
             <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600, display: "block" }}>Elementos a Entregar</Form.Label>
-            <div className="table-responsive mb-3" style={{ border: "1px solid #495057", borderRadius: "4px" }}>
+            <div className="table-responsive mb-2" style={{ border: "1px solid #495057", borderRadius: "4px" }}>
               <Table striped bordered hover size="sm" className="text-center align-middle mb-0" style={{ background: "#212529" }}>
                 <thead className="table-dark">
                   <tr>
-                    <th style={{ width: "60px" }}>Entregar</th>
-                    <th>Elemento</th>
-                    <th>Talle</th>
-                    <th style={{ width: "100px" }}>Cantidad</th>
+                    <th style={{ minWidth: "100px" }}>Elemento</th>
+                    <th style={{ width: "80px" }}>Entregar</th>
+                    <th style={{ width: "90px" }}>Talle</th>
+                    <th style={{ width: "80px" }}>Cant</th>
+                    <th>Observaciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {eppRows.map((row, idx) => (
                     <tr key={row.epp}>
-                      <td>
-                        <span
-                          onClick={() => !submitting && handleToggleRow(idx)}
-                          style={{
-                            cursor: submitting ? "default" : "pointer",
-                            fontSize: 20,
-                            color: row.seleccionado ? "#198754" : "#495057",
-                            userSelect: "none",
-                            lineHeight: 1
-                          }}
-                        >
-                          ●
-                        </span>
-                      </td>
                       <td className="text-start fw-semibold ps-3" style={{ color: row.seleccionado ? "#dee2e6" : "#6c757d" }}>
                         {row.label}
+                      </td>
+                      <td>
+                        <div className="d-flex justify-content-center align-items-center">
+                          <input
+                            type="radio"
+                            checked={row.seleccionado}
+                            onChange={() => {}} // Evitar warning de React
+                            onClick={() => !submitting && handleToggleRow(idx)}
+                            style={{
+                              cursor: submitting ? "not-allowed" : "pointer",
+                              accentColor: "#198754",
+                              width: 20,
+                              height: 20
+                            }}
+                          />
+                        </div>
                       </td>
                       <td>
                         <Form.Control
@@ -314,7 +316,7 @@ const EntregaEPP = () => {
                           disabled={!row.seleccionado || submitting}
                           value={row.talle}
                           onChange={(e) => handleRowChange(idx, "talle", e.target.value)}
-                          style={{ fontSize: "0.85rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
+                          style={{ fontSize: "0.82rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
                         />
                       </td>
                       <td>
@@ -326,7 +328,18 @@ const EntregaEPP = () => {
                           disabled={!row.seleccionado || submitting}
                           value={row.cantidad}
                           onChange={(e) => handleRowChange(idx, "cantidad", parseInt(e.target.value) || 1)}
-                          style={{ fontSize: "0.85rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
+                          style={{ fontSize: "0.82rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
+                        />
+                      </td>
+                      <td>
+                        <Form.Control
+                          size="sm"
+                          type="text"
+                          placeholder="Detalle..."
+                          disabled={!row.seleccionado || submitting}
+                          value={row.observaciones}
+                          onChange={(e) => handleRowChange(idx, "observaciones", e.target.value)}
+                          style={{ fontSize: "0.82rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
                         />
                       </td>
                     </tr>
@@ -334,18 +347,6 @@ const EntregaEPP = () => {
                 </tbody>
               </Table>
             </div>
-
-            <Form.Group className="mb-3" controlId="observaciones">
-              <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Observaciones Generales</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                placeholder="Detalles u observaciones de la entrega..."
-                value={formNuevaEntrega.observaciones}
-                onChange={(e) => setFormNuevaEntrega({ ...formNuevaEntrega, observaciones: e.target.value })}
-                disabled={submitting}
-              />
-            </Form.Group>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="outline-secondary" onClick={() => setShowNuevaEntregaModal(false)} disabled={submitting}>
