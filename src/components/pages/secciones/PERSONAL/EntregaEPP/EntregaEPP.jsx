@@ -22,6 +22,7 @@ const EntregaEPP = () => {
     { epp: "botines", label: "Botines", seleccionado: false, talle: "", cantidad: 1, observaciones: "" },
     { epp: "otros", label: "Otros", seleccionado: false, talle: "", cantidad: 1, observaciones: "" }
   ]);
+  const [validationErrors, setValidationErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   // Estados para el modal de Talles (se remueve 'otros')
@@ -147,15 +148,24 @@ const EntregaEPP = () => {
       { epp: "botines", label: "Botines", seleccionado: false, talle: p.talles?.botines || "", cantidad: 1, observaciones: "" },
       { epp: "otros", label: "Otros", seleccionado: false, talle: "", cantidad: 1, observaciones: "" }
     ]);
+    setValidationErrors({});
     setShowNuevaEntregaModal(true);
   };
 
   const handleToggleRow = (idx) => {
+    const row = eppRows[idx];
     setEppRows((prev) =>
-      prev.map((row, i) =>
-        i === idx ? { ...row, seleccionado: !row.seleccionado } : row
+      prev.map((r, i) =>
+        i === idx ? { ...r, seleccionado: !r.seleccionado } : r
       )
     );
+    // Limpiar errores para esta fila
+    setValidationErrors((prev) => {
+      const next = { ...prev };
+      delete next[`cant_${row.epp}`];
+      delete next[`obs_${row.epp}`];
+      return next;
+    });
   };
 
   const handleRowChange = (idx, field, value) => {
@@ -164,6 +174,14 @@ const EntregaEPP = () => {
         i === idx ? { ...row, [field]: value } : row
       )
     );
+    // Limpiar error específico
+    const row = eppRows[idx];
+    const key = field === "cantidad" ? `cant_${row.epp}` : `obs_${row.epp}`;
+    setValidationErrors((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   };
 
   const handleSubmitNuevaEntrega = async (e) => {
@@ -179,24 +197,20 @@ const EntregaEPP = () => {
       return;
     }
 
-    // Validar cantidad y observaciones para "otros"
-    for (const item of seleccionados) {
-      if (!item.cantidad || item.cantidad < 1) {
-        Swal.fire({
-          icon: "warning",
-          title: "Atención",
-          text: `La cantidad para ${item.label} debe ser al menos 1.`,
-        });
-        return;
+    // Validar cantidad y observaciones para "otros" de forma local
+    const errors = {};
+    seleccionados.forEach((item) => {
+      if (item.cantidad === "" || item.cantidad < 1) {
+        errors[`cant_${item.epp}`] = "Mínimo 1";
       }
       if (item.epp === "otros" && (!item.observaciones || !item.observaciones.trim())) {
-        Swal.fire({
-          icon: "warning",
-          title: "Atención",
-          text: 'Debe especificar qué elemento está entregando en las observaciones de "Otros".',
-        });
-        return;
+        errors[`obs_${item.epp}`] = "Detalle obligatorio";
       }
+    });
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
     }
 
     setSubmitting(true);
@@ -403,7 +417,7 @@ const EntregaEPP = () => {
         <Modal.Header closeButton={!submitting}>
           <Modal.Title style={{ fontSize: "1.2rem" }}>Nueva Entrega de EPP - {personalSeleccionado}</Modal.Title>
         </Modal.Header>
-        <Form onSubmit={handleSubmitNuevaEntrega}>
+        <Form onSubmit={handleSubmitNuevaEntrega} noValidate>
           <Modal.Body>
             <Form.Group className="mb-3" controlId="fecha" style={{ maxWidth: "160px" }}>
               <Form.Label style={{ fontSize: "0.9rem", fontWeight: 600 }}>Fecha</Form.Label>
@@ -470,23 +484,31 @@ const EntregaEPP = () => {
                           size="sm"
                           type="number"
                           min="1"
-                          required={row.seleccionado}
                           disabled={!row.seleccionado || submitting}
                           value={row.cantidad}
-                          onChange={(e) => handleRowChange(idx, "cantidad", parseInt(e.target.value) || 1)}
+                          onChange={(e) => handleRowChange(idx, "cantidad", e.target.value === "" ? "" : (parseInt(e.target.value) || 0))}
                           style={{ fontSize: "0.82rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
                         />
+                        {validationErrors[`cant_${row.epp}`] && (
+                          <div className="text-danger text-start mt-1 fw-bold" style={{ fontSize: "0.75rem" }}>
+                            {validationErrors[`cant_${row.epp}`]}
+                          </div>
+                        )}
                       </td>
                       <td>
                         <Form.Control
                           size="sm"
                           type="text"
-                          required={row.seleccionado && row.epp === "otros"}
                           disabled={!row.seleccionado || submitting}
                           value={row.observaciones}
                           onChange={(e) => handleRowChange(idx, "observaciones", e.target.value)}
                           style={{ fontSize: "0.82rem", background: row.seleccionado ? "#2b3035" : "#212529" }}
                         />
+                        {validationErrors[`obs_${row.epp}`] && (
+                          <div className="text-danger text-start mt-1 fw-bold" style={{ fontSize: "0.75rem" }}>
+                            {validationErrors[`obs_${row.epp}`]}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
