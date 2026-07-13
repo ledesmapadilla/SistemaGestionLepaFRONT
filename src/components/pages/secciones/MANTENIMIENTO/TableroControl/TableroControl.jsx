@@ -155,7 +155,7 @@ const TableroControl = () => {
     const GAP_COL = 1;
     const CARD_ROWS = 6;
     const GAP_ROW = 1;
-    const HEADER_ROWS = 2;
+    const HEADER_ROWS = 5;
 
     const colLetter = (idx) => {
       if (idx < 26) return String.fromCharCode(65 + idx);
@@ -211,6 +211,53 @@ const TableroControl = () => {
     const titCol = colLetter(Math.floor(lastCol / 2) - 2);
     ws[`${titCol}1`] = { v: "Tablero de Control — Equipos", t: "s", s: { font: { bold: true, sz: 13 }, alignment: { horizontal: "center", vertical: "center" } } };
     merges.push({ s: { r: 0, c: Math.floor(lastCol / 2) - 2 }, e: { r: 0, c: Math.floor(lastCol / 2) + 2 } });
+
+    // Summary Metrics Boxes en filas 3 y 4
+    const totalEquipos = tablero.length;
+    const equiposOk = tablero.filter(m => m.estado === "OK").length;
+    const equiposAtrasados = tablero.filter(m => m.estado === "ATRASADO").length;
+    const equiposSinDatos = tablero.filter(m => !m.estado || m.estado === "SIN DATOS").length;
+
+    const getBoxBorder = (rowType, colOffset) => ({
+      top: { style: rowType === 'top' ? 'thin' : 'none', color: { rgb: "A0AEC0" } },
+      bottom: { style: rowType === 'bottom' ? 'thin' : 'none', color: { rgb: "A0AEC0" } },
+      left: { style: colOffset === 0 ? 'thin' : 'none', color: { rgb: "A0AEC0" } },
+      right: { style: colOffset === 2 ? 'thin' : 'none', color: { rgb: "A0AEC0" } }
+    });
+
+    const setBox = (startColIdx, row1, row2, val, label, fgColor, fontColor) => {
+      const cL = (i) => colLetter(startColIdx + i);
+      merges.push({ s: { r: row1 - 1, c: startColIdx }, e: { r: row1 - 1, c: startColIdx + 2 } });
+      merges.push({ s: { r: row2 - 1, c: startColIdx }, e: { r: row2 - 1, c: startColIdx + 2 } });
+      
+      for (let i = 0; i < 3; i++) {
+        ws[`${cL(i)}${row1}`] = { 
+          v: i === 0 ? val : "", 
+          t: typeof val === "number" ? "n" : "s", 
+          s: {
+            fill: { fgColor: { rgb: fgColor } },
+            font: { bold: true, sz: 12, color: { rgb: fontColor } },
+            alignment: alinC,
+            border: getBoxBorder('top', i)
+          }
+        };
+        ws[`${cL(i)}${row2}`] = { 
+          v: i === 0 ? label : "", 
+          t: "s", 
+          s: {
+            fill: { fgColor: { rgb: fgColor } },
+            font: { bold: true, sz: 7, color: { rgb: fontColor } },
+            alignment: alinC,
+            border: getBoxBorder('bottom', i)
+          }
+        };
+      }
+    };
+
+    setBox(0, 3, 4, totalEquipos, "TOTAL EQUIPOS", "F1F5F9", "475569");
+    setBox(4, 3, 4, equiposOk, "OPERATIVOS", "D1E7DD", "0F5132");
+    setBox(8, 3, 4, equiposAtrasados, "ATRASADOS", "F8D7DA", "842029");
+    setBox(12, 3, 4, equiposSinDatos, "SIN DATOS", "E2E3E5", "41464B");
 
     tablero.forEach((m, cardIdx) => {
       const cardCol = cardIdx % CARDS_PER_ROW;
