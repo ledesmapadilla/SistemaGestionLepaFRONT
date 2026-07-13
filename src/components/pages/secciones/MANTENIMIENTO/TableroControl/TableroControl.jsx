@@ -5,22 +5,31 @@ import * as XLSXStyle from "xlsx-js-style";
 import { obtenerTablero } from "../../../../../helpers/queriesTablero.js";
 import "../../../../../styles/tableroControl.css";
 
-const fmtHorometro = (val) =>
-  val != null ? Number(val).toLocaleString("es-AR") + " hs" : "-";
+const getMedida = (nombre = "") => {
+  const n = String(nombre).toLowerCase();
+  if (n.includes("nissan") || n.includes("ranger") || n.includes("fiat")) {
+    return "Km";
+  }
+  return "hs";
+};
 
 const fmtFecha = (f) =>
   f ? new Date(f + "T12:00:00").toLocaleDateString("es-AR") : "-";
 
 const TarjetaMaquina = ({ datos }) => {
   const { nombre, horometroActual, fechaUltimoRegistro, fechaUltimoService, horometroUltimoService, proximoService, estado } = datos;
+  const medida = getMedida(nombre);
 
-  // Calculate hours left or exceeded
+  const fmtHorometroLocal = (val) =>
+    val != null ? Number(val).toLocaleString("es-AR") + ` ${medida}` : "-";
+
+  // Calculate hours/Km left or exceeded
   let horasRestantes = null;
   if (proximoService != null && horometroActual != null) {
     horasRestantes = proximoService - horometroActual;
   }
 
-  // Hours remaining badge class
+  // Hours/Km remaining badge class
   let hoursLeftClass = "normal";
   if (horasRestantes != null) {
     if (horasRestantes <= 0) {
@@ -44,10 +53,10 @@ const TarjetaMaquina = ({ datos }) => {
       <div className="maquina-card-body">
         {/* Metric hero for current hours */}
         <div className="maquina-hours-hero">
-          <span className="maquina-hours-value">{fmtHorometro(horometroActual)}</span>
+          <span className="maquina-hours-value">{fmtHorometroLocal(horometroActual)}</span>
           <span className="maquina-hours-label">Horómetro Actual</span>
           {fechaUltimoRegistro && (
-            <span className="maquina-hours-date">Reg: {fmtFecha(fechaUltimoRegistro)}</span>
+            <span className="maquina-hours-date">{fmtFecha(fechaUltimoRegistro)}</span>
           )}
         </div>
 
@@ -56,7 +65,7 @@ const TarjetaMaquina = ({ datos }) => {
           <div className="maquina-info-row">
             <span className="info-lbl">Últ. Service</span>
             <span className="info-val">
-              {horometroUltimoService != null ? fmtHorometro(horometroUltimoService) : "-"}
+              {horometroUltimoService != null ? fmtHorometroLocal(horometroUltimoService) : "-"}
             </span>
           </div>
           {fechaUltimoService && (
@@ -69,7 +78,7 @@ const TarjetaMaquina = ({ datos }) => {
           )}
           <div className="maquina-info-row">
             <span className="info-lbl">Próx. Service</span>
-            <span className="info-val">{fmtHorometro(proximoService)}</span>
+            <span className="info-val">{fmtHorometroLocal(proximoService)}</span>
           </div>
         </div>
 
@@ -79,9 +88,9 @@ const TarjetaMaquina = ({ datos }) => {
           {horasRestantes != null && (
             <span className={`hours-left-indicator ${hoursLeftClass}`} title="Horas para el próximo service">
               {horasRestantes <= 0 ? (
-                `Atrasado ${Math.abs(horasRestantes)} hs`
+                `Atrasado ${Math.abs(horasRestantes)} ${medida}`
               ) : (
-                `Faltan ${horasRestantes} hs`
+                `Faltan ${horasRestantes} ${medida}`
               )}
             </span>
           )}
@@ -159,7 +168,7 @@ const TableroControl = () => {
     const mkVal    = (ri, ci) => ({ font: { color: negro, sz: 9 }, alignment: alinC, border: mkBord(ri, ci) });
 
     const fmtD = (f) => f ? new Date(f + "T12:00:00").toLocaleDateString("es-AR") : "";
-    const fmtH = (v) => v != null ? Number(v).toLocaleString("es-AR") + " hs" : "";
+    const fmtH = (v, name) => v != null ? Number(v).toLocaleString("es-AR") + " " + getMedida(name) : "";
 
     const wb = XLSXStyle.utils.book_new();
     const ws = {};
@@ -186,6 +195,7 @@ const TableroControl = () => {
       if (m.proximoService != null && m.horometroActual != null) {
         horasRestantes = m.proximoService - m.horometroActual;
       }
+      const medida = getMedida(m.nombre);
 
       // Título (ri=0)
       ws[`${c0}${r0}`] = { v: m.nombre ?? "", t: "s", s: mkNombre(0, 0) };
@@ -195,17 +205,17 @@ const TableroControl = () => {
 
       // Horómetro (ri=1)
       ws[`${c0}${r1}`] = { v: "Horómetro:", t: "s", s: mkLbl(1, 0) };
-      ws[`${c1}${r1}`] = { v: fmtH(m.horometroActual), t: "s", s: mkVal(1, 1) };
+      ws[`${c1}${r1}`] = { v: fmtH(m.horometroActual, m.nombre), t: "s", s: mkVal(1, 1) };
       ws[`${c2}${r1}`] = { v: fmtD(m.fechaUltimoRegistro), t: "s", s: mkVal(1, 2) };
 
       // Últ. Service (ri=2)
       ws[`${c0}${r2}`] = { v: "Últ. Service:", t: "s", s: mkLbl(2, 0) };
-      ws[`${c1}${r2}`] = { v: fmtH(m.horometroUltimoService), t: "s", s: mkVal(2, 1) };
+      ws[`${c1}${r2}`] = { v: fmtH(m.horometroUltimoService, m.nombre), t: "s", s: mkVal(2, 1) };
       ws[`${c2}${r2}`] = { v: fmtD(m.fechaUltimoService), t: "s", s: mkVal(2, 2) };
 
       // Próximo Service (ri=3)
       ws[`${c0}${r3}`] = { v: "Prox. Service:", t: "s", s: mkLbl(3, 0) };
-      ws[`${c1}${r3}`] = { v: fmtH(m.proximoService), t: "s", s: mkVal(3, 1) };
+      ws[`${c1}${r3}`] = { v: fmtH(m.proximoService, m.nombre), t: "s", s: mkVal(3, 1) };
       ws[`${c2}${r3}`] = { v: "", t: "s", s: mkVal(3, 2) };
       merges.push({ s: { r: sr + 3, c: sc + 1 }, e: { r: sr + 3, c: sc + 2 } });
 
@@ -214,14 +224,14 @@ const TableroControl = () => {
       let styleRestante = mkVal(4, 1);
       if (horasRestantes != null) {
         if (horasRestantes <= 0) {
-          valRestante = `Atrasado ${Math.abs(horasRestantes)} hs`;
+          valRestante = `Atrasado ${Math.abs(horasRestantes)} ${medida}`;
           styleRestante = {
             font: { color: { rgb: "842029" }, sz: 9 },
             alignment: alinC,
             border: mkBord(4, 1)
           };
         } else {
-          valRestante = `Faltan ${horasRestantes} hs`;
+          valRestante = `Faltan ${horasRestantes} ${medida}`;
           const isWarning = horasRestantes <= 50;
           styleRestante = {
             font: { color: isWarning ? { rgb: "664D03" } : { rgb: "0F5132" }, sz: 9 },
@@ -262,14 +272,14 @@ const TableroControl = () => {
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
-    <div className="tablero-container">
-      {/* Header section */}
-      <div className="tablero-header">
-        <div className="tablero-title-section">
-          <h1 className="tablero-title">Tablero de Control — Equipos</h1>
-          <span className="tablero-date">Actualizado al: {new Date().toLocaleDateString("es-AR")}</span>
+    <div className="w-75 mx-auto my-2">
+      <h6 className="text-center mb-2">Tablero de Control — Equipos</h6>
+      
+      <div className="d-flex justify-content-between align-items-start mb-3">
+        <div style={{ fontSize: "0.9rem" }}>
+          <small className="text-muted">Fecha: {new Date().toLocaleDateString("es-AR")}</small>
         </div>
-        <div className="d-flex gap-2 justify-content-end align-items-center">
+        <div className="d-flex gap-2">
           <Button size="sm" variant="outline-light" style={{ borderRadius: "8px", padding: "0.4rem 1rem" }} onClick={exportarExcel}>
             <i className="bi bi-file-earmark-excel me-1"></i> Excel
           </Button>
