@@ -120,7 +120,7 @@ const TableroControl = () => {
   }, []);
 
   const exportarExcel = () => {
-    const CARDS_PER_ROW = 5;
+    const CARDS_PER_ROW = 4;
     const CARD_COLS = 3;
     const GAP_COL = 1;
     const CARD_ROWS = 6;
