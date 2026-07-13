@@ -17,6 +17,12 @@ const formatearFecha = (fecha) => {
   return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : fecha;
 };
 
+const formatearFechaBarra = (fecha) => {
+  if (!fecha) return "-";
+  const p = fecha.split("-");
+  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : fecha;
+};
+
 const formatoMoneda = (valor) =>
   Number(valor).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 
@@ -455,7 +461,7 @@ const NuevoPagoProveedor = () => {
   return (
     <Container className="py-4 w-75">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h6 className="mb-0">Nuevo Pago a Proveedor</h6>
+        <h6 className="mb-0">Nuevo Pago a Proveedor (IVA incluido)</h6>
         <Button variant="outline-success" onClick={() => navigate("/pago-proveedores")}>Volver</Button>
       </div>
 
@@ -685,7 +691,7 @@ const NuevoPagoProveedor = () => {
                   <td style={{ minWidth: "115px" }}>
                     {esCheque(m.medioPago) ? (
                       m.chequeId ? (
-                        <span className="small">{m.fechaCobro}</span>
+                        <span className="small">{formatearFechaBarra(m.fechaCobro)}</span>
                       ) : (
                         <Form.Control type="date" size="sm" value={m.fechaCobro} onChange={(e) => actualizarMedioPago(m.id, "fechaCobro", e.target.value)} />
                       )

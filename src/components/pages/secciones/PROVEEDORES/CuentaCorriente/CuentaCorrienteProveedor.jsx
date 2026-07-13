@@ -91,10 +91,11 @@ const CuentaCorrienteProveedor = () => {
 
   const movConSaldo = useMemo(() => {
     let saldoAcum = 0;
-    return movFiltrados.map((m) => {
+    const cronologico = movFiltrados.map((m) => {
       saldoAcum += (m.debito || 0) - (m.credito || 0);
       return { ...m, saldo: saldoAcum };
     });
+    return [...cronologico].reverse();
   }, [movFiltrados]);
 
   const totalDebitos = movFiltrados.reduce((s, m) => s + (m.debito || 0), 0);
