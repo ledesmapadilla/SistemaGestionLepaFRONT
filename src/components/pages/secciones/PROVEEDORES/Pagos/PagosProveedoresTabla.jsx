@@ -277,9 +277,11 @@ const PagosProveedoresTabla = () => {
               <span>
                 Formas de pago:{" "}
                 {pagoVer.mediosPago.map((m) => {
-                  const esCheque = m.medioPago === "Cheque" || m.medioPago === "E-Cheq";
+                  const esCheque = ["Cheque", "E-Cheq", "Cheque propio", "Cheque tercero", "E-Cheq propio", "E-Cheq tercero"].includes(m.medioPago);
+                  const esECheq = ["E-Cheq", "E-Cheq propio", "E-Cheq tercero"].includes(m.medioPago);
+                  const labelN = esECheq ? "E-Cheq " : "N°";
                   const extra = esCheque
-                    ? ` — N°${m.numeroCheque || "-"} · Venc: ${m.fechaCobro ? formatearFecha(m.fechaCobro) : "-"}`
+                    ? ` — ${labelN}${m.numeroCheque || "-"} · Venc: ${m.fechaCobro ? formatearFecha(m.fechaCobro) : "-"}`
                     : "";
                   return `${m.medioPago} ${formatoMoneda(m.monto)}${extra}`;
                 }).join(" | ")}

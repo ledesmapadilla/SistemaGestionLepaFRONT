@@ -587,7 +587,9 @@ const NuevoPagoProveedor = () => {
                       esChequeTercero(m.medioPago) ? (
                         m.chequeId ? (
                           <div className="d-flex align-items-center justify-content-center gap-1">
-                            <span className="small">N°{m.numeroCheque}</span>
+                            <span className="small">
+                              {m.medioPago === "E-Cheq tercero" ? `E-Cheq ${m.numeroCheque}` : `N°${m.numeroCheque}`}
+                            </span>
                             <Button size="sm" variant="outline-secondary" style={{ padding: "0 5px", fontSize: "11px", lineHeight: "1.4" }} onClick={() => seleccionarCheque(m.id, null)}>✕</Button>
                           </div>
                         ) : (
@@ -595,7 +597,7 @@ const NuevoPagoProveedor = () => {
                             <option value="">Seleccionar cheque...</option>
                             {chequesDisponibles(m.medioPago, m.id).map(c => (
                               <option key={c._id} value={c._id}>
-                                N°{c.numeroCheque} — {c.cliente} — {formatoMoneda(c.valor)}
+                                {c.tipo === "E-Cheq" ? `E-Cheq ${c.numeroCheque}` : `N°${c.numeroCheque}`} — {c.cliente} — {formatoMoneda(c.valor)}
                               </option>
                             ))}
                           </Form.Select>

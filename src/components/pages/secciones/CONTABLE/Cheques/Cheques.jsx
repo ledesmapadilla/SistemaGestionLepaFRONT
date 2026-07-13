@@ -193,7 +193,7 @@ const Cheques = () => {
 
   const datosFijosCheque = (fila) => (
     <>
-      <p className="mb-1"><strong>N° Cheque:</strong> {fila?.numeroCheque}</p>
+      <p className="mb-1"><strong>N° Cheque:</strong> {fila?.tipo === "E-Cheq" ? `E-Cheq ${fila?.numeroCheque}` : fila?.numeroCheque}</p>
       <p className="mb-1"><strong>Fecha de cobro:</strong> {formatearFecha(fila?.fechaVencimiento)}</p>
       <p className="mb-1"><strong>Razón social cheque:</strong> {fila?.cliente}</p>
       <p className="mb-3"><strong>Monto:</strong> {fila ? formatoMoneda(fila.valor) : ""}</p>
@@ -229,7 +229,7 @@ const Cheques = () => {
         </Modal.Header>
         <Modal.Body>
           <p className="mb-1">Cliente: <span className="text-secondary">{modalVer?.cliente}</span></p>
-          <p className="mb-1">N° Cheque: <span className="text-secondary">{modalVer?.numeroCheque}</span></p>
+          <p className="mb-1">N° Cheque: <span className="text-secondary">{modalVer?.tipo === "E-Cheq" ? `E-Cheq ${modalVer?.numeroCheque}` : modalVer?.numeroCheque}</span></p>
           <p className="mb-1">Tipo: <span className="text-secondary">{modalVer?.tipo}</span></p>
           <p className="mb-1">Fecha de cobro: <span className="text-secondary">{formatearFecha(modalVer?.fechaVencimiento)}</span></p>
           <p className="mb-1">Monto: <span className="text-secondary">{modalVer ? formatoMoneda(modalVer.valor) : ""}</span></p>
@@ -325,7 +325,7 @@ const Cheques = () => {
           <Modal.Title>Cambio de cheque</Modal.Title>
         </Modal.Header>
         <Modal.Body className="py-2">
-          <p className="mb-0">N° Cheque: <span className="text-secondary">{modalCambio?.numeroCheque}</span></p>
+          <p className="mb-0">N° Cheque: <span className="text-secondary">{modalCambio?.tipo === "E-Cheq" ? `E-Cheq ${modalCambio?.numeroCheque}` : modalCambio?.numeroCheque}</span></p>
           <p className="mb-0">Fecha de cobro: <span className="text-secondary">{formatearFecha(modalCambio?.fechaVencimiento)}</span></p>
           <p className="mb-0">Razón social cheque: <span className="text-secondary">{modalCambio?.cliente}</span></p>
           <p className="mb-2">Monto: <span className="text-secondary">{modalCambio ? formatoMoneda(modalCambio.valor) : ""}</span></p>

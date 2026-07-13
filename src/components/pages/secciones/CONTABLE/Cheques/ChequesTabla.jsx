@@ -46,7 +46,10 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
   const filasFiltradas = useMemo(() => {
     return cheques.filter((c) => {
       if (filtroCliente && !c.cliente?.toLowerCase().includes(filtroCliente.toLowerCase())) return false;
-      if (filtroNumero && !String(c.numeroCheque).includes(filtroNumero)) return false;
+      if (filtroNumero) {
+        const numMostrar = c.tipo === "E-Cheq" ? `E-Cheq ${c.numeroCheque}` : String(c.numeroCheque);
+        if (!numMostrar.toLowerCase().includes(filtroNumero.toLowerCase())) return false;
+      }
       if (filtroValor && !String(c.valor).includes(filtroValor)) return false;
       if (filtroFecha && !(c.fechaVencimiento || "").includes(filtroFecha)) return false;
       if (filtroEstado && c.estado !== filtroEstado) return false;
@@ -71,7 +74,8 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
 
     filasFiltradas.forEach((c, rowIdx) => {
       const estado = c.estado === "Pago proveedores" && c.proveedor ? `Pago proveedores — ${c.proveedor}` : c.estado;
-      const fila = [c.cliente, c.numeroCheque, c.valor, formatearFecha(c.fechaVencimiento), estado, c.observaciones || "-"];
+      const numMostrar = c.tipo === "E-Cheq" ? `E-Cheq ${c.numeroCheque}` : c.numeroCheque;
+      const fila = [c.cliente, numMostrar, c.valor, formatearFecha(c.fechaVencimiento), estado, c.observaciones || "-"];
       fila.forEach((val, colIdx) => {
         const esCurrency = colIdx === 2;
         ws[`${cols[colIdx]}${rowIdx + 4}`] = {
@@ -194,7 +198,7 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
             filasFiltradas.map((c) => (
               <tr key={c._id}>
                 <td>{c.cliente}</td>
-                <td>{c.numeroCheque}</td>
+                <td>{c.tipo === "E-Cheq" ? `E-Cheq ${c.numeroCheque}` : c.numeroCheque}</td>
                 <td className={esVencido(c.fechaVencimiento, c.estado) ? "text-danger fw-bold" : ""}>
                   {formatoMoneda(c.valor)}
                 </td>

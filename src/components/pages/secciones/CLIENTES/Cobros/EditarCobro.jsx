@@ -175,11 +175,13 @@ const EditarCobro = () => {
         return;
       }
       if (esCheque(m.medioPago) && !m.numeroCheque) {
-        Swal.fire({ icon: "warning", title: "Número de cheque faltante", text: "Ingresá el número de cheque" });
+        const esE = m.medioPago === "E-Cheq";
+        Swal.fire({ icon: "warning", title: `Número de ${esE ? "e-cheq" : "cheque"} faltante`, text: `Ingresá el número de ${esE ? "e-cheq" : "cheque"}` });
         return;
       }
       if (esCheque(m.medioPago) && !m.fechaCobro) {
-        Swal.fire({ icon: "warning", title: "Fecha de cobro faltante", text: "Ingresá la fecha de cobro del cheque" });
+        const esE = m.medioPago === "E-Cheq";
+        Swal.fire({ icon: "warning", title: "Fecha de cobro faltante", text: `Ingresá la fecha de cobro del ${esE ? "e-cheq" : "cheque"}` });
         return;
       }
     }
@@ -255,11 +257,13 @@ const EditarCobro = () => {
         return;
       }
       if (esCheque(m.medioPago) && !m.numeroCheque) {
-        Swal.fire({ icon: "warning", title: "Número de cheque faltante", text: "Ingresá el número de cheque" });
+        const esE = m.medioPago === "E-Cheq";
+        Swal.fire({ icon: "warning", title: `Número de ${esE ? "e-cheq" : "cheque"} faltante`, text: `Ingresá el número de ${esE ? "e-cheq" : "cheque"}` });
         return;
       }
       if (esCheque(m.medioPago) && !m.fechaCobro) {
-        Swal.fire({ icon: "warning", title: "Fecha de cobro faltante", text: "Ingresá la fecha de cobro del cheque" });
+        const esE = m.medioPago === "E-Cheq";
+        Swal.fire({ icon: "warning", title: "Fecha de cobro faltante", text: `Ingresá la fecha de cobro del ${esE ? "e-cheq" : "cheque"}` });
         return;
       }
     }
@@ -481,7 +485,7 @@ const EditarCobro = () => {
                   </td>
                   <td style={{ minWidth: "130px" }}>
                     {esCheque(m.medioPago)
-                      ? <Form.Control type="text" size="sm" placeholder="N° cheque" value={m.numeroCheque} onChange={(e) => actualizarMedioPago(m.id, "numeroCheque", e.target.value)} />
+                      ? <Form.Control type="text" size="sm" placeholder={m.medioPago === "E-Cheq" ? "N° e-cheq" : "N° cheque"} value={m.numeroCheque} onChange={(e) => actualizarMedioPago(m.id, "numeroCheque", e.target.value)} />
                       : <span className="text-muted">—</span>}
                   </td>
                   <td style={{ minWidth: "140px" }}>

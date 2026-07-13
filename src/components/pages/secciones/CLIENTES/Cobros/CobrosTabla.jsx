@@ -328,8 +328,9 @@ const CobrosTabla = () => {
                 <strong>Formas de pago:</strong>{" "}
                 {cobroVer.mediosPago.map((m) => {
                   const esCheque = m.medioPago === "Cheque" || m.medioPago === "E-Cheq";
+                  const labelN = m.medioPago === "E-Cheq" ? "E-Cheq " : "N°";
                   const extra = esCheque
-                    ? ` — N°${m.numeroCheque || "-"} · Cobro: ${m.fechaCobro ? formatearFecha(m.fechaCobro) : "-"}`
+                    ? ` — ${labelN}${m.numeroCheque || "-"} · Cobro: ${m.fechaCobro ? formatearFecha(m.fechaCobro) : "-"}`
                     : "";
                   return `${m.medioPago} ${formatoMoneda(m.monto)}${extra}`;
                 }).join(" | ")}
