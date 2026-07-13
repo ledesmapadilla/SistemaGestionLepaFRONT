@@ -32,7 +32,7 @@
 
 .tablero-title {
   font-size: 1.5rem;
-  font-weight: 800;
+  font-weight: normal;
   color: var(--lepa-white, #ffffff);
   margin: 0;
   letter-spacing: -0.02em;
@@ -98,7 +98,7 @@
 
 .maquina-name {
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: normal;
   color: #ffffff;
   margin: 0;
   white-space: nowrap;
@@ -126,7 +126,7 @@
 
 .maquina-hours-value {
   font-size: 1.15rem;
-  font-weight: 800;
+  font-weight: normal;
   color: var(--lepa-orange, #F59E0B);
   line-height: 1.1;
 }
@@ -170,12 +170,12 @@
 
 .info-lbl {
   color: #9ca3af;
-  font-weight: 500;
+  font-weight: normal;
 }
 
 .info-val {
   color: #e5e7eb;
-  font-weight: 600;
+  font-weight: normal;
 }
 
 /* Card Footer / Status Badge */
@@ -190,7 +190,7 @@
 
 .status-badge {
   font-size: 0.6rem;
-  font-weight: 750;
+  font-weight: normal;
   padding: 0.15rem 0.45rem;
   border-radius: 30px;
   text-transform: uppercase;
@@ -243,7 +243,7 @@
 /* Hours left badge */
 .hours-left-indicator {
   font-size: 0.65rem;
-  font-weight: 600;
+  font-weight: normal;
 }
 
 .hours-left-indicator.danger {

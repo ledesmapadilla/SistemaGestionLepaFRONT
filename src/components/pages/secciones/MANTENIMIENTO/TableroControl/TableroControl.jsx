@@ -137,24 +137,24 @@ const TableroControl = () => {
 
     const getStyleOK = (ri, ci) => ({
       fill: { fgColor: { rgb: "D1E7DD" } },
-      font: { color: { rgb: "0F5132" }, bold: true, sz: 10 },
+      font: { color: { rgb: "0F5132" }, sz: 10 },
       alignment: alinC,
       border: mkBord(ri, ci)
     });
     const getStyleAtr = (ri, ci) => ({
       fill: { fgColor: { rgb: "F8D7DA" } },
-      font: { color: { rgb: "842029" }, bold: true, sz: 10 },
+      font: { color: { rgb: "842029" }, sz: 10 },
       alignment: alinC,
       border: mkBord(ri, ci)
     });
     const getStyleSin = (ri, ci) => ({
       fill: { fgColor: { rgb: "E2E3E5" } },
-      font: { color: { rgb: "41464B" }, bold: true, sz: 10 },
+      font: { color: { rgb: "41464B" }, sz: 10 },
       alignment: alinC,
       border: mkBord(ri, ci)
     });
 
-    const mkNombre = (ri, ci) => ({ fill: { fgColor: { rgb: "D97706" } }, font: { bold: true, color: { rgb: "FFFFFF" }, sz: 10 }, alignment: alinC, border: mkBord(ri, ci) });
+    const mkNombre = (ri, ci) => ({ fill: { fgColor: { rgb: "D97706" } }, font: { color: { rgb: "FFFFFF" }, sz: 10 }, alignment: alinC, border: mkBord(ri, ci) });
     const mkLbl    = (ri, ci) => ({ font: { color: negro, sz: 9 }, alignment: alinL, border: mkBord(ri, ci) });
     const mkVal    = (ri, ci) => ({ font: { color: negro, sz: 9 }, alignment: alinC, border: mkBord(ri, ci) });
 
@@ -170,7 +170,7 @@ const TableroControl = () => {
     const today = new Date().toLocaleDateString("es-AR");
     ws["A1"] = { v: `Fecha: ${today}`, t: "s", s: { font: { sz: 11 }, alignment: { horizontal: "left", vertical: "center" } } };
     const titCol = colLetter(Math.floor(lastCol / 2) - 2);
-    ws[`${titCol}1`] = { v: "Tablero de Control — Equipos", t: "s", s: { font: { bold: true, sz: 13 }, alignment: { horizontal: "center", vertical: "center" } } };
+    ws[`${titCol}1`] = { v: "Tablero de Control — Equipos", t: "s", s: { font: { sz: 13 }, alignment: { horizontal: "center", vertical: "center" } } };
     merges.push({ s: { r: 0, c: Math.floor(lastCol / 2) - 2 }, e: { r: 0, c: Math.floor(lastCol / 2) + 2 } });
 
     tablero.forEach((m, cardIdx) => {
@@ -216,7 +216,7 @@ const TableroControl = () => {
         if (horasRestantes <= 0) {
           valRestante = `Atrasado ${Math.abs(horasRestantes)} hs`;
           styleRestante = {
-            font: { color: { rgb: "842029" }, bold: true, sz: 9 },
+            font: { color: { rgb: "842029" }, sz: 9 },
             alignment: alinC,
             border: mkBord(4, 1)
           };
@@ -224,7 +224,7 @@ const TableroControl = () => {
           valRestante = `Faltan ${horasRestantes} hs`;
           const isWarning = horasRestantes <= 50;
           styleRestante = {
-            font: { color: isWarning ? { rgb: "664D03" } : { rgb: "0F5132" }, bold: true, sz: 9 },
+            font: { color: isWarning ? { rgb: "664D03" } : { rgb: "0F5132" }, sz: 9 },
             alignment: alinC,
             border: mkBord(4, 1)
           };
@@ -270,10 +270,10 @@ const TableroControl = () => {
           <span className="tablero-date">Actualizado al: {new Date().toLocaleDateString("es-AR")}</span>
         </div>
         <div className="d-flex gap-2 justify-content-end align-items-center">
-          <Button size="sm" variant="outline-light" style={{ borderRadius: "8px", fontWeight: "600", padding: "0.4rem 1rem" }} onClick={exportarExcel}>
+          <Button size="sm" variant="outline-light" style={{ borderRadius: "8px", padding: "0.4rem 1rem" }} onClick={exportarExcel}>
             <i className="bi bi-file-earmark-excel me-1"></i> Excel
           </Button>
-          <Button size="sm" variant="outline-success" style={{ borderRadius: "8px", fontWeight: "600", padding: "0.4rem 1rem" }} onClick={() => navigate(-1)}>
+          <Button size="sm" variant="outline-success" style={{ borderRadius: "8px", padding: "0.4rem 1rem" }} onClick={() => navigate(-1)}>
             Volver
           </Button>
         </div>
