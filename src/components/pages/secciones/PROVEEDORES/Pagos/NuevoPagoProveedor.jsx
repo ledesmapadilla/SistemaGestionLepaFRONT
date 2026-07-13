@@ -461,25 +461,25 @@ const NuevoPagoProveedor = () => {
   return (
     <Container className="py-4 w-75">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h6 className="mb-0">Nuevo Pago a Proveedor (IVA incluido)</h6>
+        <h6 className="mb-0">Nuevo Pago a Proveedor <small className="text-muted">(iva incluido)</small></h6>
         <Button variant="outline-success" onClick={() => navigate("/pago-proveedores")}>Volver</Button>
       </div>
 
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="d-flex flex-column gap-3 mb-4">
+          <div className="d-flex align-items-center gap-2">
+            <Form.Label className="mb-0 text-nowrap" style={{ width: "80px" }}>Fecha</Form.Label>
+            <Form.Control
+              type="date"
+              max={hoy}
+              style={{ width: "160px" }}
+              {...register("fecha", { required: "La fecha es obligatoria" })}
+              isInvalid={!!errors.fecha}
+            />
+          </div>
           <div className="d-flex align-items-center gap-3">
             <div className="d-flex align-items-center gap-2">
-              <Form.Label className="mb-0 text-nowrap">Fecha</Form.Label>
-              <Form.Control
-                type="date"
-                max={hoy}
-                style={{ width: "160px" }}
-                {...register("fecha", { required: "La fecha es obligatoria" })}
-                isInvalid={!!errors.fecha}
-              />
-            </div>
-            <div className="d-flex align-items-center gap-2">
-              <Form.Label className="mb-0 text-nowrap">Proveedor</Form.Label>
+              <Form.Label className="mb-0 text-nowrap" style={{ width: "80px" }}>Proveedor</Form.Label>
               <div style={{ position: "relative", width: "260px" }}>
                 <Form.Select
                   {...proveedorReg}
@@ -511,7 +511,7 @@ const NuevoPagoProveedor = () => {
           </div>
           <div className="d-flex align-items-center gap-3">
             <div className="d-flex align-items-center gap-2">
-              <Form.Label className="mb-0 text-nowrap">Factura</Form.Label>
+              <Form.Label className="mb-0 text-nowrap" style={{ width: "80px" }}>Factura</Form.Label>
               <Form.Select
                 style={{ width: "380px" }}
                 value={facturaElegida}

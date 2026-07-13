@@ -137,7 +137,9 @@ const PagosProveedoresTabla = () => {
   }, [pagos]);
 
   const pagosFiltrados = useMemo(
-    () => [...pagos].reverse().filter((p) => {
+    () => [...pagos]
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+      .filter((p) => {
       const coincideProveedor = filtroProveedor === "" || p.proveedor?.toLowerCase().includes(filtroProveedor.toLowerCase());
       const coincideMedio =
         filtroMedio === "" ||
