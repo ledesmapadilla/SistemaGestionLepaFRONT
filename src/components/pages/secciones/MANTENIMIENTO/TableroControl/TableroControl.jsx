@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Row, Col, Spinner, Button } from "react-bootstrap";
+import { Spinner, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import * as XLSXStyle from "xlsx-js-style";
 import { obtenerTablero } from "../../../../../helpers/queriesTablero.js";
+import "../../../../../styles/tableroControl.css";
 
 const fmtHorometro = (val) =>
   val != null ? Number(val).toLocaleString("es-AR") + " hs" : "-";
@@ -13,54 +14,116 @@ const fmtFecha = (f) =>
 const TarjetaMaquina = ({ datos }) => {
   const { nombre, horometroActual, fechaUltimoRegistro, fechaUltimoService, horometroUltimoService, proximoService, estado } = datos;
 
-  const estadoEl = () => {
-    if (!estado) return <span className="text-muted">SIN DATOS</span>;
-    if (estado === "OK") return <span style={{ color: "#198754", fontWeight: 700 }}>OK</span>;
-    return <span style={{ color: "#dc3545", fontWeight: 700 }}>ATRASADO</span>;
+  // Calculate hours left or exceeded
+  let horasRestantes = null;
+  if (proximoService != null && horometroActual != null) {
+    horasRestantes = proximoService - horometroActual;
+  }
+
+  // Calculate usage percentage since last service
+  let porcentaje = 0;
+  let labelPorcentaje = "0%";
+  if (proximoService != null && horometroUltimoService != null && horometroActual != null) {
+    const totalInterval = proximoService - horometroUltimoService;
+    if (totalInterval > 0) {
+      const transcurrido = horometroActual - horometroUltimoService;
+      porcentaje = Math.min(Math.max((transcurrido / totalInterval) * 100, 0), 100);
+      labelPorcentaje = `${Math.round((transcurrido / totalInterval) * 100)}%`;
+    }
+  } else if (proximoService != null && horometroActual != null && proximoService > 0) {
+    porcentaje = Math.min(Math.max((horometroActual / proximoService) * 100, 0), 100);
+    labelPorcentaje = `${Math.round((horometroActual / proximoService) * 100)}%`;
+  }
+
+  // Determine progress bar and status classes
+  let progressClass = "progress-ok";
+  if (estado === "ATRASADO" || porcentaje >= 100) {
+    progressClass = "progress-danger";
+  } else if (porcentaje >= 80) {
+    progressClass = "progress-warning";
+  }
+
+  // Hours remaining badge class
+  let hoursLeftClass = "normal";
+  if (horasRestantes != null) {
+    if (horasRestantes <= 0) {
+      hoursLeftClass = "danger";
+    } else if (horasRestantes <= 50) {
+      hoursLeftClass = "warning";
+    }
+  }
+
+  const renderBadge = () => {
+    if (!estado) return <span className="status-badge badge-sindatos">Sin Datos</span>;
+    if (estado === "OK") return <span className="status-badge badge-ok">Operativo</span>;
+    return <span className="status-badge badge-atrasado">Atrasado</span>;
   };
 
-  const fila = { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 0" };
-  const lbl = { color: "#fff", fontSize: "0.72rem" };
-  const val = { color: "#6c757d", fontSize: "0.72rem" };
-  const sep = { borderBottom: "1px solid #f0f0f0" };
-
   return (
-    <div style={{ border: "1px solid #ffc107", borderRadius: 6, marginBottom: 8 }}>
-      <div style={{
-        backgroundColor: "#6c757d",
-        color: "#fff",
-        padding: "6px 10px",
-        fontWeight: 700,
-        fontSize: "1rem",
-        textAlign: "center",
-        borderBottom: "2px solid #ffc107",
-      }}>
-        {nombre}
+    <div className={`maquina-card ${estado === "ATRASADO" ? "atrasado" : ""}`}>
+      <div className="maquina-card-header">
+        <h6 className="maquina-name" title={nombre}>{nombre}</h6>
       </div>
-      <div style={{ padding: "6px 10px" }}>
-        <div style={{ ...fila, ...sep }}>
-          <span style={lbl}>Horómetro:</span>
-          <span style={val}>{fmtHorometro(horometroActual)}</span>
-          {fechaUltimoRegistro && <span style={val}>{fmtFecha(fechaUltimoRegistro)}</span>}
-        </div>
-        <div style={{ ...fila, ...sep }}>
-          <span style={lbl}>Últ. Service:</span>
-          {fechaUltimoService ? (
-            <>
-              {horometroUltimoService != null && <span style={val}>{fmtHorometro(horometroUltimoService)}</span>}
-              <span style={val}>{fmtFecha(fechaUltimoService)}</span>
-            </>
-          ) : (
-            <span style={val}>-</span>
+      <div className="maquina-card-body">
+        {/* Metric hero for current hours */}
+        <div className="maquina-hours-hero">
+          <span className="maquina-hours-value">{fmtHorometro(horometroActual)}</span>
+          <span className="maquina-hours-label">Horómetro Actual</span>
+          {fechaUltimoRegistro && (
+            <span className="maquina-hours-date">Reg: {fmtFecha(fechaUltimoRegistro)}</span>
           )}
         </div>
-        <div style={{ ...fila, ...sep }}>
-          <span style={lbl}>Próximo Service:</span>
-          <span style={{ ...val, flex: 1, textAlign: "center", color: "#fff" }}>{fmtHorometro(proximoService)}</span>
-          <span />
+
+        {/* Details Grid */}
+        <div className="maquina-info-grid">
+          <div className="maquina-info-row">
+            <span className="info-lbl">Últ. Service</span>
+            <span className="info-val">
+              {horometroUltimoService != null ? fmtHorometro(horometroUltimoService) : "-"}
+            </span>
+          </div>
+          {fechaUltimoService && (
+            <div className="maquina-info-row" style={{ marginTop: "-2px", borderTop: "none" }}>
+              <span className="info-lbl">Fecha Últ. Serv.</span>
+              <span className="info-val" style={{ fontSize: "0.68rem", color: "#9ca3af" }}>
+                {fmtFecha(fechaUltimoService)}
+              </span>
+            </div>
+          )}
+          <div className="maquina-info-row">
+            <span className="info-lbl">Próx. Service</span>
+            <span className="info-val">{fmtHorometro(proximoService)}</span>
+          </div>
         </div>
-        <div style={{ textAlign: "center", paddingTop: 4, fontSize: "1rem" }}>
-          {estadoEl()}
+
+        {/* Service Progress Bar */}
+        {(proximoService != null) && (
+          <div className="maquina-progress-wrapper">
+            <div className="maquina-progress-header">
+              <span>Progreso de uso</span>
+              <span>{labelPorcentaje}</span>
+            </div>
+            <div className="maquina-progress-container">
+              <div
+                className={`maquina-progress-bar ${progressClass}`}
+                style={{ width: `${porcentaje}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Card Footer */}
+        <div className="maquina-card-footer">
+          {renderBadge()}
+          {horasRestantes != null && (
+            <span className={`hours-left-indicator ${hoursLeftClass}`} title="Horas para el próximo service">
+              {horasRestantes <= 0 ? (
+                `Atrasado ${Math.abs(horasRestantes)} hs`
+              ) : (
+                `Faltan ${horasRestantes} hs`
+              )}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -130,7 +193,6 @@ const TableroControl = () => {
     const today = new Date().toLocaleDateString("es-AR");
     ws["A1"] = { v: `Fecha: ${today}`, t: "s", s: { font: { sz: 11 }, alignment: { horizontal: "left", vertical: "center" } } };
     const titCol = colLetter(Math.floor(lastCol / 2) - 2);
-    const titColFin = colLetter(Math.floor(lastCol / 2) + 2);
     ws[`${titCol}1`] = { v: "Tablero de Control — Equipos", t: "s", s: { font: { bold: true, sz: 13 }, alignment: { horizontal: "center", vertical: "center" } } };
     merges.push({ s: { r: 0, c: Math.floor(lastCol / 2) - 2 }, e: { r: 0, c: Math.floor(lastCol / 2) + 2 } });
 
@@ -190,28 +252,85 @@ const TableroControl = () => {
 
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
+  // Calculate summary metrics
+  const totalEquipos = tablero.length;
+  const equiposOk = tablero.filter(m => m.estado === "OK").length;
+  const equiposAtrasados = tablero.filter(m => m.estado === "ATRASADO").length;
+  const equiposSinDatos = tablero.filter(m => !m.estado || m.estado === "SIN DATOS").length;
+
   return (
-    <div className="mx-auto my-2" style={{ maxWidth: "85vw" }}>
-      <div className="d-flex align-items-center mb-2">
-        <div style={{ flex: 1 }}>
-          <small className="text-muted">Fecha: {new Date().toLocaleDateString("es-AR")}</small>
+    <div className="tablero-container">
+      {/* Header section */}
+      <div className="tablero-header">
+        <div className="tablero-title-section">
+          <h1 className="tablero-title">Tablero de Control — Equipos</h1>
+          <span className="tablero-date">Actualizado al: {new Date().toLocaleDateString("es-AR")}</span>
         </div>
-        <h6 className="mb-0 text-center" style={{ flex: 1 }}>Tablero de Control — Equipos</h6>
-        <div className="d-flex gap-2 justify-content-end" style={{ flex: 1 }}>
-          <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
-          <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+        <div className="d-flex gap-2 justify-content-end align-items-center">
+          <Button size="sm" variant="outline-light" style={{ borderRadius: "8px", fontWeight: "600", padding: "0.4rem 1rem" }} onClick={exportarExcel}>
+            <i className="bi bi-file-earmark-excel me-1"></i> Excel
+          </Button>
+          <Button size="sm" variant="outline-success" style={{ borderRadius: "8px", fontWeight: "600", padding: "0.4rem 1rem" }} onClick={() => navigate(-1)}>
+            Volver
+          </Button>
         </div>
       </div>
+
+      {/* Summary statistics row */}
+      <div className="tablero-summary-row">
+        <div className="stat-card">
+          <div className="stat-icon-wrapper stat-icon-total">
+            <i className="bi bi-gear-fill"></i>
+          </div>
+          <div className="stat-info">
+            <span className="stat-value">{totalEquipos}</span>
+            <span className="stat-label">Total Equipos</span>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon-wrapper stat-icon-ok">
+            <i className="bi bi-check-circle-fill"></i>
+          </div>
+          <div className="stat-info">
+            <span className="stat-value">{equiposOk}</span>
+            <span className="stat-label">Operativos</span>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon-wrapper stat-icon-atrasado">
+            <i className="bi bi-exclamation-triangle-fill"></i>
+          </div>
+          <div className="stat-info">
+            <span className="stat-value">{equiposAtrasados}</span>
+            <span className="stat-label">Atrasados</span>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon-wrapper stat-icon-sindatos">
+            <i className="bi bi-dash-circle-fill"></i>
+          </div>
+          <div className="stat-info">
+            <span className="stat-value">{equiposSinDatos}</span>
+            <span className="stat-label">Sin Datos</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main cards grid */}
       {tablero.length === 0 ? (
-        <p className="text-center text-muted">No hay máquinas registradas</p>
+        <div className="text-center p-5" style={{ borderRadius: "14px", border: "1px dashed rgba(255,255,255,0.1)", background: "rgba(30,41,59,0.3)" }}>
+          <i className="bi bi-inbox text-muted" style={{ fontSize: "2.5rem" }}></i>
+          <p className="text-muted mt-2">No hay máquinas registradas en el sistema.</p>
+        </div>
       ) : (
-        <Row className="g-2">
+        <div className="tablero-grid">
           {tablero.map((m) => (
-            <Col key={m._id} xs={12} sm={6} md={4} lg={2} xl={2} style={{ flex: "0 0 20%", maxWidth: "20%" }}>
-              <TarjetaMaquina datos={m} />
-            </Col>
+            <TarjetaMaquina key={m._id} datos={m} />
           ))}
-        </Row>
+        </div>
       )}
     </div>
   );
