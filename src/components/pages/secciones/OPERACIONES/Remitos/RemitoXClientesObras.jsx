@@ -86,7 +86,7 @@ const RemitosXClientesObras = () => {
     return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
-    <div className="w-50 mx-auto my-2">
+    <div className="w-75 mx-auto my-2">
       <h6 className="text-center mb-1">Obras con remitos sin facturar</h6>
       <h6 className="text-center mb-1">Razón social: <span className="titulosLetras">{razonSocial}</span></h6>
       <div className="d-flex justify-content-end mb-3">
