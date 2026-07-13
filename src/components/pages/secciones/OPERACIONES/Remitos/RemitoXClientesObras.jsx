@@ -93,7 +93,7 @@ const RemitosXClientesObras = () => {
         <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
       </div>
 
-      <div>
+      <div className="table-responsive shadow-sm">
         <Table striped bordered hover className="text-center align-middle">
           <thead className="table-dark">
             <tr>

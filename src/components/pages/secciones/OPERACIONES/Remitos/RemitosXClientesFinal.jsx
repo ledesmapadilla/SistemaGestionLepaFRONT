@@ -163,7 +163,7 @@ const RemitosXClientesFinal = () => {
           </div>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+        <div className="table-responsive shadow-sm" style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
           <Table striped bordered hover className="align-middle text-center">
             <thead className="table-dark">
               <tr>
