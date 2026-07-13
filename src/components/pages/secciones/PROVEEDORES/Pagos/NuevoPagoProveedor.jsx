@@ -57,6 +57,23 @@ const NuevoPagoProveedor = () => {
   const saldoFactura = (f) =>
     Math.max(0, totalFactura(f) - (pagadoPorFactura[f._id?.toString()] || 0));
 
+  const aplicarAsignacionFIFO = (facturasList, mediosList) => {
+    const totalMedios = mediosList.reduce((sum, m) => sum + (parseFloat(m.monto) || 0), 0);
+    const ordenadas = [...facturasList].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    let restante = totalMedios;
+    const mapMonto = {};
+    ordenadas.forEach((f) => {
+      const saldo = saldoFactura(f);
+      const pagar = Math.min(restante, saldo);
+      mapMonto[f._id] = pagar;
+      restante -= pagar;
+    });
+    return facturasList.map((f) => ({
+      ...f,
+      montoPagado: (mapMonto[f._id] || 0).toFixed(2),
+    }));
+  };
+
   useEffect(() => {
     const cargar = async () => {
       try {
@@ -142,6 +159,7 @@ const NuevoPagoProveedor = () => {
 
   useEffect(() => {
     if (mediosPago.length !== 1) return;
+    if (mediosPago[0].chequeId || esCheque(mediosPago[0].medioPago)) return;
     const newTotal = facturasSeleccionadas.reduce(
       (sum, f) => sum + (parseFloat(f.montoPagado) || 0), 0
     );
@@ -152,15 +170,21 @@ const NuevoPagoProveedor = () => {
     if (!facturaElegida) return;
     const factura = todasFacturas.find((f) => f._id === facturaElegida);
     if (!factura) return;
-    setFacturasSeleccionadas((prev) => [
-      ...prev,
-      { ...factura, montoPagado: saldoFactura(factura).toFixed(2) },
-    ]);
+    setFacturasSeleccionadas((prev) => {
+      const nuevaLista = [
+        ...prev,
+        { ...factura, montoPagado: "0.00" },
+      ];
+      return aplicarAsignacionFIFO(nuevaLista, mediosPago);
+    });
     setFacturaElegida("");
   };
 
   const quitarFactura = (id) => {
-    setFacturasSeleccionadas(facturasSeleccionadas.filter((f) => f._id !== id));
+    setFacturasSeleccionadas((prev) => {
+      const nuevaLista = prev.filter((f) => f._id !== id);
+      return aplicarAsignacionFIFO(nuevaLista, mediosPago);
+    });
   };
 
   const esCheque = (tipo) => ["Cheque propio", "Cheque tercero", "E-Cheq propio", "E-Cheq tercero"].includes(tipo);
@@ -176,29 +200,53 @@ const NuevoPagoProveedor = () => {
 
   const seleccionarCheque = (medioId, chequeLocalId) => {
     if (!chequeLocalId) {
-      setMediosPago(prev => prev.map(m => m.id !== medioId ? m : { ...m, numeroCheque: "", clienteCheque: "", fechaCobro: "", monto: "", cobroId: null, medioIndex: null, chequeId: null }));
+      setMediosPago(prev => {
+        const nuevos = prev.map(m => m.id !== medioId ? m : { ...m, numeroCheque: "", clienteCheque: "", fechaCobro: "", monto: "", cobroId: null, medioIndex: null, chequeId: null });
+        setTimeout(() => {
+          setFacturasSeleccionadas((prevFacts) => aplicarAsignacionFIFO(prevFacts, nuevos));
+        }, 0);
+        return nuevos;
+      });
       return;
     }
     const cheque = chequesEnCartera.find(c => c._id === chequeLocalId);
     if (!cheque) return;
-    setMediosPago(prev => prev.map(m => m.id !== medioId ? m : {
-      ...m,
-      numeroCheque: cheque.numeroCheque,
-      clienteCheque: cheque.cliente,
-      fechaCobro: cheque.fechaVencimiento,
-      monto: cheque.valor.toFixed(2),
-      cobroId: cheque.cobroId,
-      medioIndex: cheque.medioIndex,
-      chequeId: cheque._id,
-    }));
+    setMediosPago(prev => {
+      const nuevos = prev.map(m => m.id !== medioId ? m : {
+        ...m,
+        numeroCheque: cheque.numeroCheque,
+        clienteCheque: cheque.cliente,
+        fechaCobro: cheque.fechaVencimiento,
+        monto: cheque.valor.toFixed(2),
+        cobroId: cheque.cobroId,
+        medioIndex: cheque.medioIndex,
+        chequeId: cheque._id,
+      });
+      setTimeout(() => {
+        setFacturasSeleccionadas((prevFacts) => aplicarAsignacionFIFO(prevFacts, nuevos));
+      }, 0);
+      return nuevos;
+    });
   };
 
   const agregarMedioPago = () => {
-    setMediosPago((prev) => [...prev, { id: Date.now(), medioPago: "", monto: totalPagado.toFixed(2), numeroCheque: "", clienteCheque: "", fechaCobro: "", cobroId: null, medioIndex: null, chequeId: null }]);
+    setMediosPago((prev) => {
+      const nuevos = [...prev, { id: Date.now(), medioPago: "", monto: totalPagado.toFixed(2), numeroCheque: "", clienteCheque: "", fechaCobro: "", cobroId: null, medioIndex: null, chequeId: null }];
+      setTimeout(() => {
+        setFacturasSeleccionadas((prevFacts) => aplicarAsignacionFIFO(prevFacts, nuevos));
+      }, 0);
+      return nuevos;
+    });
   };
 
   const quitarMedioPago = (id) => {
-    setMediosPago((prev) => prev.filter((m) => m.id !== id));
+    setMediosPago((prev) => {
+      const nuevos = prev.filter((m) => m.id !== id);
+      setTimeout(() => {
+        setFacturasSeleccionadas((prevFacts) => aplicarAsignacionFIFO(prevFacts, nuevos));
+      }, 0);
+      return nuevos;
+    });
   };
 
   const cerrarModalPago = () => {
@@ -222,21 +270,20 @@ const NuevoPagoProveedor = () => {
       }
     }
     const totalMediosPago = mediosPago.reduce((sum, m) => sum + (parseFloat(m.monto) || 0), 0);
-    if (Math.abs(totalMediosPago - totalPagado) > 0.01) {
-      Swal.fire({
-        icon: "warning",
-        title: "Los montos no coinciden",
-        text: `La suma de las formas de pago (${formatoMoneda(totalMediosPago)}) debe ser igual al total pagado (${formatoMoneda(totalPagado)})`,
-      });
-      return;
-    }
+    setFacturasSeleccionadas((prev) => aplicarAsignacionFIFO(prev, mediosPago));
     setShowModalPago(false);
   };
 
   const actualizarMedioPago = (id, campo, valor) => {
-    setMediosPago((prev) =>
-      prev.map((m) => (m.id !== id ? m : { ...m, [campo]: valor }))
-    );
+    setMediosPago((prev) => {
+      const nuevos = prev.map((m) => (m.id !== id ? m : { ...m, [campo]: valor }));
+      if (campo === "monto" || campo === "medioPago") {
+        setTimeout(() => {
+          setFacturasSeleccionadas((prevFacts) => aplicarAsignacionFIFO(prevFacts, nuevos));
+        }, 0);
+      }
+      return nuevos;
+    });
   };
 
   const actualizarCampo = (id, campo, valor) => {
@@ -292,14 +339,23 @@ const NuevoPagoProveedor = () => {
     }
 
     const totalMediosPago = mediosPago.reduce((sum, m) => sum + (parseFloat(m.monto) || 0), 0);
-    if (Math.abs(totalMediosPago - totalPagado) > 0.01) {
-      Swal.fire({
-        icon: "warning",
-        title: "Los montos no coinciden",
-        text: `La suma de las formas de pago (${formatoMoneda(totalMediosPago)}) debe ser igual al total pagado (${formatoMoneda(totalPagado)})`,
-      });
-      return;
-    }
+
+    // Calcular asignaciones FIFO exactas antes de enviar
+    const ordenadas = [...facturasSeleccionadas].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    let restante = totalMediosPago;
+    const asignaciones = [];
+
+    ordenadas.forEach((f) => {
+      const saldo = saldoFactura(f);
+      const pagar = Math.min(restante, saldo);
+      if (pagar > 0.01) {
+        asignaciones.push({
+          factura: f._id,
+          montoPagado: parseFloat(pagar.toFixed(2)),
+        });
+        restante -= pagar;
+      }
+    });
 
     const payload = {
       fecha: data.fecha?.substring(0, 10),
@@ -311,10 +367,7 @@ const NuevoPagoProveedor = () => {
         numeroCheque: m.numeroCheque || "",
         fechaCobro: m.fechaCobro || "",
       })),
-      pagos: facturasSeleccionadas.map((f) => ({
-        factura: f._id,
-        montoPagado: parseFloat(f.montoPagado),
-      })),
+      pagos: asignaciones,
     };
 
     try {
@@ -366,14 +419,20 @@ const NuevoPagoProveedor = () => {
       if (res?.ok) {
         const data = await res.json();
         setChequesPropioCargados((prev) => [...prev, data.cheque]);
-        setMediosPago((prev) => prev.map((m) =>
-          m.id !== altaChequemedioId ? m : {
-            ...m,
-            numeroCheque: formAltaCheque.numeroCheque.trim(),
-            monto: formAltaCheque.monto,
-            fechaCobro: formAltaCheque.fechaCobro,
-          }
-        ));
+        setMediosPago((prev) => {
+          const nuevos = prev.map((m) =>
+            m.id !== altaChequemedioId ? m : {
+              ...m,
+              numeroCheque: formAltaCheque.numeroCheque.trim(),
+              monto: formAltaCheque.monto,
+              fechaCobro: formAltaCheque.fechaCobro,
+            }
+          );
+          setTimeout(() => {
+            setFacturasSeleccionadas((prevFacts) => aplicarAsignacionFIFO(prevFacts, nuevos));
+          }, 0);
+          return nuevos;
+        });
         setShowAltaCheque(false);
         Swal.fire({ icon: "success", title: "Cheque dado de alta", timer: 1500, showConfirmButton: false });
       } else {
