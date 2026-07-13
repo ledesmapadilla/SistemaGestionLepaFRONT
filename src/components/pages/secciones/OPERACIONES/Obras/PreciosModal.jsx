@@ -30,7 +30,7 @@ const MAQUINA_A_UNIDAD = {
   Retropala: "Horas",
   "Pala cargadora": "Horas",
   Motoniveladora: "Horas",
-  "Camión batea": "Viaje",
+  "Camión batea": "Horas",
   "Carretón chico": "Viaje",
   "Carretón grande": "Viaje",
   "Viaje batea": "Viaje",
