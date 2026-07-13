@@ -179,7 +179,7 @@ const TableroControl = () => {
     const today = new Date().toLocaleDateString("es-AR");
     ws["A1"] = { v: `Fecha: ${today}`, t: "s", s: { font: { sz: 11 }, alignment: { horizontal: "left", vertical: "center" } } };
     const titCol = colLetter(Math.floor(lastCol / 2) - 2);
-    ws[`${titCol}1`] = { v: "Tablero de Control — Equipos", t: "s", s: { font: { sz: 13 }, alignment: { horizontal: "center", vertical: "center" } } };
+    ws[`${titCol}1`] = { v: "Tablero de Control - Equipos", t: "s", s: { font: { sz: 13 }, alignment: { horizontal: "center", vertical: "center" } } };
     merges.push({ s: { r: 0, c: Math.floor(lastCol / 2) - 2 }, e: { r: 0, c: Math.floor(lastCol / 2) + 2 } });
 
     tablero.forEach((m, cardIdx) => {
@@ -273,7 +273,7 @@ const TableroControl = () => {
 
   return (
     <div className="w-75 mx-auto my-2">
-      <h6 className="text-center mb-2">Tablero de Control — Equipos</h6>
+      <h6 className="text-center mb-2">Tablero de Control - Equipos</h6>
       
       <div className="d-flex justify-content-between align-items-start mb-3">
         <div style={{ fontSize: "0.9rem" }}>
