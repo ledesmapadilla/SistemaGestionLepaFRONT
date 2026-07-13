@@ -153,7 +153,7 @@ const TableroControl = () => {
     const CARDS_PER_ROW = 5;
     const CARD_COLS = 3;
     const GAP_COL = 1;
-    const CARD_ROWS = 5;
+    const CARD_ROWS = 6;
     const GAP_ROW = 1;
     const HEADER_ROWS = 2;
 
@@ -174,12 +174,28 @@ const TableroControl = () => {
       right:  { style: ci === CARD_COLS - 1 ? "medium" : "thin", color: { rgb: "000000" } },
     });
 
-    const mkNombre = (ri, ci) => ({ fill: { fgColor: { rgb: "6C757D" } }, font: { bold: true, color: { rgb: "FFFFFF" }, sz: 10 }, alignment: alinC, border: mkBord(ri, ci) });
+    const getStyleOK = (ri, ci) => ({
+      fill: { fgColor: { rgb: "D1E7DD" } },
+      font: { color: { rgb: "0F5132" }, bold: true, sz: 10 },
+      alignment: alinC,
+      border: mkBord(ri, ci)
+    });
+    const getStyleAtr = (ri, ci) => ({
+      fill: { fgColor: { rgb: "F8D7DA" } },
+      font: { color: { rgb: "842029" }, bold: true, sz: 10 },
+      alignment: alinC,
+      border: mkBord(ri, ci)
+    });
+    const getStyleSin = (ri, ci) => ({
+      fill: { fgColor: { rgb: "E2E3E5" } },
+      font: { color: { rgb: "41464B" }, bold: true, sz: 10 },
+      alignment: alinC,
+      border: mkBord(ri, ci)
+    });
+
+    const mkNombre = (ri, ci) => ({ fill: { fgColor: { rgb: "D97706" } }, font: { bold: true, color: { rgb: "FFFFFF" }, sz: 10 }, alignment: alinC, border: mkBord(ri, ci) });
     const mkLbl    = (ri, ci) => ({ font: { color: negro, sz: 9 }, alignment: alinL, border: mkBord(ri, ci) });
     const mkVal    = (ri, ci) => ({ font: { color: negro, sz: 9 }, alignment: alinC, border: mkBord(ri, ci) });
-    const mkEstOK  = (ri, ci) => ({ font: { color: { rgb: "198754" }, bold: true, sz: 10 }, alignment: alinC, border: mkBord(ri, ci) });
-    const mkEstAtr = (ri, ci) => ({ font: { color: { rgb: "DC3545" }, bold: true, sz: 10 }, alignment: alinC, border: mkBord(ri, ci) });
-    const mkEstSin = (ri, ci) => ({ font: { color: negro, sz: 10 }, alignment: alinC, border: mkBord(ri, ci) });
 
     const fmtD = (f) => f ? new Date(f + "T12:00:00").toLocaleDateString("es-AR") : "";
     const fmtH = (v) => v != null ? Number(v).toLocaleString("es-AR") + " hs" : "";
@@ -202,7 +218,24 @@ const TableroControl = () => {
       const sc = cardCol * (CARD_COLS + GAP_COL);
       const sr = cardRow * (CARD_ROWS + GAP_ROW) + HEADER_ROWS;
       const [c0, c1, c2] = [colLetter(sc), colLetter(sc + 1), colLetter(sc + 2)];
-      const [r0, r1, r2, r3, r4] = [sr + 1, sr + 2, sr + 3, sr + 4, sr + 5];
+      const [r0, r1, r2, r3, r4, r5] = [sr + 1, sr + 2, sr + 3, sr + 4, sr + 5, sr + 6];
+
+      // Calculate hours remaining / progress
+      let horasRestantes = null;
+      if (m.proximoService != null && m.horometroActual != null) {
+        horasRestantes = m.proximoService - m.horometroActual;
+      }
+      
+      let labelPorcentaje = "";
+      if (m.proximoService != null && m.horometroUltimoService != null && m.horometroActual != null) {
+        const totalInterval = m.proximoService - m.horometroUltimoService;
+        if (totalInterval > 0) {
+          const transcurrido = m.horometroActual - m.horometroUltimoService;
+          labelPorcentaje = `${Math.round((transcurrido / totalInterval) * 100)}%`;
+        }
+      } else if (m.proximoService != null && m.horometroActual != null && m.proximoService > 0) {
+        labelPorcentaje = `${Math.round((m.horometroActual / m.proximoService) * 100)}%`;
+      }
 
       // Título (ri=0)
       ws[`${c0}${r0}`] = { v: m.nombre ?? "", t: "s", s: mkNombre(0, 0) };
@@ -223,16 +256,41 @@ const TableroControl = () => {
       // Próximo Service (ri=3)
       ws[`${c0}${r3}`] = { v: "Prox. Service:", t: "s", s: mkLbl(3, 0) };
       ws[`${c1}${r3}`] = { v: fmtH(m.proximoService), t: "s", s: mkVal(3, 1) };
-      ws[`${c2}${r3}`] = { v: "", t: "s", s: mkVal(3, 2) };
-      merges.push({ s: { r: sr + 3, c: sc + 1 }, e: { r: sr + 3, c: sc + 2 } });
+      ws[`${c2}${r3}`] = { v: labelPorcentaje ? `Uso: ${labelPorcentaje}` : "", t: "s", s: mkVal(3, 2) };
 
-      // Estado (ri=4)
-      const valEst = m.estado ?? "SIN DATOS";
-      const mkE = m.estado === "OK" ? mkEstOK : m.estado === "ATRASADO" ? mkEstAtr : mkEstSin;
-      ws[`${c0}${r4}`] = { v: valEst, t: "s", s: mkE(4, 0) };
-      ws[`${c1}${r4}`] = { v: "", t: "s", s: mkE(4, 1) };
-      ws[`${c2}${r4}`] = { v: "", t: "s", s: mkE(4, 2) };
-      merges.push({ s: { r: sr + 4, c: sc }, e: { r: sr + 4, c: sc + 2 } });
+      // Restante (ri=4)
+      let valRestante = "-";
+      let styleRestante = mkVal(4, 1);
+      if (horasRestantes != null) {
+        if (horasRestantes <= 0) {
+          valRestante = `Atrasado ${Math.abs(horasRestantes)} hs`;
+          styleRestante = {
+            font: { color: { rgb: "842029" }, bold: true, sz: 9 },
+            alignment: alinC,
+            border: mkBord(4, 1)
+          };
+        } else {
+          valRestante = `Faltan ${horasRestantes} hs`;
+          const isWarning = horasRestantes <= 50;
+          styleRestante = {
+            font: { color: isWarning ? { rgb: "664D03" } : { rgb: "0F5132" }, bold: true, sz: 9 },
+            alignment: alinC,
+            border: mkBord(4, 1)
+          };
+        }
+      }
+      ws[`${c0}${r4}`] = { v: "Restante:", t: "s", s: mkLbl(4, 0) };
+      ws[`${c1}${r4}`] = { v: valRestante, t: "s", s: styleRestante };
+      ws[`${c2}${r4}`] = { v: "", t: "s", s: styleRestante };
+      merges.push({ s: { r: sr + 4, c: sc + 1 }, e: { r: sr + 4, c: sc + 2 } });
+
+      // Estado (ri=5)
+      const valEst = m.estado === "OK" ? "OPERATIVO" : m.estado === "ATRASADO" ? "ATRASADO" : "SIN DATOS";
+      const getStyleE = m.estado === "OK" ? getStyleOK : m.estado === "ATRASADO" ? getStyleAtr : getStyleSin;
+      ws[`${c0}${r5}`] = { v: valEst, t: "s", s: getStyleE(5, 0) };
+      ws[`${c1}${r5}`] = { v: "", t: "s", s: getStyleE(5, 1) };
+      ws[`${c2}${r5}`] = { v: "", t: "s", s: getStyleE(5, 2) };
+      merges.push({ s: { r: sr + 5, c: sc }, e: { r: sr + 5, c: sc + 2 } });
     });
 
     const totalCardRows = Math.ceil(tablero.length / CARDS_PER_ROW);
