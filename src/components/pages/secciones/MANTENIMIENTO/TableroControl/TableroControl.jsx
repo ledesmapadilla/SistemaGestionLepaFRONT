@@ -20,29 +20,6 @@ const TarjetaMaquina = ({ datos }) => {
     horasRestantes = proximoService - horometroActual;
   }
 
-  // Calculate usage percentage since last service
-  let porcentaje = 0;
-  let labelPorcentaje = "0%";
-  if (proximoService != null && horometroUltimoService != null && horometroActual != null) {
-    const totalInterval = proximoService - horometroUltimoService;
-    if (totalInterval > 0) {
-      const transcurrido = horometroActual - horometroUltimoService;
-      porcentaje = Math.min(Math.max((transcurrido / totalInterval) * 100, 0), 100);
-      labelPorcentaje = `${Math.round((transcurrido / totalInterval) * 100)}%`;
-    }
-  } else if (proximoService != null && horometroActual != null && proximoService > 0) {
-    porcentaje = Math.min(Math.max((horometroActual / proximoService) * 100, 0), 100);
-    labelPorcentaje = `${Math.round((horometroActual / proximoService) * 100)}%`;
-  }
-
-  // Determine progress bar and status classes
-  let progressClass = "progress-ok";
-  if (estado === "ATRASADO" || porcentaje >= 100) {
-    progressClass = "progress-danger";
-  } else if (porcentaje >= 80) {
-    progressClass = "progress-warning";
-  }
-
   // Hours remaining badge class
   let hoursLeftClass = "normal";
   if (horasRestantes != null) {
@@ -55,7 +32,7 @@ const TarjetaMaquina = ({ datos }) => {
 
   const renderBadge = () => {
     if (!estado) return <span className="status-badge badge-sindatos">Sin Datos</span>;
-    if (estado === "OK") return <span className="status-badge badge-ok">Operativo</span>;
+    if (estado === "OK") return <span className="status-badge badge-ok">OK</span>;
     return <span className="status-badge badge-atrasado">Atrasado</span>;
   };
 
@@ -95,22 +72,6 @@ const TarjetaMaquina = ({ datos }) => {
             <span className="info-val">{fmtHorometro(proximoService)}</span>
           </div>
         </div>
-
-        {/* Service Progress Bar */}
-        {(proximoService != null) && (
-          <div className="maquina-progress-wrapper">
-            <div className="maquina-progress-header">
-              <span>Progreso de uso</span>
-              <span>{labelPorcentaje}</span>
-            </div>
-            <div className="maquina-progress-container">
-              <div
-                className={`maquina-progress-bar ${progressClass}`}
-                style={{ width: `${porcentaje}%` }}
-              />
-            </div>
-          </div>
-        )}
 
         {/* Card Footer */}
         <div className="maquina-card-footer">
@@ -155,7 +116,7 @@ const TableroControl = () => {
     const GAP_COL = 1;
     const CARD_ROWS = 6;
     const GAP_ROW = 1;
-    const HEADER_ROWS = 5;
+    const HEADER_ROWS = 2;
 
     const colLetter = (idx) => {
       if (idx < 26) return String.fromCharCode(65 + idx);
@@ -212,53 +173,6 @@ const TableroControl = () => {
     ws[`${titCol}1`] = { v: "Tablero de Control — Equipos", t: "s", s: { font: { bold: true, sz: 13 }, alignment: { horizontal: "center", vertical: "center" } } };
     merges.push({ s: { r: 0, c: Math.floor(lastCol / 2) - 2 }, e: { r: 0, c: Math.floor(lastCol / 2) + 2 } });
 
-    // Summary Metrics Boxes en filas 3 y 4
-    const totalEquipos = tablero.length;
-    const equiposOk = tablero.filter(m => m.estado === "OK").length;
-    const equiposAtrasados = tablero.filter(m => m.estado === "ATRASADO").length;
-    const equiposSinDatos = tablero.filter(m => !m.estado || m.estado === "SIN DATOS").length;
-
-    const getBoxBorder = (rowType, colOffset) => ({
-      top: { style: rowType === 'top' ? 'thin' : 'none', color: { rgb: "A0AEC0" } },
-      bottom: { style: rowType === 'bottom' ? 'thin' : 'none', color: { rgb: "A0AEC0" } },
-      left: { style: colOffset === 0 ? 'thin' : 'none', color: { rgb: "A0AEC0" } },
-      right: { style: colOffset === 2 ? 'thin' : 'none', color: { rgb: "A0AEC0" } }
-    });
-
-    const setBox = (startColIdx, row1, row2, val, label, fgColor, fontColor) => {
-      const cL = (i) => colLetter(startColIdx + i);
-      merges.push({ s: { r: row1 - 1, c: startColIdx }, e: { r: row1 - 1, c: startColIdx + 2 } });
-      merges.push({ s: { r: row2 - 1, c: startColIdx }, e: { r: row2 - 1, c: startColIdx + 2 } });
-      
-      for (let i = 0; i < 3; i++) {
-        ws[`${cL(i)}${row1}`] = { 
-          v: i === 0 ? val : "", 
-          t: typeof val === "number" ? "n" : "s", 
-          s: {
-            fill: { fgColor: { rgb: fgColor } },
-            font: { bold: true, sz: 12, color: { rgb: fontColor } },
-            alignment: alinC,
-            border: getBoxBorder('top', i)
-          }
-        };
-        ws[`${cL(i)}${row2}`] = { 
-          v: i === 0 ? label : "", 
-          t: "s", 
-          s: {
-            fill: { fgColor: { rgb: fgColor } },
-            font: { bold: true, sz: 7, color: { rgb: fontColor } },
-            alignment: alinC,
-            border: getBoxBorder('bottom', i)
-          }
-        };
-      }
-    };
-
-    setBox(0, 3, 4, totalEquipos, "TOTAL EQUIPOS", "F1F5F9", "475569");
-    setBox(4, 3, 4, equiposOk, "OPERATIVOS", "D1E7DD", "0F5132");
-    setBox(8, 3, 4, equiposAtrasados, "ATRASADOS", "F8D7DA", "842029");
-    setBox(12, 3, 4, equiposSinDatos, "SIN DATOS", "E2E3E5", "41464B");
-
     tablero.forEach((m, cardIdx) => {
       const cardCol = cardIdx % CARDS_PER_ROW;
       const cardRow = Math.floor(cardIdx / CARDS_PER_ROW);
@@ -267,21 +181,10 @@ const TableroControl = () => {
       const [c0, c1, c2] = [colLetter(sc), colLetter(sc + 1), colLetter(sc + 2)];
       const [r0, r1, r2, r3, r4, r5] = [sr + 1, sr + 2, sr + 3, sr + 4, sr + 5, sr + 6];
 
-      // Calculate hours remaining / progress
+      // Calculate hours remaining
       let horasRestantes = null;
       if (m.proximoService != null && m.horometroActual != null) {
         horasRestantes = m.proximoService - m.horometroActual;
-      }
-      
-      let labelPorcentaje = "";
-      if (m.proximoService != null && m.horometroUltimoService != null && m.horometroActual != null) {
-        const totalInterval = m.proximoService - m.horometroUltimoService;
-        if (totalInterval > 0) {
-          const transcurrido = m.horometroActual - m.horometroUltimoService;
-          labelPorcentaje = `${Math.round((transcurrido / totalInterval) * 100)}%`;
-        }
-      } else if (m.proximoService != null && m.horometroActual != null && m.proximoService > 0) {
-        labelPorcentaje = `${Math.round((m.horometroActual / m.proximoService) * 100)}%`;
       }
 
       // Título (ri=0)
@@ -303,7 +206,8 @@ const TableroControl = () => {
       // Próximo Service (ri=3)
       ws[`${c0}${r3}`] = { v: "Prox. Service:", t: "s", s: mkLbl(3, 0) };
       ws[`${c1}${r3}`] = { v: fmtH(m.proximoService), t: "s", s: mkVal(3, 1) };
-      ws[`${c2}${r3}`] = { v: labelPorcentaje ? `Uso: ${labelPorcentaje}` : "", t: "s", s: mkVal(3, 2) };
+      ws[`${c2}${r3}`] = { v: "", t: "s", s: mkVal(3, 2) };
+      merges.push({ s: { r: sr + 3, c: sc + 1 }, e: { r: sr + 3, c: sc + 2 } });
 
       // Restante (ri=4)
       let valRestante = "-";
@@ -332,7 +236,7 @@ const TableroControl = () => {
       merges.push({ s: { r: sr + 4, c: sc + 1 }, e: { r: sr + 4, c: sc + 2 } });
 
       // Estado (ri=5)
-      const valEst = m.estado === "OK" ? "OPERATIVO" : m.estado === "ATRASADO" ? "ATRASADO" : "SIN DATOS";
+      const valEst = m.estado === "OK" ? "OK" : m.estado === "ATRASADO" ? "ATRASADO" : "SIN DATOS";
       const getStyleE = m.estado === "OK" ? getStyleOK : m.estado === "ATRASADO" ? getStyleAtr : getStyleSin;
       ws[`${c0}${r5}`] = { v: valEst, t: "s", s: getStyleE(5, 0) };
       ws[`${c1}${r5}`] = { v: "", t: "s", s: getStyleE(5, 1) };
@@ -357,12 +261,6 @@ const TableroControl = () => {
 
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
-  // Calculate summary metrics
-  const totalEquipos = tablero.length;
-  const equiposOk = tablero.filter(m => m.estado === "OK").length;
-  const equiposAtrasados = tablero.filter(m => m.estado === "ATRASADO").length;
-  const equiposSinDatos = tablero.filter(m => !m.estado || m.estado === "SIN DATOS").length;
-
   return (
     <div className="tablero-container">
       {/* Header section */}
@@ -378,49 +276,6 @@ const TableroControl = () => {
           <Button size="sm" variant="outline-success" style={{ borderRadius: "8px", fontWeight: "600", padding: "0.4rem 1rem" }} onClick={() => navigate(-1)}>
             Volver
           </Button>
-        </div>
-      </div>
-
-      {/* Summary statistics row */}
-      <div className="tablero-summary-row">
-        <div className="stat-card">
-          <div className="stat-icon-wrapper stat-icon-total">
-            <i className="bi bi-gear-fill"></i>
-          </div>
-          <div className="stat-info">
-            <span className="stat-value">{totalEquipos}</span>
-            <span className="stat-label">Total Equipos</span>
-          </div>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-icon-wrapper stat-icon-ok">
-            <i className="bi bi-check-circle-fill"></i>
-          </div>
-          <div className="stat-info">
-            <span className="stat-value">{equiposOk}</span>
-            <span className="stat-label">Operativos</span>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon-wrapper stat-icon-atrasado">
-            <i className="bi bi-exclamation-triangle-fill"></i>
-          </div>
-          <div className="stat-info">
-            <span className="stat-value">{equiposAtrasados}</span>
-            <span className="stat-label">Atrasados</span>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon-wrapper stat-icon-sindatos">
-            <i className="bi bi-dash-circle-fill"></i>
-          </div>
-          <div className="stat-info">
-            <span className="stat-value">{equiposSinDatos}</span>
-            <span className="stat-label">Sin Datos</span>
-          </div>
         </div>
       </div>
 
