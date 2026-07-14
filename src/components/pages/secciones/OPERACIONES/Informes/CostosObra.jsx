@@ -7,6 +7,7 @@ import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos.js";
 import { listarGastosPorObra } from "../../../../../helpers/queriesGastos.js";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { listarAceites } from "../../../../../helpers/queriesAceites.js";
+import { listarPagosProveedoresPorObra } from "../../../../../helpers/queriesPagosProveedores";
 import { valorSemanalVigente } from "../../../../../helpers/semanalUtils.js";
 import "../../../../../styles/verRemitos.css";
 import CostoObraTabla from "./CostoObraTabla"; 
@@ -115,11 +116,12 @@ const CostosObra = () => {
     setDatosAnalisis(null);
 
     try {
-      const [remitosData, gastosData, personalRes, aceitesRes] = await Promise.all([
+      const [remitosData, gastosData, personalRes, aceitesRes, pagosRes] = await Promise.all([
         listarRemitosPorObra(obra._id),
         listarGastosPorObra(obra._id),
         listarPersonal(),
-        listarAceites()
+        listarAceites(),
+        listarPagosProveedoresPorObra(obra.nombreobra).catch(() => [])
       ]);
 
       const remitos = Array.isArray(remitosData) ? remitosData : [];
@@ -162,23 +164,30 @@ const CostosObra = () => {
         }, 0);
       }, 0);
 
-      // Costo de personal por ítem, usando el semanal vigente a la fecha del
-      // remito: un aumento posterior no debe alterar el costo de una obra pasada.
+      // Costo de personal por ítem, usando costoHoraPersonal de remitos
+      // o el semanal vigente a la fecha del remito como fallback.
       let totalPersonalCalculado = 0;
       remitos.forEach((remito) => {
         if (!remito.items) return;
         remito.items.forEach((item) => {
           if (!item.personal) return;
-          const empleadoEncontrado = personalDB.find(
-            (p) => p.nombre.trim().toLowerCase() === item.personal.trim().toLowerCase()
-          );
-          if (!empleadoEncontrado) return;
-          const esServicio = item.servicio && item.servicio !== "";
-          const divisor = esServicio ? 5.5 : 44;
-          const precioSemanal = valorSemanalVigente(empleadoEncontrado.semanal, item.fecha || remito.fecha);
-          const valorUnitario = precioSemanal > 0 ? precioSemanal / divisor : 0;
-          const cantidad = esServicio ? 1 : Number(item.cantidad || 0);
-          totalPersonalCalculado += cantidad * valorUnitario;
+          const costoHora = Number(item.costoHoraPersonal || 0);
+          if (costoHora > 0) {
+            const esServicio = item.servicio && item.servicio !== "";
+            const cantidad = esServicio ? 8 : Number(item.cantidad || 0);
+            totalPersonalCalculado += cantidad * costoHora;
+          } else {
+            const empleadoEncontrado = personalDB.find(
+              (p) => p.nombre.trim().toLowerCase() === item.personal.trim().toLowerCase()
+            );
+            if (!empleadoEncontrado) return;
+            const esServicio = item.servicio && item.servicio !== "";
+            const divisor = esServicio ? 5.5 : 44;
+            const precioSemanal = valorSemanalVigente(empleadoEncontrado.semanal, item.fecha || remito.fecha);
+            const valorUnitario = precioSemanal > 0 ? precioSemanal / divisor : 0;
+            const cantidad = esServicio ? 1 : Number(item.cantidad || 0);
+            totalPersonalCalculado += cantidad * valorUnitario;
+          }
         });
       });
 
@@ -199,6 +208,16 @@ const CostosObra = () => {
             return true;
         })
         .reduce((acc, item) => acc + Number((item.costoUnitario || 0) * (item.cantidad || 0)), 0);
+
+      // Sumar los pagos a proveedores que pertenecen a esta obra
+      const pagosObra = (pagosRes || []).flatMap((pago) => {
+        const itemsObra = (pago.pagos || []).filter((item) => item.factura?.obra === obra.nombreobra);
+        return itemsObra.map((item) => ({
+          montoPagado: item.montoPagado || 0,
+        }));
+      });
+      const totalPagosProveedores = pagosObra.reduce((sum, p) => sum + p.montoPagado, 0);
+      const totalOtrosConPagos = totalOtros + totalPagosProveedores;
 
       // --- CÁLCULO ACEITES ---
       let aceitesDB = [];
@@ -226,7 +245,7 @@ const CostosObra = () => {
       setDatosAnalisis({
         gasoil: totalGasoil,
         manoObra: totalManoObraFinal,
-        otros: totalOtros,
+        otros: totalOtrosConPagos,
         aceites: totalAceites,
         facturacion: totalFacturacion
       });
