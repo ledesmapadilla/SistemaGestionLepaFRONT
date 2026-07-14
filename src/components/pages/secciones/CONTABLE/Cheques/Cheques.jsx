@@ -97,18 +97,18 @@ const Cheques = () => {
       return;
     }
     if (uso === "En cartera") {
-      await actualizarEstadoCheque(fila.cobroId, fila.medioIndex, "En cartera", "", "", { tasaInteres: null, gastosPorc: null, montoDescontado: null });
+      await actualizarEstadoCheque(fila.cobroId, fila.medioIndex, "En cartera", "", "", { tasaInteres: null, gastosPorc: null, montoDescontado: null, fechaCambio: "" });
       setCheques((prev) =>
         prev.map((c) =>
-          c._id === fila._id ? { ...c, estado: "En cartera", proveedor: "", tasaInteres: null, gastosPorc: null, montoDescontado: null, observaciones: "" } : c
+          c._id === fila._id ? { ...c, estado: "En cartera", proveedor: "", tasaInteres: null, gastosPorc: null, montoDescontado: null, fechaCambio: "", observaciones: "" } : c
         )
       );
       return;
     }
-    await actualizarEstadoCheque(fila.cobroId, fila.medioIndex, uso, "", "", { tasaInteres: null, gastosPorc: null, montoDescontado: null });
+    await actualizarEstadoCheque(fila.cobroId, fila.medioIndex, uso, "", "", { tasaInteres: null, gastosPorc: null, montoDescontado: null, fechaCambio: "" });
     setCheques((prev) =>
       prev.map((c) =>
-        c._id === fila._id ? { ...c, estado: uso, proveedor: "", tasaInteres: null, gastosPorc: null, montoDescontado: null, observaciones: "" } : c
+        c._id === fila._id ? { ...c, estado: uso, proveedor: "", tasaInteres: null, gastosPorc: null, montoDescontado: null, fechaCambio: "", observaciones: "" } : c
       )
     );
   };
