@@ -267,7 +267,7 @@ const RemitosXClientesFinal = () => {
         </div>
 
         <div className="table-responsive shadow-sm" style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-          <Table striped bordered hover className="align-middle text-center">
+          <Table striped bordered hover className="align-middle text-center tabla-remitos">
             <thead className="table-dark">
               <tr>
                 <th>N° Remito</th>

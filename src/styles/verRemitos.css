@@ -31,3 +31,16 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Encabezado fijo al hacer scroll vertical */
+.table-responsive {
+  position: relative;
+}
+
+.tabla-remitos thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background-color: #212529 !important; /* Color oscuro table-dark */
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.15); /* Borde inferior visible */
+}
