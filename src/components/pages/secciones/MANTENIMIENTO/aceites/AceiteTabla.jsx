@@ -49,6 +49,15 @@ const AceiteTabla = () => {
     }
   };
 
+  const mostrarFechaDMY = (fecha) => {
+    if (!fecha) return "-";
+    const cleanFecha = fecha.includes("T") ? fecha.split("T")[0] : fecha;
+    const parts = cleanFecha.split("-");
+    if (parts.length !== 3) return "-";
+    const [y, m, d] = parts;
+    return `${d}-${m}-${y}`;
+  };
+
   // Calcular saldo por tipo de aceite
   const resumen = aceites.map((aceite) => {
     let saldo = 0;
@@ -165,7 +174,7 @@ const AceiteTabla = () => {
       title: "Detalle del Consumo",
       html: `
         <div style="text-align:left">
-          <p><b>Fecha:</b> ${new Date(c.fecha).toLocaleDateString("es-AR")}</p>
+          <p><b>Fecha:</b> ${mostrarFechaDMY(c.fecha)}</p>
           <p><b>Tipo de Aceite:</b> ${c.tipoAceite}</p>
           <p><b>Litros:</b> ${c.litros}</p>
           <p><b>Máquina:</b> ${c.maquina || "-"}</p>
@@ -308,7 +317,7 @@ const AceiteTabla = () => {
                     ))}
                     {consumosFiltrados.map((c, i) => (
                       <tr key={c._id || i}>
-                        <td>{new Date(c.fecha).toLocaleDateString("es-AR")}</td>
+                        <td>{mostrarFechaDMY(c.fecha)}</td>
                         <td>{c.tipoAceite}</td>
                         <td>{c.litros}</td>
                         <td>{c.maquina || "-"}</td>

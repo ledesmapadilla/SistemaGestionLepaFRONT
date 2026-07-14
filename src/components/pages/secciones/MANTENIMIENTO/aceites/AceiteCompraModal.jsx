@@ -28,7 +28,7 @@ const AceiteCompraModal = ({ show, onHide, onSubmit, editando = false, compra = 
       cargarDatos().then(() => {
         if (editando && compra) {
           reset({
-            fecha: compra.fecha ? new Date(compra.fecha).toISOString().split("T")[0] : "",
+            fecha: compra.fecha ? compra.fecha.split("T")[0] : "",
             proveedor: compra.proveedor || "",
             tipoAceite: compra.tipoAceite || "",
             marca: compra.marca || "",
@@ -37,8 +37,10 @@ const AceiteCompraModal = ({ show, onHide, onSubmit, editando = false, compra = 
             observaciones: compra.observaciones || ""
           });
         } else {
+          const today = new Date();
+          const hoy = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
           reset({
-            fecha: new Date().toISOString().split("T")[0],
+            fecha: hoy,
             proveedor: "",
             tipoAceite: "",
             marca: "",

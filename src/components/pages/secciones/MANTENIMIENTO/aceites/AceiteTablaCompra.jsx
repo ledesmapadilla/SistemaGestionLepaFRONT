@@ -51,6 +51,15 @@ const AceiteTablaCompra = () => {
     (c.proveedor || "").toLowerCase().includes(busq)
   );
 
+  const mostrarFechaDMY = (fecha) => {
+    if (!fecha) return "-";
+    const cleanFecha = fecha.includes("T") ? fecha.split("T")[0] : fecha;
+    const parts = cleanFecha.split("-");
+    if (parts.length !== 3) return "-";
+    const [y, m, d] = parts;
+    return `${d}-${m}-${y}`;
+  };
+
   const formatoMiles = (valor) => {
     if (valor === undefined || valor === null) return "-";
     return new Intl.NumberFormat("es-AR").format(valor);
@@ -141,7 +150,7 @@ const AceiteTablaCompra = () => {
                 ) : (
                   filtradas.map((c, i) => (
                     <tr key={c._id || i}>
-                      <td>{new Date(c.fecha).toLocaleDateString("es-AR")}</td>
+                      <td>{mostrarFechaDMY(c.fecha)}</td>
                       <td>{c.proveedor || "-"}</td>
                       <td>{c.tipoAceite}</td>
                       <td>{c.marca || "-"}</td>

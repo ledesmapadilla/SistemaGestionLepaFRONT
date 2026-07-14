@@ -28,7 +28,7 @@ const AceiteConsumoModal = ({ show, onHide, onSubmit, editando = false, consumo 
       cargarDatos();
       if (editando && consumo) {
         reset({
-          fecha: consumo.fecha ? new Date(consumo.fecha).toISOString().split("T")[0] : "",
+          fecha: consumo.fecha ? consumo.fecha.split("T")[0] : "",
           tipoAceite: consumo.tipoAceite || "",
           litros: consumo.litros || "",
           maquina: consumo.maquina || "",
