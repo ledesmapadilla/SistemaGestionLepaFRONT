@@ -106,11 +106,21 @@ const AceiteConsumoModal = ({ show, onHide, onSubmit, editando = false, consumo 
                 <Form.Label className="fw-bold">Máquina *</Form.Label>
                 <Form.Select {...register("maquina", { required: "Seleccione una máquina" })}>
                   <option value="">-- Seleccionar --</option>
-                  {maquinas.map((m) => (
-                    <option key={m._id} value={m.maquina}>
-                      {m.maquina} {m.patente ? `(${m.patente})` : ""}
-                    </option>
-                  ))}
+                  {maquinas
+                    .filter((m) => {
+                      const nombre = m.maquina.toLowerCase().trim();
+                      const esExcluida = ["batea 1", "batea 2", "carreton grande", "carretón grande", "carreton chico", "carretón chico"].includes(nombre);
+                      if (esExcluida && editando && consumo && consumo.maquina === m.maquina) {
+                        return true;
+                      }
+                      return !esExcluida;
+                    })
+                    .map((m) => (
+                      <option key={m._id} value={m.maquina}>
+                        {m.maquina} {m.patente ? `(${m.patente})` : ""}
+                      </option>
+                    ))}
+                  <option value="Otras">Otras</option>
                 </Form.Select>
                 <Form.Text className="text-danger">{errors.maquina?.message}</Form.Text>
               </Form.Group>
