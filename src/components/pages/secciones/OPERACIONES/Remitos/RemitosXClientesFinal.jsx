@@ -112,26 +112,6 @@ const RemitosXClientesFinal = () => {
         return total + subtotalRemito;
       }, 0);
 
-  const handleToggleRemito = (remitoId) => {
-    let newSelected;
-    if (selectedRemitoIds.includes(remitoId)) {
-      newSelected = selectedRemitoIds.filter((id) => id !== remitoId);
-    } else {
-      newSelected = [...selectedRemitoIds, remitoId];
-    }
-    setSelectedRemitoIds(newSelected);
-
-    // Auto-populate input if exactly one remito is selected
-    if (newSelected.length === 1) {
-      const r = remitos.find((rem) => rem._id === newSelected[0]);
-      if (r && r.oc) {
-        setOcInput(r.oc);
-      } else {
-        setOcInput("");
-      }
-    }
-  };
-
   const handleSaveOC = async () => {
     if (!ocInput.trim() || selectedRemitoIds.length === 0) return;
     try {
@@ -142,8 +122,8 @@ const RemitosXClientesFinal = () => {
       setShowModalOC(false);
       await Swal.fire({
         icon: "success",
-        title: "O.C. Guardada",
-        text: `Se guardó la O.C. ${ocInput} en los remitos seleccionados.`,
+        title: "O.C. Asignada",
+        text: `Se asignó la O.C. ${ocInput} a los remitos seleccionados.`,
         timer: 2000,
         showConfirmButton: false,
       });
@@ -153,7 +133,7 @@ const RemitosXClientesFinal = () => {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "No se pudo guardar la O.C. en los remitos.",
+        text: "No se pudo asignar la O.C. a los remitos.",
       });
     } finally {
       setLoading(false);
@@ -368,14 +348,18 @@ const RemitosXClientesFinal = () => {
                       return (
                         <div key={r._id} className="dropdown-item d-flex align-items-center gap-2" style={{ cursor: "pointer" }} onClick={(e) => {
                           e.stopPropagation();
-                          handleToggleRemito(r._id);
+                          if (isChecked) {
+                            setSelectedRemitoIds(selectedRemitoIds.filter((id) => id !== r._id));
+                          } else {
+                            setSelectedRemitoIds([...selectedRemitoIds, r._id]);
+                          }
                         }}>
                           <Form.Check
                             type="checkbox"
                             id={`dd-remito-${r._id}`}
                             checked={isChecked}
                             onChange={() => {}}
-                            label={`Remito N° ${r.remito} (${mostrarFechaDMY(r.fecha)}) - $${formatoMiles(totalRemito)} ${r.oc ? `[O.C.: ${r.oc}]` : ""}`}
+                            label={`Remito N° ${r.remito} (${mostrarFechaDMY(r.fecha)}) - $${formatoMiles(totalRemito)}`}
                             onClick={(e) => e.stopPropagation()}
                           />
                         </div>
@@ -399,11 +383,11 @@ const RemitosXClientesFinal = () => {
                 Borrar O.C.
               </Button>
               <Button
-                variant="outline-primary"
+                variant="outline-success"
                 onClick={handleSaveOC}
                 disabled={!ocInput.trim() || selectedRemitoIds.length === 0}
               >
-                Editar
+                Asignar O.C.
               </Button>
             </div>
           </Modal.Footer>
