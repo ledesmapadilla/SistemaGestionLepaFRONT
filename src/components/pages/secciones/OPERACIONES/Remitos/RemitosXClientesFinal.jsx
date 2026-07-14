@@ -112,6 +112,26 @@ const RemitosXClientesFinal = () => {
         return total + subtotalRemito;
       }, 0);
 
+  const handleToggleRemito = (remitoId) => {
+    let newSelected;
+    if (selectedRemitoIds.includes(remitoId)) {
+      newSelected = selectedRemitoIds.filter((id) => id !== remitoId);
+    } else {
+      newSelected = [...selectedRemitoIds, remitoId];
+    }
+    setSelectedRemitoIds(newSelected);
+
+    // Auto-populate input if exactly one remito is selected
+    if (newSelected.length === 1) {
+      const r = remitos.find((rem) => rem._id === newSelected[0]);
+      if (r && r.oc) {
+        setOcInput(r.oc);
+      } else {
+        setOcInput("");
+      }
+    }
+  };
+
   const handleSaveOC = async () => {
     if (!ocInput.trim() || selectedRemitoIds.length === 0) return;
     try {
@@ -122,8 +142,8 @@ const RemitosXClientesFinal = () => {
       setShowModalOC(false);
       await Swal.fire({
         icon: "success",
-        title: "O.C. Asignada",
-        text: `Se asignó la O.C. ${ocInput} a los remitos seleccionados.`,
+        title: "O.C. Guardada",
+        text: `Se guardó la O.C. ${ocInput} en los remitos seleccionados.`,
         timer: 2000,
         showConfirmButton: false,
       });
@@ -133,7 +153,47 @@ const RemitosXClientesFinal = () => {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "No se pudo asignar la O.C. a los remitos.",
+        text: "No se pudo guardar la O.C. en los remitos.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteOC = async () => {
+    if (selectedRemitoIds.length === 0) return;
+    const confirm = await Swal.fire({
+      title: "¿Borrar O.C.?",
+      text: `Se eliminará la O.C. de los ${selectedRemitoIds.length} remito(s) seleccionado(s).`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, borrar",
+      cancelButtonText: "Cancelar",
+      customClass: { confirmButton: 'swal-btn-danger' }
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+      setLoading(true);
+      await Promise.all(
+        selectedRemitoIds.map((id) => editarRemito(id, { oc: "" }))
+      );
+      setShowModalOC(false);
+      await Swal.fire({
+        icon: "success",
+        title: "O.C. Eliminada",
+        text: "Se eliminó la O.C. de los remitos seleccionados.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      cargarRemitos();
+    } catch (error) {
+      console.error("Error al borrar O.C.:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo eliminar la O.C. de los remitos.",
       });
     } finally {
       setLoading(false);
@@ -308,18 +368,14 @@ const RemitosXClientesFinal = () => {
                       return (
                         <div key={r._id} className="dropdown-item d-flex align-items-center gap-2" style={{ cursor: "pointer" }} onClick={(e) => {
                           e.stopPropagation();
-                          if (isChecked) {
-                            setSelectedRemitoIds(selectedRemitoIds.filter((id) => id !== r._id));
-                          } else {
-                            setSelectedRemitoIds([...selectedRemitoIds, r._id]);
-                          }
+                          handleToggleRemito(r._id);
                         }}>
                           <Form.Check
                             type="checkbox"
                             id={`dd-remito-${r._id}`}
                             checked={isChecked}
                             onChange={() => {}}
-                            label={`Remito N° ${r.remito} (${mostrarFechaDMY(r.fecha)}) - $${formatoMiles(totalRemito)}`}
+                            label={`Remito N° ${r.remito} (${mostrarFechaDMY(r.fecha)}) - $${formatoMiles(totalRemito)} ${r.oc ? `[O.C.: ${r.oc}]` : ""}`}
                             onClick={(e) => e.stopPropagation()}
                           />
                         </div>
@@ -334,13 +390,22 @@ const RemitosXClientesFinal = () => {
             <Button variant="outline-secondary" onClick={() => setShowModalOC(false)}>
               Cancelar
             </Button>
-            <Button
-              variant="outline-success"
-              onClick={handleSaveOC}
-              disabled={!ocInput.trim() || selectedRemitoIds.length === 0}
-            >
-              Asignar O.C.
-            </Button>
+            <div className="d-flex gap-2">
+              <Button
+                variant="outline-danger"
+                onClick={handleDeleteOC}
+                disabled={selectedRemitoIds.length === 0}
+              >
+                Borrar O.C.
+              </Button>
+              <Button
+                variant="outline-primary"
+                onClick={handleSaveOC}
+                disabled={!ocInput.trim() || selectedRemitoIds.length === 0}
+              >
+                Editar
+              </Button>
+            </div>
           </Modal.Footer>
         </Modal>
       </div>
