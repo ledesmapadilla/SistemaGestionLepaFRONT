@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Table, Button } from "react-bootstrap";
+import { Table, Button, Modal, Form, Dropdown } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
-import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos";
+import { listarRemitosPorObra, editarRemito } from "../../../../../helpers/queriesRemitos";
 import { obtenerObra } from "../../../../../helpers/queriesObras";
 import XLSXStyle from "xlsx-js-style";
+import Swal from "sweetalert2";
 import "../../../../../styles/verRemitos.css";
 
 const RemitosXClientesFinal = () => {
@@ -35,11 +36,15 @@ const RemitosXClientesFinal = () => {
       }
     };
   }, []);
-  // NUEVO ESTADO: Para guardar el total global de la obra
   const [totalObra, setTotalObra] = useState(0);
   const [todosLosRemitos, setTodosLosRemitos] = useState([]);
   const [modalidadState, setModalidadState] = useState("");
   const [precios, setPrecios] = useState([]);
+
+  // Estados para Modal de O.C.
+  const [showModalOC, setShowModalOC] = useState(false);
+  const [ocInput, setOcInput] = useState("");
+  const [selectedRemitoIds, setSelectedRemitoIds] = useState([]);
 
   const cargarRemitos = async () => {
     if (!obraId) return;
@@ -107,9 +112,37 @@ const RemitosXClientesFinal = () => {
         return total + subtotalRemito;
       }, 0);
 
+  const handleSaveOC = async () => {
+    if (!ocInput.trim() || selectedRemitoIds.length === 0) return;
+    try {
+      setLoading(true);
+      await Promise.all(
+        selectedRemitoIds.map((id) => editarRemito(id, { oc: ocInput.trim() }))
+      );
+      setShowModalOC(false);
+      await Swal.fire({
+        icon: "success",
+        title: "O.C. Asignada",
+        text: `Se asignó la O.C. ${ocInput} a los remitos seleccionados.`,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      cargarRemitos();
+    } catch (error) {
+      console.error("Error al guardar O.C.:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo asignar la O.C. a los remitos.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const exportarExcel = () => {
-    const headers = ["N° Remito", "Fecha", "Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Gasoil (lts)"];
-    const cols = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+    const headers = ["N° Remito", "Fecha", "Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Gasoil (lts)", "O.C."];
+    const cols = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
@@ -126,6 +159,7 @@ const RemitosXClientesFinal = () => {
         item.precioUnitario,
         item.cantidad * item.precioUnitario,
         item.gasoil || "-",
+        remito.oc || "-",
       ])
     );
 
@@ -152,8 +186,8 @@ const RemitosXClientesFinal = () => {
       });
     });
 
-    ws["!ref"] = `A1:J${filas.length + 6}`;
-    ws["!cols"] = [{ wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 12 }];
+    ws["!ref"] = `A1:K${filas.length + 6}`;
+    ws["!cols"] = [{ wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 12 }];
 
     const libro = XLSXStyle.utils.book_new();
     XLSXStyle.utils.book_append_sheet(libro, ws, "Sin facturar");
@@ -182,6 +216,11 @@ const RemitosXClientesFinal = () => {
             </div>
             <div className="col-4 text-end d-flex gap-2 justify-content-end">
               <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
+              <Button size="sm" variant="outline-primary" onClick={() => {
+                setOcInput("");
+                setSelectedRemitoIds([]);
+                setShowModalOC(true);
+              }}>O.C.</Button>
               <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
             </div>
           </div>
@@ -201,6 +240,7 @@ const RemitosXClientesFinal = () => {
                 <th>$ Un.</th>
                 <th>$ Total</th>
                 <th>Gasoil(lts)</th>
+                <th>O.C.</th>
               </tr>
             </thead>
             <tbody>
@@ -218,12 +258,13 @@ const RemitosXClientesFinal = () => {
                       <td>${formatoMiles(item.precioUnitario)}</td>
                       <td>${formatoMiles(item.cantidad * item.precioUnitario)}</td>
                       <td>{item.gasoil || "-"}</td>
+                      <td>{remito.oc || "-"}</td>
                     </tr>
                   ))
                 )
               ) : (
                 <tr>
-                  <td colSpan="10" className="py-4 text-muted">
+                  <td colSpan="11" className="py-4 text-muted">
                     No hay remitos pendientes de facturación para esta obra.
                   </td>
                 </tr>
@@ -231,6 +272,77 @@ const RemitosXClientesFinal = () => {
             </tbody>
           </Table>
         </div>
+
+        {/* Modal para O.C. */}
+        <Modal show={showModalOC} onHide={() => setShowModalOC(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Asignar Orden de Compra (O.C.)</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form.Group className="mb-3">
+              <Form.Label>Número de O.C.</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Ingrese el número de O.C..."
+                value={ocInput}
+                onChange={(e) => setOcInput(e.target.value)}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label className="d-block">Seleccionar Remitos</Form.Label>
+              <Dropdown onSelect={(e) => e.preventDefault()}>
+                <Dropdown.Toggle variant="outline-light" id="dropdown-remitos-oc" className="w-100 text-start d-flex justify-content-between align-items-center">
+                  {selectedRemitoIds.length === 0
+                    ? "Seleccionar remitos..."
+                    : `${selectedRemitoIds.length} remito(s) seleccionado(s)`}
+                </Dropdown.Toggle>
+
+                <Dropdown.Menu className="w-100" style={{ maxHeight: "250px", overflowY: "auto" }}>
+                  {remitos.length === 0 ? (
+                    <Dropdown.Item disabled>No hay remitos disponibles</Dropdown.Item>
+                  ) : (
+                    remitos.map((r) => {
+                      const isChecked = selectedRemitoIds.includes(r._id);
+                      const totalRemito = r.items.reduce((sum, item) => sum + item.cantidad * item.precioUnitario, 0);
+                      return (
+                        <div key={r._id} className="dropdown-item d-flex align-items-center gap-2" style={{ cursor: "pointer" }} onClick={(e) => {
+                          e.stopPropagation();
+                          if (isChecked) {
+                            setSelectedRemitoIds(selectedRemitoIds.filter((id) => id !== r._id));
+                          } else {
+                            setSelectedRemitoIds([...selectedRemitoIds, r._id]);
+                          }
+                        }}>
+                          <Form.Check
+                            type="checkbox"
+                            id={`dd-remito-${r._id}`}
+                            checked={isChecked}
+                            onChange={() => {}}
+                            label={`Remito N° ${r.remito} (${mostrarFechaDMY(r.fecha)}) - $${formatoMiles(totalRemito)}`}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      );
+                    })
+                  )}
+                </Dropdown.Menu>
+              </Dropdown>
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer className="justify-content-between">
+            <Button variant="outline-secondary" onClick={() => setShowModalOC(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="outline-success"
+              onClick={handleSaveOC}
+              disabled={!ocInput.trim() || selectedRemitoIds.length === 0}
+            >
+              Asignar O.C.
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     </div>
   );
