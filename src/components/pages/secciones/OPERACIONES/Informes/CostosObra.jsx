@@ -136,14 +136,22 @@ const CostosObra = () => {
          personalDB = await personalRes.json();
       }
 
-      const totalFacturacion = remitos.reduce((acc, remito) => {
-        const subtotal = (remito.items || []).reduce((sum, item) => {
-          return sum + (Number(item.cantidad) * Number(item.precioUnitario));
-        }, 0);
-        return acc + subtotal;
-      }, 0);
-
       const preciosArray = obra.precios || obra.precio || [];
+
+      let totalFacturacion = 0;
+      if (obra.modalidad === "Precio cerrado") {
+        const precioCerradoObj = preciosArray.find(
+          (p) => p.clasificacion === "Precio cerrado"
+        );
+        totalFacturacion = precioCerradoObj ? Number(precioCerradoObj.precio || 0) : 0;
+      } else {
+        totalFacturacion = remitos.reduce((acc, remito) => {
+          const subtotal = (remito.items || []).reduce((sum, item) => {
+            return sum + (Number(item.cantidad) * Number(item.precioUnitario));
+          }, 0);
+          return acc + subtotal;
+        }, 0);
+      }
       const totalGasoil = remitos.reduce((total, remito) => {
         return total + (remito.items || []).reduce((acc, item) => {
           const litros = parseFloat(item.gasoil || 0);
