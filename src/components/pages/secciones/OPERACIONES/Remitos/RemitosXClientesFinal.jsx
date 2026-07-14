@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Table, Button } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos";
+import { obtenerObra } from "../../../../../helpers/queriesObras";
 import XLSXStyle from "xlsx-js-style";
 import "../../../../../styles/verRemitos.css";
 
@@ -36,14 +37,26 @@ const RemitosXClientesFinal = () => {
   }, []);
   // NUEVO ESTADO: Para guardar el total global de la obra
   const [totalObra, setTotalObra] = useState(0);
+  const [todosLosRemitos, setTodosLosRemitos] = useState([]);
+  const [modalidadState, setModalidadState] = useState("");
+  const [precios, setPrecios] = useState([]);
 
   const cargarRemitos = async () => {
     if (!obraId) return;
     try {
-      const data = await listarRemitosPorObra(obraId);
+      const [data, obraRes] = await Promise.all([
+        listarRemitosPorObra(obraId),
+        obtenerObra(obraId)
+      ]);
+
+      setTodosLosRemitos(data || []);
+      if (obraRes) {
+        if (obraRes.modalidad) setModalidadState(obraRes.modalidad);
+        if (obraRes.precio) setPrecios(obraRes.precio);
+      }
 
       // 1. CALCULAMOS EL TOTAL OBRA (Con todos los remitos, facturados o no, excluyendo "Precio de la obra")
-      const totalGlobal = data.reduce((total, remito) => {
+      const totalGlobal = (data || []).reduce((total, remito) => {
         const subtotalRemito = remito.items.reduce((sum, item) => {
           if (item.servicio === "Precio de la obra") return sum;
           return sum + item.cantidad * item.precioUnitario;
@@ -53,7 +66,7 @@ const RemitosXClientesFinal = () => {
       setTotalObra(totalGlobal);
 
       // 2. FILTRAMOS (Para mostrar en tabla solo los "Sin facturar")
-      const soloPendientes = data.filter((r) => r.estado === "Sin facturar");
+      const soloPendientes = (data || []).filter((r) => r.estado === "Sin facturar");
       setRemitos(soloPendientes);
 
     } catch (error) {
@@ -79,12 +92,20 @@ const RemitosXClientesFinal = () => {
   };
 
   // Cálculo del total solo de lo que se ve en esta tabla (Sin facturar)
-  const totalNoFacturado = remitos.reduce((total, remito) => {
-    const subtotalRemito = remito.items.reduce((sum, item) => {
-      return sum + item.cantidad * item.precioUnitario;
-    }, 0);
-    return total + subtotalRemito;
-  }, 0);
+  const totalNoFacturado = modalidadState === "Precio cerrado"
+    ? (() => {
+        const preciosArray = precios || [];
+        const precioCerradoObj = preciosArray.find((p) => p.clasificacion === "Precio cerrado");
+        const precioCerrado = precioCerradoObj ? Number(precioCerradoObj.precio || 0) : 0;
+        const totalFacturado = todosLosRemitos.reduce((sum, r) => sum + (r.montoFacturado || 0), 0);
+        return Math.max(0, precioCerrado - totalFacturado);
+      })()
+    : remitos.reduce((total, remito) => {
+        const subtotalRemito = remito.items.reduce((sum, item) => {
+          return sum + item.cantidad * item.precioUnitario;
+        }, 0);
+        return total + subtotalRemito;
+      }, 0);
 
   const exportarExcel = () => {
     const headers = ["N° Remito", "Fecha", "Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Gasoil (lts)"];
@@ -153,7 +174,10 @@ const RemitosXClientesFinal = () => {
               <h6 className="mb-0"><strong>Obra:</strong> <span className="titulosLetras">{obraNombre}</span></h6>
             </div>
             <div className="col-4 text-center">
-              <h6 className="mb-1">Total Obra: <span className="text-gray">${formatoMiles(totalObra)} + iva</span></h6>
+              <h6 className="mb-1">
+                {modalidadState === "Precio cerrado" ? "Total obra propia" : "Total Obra"}:{" "}
+                <span className="text-gray">${formatoMiles(totalObra)} + iva</span>
+              </h6>
               <h6 className="mb-0">Sin facturar: <span className="text-gray">${formatoMiles(totalNoFacturado)} + iva</span></h6>
             </div>
             <div className="col-4 text-end d-flex gap-2 justify-content-end">

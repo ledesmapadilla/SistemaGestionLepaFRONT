@@ -25,6 +25,7 @@ const VerRemitos = () => {
   const [remitos, setRemitos] = useState([]);
   const [filtroRemito, setFiltroRemito] = useState("");
   const [precios, setPrecios] = useState(location.state?.precios || []);
+  const [modalidadState, setModalidadState] = useState(location.state?.modalidad || "");
   const [showModalRemito, setShowModalRemito] = useState(false);
   const [obsSeleccionada, setObsSeleccionada] = useState("");
   const [remitoVer, setRemitoVer] = useState(null);
@@ -48,7 +49,10 @@ const VerRemitos = () => {
     if (!obraId) return;
     try {
       const obra = await obtenerObra(obraId);
-      if (obra?.precio) setPrecios(obra.precio);
+      if (obra) {
+        if (obra.precio) setPrecios(obra.precio);
+        if (obra.modalidad) setModalidadState(obra.modalidad);
+      }
     } catch (error) {
       console.error("Error al cargar precios:", error);
     }
@@ -195,7 +199,16 @@ const VerRemitos = () => {
     return `${d}-${m}-${y}`;
   };
 
-  const totalNoFacturado = calcularTotalNoFacturado();
+  const totalFacturado = remitos.reduce((sum, r) => sum + (r.montoFacturado || 0), 0);
+
+  const totalNoFacturado = modalidadState === "Precio cerrado"
+    ? (() => {
+        const preciosArray = precios || [];
+        const precioCerradoObj = preciosArray.find((p) => p.clasificacion === "Precio cerrado");
+        const precioCerrado = precioCerradoObj ? Number(precioCerradoObj.precio || 0) : 0;
+        return Math.max(0, precioCerrado - totalFacturado);
+      })()
+    : calcularTotalNoFacturado();
 
   const remitosFiltrados = filtroRemito ? remitos.filter((r) => String(r.remito).includes(filtroRemito)) : remitos;
 
@@ -275,7 +288,10 @@ const VerRemitos = () => {
         </div>
 
         <div className="col-4 text-center">
-          <h6 className="mb-1">Total Obra: <span className="text-gray">${formatoMiles(totalObra)} + iva</span></h6>
+          <h6 className="mb-1">
+            {modalidadState === "Precio cerrado" ? "Total obra propia" : "Total Obra"}:{" "}
+            <span className="text-gray">${formatoMiles(totalObra)} + iva</span>
+          </h6>
           <h6 className="mb-0">Sin facturar: <span className="text-gray">${formatoMiles(totalNoFacturado)} + iva</span></h6>
         </div>
 
