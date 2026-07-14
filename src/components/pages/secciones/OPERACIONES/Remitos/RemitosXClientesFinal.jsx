@@ -244,8 +244,8 @@ const RemitosXClientesFinal = () => {
           <h6 className="text-center mb-2">Remitos sin facturar</h6>
           <div className="row align-items-center mb-2">
             <div className="col-4">
-              <h6 className="mb-1"><strong>Razón social: </strong><span className="titulosLetras">{razonsocial}</span></h6>
-              <h6 className="mb-0"><strong>Obra:</strong> <span className="titulosLetras">{obraNombre}</span></h6>
+              <h6 className="mb-1">Razón social: <span className="titulosLetras">{razonsocial}</span></h6>
+              <h6 className="mb-0">Obra: <span className="titulosLetras">{obraNombre}</span></h6>
             </div>
             <div className="col-4 text-center">
               <h6 className="mb-1">
