@@ -60,11 +60,17 @@ const NuevoPagoProveedor = () => {
   const proveedorSeleccionado = watch("proveedor");
   const { onChange: onChangeProveedor, ...proveedorReg } = register("proveedor", { required: "El proveedor es obligatorio" });
 
+  const parseMonto = (val) => {
+    if (val === undefined || val === null) return 0;
+    const s = String(val).replace(",", ".").trim();
+    return parseFloat(s) || 0;
+  };
+
   const saldoFactura = (f) =>
     Math.max(0, totalFactura(f) - (pagadoPorFactura[f._id?.toString()] || 0));
 
   const aplicarAsignacionFIFO = (facturasList, mediosList) => {
-    const totalMedios = mediosList.reduce((sum, m) => sum + (parseFloat(m.monto) || 0), 0);
+    const totalMedios = mediosList.reduce((sum, m) => sum + parseMonto(m.monto), 0);
     const ordenadas = [...facturasList].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     let restante = totalMedios;
     const mapMonto = {};
@@ -163,25 +169,23 @@ const NuevoPagoProveedor = () => {
     setFacturaElegida("");
   }, [proveedorSeleccionado, todasFacturas, facturasSeleccionadas]);
 
-  useEffect(() => {
-    if (mediosPago.length !== 1) return;
-    if (mediosPago[0].chequeId || esCheque(mediosPago[0].medioPago)) return;
-    const newTotal = facturasSeleccionadas.reduce(
-      (sum, f) => sum + (parseFloat(f.montoPagado) || 0), 0
-    );
-    setMediosPago((prev) => [{ ...prev[0], monto: newTotal.toFixed(2) }]);
-  }, [facturasSeleccionadas]);
+  // Se eliminó el useEffect que sincronizaba automáticamente el monto del medio de pago único
+  // con la suma de las facturas seleccionadas, permitiendo ingresar cualquier monto (criterio cheque).
 
   const agregarFactura = () => {
     if (!facturaElegida) return;
     const factura = todasFacturas.find((f) => f._id === facturaElegida);
     if (!factura) return;
     setFacturasSeleccionadas((prev) => {
+      const saldo = saldoFactura(factura);
       const nuevaLista = [
         ...prev,
-        { ...factura, montoPagado: "0.00" },
+        { ...factura, montoPagado: saldo.toFixed(2) },
       ];
-      return aplicarAsignacionFIFO(nuevaLista, mediosPago);
+      if (mediosPago.length > 0) {
+        return aplicarAsignacionFIFO(nuevaLista, mediosPago);
+      }
+      return nuevaLista;
     });
     setFacturaElegida("");
   };
@@ -189,7 +193,10 @@ const NuevoPagoProveedor = () => {
   const quitarFactura = (id) => {
     setFacturasSeleccionadas((prev) => {
       const nuevaLista = prev.filter((f) => f._id !== id);
-      return aplicarAsignacionFIFO(nuevaLista, mediosPago);
+      if (mediosPago.length > 0) {
+        return aplicarAsignacionFIFO(nuevaLista, mediosPago);
+      }
+      return nuevaLista;
     });
   };
 
@@ -249,7 +256,16 @@ const NuevoPagoProveedor = () => {
     setMediosPago((prev) => {
       const nuevos = prev.filter((m) => m.id !== id);
       setTimeout(() => {
-        setFacturasSeleccionadas((prevFacts) => aplicarAsignacionFIFO(prevFacts, nuevos));
+        setFacturasSeleccionadas((prevFacts) => {
+          if (nuevos.length > 0) {
+            return aplicarAsignacionFIFO(prevFacts, nuevos);
+          } else {
+            return prevFacts.map((f) => ({
+              ...f,
+              montoPagado: saldoFactura(f).toFixed(2),
+            }));
+          }
+        });
       }, 0);
       return nuevos;
     });
@@ -262,7 +278,8 @@ const NuevoPagoProveedor = () => {
         Swal.fire({ icon: "warning", title: "Forma de pago incompleta", text: "Seleccioná el tipo en cada forma de pago" });
         return;
       }
-      if (isNaN(parseFloat(m.monto)) || parseFloat(m.monto) <= 0) {
+      const parsedMonto = parseMonto(m.monto);
+      if (isNaN(parsedMonto) || parsedMonto <= 0) {
         Swal.fire({ icon: "warning", title: "Monto inválido", text: "Ingresá un monto válido en cada forma de pago" });
         return;
       }
@@ -275,8 +292,6 @@ const NuevoPagoProveedor = () => {
         return;
       }
     }
-    const totalMediosPago = mediosPago.reduce((sum, m) => sum + (parseFloat(m.monto) || 0), 0);
-    setFacturasSeleccionadas((prev) => aplicarAsignacionFIFO(prev, mediosPago));
     setShowModalPago(false);
   };
 
@@ -298,12 +313,10 @@ const NuevoPagoProveedor = () => {
     );
   };
 
-  const totalSeleccionado = facturasSeleccionadas.reduce(
-    (sum, f) => sum + saldoFactura(f), 0
-  );
+
 
   const totalPagado = facturasSeleccionadas.reduce(
-    (sum, f) => sum + (parseFloat(f.montoPagado) || 0), 0
+    (sum, f) => sum + parseMonto(f.montoPagado), 0
   );
 
   const onSubmit = async (data) => {
@@ -313,7 +326,7 @@ const NuevoPagoProveedor = () => {
     }
 
     for (const f of facturasSeleccionadas) {
-      const monto = parseFloat(f.montoPagado);
+      const monto = parseMonto(f.montoPagado);
       if (isNaN(monto) || monto <= 0) {
         Swal.fire({ icon: "warning", title: "Monto inválido", text: `Ingresá un monto válido para la factura N° ${f.numeroFactura}` });
         return;
@@ -330,7 +343,8 @@ const NuevoPagoProveedor = () => {
         Swal.fire({ icon: "warning", title: "Forma de pago incompleta", text: "Seleccioná el tipo en cada forma de pago" });
         return;
       }
-      if (isNaN(parseFloat(m.monto)) || parseFloat(m.monto) <= 0) {
+      const parsedMonto = parseMonto(m.monto);
+      if (isNaN(parsedMonto) || parsedMonto <= 0) {
         Swal.fire({ icon: "warning", title: "Monto inválido", text: "Ingresá un monto válido en cada forma de pago" });
         return;
       }
@@ -344,24 +358,24 @@ const NuevoPagoProveedor = () => {
       }
     }
 
-    const totalMediosPago = mediosPago.reduce((sum, m) => sum + (parseFloat(m.monto) || 0), 0);
+    const totalMediosPago = mediosPago.reduce((sum, m) => sum + parseMonto(m.monto), 0);
+    const totalFacturasPagadas = facturasSeleccionadas.reduce((sum, f) => sum + parseMonto(f.montoPagado), 0);
 
-    // Calcular asignaciones FIFO exactas antes de enviar
-    const ordenadas = [...facturasSeleccionadas].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-    let restante = totalMediosPago;
-    const asignaciones = [];
+    if (totalFacturasPagadas > totalMediosPago + 0.01) {
+      Swal.fire({
+        icon: "warning",
+        title: "Monto excedido",
+        text: `El total asignado a las facturas (${formatoMoneda(totalFacturasPagadas)}) no puede superar la suma de las formas de pago (${formatoMoneda(totalMediosPago)})`,
+      });
+      return;
+    }
 
-    ordenadas.forEach((f) => {
-      const saldo = saldoFactura(f);
-      const pagar = Math.min(restante, saldo);
-      if (pagar > 0.01) {
-        asignaciones.push({
-          factura: f._id,
-          montoPagado: parseFloat(pagar.toFixed(2)),
-        });
-        restante -= pagar;
-      }
-    });
+    const asignaciones = facturasSeleccionadas
+      .map((f) => ({
+        factura: f._id,
+        montoPagado: parseFloat(parseMonto(f.montoPagado).toFixed(2)),
+      }))
+      .filter((a) => a.montoPagado > 0.01);
 
     const payload = {
       fecha: data.fecha?.substring(0, 10),
@@ -369,7 +383,7 @@ const NuevoPagoProveedor = () => {
       observaciones: data.observaciones || "",
       mediosPago: mediosPago.map((m) => ({
         medioPago: m.medioPago,
-        monto: parseFloat(m.monto),
+        monto: parseMonto(m.monto),
         numeroCheque: m.numeroCheque || "",
         fechaCobro: m.fechaCobro || "",
       })),
@@ -390,7 +404,7 @@ const NuevoPagoProveedor = () => {
         const err = await respuesta.json();
         Swal.fire({ icon: "error", title: "Error", text: err.msg || "No se pudo registrar el pago" });
       }
-    } catch (error) {
+    } catch {
       Swal.fire({ icon: "error", title: "Error inesperado", text: "No se pudo procesar la solicitud" });
     }
   };
@@ -409,7 +423,8 @@ const NuevoPagoProveedor = () => {
       (c) => c.numeroCheque.trim().toLowerCase() === formAltaCheque.numeroCheque.trim().toLowerCase()
     );
     if (duplicado) return Swal.fire("Atención", "Ya existe un cheque propio con ese número.", "warning");
-    if (!formAltaCheque.monto || isNaN(parseFloat(formAltaCheque.monto)) || parseFloat(formAltaCheque.monto) <= 0)
+    const parsedMonto = parseMonto(formAltaCheque.monto);
+    if (!formAltaCheque.monto || isNaN(parsedMonto) || parsedMonto <= 0)
       return Swal.fire("Atención", "El monto es obligatorio.", "warning");
     if (!formAltaCheque.fechaCobro) return Swal.fire("Atención", "La fecha de cobro es obligatoria.", "warning");
 
@@ -417,7 +432,7 @@ const NuevoPagoProveedor = () => {
     try {
       const res = await crearChequePropio({
         numeroCheque: formAltaCheque.numeroCheque.trim(),
-        monto: parseFloat(formAltaCheque.monto),
+        monto: parsedMonto,
         fechaCobro: formAltaCheque.fechaCobro,
         proveedor: formAltaCheque.proveedor.trim(),
         tipo: formAltaCheque.tipo,
@@ -592,7 +607,7 @@ const NuevoPagoProveedor = () => {
               <tr>
                 <td colSpan={3} className="text-end">Total facturas:</td>
                 <td>{formatoMoneda(facturasSeleccionadas.reduce((sum, f) => sum + totalFactura(f), 0))}</td>
-                <td>{formatoMoneda(facturasSeleccionadas.reduce((sum, f) => sum + saldoFactura(f) - (parseFloat(f.montoPagado) || 0), 0))}</td>
+                <td>{formatoMoneda(facturasSeleccionadas.reduce((sum, f) => sum + saldoFactura(f) - parseMonto(f.montoPagado), 0))}</td>
                 <td className="fw-bold">{formatoMoneda(totalPagado)}</td>
                 <td></td>
               </tr>
@@ -708,7 +723,7 @@ const NuevoPagoProveedor = () => {
             <tfoot style={{ borderTop: "2px solid #ffc107" }}>
               <tr>
                 <td className="text-end fw-semibold">Total:</td>
-                <td className="fw-bold">{formatoMoneda(mediosPago.reduce((sum, m) => sum + (parseFloat(m.monto) || 0), 0))}</td>
+                <td className="fw-bold">{formatoMoneda(mediosPago.reduce((sum, m) => sum + parseMonto(m.monto), 0))}</td>
                 <td colSpan={4}></td>
               </tr>
             </tfoot>
