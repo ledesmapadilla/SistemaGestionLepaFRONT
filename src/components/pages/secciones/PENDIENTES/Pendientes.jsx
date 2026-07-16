@@ -22,6 +22,15 @@ const RESPONSABLES = [
 // El tope existe para que el panel entre en una pantalla sin scroll.
 const TAREAS_VISIBLES = 4;
 
+// Línea vertical a los costados de la tarjeta: la mitad del alto, centrada.
+const ESTILO_LINEA_LATERAL = {
+  position: "absolute",
+  top: "25%",
+  height: "50%",
+  width: "1px",
+  backgroundColor: "rgba(255, 255, 255, 0.2)",
+};
+
 const ESTADOS = ["Pendiente", "En proceso", "Terminado"];
 const ESTADOS_REPUESTO = ["Pedido", "Pendiente", "En taller", "Colocado"];
 
@@ -492,12 +501,14 @@ export default function Pendientes() {
     Swal.fire({ position: "center", icon: "success", title: "Tarea eliminada", showConfirmButton: false, timer: 1200, timerProgressBar: true });
   };
 
+  // Devuelve las tareas activas del responsable, de la más reciente a la más vieja.
+  // Las fechas son "YYYY-MM-DD", así que se ordenan comparando el string.
   const obtenerTareasActivasDeResponsable = (nombre) => {
     const derivadasResp = derivadas.filter((d) => (d.responsable || "").trim() === nombre.trim());
     const manuales = tareasPorResp[nombre] || [];
-    return [...derivadasResp, ...manuales].filter(
-      (t) => t.estado === "Pendiente" || t.estado === "En proceso"
-    );
+    return [...derivadasResp, ...manuales]
+      .filter((t) => t.estado === "Pendiente" || t.estado === "En proceso")
+      .sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""));
   };
 
   return (
@@ -511,7 +522,7 @@ export default function Pendientes() {
           return (
             <Col key={r.nombre}>
               <Card
-                className="h-100 shadow-sm border-0"
+                className="h-100 shadow-sm border-0 position-relative"
                 style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
                 onClick={() => abrir(r)}
                 onMouseEnter={(e) => {
@@ -523,6 +534,10 @@ export default function Pendientes() {
                   e.currentTarget.style.boxShadow = "";
                 }}
               >
+                {/* Líneas de cierre: media altura, centradas, a cada lado. Separan tarjeta de tarjeta. */}
+                <div style={{ ...ESTILO_LINEA_LATERAL, left: 0 }} />
+                <div style={{ ...ESTILO_LINEA_LATERAL, right: 0 }} />
+
                 <Card.Body className="d-flex flex-column align-items-center text-center py-3">
                   <div
                     className="rounded-circle d-flex align-items-center justify-content-center mb-2"
