@@ -199,15 +199,6 @@ export default function Pendientes() {
     ? derivadas.filter((d) => (d.responsable || "").trim() === modalResp.nombre.trim())
     : [];
 
-  // Cantidad de tareas Pendiente + En proceso de un responsable (derivadas + manuales).
-  const contarPendientesEnProceso = (nombre) => {
-    const derivadasResp = derivadas.filter((d) => (d.responsable || "").trim() === nombre.trim());
-    const manuales = tareasPorResp[nombre] || [];
-    return [...derivadasResp, ...manuales].filter(
-      (t) => t.estado === "Pendiente" || t.estado === "En proceso"
-    ).length;
-  };
-
   // Máquinas para el select al cargar una tarea (todas las tarjetas de Reparaciones).
   // Las camionetas (Fiat, Nissan, Ranger) van juntas al final del listado.
   const CAMIONETAS = ["Fiat", "Nissan", "Ranger"];
@@ -539,7 +530,7 @@ export default function Pendientes() {
     const derivadasResp = derivadas.filter((d) => (d.responsable || "").trim() === nombre.trim());
     const manuales = tareasPorResp[nombre] || [];
     return [...derivadasResp, ...manuales].filter(
-      (t) => t.estado !== "Terminado" && t.estado !== "Colocado"
+      (t) => t.estado === "Pendiente" || t.estado === "En proceso"
     );
   };
 
@@ -597,7 +588,7 @@ export default function Pendientes() {
                     ) : (
                       activeTasks.slice(0, 4).map((t) => (
                         <div key={t.id} className="text-truncate mb-0.5" style={{ color: "#000000", fontWeight: "600" }}>
-                          • {t.tarea}
+                          • {t.maquina ? `${t.maquina} - ${t.tarea}` : t.tarea}
                         </div>
                       ))
                     )}
