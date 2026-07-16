@@ -608,7 +608,7 @@ const NuevoPagoProveedor = () => {
                       <Form.Control
                         type="text"
                         size="sm"
-                        style={{ width: "130px", margin: "0 auto", textAlign: "center" }}
+                        style={{ width: "220px", margin: "0 auto", textAlign: "center" }}
                         value={parseMonto(f.montoPagado) === 0 ? "" : formatoMoneda(f.montoPagado)}
                         placeholder="Completar en forma de pago"
                         readOnly
