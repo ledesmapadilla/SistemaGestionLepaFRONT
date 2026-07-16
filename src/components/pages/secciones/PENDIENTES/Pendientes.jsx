@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
@@ -72,6 +72,9 @@ const filaVacia = () => ({
 
 export default function Pendientes() {
   const navigate = useNavigate();
+  // El logo de Inicio navega con este flag; la tarjeta "Iniciar" solo sale por esa vía
+  // (no al entrar por el menú ni al abrirse como modal desde los botones flotantes).
+  const desdeInicio = useLocation().state?.desdeInicio === true;
   const pendientesModal = usePendientesModal();
   const [modalResp, setModalResp] = useState(null);   // responsable abierto
   const [tareasPorResp, setTareasPorResp] = useState({});
@@ -523,7 +526,21 @@ export default function Pendientes() {
                   >
                     <i className="bi bi-person-fill fs-5" style={{ color: r.color }} />
                   </div>
-                  <Card.Title className="fw-semibold mb-2" style={{ fontSize: "1rem" }}>{r.nombre}</Card.Title>
+                  <Card.Title
+                    className="fw-semibold mb-2 d-flex align-items-center justify-content-center gap-2"
+                    style={{ fontSize: "1rem" }}
+                  >
+                    {r.nombre}
+                    {activeTasks.length > 0 && (
+                      <span
+                        className="badge rounded-pill text-white fw-bold"
+                        title="Tareas pendientes o en proceso"
+                        style={{ backgroundColor: r.color, fontSize: "0.7rem" }}
+                      >
+                        {activeTasks.length}
+                      </span>
+                    )}
+                  </Card.Title>
 
                   {activeTasks.length === 0 ? (
                     <span className="text-muted fst-italic small">Sin pendientes</span>
@@ -542,6 +559,36 @@ export default function Pendientes() {
             </Col>
           );
         })}
+
+        {/* Acceso directo a Obras, solo cuando se entra desde el logo de Inicio. */}
+        {desdeInicio && (
+          <Col key="iniciar">
+            <Card
+              className="h-100 shadow-sm border-0"
+              style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
+              onClick={() => navigate("/obras")}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "";
+              }}
+            >
+              <Card.Body className="d-flex flex-column align-items-center justify-content-center text-center py-3">
+                <div
+                  className="rounded-circle d-flex align-items-center justify-content-center mb-2"
+                  style={{ width: 44, height: 44, backgroundColor: "#F59E0B1a" }}
+                >
+                  <i className="bi bi-play-fill fs-5" style={{ color: "#F59E0B" }} />
+                </div>
+                <Card.Title className="fw-semibold mb-0" style={{ fontSize: "1rem" }}>Iniciar</Card.Title>
+              </Card.Body>
+              <div style={{ height: 4, backgroundColor: "#F59E0B", borderRadius: "0 0 .375rem .375rem" }} />
+            </Card>
+          </Col>
+        )}
       </Row>
 
       {/* ── Modal de tareas del responsable ── */}
