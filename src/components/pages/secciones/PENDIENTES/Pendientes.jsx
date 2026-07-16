@@ -7,7 +7,6 @@ import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/q
 import { obtenerTodasReparaciones, guardarReparaciones } from "../../../../helpers/queriesReparaciones";
 import { listarMaquinas } from "../../../../helpers/queriesMaquinas";
 import { usePendientesModal } from "../../../../context/PendientesModalContext";
-import "../../../../styles/pendientes.css";
 
 // Mismos responsables que el select de repuestos.
 const RESPONSABLES = [
@@ -495,300 +494,289 @@ export default function Pendientes() {
   };
 
   return (
-    <>
-      <div className="pendientes-bg" />
-      <div className="pendientes-overlay" />
-      <Container className="content-wrapper py-4">
-        <h2 className="mb-1 fw-bold text-center text-white">Panel de Control de Pendientes</h2>
-        <p className="text-white text-opacity-75 mb-5 text-center">Gestión visual por responsable</p>
+    <Container className="py-4">
+      <h2 className="mb-1 fw-bold text-center">Panel de Control de Pendientes</h2>
+      <p className="text-muted mb-4 text-center">Gestión visual por responsable</p>
 
-        <Row xs={2} sm={3} md={3} lg={3} className="g-4 mx-auto justify-content-center" style={{ maxWidth: 800 }}>
-          {RESPONSABLES.map((r) => {
-            const activeTasks = obtenerTareasActivasDeResponsable(r.nombre);
+      <Row xs={1} sm={2} md={3} lg={3} className="g-4 mx-auto justify-content-center" style={{ maxWidth: 900 }}>
+        {RESPONSABLES.map((r) => {
+          const activeTasks = obtenerTareasActivasDeResponsable(r.nombre);
 
-            return (
-              <Col key={r.nombre}>
-                <div
-                  className="glass-panel p-3 d-flex flex-column h-100 position-relative"
-                  onClick={() => abrir(r)}
-                  style={{ cursor: "pointer", minHeight: "180px" }}
-                >
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <div className="d-flex align-items-center gap-2">
-                      <div
-                        className="rounded-circle d-flex align-items-center justify-content-center"
-                        style={{
-                          width: 32,
-                          height: 32,
-                          backgroundColor: r.color + "22",
-                          border: `1px solid ${r.color}44`,
-                        }}
-                      >
-                        <i className="bi bi-person-fill fs-6" style={{ color: r.color }} />
-                      </div>
-                      <h5 className="fw-bold mb-0 text-dark" style={{ fontSize: "0.95rem" }}>
-                        {r.nombre}
-                      </h5>
-                    </div>
-                    {activeTasks.length > 0 && (
-                      <span
-                        className="badge rounded-pill text-white fw-bold px-2 py-0.5"
-                        style={{ backgroundColor: r.color, fontSize: "0.7rem" }}
-                      >
-                        {activeTasks.length}
-                      </span>
-                    )}
+          return (
+            <Col key={r.nombre}>
+              <Card
+                className="h-100 shadow-sm border-0"
+                style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
+                onClick={() => abrir(r)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.15)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "";
+                }}
+              >
+                <Card.Body className="d-flex flex-column align-items-center text-center py-4">
+                  <div
+                    className="rounded-circle d-flex align-items-center justify-content-center mb-3"
+                    style={{ width: 64, height: 64, backgroundColor: r.color + "1a" }}
+                  >
+                    <i className="bi bi-person-fill fs-2" style={{ color: r.color }} />
                   </div>
+                  <Card.Title className="fw-semibold mb-1">{r.nombre}</Card.Title>
+                  <Card.Text className="text-muted small mb-0">
+                    {activeTasks.length === 0
+                      ? "Sin pendientes"
+                      : `${activeTasks.length} ${activeTasks.length === 1 ? "tarea activa" : "tareas activas"}`}
+                  </Card.Text>
 
-                  <hr className="my-1.5 text-muted" style={{ opacity: 0.1 }} />
-
-                  <div className="flex-grow-1 text-start" style={{ fontSize: "0.75rem", color: "#000000" }}>
-                    {activeTasks.length === 0 ? (
-                      <span className="text-muted" style={{ fontStyle: "italic", fontSize: "0.7rem" }}>Sin pendientes</span>
-                    ) : (
-                      activeTasks.slice(0, 4).map((t) => (
-                        <div key={t.id} className="text-truncate mb-0.5" style={{ color: "#000000", fontWeight: "600" }}>
+                  {activeTasks.length > 0 && (
+                    <div className="text-start w-100 mt-3" style={{ fontSize: "0.75rem" }}>
+                      {activeTasks.slice(0, 4).map((t) => (
+                        <div key={t.id} className="text-truncate fw-semibold text-dark">
                           • {t.maquina ? `${t.maquina} - ${t.tarea}` : t.tarea}
                         </div>
-                      ))
-                    )}
-                    {activeTasks.length > 4 && (
-                      <div className="text-muted" style={{ fontSize: "0.68rem", fontStyle: "italic", marginTop: "2px" }}>
-                        + {activeTasks.length - 4} más...
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Col>
-            );
-          })}
-        </Row>
-
-        {/* ── Modal de tareas del responsable ── */}
-        <Modal show={!!modalResp} onHide={cerrar} centered size="xl" scrollable>
-          <Modal.Header closeButton>
-            <Modal.Title>Pendientes - {modalResp?.nombre}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <span className="text-muted">Fecha: {new Date().toLocaleDateString("es-AR")}</span>
-              <div className="d-flex gap-2">
-                <Button size="sm" variant="outline-light" onClick={exportarExcelPendientes}>Excel</Button>
-                <Button size="sm" variant="outline-primary" onClick={agregar}>Agregar tarea</Button>
-              </div>
-            </div>
-
-            {!cargando && (
-              <div className="d-flex gap-2 mb-3 flex-wrap">
-                <div className="position-relative" style={{ width: 270 }}>
-                  <Form.Select
-                    size="sm"
-                    value={filtroEstado}
-                    onChange={(e) => setFiltroEstado(e.target.value)}
-                    style={{ minWidth: 0, ...(filtroEstado !== "" ? { backgroundImage: "none" } : {}) }}
-                  >
-                    <option value="activas">Pedido / Pendiente / En proceso</option>
-                    <option value="Pedido">Pedido</option>
-                    <option value="Pendiente">Pendiente</option>
-                    <option value="En proceso">En proceso</option>
-                    <option value="En taller">En taller</option>
-                    <option value="Colocado">Colocado</option>
-                    <option value="Terminado">Terminado</option>
-                    <option value="">Todos</option>
-                  </Form.Select>
-                  {filtroEstado !== "" && (
-                    <span onClick={() => setFiltroEstado("")} style={estiloX}>✕</span>
-                  )}
-                </div>
-                <div className="position-relative" style={{ width: 200 }}>
-                  <Form.Select
-                    size="sm"
-                    value={filtroMaquina}
-                    onChange={(e) => setFiltroMaquina(e.target.value)}
-                    style={{ minWidth: 0, ...(filtroMaquina ? { backgroundImage: "none" } : {}) }}
-                  >
-                    <option value="">Máquina (todas)</option>
-                    {maquinasUnicas.map((m) => (<option key={m} value={m}>{m}</option>))}
-                  </Form.Select>
-                  {filtroMaquina && (
-                    <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>
-                  )}
-                </div>
-                <div className="position-relative" style={{ width: 280 }}>
-                  <Form.Select
-                    size="sm"
-                    value={filtroTarea}
-                    onChange={(e) => setFiltroTarea(e.target.value)}
-                    style={{ minWidth: 0, ...(filtroTarea ? { backgroundImage: "none" } : {}) }}
-                  >
-                    <option value="">Tarea (todas)</option>
-                    {tareasUnicas.map((t) => (<option key={t} value={t}>{t}</option>))}
-                  </Form.Select>
-                  {filtroTarea && (
-                    <span onClick={() => setFiltroTarea("")} style={estiloX}>✕</span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {cargando ? (
-              <Spinner animation="border" className="d-block mx-auto my-4" />
-            ) : (
-            <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
-              <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
-                <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
-                  <tr>
-                    <th style={{ width: 95 }}>Fecha</th>
-                    <th style={{ width: 110 }}>Máquina</th>
-                    <th>Tarea</th>
-                    <th style={{ width: 85 }}>Días pendiente</th>
-                    <th style={{ width: 110 }}>Estado</th>
-                    <th style={{ width: 80 }}>Obs.</th>
-                    <th style={{ width: 230 }}>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {derivadasFiltradas.map((t) => {
-                    const enEdicion = editandoId === t.id;
-                    return (
-                    <tr key={t.id} style={{ backgroundColor: "#fbfbf3" }}>
-                      <td>
-                        {enEdicion && t.tipo === "reparacion" ? (
-                          <Form.Control size="sm" type="date" value={derivadoEdit.fecha || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, fecha: e.target.value }))} />
-                        ) : (
-                          t.fecha ? t.fecha.split("-").reverse().join("/") : "-"
-                        )}
-                      </td>
-                      <td>{t.maquina || "-"}</td>
-                      <td className="text-start">
-                        {enEdicion ? (
-                          <Form.Control size="sm" value={derivadoEdit.tarea || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, tarea: e.target.value }))} />
-                        ) : (
-                          t.tarea || "-"
-                        )}
-                      </td>
-                      <td>{diasPendiente(t.fecha)}</td>
-                      <td>
-                        {enEdicion ? (
-                          <Form.Select size="sm" value={derivadoEdit.estado} onChange={(e) => setDerivadoEdit((p) => ({ ...p, estado: e.target.value }))}>
-                            {(t.tipo === "repuesto" ? ESTADOS_REPUESTO : ESTADOS).map((s) => (
-                              <option key={s} value={s}>{s}</option>
-                            ))}
-                          </Form.Select>
-                        ) : (
-                          <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
-                        )}
-                      </td>
-                      <td>
-                        {enEdicion ? (
-                          <Form.Control size="sm" value={derivadoEdit.observaciones || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, observaciones: e.target.value }))} />
-                        ) : t.observaciones ? (
-                          <Button size="sm" variant="outline-secondary" className="py-0 px-2" onClick={() => verObservacion(t.observaciones)}>Ver</Button>
-                        ) : (
-                          <span className="text-muted">-</span>
-                        )}
-                      </td>
-                      <td>
-                        <div className="d-flex gap-1 justify-content-center align-items-center flex-nowrap text-nowrap">
-                          {enEdicion ? (
-                            <Button size="sm" variant="outline-success" onClick={() => guardarDerivado(t)}>Listo</Button>
-                          ) : (
-                            <Button size="sm" variant="outline-warning" onClick={() => editarDerivado(t)}>Editar</Button>
-                          )}
-                          <Button size="sm" variant="outline-danger" onClick={() => borrarDerivado(t)}>Borrar</Button>
-                          <Button
-                            size="sm"
-                            variant={t.tipo === "repuesto" ? "outline-info" : "outline-secondary"}
-                            onClick={() => irAReparaciones(t)}
-                          >
-                            {t.tipo === "repuesto" ? "Repuestos" : "Reparación"}
-                          </Button>
+                      ))}
+                      {activeTasks.length > 4 && (
+                        <div className="text-muted fst-italic" style={{ fontSize: "0.7rem" }}>
+                          + {activeTasks.length - 4} más...
                         </div>
-                      </td>
-                    </tr>
-                    );
-                  })}
-                  {tareasFiltradas.length === 0 && derivadasFiltradas.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="text-muted py-3">Sin tareas cargadas</td>
-                    </tr>
-                  ) : (
-                    tareasFiltradas.map((t) => {
-                      const editando = editandoId === t.id;
-                      return (
-                        <tr key={t.id}>
-                          <td>
-                            {editando ? (
-                              <Form.Control size="sm" type="date" value={t.fecha} onChange={(e) => editar(t.id, "fecha", e.target.value)} />
-                            ) : (
-                              t.fecha ? t.fecha.split("-").reverse().join("/") : "-"
-                            )}
-                          </td>
-                          <td>
-                            {editando ? (
-                              <Form.Select
-                                size="sm"
-                                value={t.maquina || ""}
-                                onChange={(e) => editar(t.id, "maquina", e.target.value)}
-                              >
-                                <option value="">Seleccionar...</option>
-                                {maquinasReparaciones.map((m) => (<option key={m} value={m}>{m}</option>))}
-                                <option value="Otra">Otra</option>
-                              </Form.Select>
-                            ) : (
-                              t.maquina || "-"
-                            )}
-                          </td>
-                          <td className={editando ? "" : "text-start"}>
-                            {editando ? (
-                              <Form.Control size="sm" value={t.tarea} onChange={(e) => editar(t.id, "tarea", e.target.value)} />
-                            ) : (
-                              t.tarea || "-"
-                            )}
-                          </td>
-                          <td>{diasPendiente(t.fecha, t.fechaTerminado)}</td>
-                          <td>
-                            {editando ? (
-                              <Form.Select size="sm" value={t.estado} onChange={(e) => editar(t.id, "estado", e.target.value)}>
-                                {ESTADOS.map((s) => (<option key={s} value={s}>{s}</option>))}
-                              </Form.Select>
-                            ) : (
-                              <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
-                            )}
-                          </td>
-                          <td>
-                            {editando ? (
-                              <Form.Control size="sm" value={t.observaciones} onChange={(e) => editar(t.id, "observaciones", e.target.value)} />
-                            ) : t.observaciones ? (
-                              <Button size="sm" variant="outline-secondary" className="py-0 px-2" onClick={() => verObservacion(t.observaciones)}>Ver</Button>
-                            ) : (
-                              <span className="text-muted">-</span>
-                            )}
-                          </td>
-                          <td>
-                            <div className="d-flex gap-1 justify-content-center">
-                              {editando ? (
-                                <Button size="sm" variant="outline-success" onClick={finalizarEdicion}>Listo</Button>
-                              ) : (
-                                <Button size="sm" variant="outline-warning" onClick={() => setEditandoId(t.id)}>Editar</Button>
-                              )}
-                              <Button size="sm" variant="outline-danger" onClick={() => borrar(t.id)}>Borrar</Button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
+                      )}
+                    </div>
                   )}
-                </tbody>
-              </Table>
+                </Card.Body>
+                <div style={{ height: 4, backgroundColor: r.color, borderRadius: "0 0 .375rem .375rem" }} />
+              </Card>
+            </Col>
+          );
+        })}
+      </Row>
+
+      {/* ── Modal de tareas del responsable ── */}
+      <Modal show={!!modalResp} onHide={cerrar} centered size="xl" scrollable>
+        <Modal.Header closeButton>
+          <Modal.Title>Pendientes - {modalResp?.nombre}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <span className="text-muted">Fecha: {new Date().toLocaleDateString("es-AR")}</span>
+            <div className="d-flex gap-2">
+              <Button size="sm" variant="outline-light" onClick={exportarExcelPendientes}>Excel</Button>
+              <Button size="sm" variant="outline-primary" onClick={agregar}>Agregar tarea</Button>
             </div>
-            )}
-          </Modal.Body>
-          <Modal.Footer className="justify-content-center">
-            <Button variant="outline-secondary" onClick={cerrar}>Cerrar</Button>
-          </Modal.Footer>
-        </Modal>
-      </Container>
-    </>
+          </div>
+
+          {!cargando && (
+            <div className="d-flex gap-2 mb-3 flex-wrap">
+              <div className="position-relative" style={{ width: 270 }}>
+                <Form.Select
+                  size="sm"
+                  value={filtroEstado}
+                  onChange={(e) => setFiltroEstado(e.target.value)}
+                  style={{ minWidth: 0, ...(filtroEstado !== "" ? { backgroundImage: "none" } : {}) }}
+                >
+                  <option value="activas">Pedido / Pendiente / En proceso</option>
+                  <option value="Pedido">Pedido</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="En proceso">En proceso</option>
+                  <option value="En taller">En taller</option>
+                  <option value="Colocado">Colocado</option>
+                  <option value="Terminado">Terminado</option>
+                  <option value="">Todos</option>
+                </Form.Select>
+                {filtroEstado !== "" && (
+                  <span onClick={() => setFiltroEstado("")} style={estiloX}>✕</span>
+                )}
+              </div>
+              <div className="position-relative" style={{ width: 200 }}>
+                <Form.Select
+                  size="sm"
+                  value={filtroMaquina}
+                  onChange={(e) => setFiltroMaquina(e.target.value)}
+                  style={{ minWidth: 0, ...(filtroMaquina ? { backgroundImage: "none" } : {}) }}
+                >
+                  <option value="">Máquina (todas)</option>
+                  {maquinasUnicas.map((m) => (<option key={m} value={m}>{m}</option>))}
+                </Form.Select>
+                {filtroMaquina && (
+                  <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>
+                )}
+              </div>
+              <div className="position-relative" style={{ width: 280 }}>
+                <Form.Select
+                  size="sm"
+                  value={filtroTarea}
+                  onChange={(e) => setFiltroTarea(e.target.value)}
+                  style={{ minWidth: 0, ...(filtroTarea ? { backgroundImage: "none" } : {}) }}
+                >
+                  <option value="">Tarea (todas)</option>
+                  {tareasUnicas.map((t) => (<option key={t} value={t}>{t}</option>))}
+                </Form.Select>
+                {filtroTarea && (
+                  <span onClick={() => setFiltroTarea("")} style={estiloX}>✕</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {cargando ? (
+            <Spinner animation="border" className="d-block mx-auto my-4" />
+          ) : (
+          <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
+            <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
+              <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
+                <tr>
+                  <th style={{ width: 95 }}>Fecha</th>
+                  <th style={{ width: 110 }}>Máquina</th>
+                  <th>Tarea</th>
+                  <th style={{ width: 85 }}>Días pendiente</th>
+                  <th style={{ width: 110 }}>Estado</th>
+                  <th style={{ width: 80 }}>Obs.</th>
+                  <th style={{ width: 230 }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {derivadasFiltradas.map((t) => {
+                  const enEdicion = editandoId === t.id;
+                  return (
+                  <tr key={t.id} style={{ backgroundColor: "#fbfbf3" }}>
+                    <td>
+                      {enEdicion && t.tipo === "reparacion" ? (
+                        <Form.Control size="sm" type="date" value={derivadoEdit.fecha || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, fecha: e.target.value }))} />
+                      ) : (
+                        t.fecha ? t.fecha.split("-").reverse().join("/") : "-"
+                      )}
+                    </td>
+                    <td>{t.maquina || "-"}</td>
+                    <td className="text-start">
+                      {enEdicion ? (
+                        <Form.Control size="sm" value={derivadoEdit.tarea || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, tarea: e.target.value }))} />
+                      ) : (
+                        t.tarea || "-"
+                      )}
+                    </td>
+                    <td>{diasPendiente(t.fecha)}</td>
+                    <td>
+                      {enEdicion ? (
+                        <Form.Select size="sm" value={derivadoEdit.estado} onChange={(e) => setDerivadoEdit((p) => ({ ...p, estado: e.target.value }))}>
+                          {(t.tipo === "repuesto" ? ESTADOS_REPUESTO : ESTADOS).map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </Form.Select>
+                      ) : (
+                        <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
+                      )}
+                    </td>
+                    <td>
+                      {enEdicion ? (
+                        <Form.Control size="sm" value={derivadoEdit.observaciones || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, observaciones: e.target.value }))} />
+                      ) : t.observaciones ? (
+                        <Button size="sm" variant="outline-secondary" className="py-0 px-2" onClick={() => verObservacion(t.observaciones)}>Ver</Button>
+                      ) : (
+                        <span className="text-muted">-</span>
+                      )}
+                    </td>
+                    <td>
+                      <div className="d-flex gap-1 justify-content-center align-items-center flex-nowrap text-nowrap">
+                        {enEdicion ? (
+                          <Button size="sm" variant="outline-success" onClick={() => guardarDerivado(t)}>Listo</Button>
+                        ) : (
+                          <Button size="sm" variant="outline-warning" onClick={() => editarDerivado(t)}>Editar</Button>
+                        )}
+                        <Button size="sm" variant="outline-danger" onClick={() => borrarDerivado(t)}>Borrar</Button>
+                        <Button
+                          size="sm"
+                          variant={t.tipo === "repuesto" ? "outline-info" : "outline-secondary"}
+                          onClick={() => irAReparaciones(t)}
+                        >
+                          {t.tipo === "repuesto" ? "Repuestos" : "Reparación"}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                  );
+                })}
+                {tareasFiltradas.length === 0 && derivadasFiltradas.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-muted py-3">Sin tareas cargadas</td>
+                  </tr>
+                ) : (
+                  tareasFiltradas.map((t) => {
+                    const editando = editandoId === t.id;
+                    return (
+                      <tr key={t.id}>
+                        <td>
+                          {editando ? (
+                            <Form.Control size="sm" type="date" value={t.fecha} onChange={(e) => editar(t.id, "fecha", e.target.value)} />
+                          ) : (
+                            t.fecha ? t.fecha.split("-").reverse().join("/") : "-"
+                          )}
+                        </td>
+                        <td>
+                          {editando ? (
+                            <Form.Select
+                              size="sm"
+                              value={t.maquina || ""}
+                              onChange={(e) => editar(t.id, "maquina", e.target.value)}
+                            >
+                              <option value="">Seleccionar...</option>
+                              {maquinasReparaciones.map((m) => (<option key={m} value={m}>{m}</option>))}
+                              <option value="Otra">Otra</option>
+                            </Form.Select>
+                          ) : (
+                            t.maquina || "-"
+                          )}
+                        </td>
+                        <td className={editando ? "" : "text-start"}>
+                          {editando ? (
+                            <Form.Control size="sm" value={t.tarea} onChange={(e) => editar(t.id, "tarea", e.target.value)} />
+                          ) : (
+                            t.tarea || "-"
+                          )}
+                        </td>
+                        <td>{diasPendiente(t.fecha, t.fechaTerminado)}</td>
+                        <td>
+                          {editando ? (
+                            <Form.Select size="sm" value={t.estado} onChange={(e) => editar(t.id, "estado", e.target.value)}>
+                              {ESTADOS.map((s) => (<option key={s} value={s}>{s}</option>))}
+                            </Form.Select>
+                          ) : (
+                            <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
+                          )}
+                        </td>
+                        <td>
+                          {editando ? (
+                            <Form.Control size="sm" value={t.observaciones} onChange={(e) => editar(t.id, "observaciones", e.target.value)} />
+                          ) : t.observaciones ? (
+                            <Button size="sm" variant="outline-secondary" className="py-0 px-2" onClick={() => verObservacion(t.observaciones)}>Ver</Button>
+                          ) : (
+                            <span className="text-muted">-</span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="d-flex gap-1 justify-content-center">
+                            {editando ? (
+                              <Button size="sm" variant="outline-success" onClick={finalizarEdicion}>Listo</Button>
+                            ) : (
+                              <Button size="sm" variant="outline-warning" onClick={() => setEditandoId(t.id)}>Editar</Button>
+                            )}
+                            <Button size="sm" variant="outline-danger" onClick={() => borrar(t.id)}>Borrar</Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </Table>
+          </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={cerrar}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
+    </Container>
   );
 }
