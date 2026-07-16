@@ -530,7 +530,7 @@ export default function Pendientes() {
                   ) : (
                     <div className="text-start w-100" style={{ fontSize: "0.8rem", lineHeight: 1.5 }}>
                       {activeTasks.map((t) => (
-                        <div key={t.id} className="text-truncate fw-semibold" style={{ color: "#000000" }}>
+                        <div key={t.id} className="text-truncate fw-semibold text-muted">
                           • {t.maquina ? `${t.maquina} - ${t.tarea}` : t.tarea}
                         </div>
                       ))}
