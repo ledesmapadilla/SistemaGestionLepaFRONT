@@ -177,10 +177,9 @@ const NuevoPagoProveedor = () => {
     const factura = todasFacturas.find((f) => f._id === facturaElegida);
     if (!factura) return;
     setFacturasSeleccionadas((prev) => {
-      const saldo = saldoFactura(factura);
       const nuevaLista = [
         ...prev,
-        { ...factura, montoPagado: saldo.toFixed(2) },
+        { ...factura, montoPagado: "0.00" },
       ];
       if (mediosPago.length > 0) {
         return aplicarAsignacionFIFO(nuevaLista, mediosPago);
@@ -244,7 +243,9 @@ const NuevoPagoProveedor = () => {
 
   const agregarMedioPago = () => {
     setMediosPago((prev) => {
-      const nuevos = [...prev, { id: Date.now(), medioPago: "", monto: totalPagado.toFixed(2), numeroCheque: "", clienteCheque: "", fechaCobro: "", cobroId: null, medioIndex: null, chequeId: null }];
+      const totalActualMedios = prev.reduce((sum, m) => sum + parseMonto(m.monto), 0);
+      const defaultMonto = totalActualMedios > 0 ? "0.00" : totalSaldoSeleccionado.toFixed(2);
+      const nuevos = [...prev, { id: Date.now(), medioPago: "", monto: defaultMonto, numeroCheque: "", clienteCheque: "", fechaCobro: "", cobroId: null, medioIndex: null, chequeId: null }];
       setTimeout(() => {
         setFacturasSeleccionadas((prevFacts) => aplicarAsignacionFIFO(prevFacts, nuevos));
       }, 0);
@@ -307,13 +308,9 @@ const NuevoPagoProveedor = () => {
     });
   };
 
-  const actualizarCampo = (id, campo, valor) => {
-    setFacturasSeleccionadas((prev) =>
-      prev.map((f) => (f._id === id ? { ...f, [campo]: valor } : f))
-    );
-  };
-
-
+  const totalSaldoSeleccionado = facturasSeleccionadas.reduce(
+    (sum, f) => sum + saldoFactura(f), 0
+  );
 
   const totalPagado = facturasSeleccionadas.reduce(
     (sum, f) => sum + parseMonto(f.montoPagado), 0
@@ -578,30 +575,30 @@ const NuevoPagoProveedor = () => {
               </tr>
             </thead>
             <tbody>
-              {facturasSeleccionadas.map((f) => (
-                <tr key={f._id}>
-                  <td>{f.tipoFactura}</td>
-                  <td>{f.numeroFactura}</td>
-                  <td>{formatearFecha(f.fecha)}</td>
-                  <td>{formatoMoneda(totalFactura(f))}</td>
-                  <td>{formatoMoneda(saldoFactura(f))}</td>
-                  <td>
-                    <Form.Control
-                      type="text"
-                      size="sm"
-                      style={{ width: "130px", margin: "0 auto", textAlign: "center" }}
-                      value={editandoMontoId === f._id ? f.montoPagado : formatoMoneda(f.montoPagado)}
-                      onFocus={(e) => { setEditandoMontoId(f._id); const el = e.target; setTimeout(() => el.select(), 0); }}
-                      onChange={(e) => actualizarCampo(f._id, "montoPagado", e.target.value)}
-                      onBlur={() => setEditandoMontoId(null)}
-                      onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
-                    />
-                  </td>
-                  <td>
-                    <Button variant="outline-danger" size="sm" onClick={() => quitarFactura(f._id)}>Quitar</Button>
-                  </td>
-                </tr>
-              ))}
+              {[...facturasSeleccionadas]
+                .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+                .map((f) => (
+                  <tr key={f._id}>
+                    <td>{f.tipoFactura}</td>
+                    <td>{f.numeroFactura}</td>
+                    <td>{formatearFecha(f.fecha)}</td>
+                    <td>{formatoMoneda(totalFactura(f))}</td>
+                    <td>{formatoMoneda(saldoFactura(f))}</td>
+                    <td>
+                      <Form.Control
+                        type="text"
+                        size="sm"
+                        style={{ width: "130px", margin: "0 auto", textAlign: "center" }}
+                        value={parseMonto(f.montoPagado) === 0 ? "" : formatoMoneda(f.montoPagado)}
+                        placeholder="Completar en forma de pago"
+                        readOnly
+                      />
+                    </td>
+                    <td>
+                      <Button variant="outline-danger" size="sm" onClick={() => quitarFactura(f._id)}>Quitar</Button>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
             <tfoot style={{ borderTop: "2px solid #ffc107" }}>
               <tr>
