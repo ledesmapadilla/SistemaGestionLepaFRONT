@@ -486,46 +486,6 @@ export default function Pendientes() {
     Swal.fire({ position: "center", icon: "success", title: "Tarea eliminada", showConfirmButton: false, timer: 1200, timerProgressBar: true });
   };
 
-  const stats = useMemo(() => {
-    let activas = 0;
-    let enProceso = 0;
-    let urgentes = 0;
-    let totalDias = 0;
-    let contDias = 0;
-
-    const todasManuales = [];
-    Object.values(tareasPorResp).forEach((list) => {
-      todasManuales.push(...(list || []));
-    });
-
-    const todas = [...todasManuales, ...derivadas];
-
-    todas.forEach((t) => {
-      const active = ["Pedido", "Pendiente", "En proceso", "En taller"].includes(t.estado);
-      if (active) {
-        activas++;
-        if (t.estado === "En proceso") {
-          enProceso++;
-        }
-        const dias = diasPendiente(t.fecha, t.fechaTerminado);
-        if (typeof dias === "number") {
-          totalDias += dias;
-          contDias++;
-          if (dias > 7) {
-            urgentes++;
-          }
-        }
-      }
-    });
-
-    return {
-      activas,
-      enProceso,
-      urgentes,
-      avgDias: contDias > 0 ? totalDias / contDias : 0,
-    };
-  }, [tareasPorResp, derivadas]);
-
   const obtenerTareasActivasDeResponsable = (nombre) => {
     const derivadasResp = derivadas.filter((d) => (d.responsable || "").trim() === nombre.trim());
     const manuales = tareasPorResp[nombre] || [];
