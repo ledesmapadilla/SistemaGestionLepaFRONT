@@ -293,6 +293,26 @@ const NuevoPagoProveedor = () => {
         return;
       }
     }
+    
+    const totalMediosPago = mediosPago.reduce((sum, m) => sum + parseMonto(m.monto), 0);
+    const totalSaldoSeleccionado = facturasSeleccionadas.reduce((sum, f) => sum + saldoFactura(f), 0);
+
+    if (totalMediosPago > totalSaldoSeleccionado + 0.01) {
+      if (facturasDisponibles.length > 0) {
+        Swal.fire({
+          icon: "info",
+          title: "Monto excedente",
+          text: "El pago supera el monto de las facturas seleccionadas. Por favor, agregá otra factura para aplicar el pago completo.",
+        });
+      } else {
+        Swal.fire({
+          icon: "info",
+          title: "Saldo a favor",
+          text: "No se adeudan más facturas. El saldo restante del pago se acreditará a futuras facturas.",
+        });
+      }
+    }
+
     setShowModalPago(false);
   };
 
