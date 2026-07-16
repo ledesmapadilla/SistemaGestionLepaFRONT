@@ -89,12 +89,6 @@
   line-height: 1.4;
 }
 
-.glass-panel.selected-card {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 32px rgba(245, 158, 11, 0.15);
-  background: rgba(255, 255, 255, 0.75);
-}
-
 /* State tags */
 .state-badge {
   padding: 4px 12px;
