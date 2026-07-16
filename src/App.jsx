@@ -27,6 +27,7 @@ import ResumenModal from "./components/shared/ResumenModal";
 import { PendientesModalProvider } from "./context/PendientesModalContext";
 
 const Inicio = lazy(() => import("./components/pages/Inicio"));
+const Pendientes = lazy(() => import("./components/pages/secciones/PENDIENTES/Pendientes.jsx"));
 const Error404 = lazy(() => import("./components/pages/Error404"));
 const Clientes = lazy(() => import("./components/pages/secciones/ALTAS/Clientes/Clientes.jsx"));
 const Proveedores = lazy(() => import("./components/pages/secciones/ALTAS/Proveedores/Proveedores.jsx"));
@@ -122,6 +123,7 @@ function App() {
                     <ChunkErrorBoundary>
                     <Suspense fallback={<PageSpinner />}>
                     <Routes>
+                      <Route path="/pendientes" element={<Pendientes />} />
                       <Route path="/clientes" element={<Clientes />} />
                       <Route path="/proveedores" element={<Proveedores />} />
                       <Route path="/obras" element={<Obras />} />

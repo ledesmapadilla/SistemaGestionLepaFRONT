@@ -7,6 +7,7 @@ import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/q
 import { obtenerTodasReparaciones, guardarReparaciones } from "../../../../helpers/queriesReparaciones";
 import { listarMaquinas } from "../../../../helpers/queriesMaquinas";
 import { usePendientesModal } from "../../../../context/PendientesModalContext";
+import "../../../../styles/pendientes.css";
 
 // Mismos responsables que el select de repuestos.
 const RESPONSABLES = [
@@ -495,242 +496,310 @@ export default function Pendientes() {
   };
 
   return (
-    <Container className="py-2">
-      <h2 className="mb-1 fw-bold text-center">Tareas pendientes</h2>
-      <p className="text-muted mb-4 text-center">Seleccioná un responsable</p>
-      <Row xs={2} sm={3} md={3} lg={3} className="g-4 mx-auto justify-content-center" style={{ maxWidth: 620 }}>
-        {RESPONSABLES.map((r) => (
-          <Col key={r.nombre}>
-            <Card
-              className="h-100 shadow-sm border-0"
-              style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
-              onClick={() => abrir(r)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-4px)";
-                e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.15)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "";
+    <>
+      <div className="pendientes-bg" />
+      <Container className="content-wrapper py-4">
+        <h2 className="mb-1 fw-bold text-center text-dark">Panel de Control de Pendientes</h2>
+        <p className="text-muted mb-4 text-center">Gestión visual e indicadores de tareas por responsable</p>
+
+        {/* Métrica superior */}
+        <Row className="g-3 mb-5 justify-content-center">
+          <Col xs={6} md={3}>
+            <div className="metric-card">
+              <div className="metric-number text-primary">{stats.activas}</div>
+              <div className="metric-label">Tareas Activas</div>
+            </div>
+          </Col>
+          <Col xs={6} md={3}>
+            <div className="metric-card">
+              <div className="metric-number text-warning">{stats.enProceso}</div>
+              <div className="metric-label">En Proceso</div>
+            </div>
+          </Col>
+          <Col xs={6} md={3}>
+            <div className="metric-card">
+              <div className="metric-number text-danger">{stats.urgentes}</div>
+              <div className="metric-label">Urgentes (>7 días)</div>
+            </div>
+          </Col>
+          <Col xs={6} md={3}>
+            <div className="metric-card">
+              <div className="metric-number text-success">
+                {stats.avgDias ? stats.avgDias.toFixed(0) : 0}d
+              </div>
+              <div className="metric-label">Promedio de espera</div>
+            </div>
+          </Col>
+        </Row>
+
+        <Row className="g-4 justify-content-center">
+          {RESPONSABLES.map((r) => {
+            const pendingCount = contarPendientesEnProceso(r.nombre);
+            const totalTasks = [
+              ...derivadas.filter((d) => (d.responsable || "").trim() === r.nombre.trim()),
+              ...(tareasPorResp[r.nombre] || []),
+            ];
+            const completedCount = totalTasks.filter(
+              (t) => t.estado === "Terminado" || t.estado === "Colocado"
+            ).length;
+            const totalCount = totalTasks.length;
+            const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 100;
+
+            return (
+              <Col key={r.nombre} xs={12} sm={6} md={4} lg={3}>
+                <div
+                  className="glass-panel p-4 d-flex flex-column h-100 position-relative"
+                  onClick={() => abrir(r)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <div className="d-flex justify-content-between align-items-start mb-3">
+                    <div
+                      className="rounded-circle d-flex align-items-center justify-content-center"
+                      style={{
+                        width: 48,
+                        height: 48,
+                        backgroundColor: r.color + "22",
+                        border: `1px solid ${r.color}44`,
+                      }}
+                    >
+                      <i className="bi bi-person-fill fs-4" style={{ color: r.color }} />
+                    </div>
+                    {pendingCount > 0 ? (
+                      <span
+                        className="badge rounded-pill text-white"
+                        style={{ backgroundColor: r.color, fontSize: "0.78rem", padding: "6px 12px" }}
+                      >
+                        {pendingCount} pendientes
+                      </span>
+                    ) : (
+                      <span
+                        className="badge rounded-pill bg-success-subtle text-success border border-success-subtle"
+                        style={{ fontSize: "0.78rem", padding: "6px 12px" }}
+                      >
+                        Al día
+                      </span>
+                    )}
+                  </div>
+
+                  <h4 className="fw-bold mb-1 text-dark" style={{ fontSize: "1.1rem" }}>
+                    {r.nombre}
+                  </h4>
+                  <p className="text-muted small mb-3">Responsable</p>
+
+                  <div className="mt-auto">
+                    <div className="d-flex justify-content-between small text-muted mb-1">
+                      <span>Progreso de tareas</span>
+                      <span>{pct}%</span>
+                    </div>
+                    <div
+                      className="progress"
+                      style={{ height: "6px", backgroundColor: "rgba(0,0,0,0.06)" }}
+                    >
+                      <div
+                        className="progress-bar"
+                        role="progressbar"
+                        style={{ width: `${pct}%`, backgroundColor: r.color }}
+                        aria-valuenow={pct}
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Col>
+            );
+          })}
+
+          {/* Card de Resumen */}
+          <Col xs={12} sm={6} md={4} lg={3}>
+            <div
+              className="glass-panel p-4 d-flex flex-column h-100 justify-content-center align-items-center text-center"
+              onClick={() => pendientesModal?.abrirResumen()}
+              style={{
+                cursor: "pointer",
+                border: "1px dashed rgba(245, 158, 11, 0.5)",
+                background: "rgba(255, 255, 255, 0.3)",
               }}
             >
-              <Card.Body className="d-flex flex-column align-items-center text-center py-3">
-                <div
-                  className="rounded-circle d-flex align-items-center justify-content-center mb-2"
-                  style={{ width: 44, height: 44, backgroundColor: r.color + "1a" }}
-                >
-                  <i className="bi bi-person-fill fs-5" style={{ color: r.color }} />
-                </div>
-                <Card.Title className="fw-semibold mb-0" style={{ fontSize: "0.95rem" }}>{r.nombre}</Card.Title>
-                {(() => {
-                  const n = contarPendientesEnProceso(r.nombre);
-                  return (
-                    <span
-                      className="badge rounded-pill mt-1"
-                      title="Tareas pendientes o en proceso"
-                      style={{ backgroundColor: n > 0 ? r.color : "#adb5bd", fontSize: "0.75rem" }}
-                    >
-                      {n}
-                    </span>
-                  );
-                })()}
-              </Card.Body>
-              <div style={{ height: 3, backgroundColor: r.color, borderRadius: "0 0 .375rem .375rem" }} />
-            </Card>
-          </Col>
-        ))}
-
-        {/* Tarjeta de acceso al resumen general */}
-        <Col key="resumen">
-          <Card
-            className="h-100 shadow-sm border-0"
-            style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
-            onClick={() => pendientesModal?.abrirResumen()}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-4px)";
-              e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.15)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "";
-            }}
-          >
-            <Card.Body className="d-flex flex-column align-items-center text-center py-3">
               <div
-                className="rounded-circle d-flex align-items-center justify-content-center mb-2"
-                style={{ width: 44, height: 44, backgroundColor: "#49505722" }}
+                className="rounded-circle d-flex align-items-center justify-content-center mb-3"
+                style={{
+                  width: 52,
+                  height: 52,
+                  backgroundColor: "rgba(245, 158, 11, 0.1)",
+                  border: "1px solid rgba(245, 158, 11, 0.2)",
+                }}
               >
-                <span className="fw-bold fs-5" style={{ color: "#495057" }}>R</span>
+                <i className="bi bi-grid-1x2-fill fs-4 text-warning" />
               </div>
-              <Card.Title className="fw-semibold mb-0" style={{ fontSize: "0.95rem" }}>Resumen</Card.Title>
-            </Card.Body>
-            <div style={{ height: 3, backgroundColor: "#495057", borderRadius: "0 0 .375rem .375rem" }} />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* ── Modal de tareas del responsable ── */}
-      <Modal show={!!modalResp} onHide={cerrar} centered size="xl" scrollable>
-        <Modal.Header closeButton>
-          <Modal.Title>Pendientes - {modalResp?.nombre}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <span className="text-muted">Fecha: {new Date().toLocaleDateString("es-AR")}</span>
-            <div className="d-flex gap-2">
-              <Button size="sm" variant="outline-light" onClick={exportarExcelPendientes}>Excel</Button>
-              <Button size="sm" variant="outline-primary" onClick={agregar}>Agregar tarea</Button>
+              <h4 className="fw-bold text-dark mb-1" style={{ fontSize: "1.1rem" }}>
+                Resumen General
+              </h4>
+              <p className="text-muted small mb-0">Ver todas las tareas juntas</p>
             </div>
-          </div>
+          </Col>
+        </Row>
 
-          {!cargando && (
-            <div className="d-flex gap-2 mb-3 flex-wrap">
-              <div className="position-relative" style={{ width: 270 }}>
-                <Form.Select
-                  size="sm"
-                  value={filtroEstado}
-                  onChange={(e) => setFiltroEstado(e.target.value)}
-                  style={{ minWidth: 0, ...(filtroEstado !== "" ? { backgroundImage: "none" } : {}) }}
-                >
-                  <option value="activas">Pedido / Pendiente / En proceso</option>
-                  <option value="Pedido">Pedido</option>
-                  <option value="Pendiente">Pendiente</option>
-                  <option value="En proceso">En proceso</option>
-                  <option value="En taller">En taller</option>
-                  <option value="Colocado">Colocado</option>
-                  <option value="Terminado">Terminado</option>
-                  <option value="">Todos</option>
-                </Form.Select>
-                {filtroEstado !== "" && (
-                  <span onClick={() => setFiltroEstado("")} style={estiloX}>✕</span>
-                )}
+        {/* ── Modal de tareas del responsable ── */}
+        <Modal show={!!modalResp} onHide={cerrar} centered size="xl" scrollable className="glass-modal">
+          <Modal.Header closeButton className="border-0 pb-0">
+            <div className="d-flex align-items-center gap-3">
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center"
+                style={{ width: 40, height: 40, backgroundColor: (modalResp?.color || "#6c757d") + "22" }}
+              >
+                <i className="bi bi-person-badge-fill fs-5" style={{ color: modalResp?.color }} />
               </div>
-              <div className="position-relative" style={{ width: 200 }}>
-                <Form.Select
-                  size="sm"
-                  value={filtroMaquina}
-                  onChange={(e) => setFiltroMaquina(e.target.value)}
-                  style={{ minWidth: 0, ...(filtroMaquina ? { backgroundImage: "none" } : {}) }}
-                >
-                  <option value="">Máquina (todas)</option>
-                  {maquinasUnicas.map((m) => (<option key={m} value={m}>{m}</option>))}
-                </Form.Select>
-                {filtroMaquina && (
-                  <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>
-                )}
-              </div>
-              <div className="position-relative" style={{ width: 280 }}>
-                <Form.Select
-                  size="sm"
-                  value={filtroTarea}
-                  onChange={(e) => setFiltroTarea(e.target.value)}
-                  style={{ minWidth: 0, ...(filtroTarea ? { backgroundImage: "none" } : {}) }}
-                >
-                  <option value="">Tarea (todas)</option>
-                  {tareasUnicas.map((t) => (<option key={t} value={t}>{t}</option>))}
-                </Form.Select>
-                {filtroTarea && (
-                  <span onClick={() => setFiltroTarea("")} style={estiloX}>✕</span>
-                )}
-              </div>
+              <Modal.Title className="fw-bold text-dark">Planilla de {modalResp?.nombre}</Modal.Title>
             </div>
-          )}
+          </Modal.Header>
+          <Modal.Body className="pt-3">
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+              <div className="d-flex gap-2">
+                <Button size="sm" variant="outline-dark" className="rounded-pill px-3" onClick={exportarExcelPendientes}>
+                  <i className="bi bi-file-earmark-excel-fill text-success me-1" /> Exportar Excel
+                </Button>
+                <Button size="sm" variant="warning" className="rounded-pill px-3 fw-semibold text-white" onClick={agregar}>
+                  <i className="bi bi-plus-lg me-1" /> Agregar Tarea
+                </Button>
+              </div>
 
-          {cargando ? (
-            <Spinner animation="border" className="d-block mx-auto my-4" />
-          ) : (
-          <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
-            <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
-              <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
-                <tr>
-                  <th style={{ width: 95 }}>Fecha</th>
-                  <th style={{ width: 110 }}>Máquina</th>
-                  <th>Tarea</th>
-                  <th style={{ width: 85 }}>Días pendiente</th>
-                  <th style={{ width: 110 }}>Estado</th>
-                  <th style={{ width: 80 }}>Obs.</th>
-                  <th style={{ width: 230 }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
+              {!cargando && (
+                <div className="d-flex gap-2 flex-wrap">
+                  <Form.Select
+                    size="sm"
+                    value={filtroEstado}
+                    onChange={(e) => setFiltroEstado(e.target.value)}
+                    className="rounded-pill px-3"
+                    style={{ width: "220px" }}
+                  >
+                    <option value="activas">Pedido / Pendiente / En proceso</option>
+                    <option value="Pedido">Pedido</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="En proceso">En proceso</option>
+                    <option value="En taller">En taller</option>
+                    <option value="Colocado">Colocado</option>
+                    <option value="Terminado">Terminado</option>
+                    <option value="">Todos los estados</option>
+                  </Form.Select>
+
+                  <Form.Select
+                    size="sm"
+                    value={filtroMaquina}
+                    onChange={(e) => setFiltroMaquina(e.target.value)}
+                    className="rounded-pill px-3"
+                    style={{ width: "180px" }}
+                  >
+                    <option value="">Todas las máquinas</option>
+                    {maquinasUnicas.map((m) => (<option key={m} value={m}>{m}</option>))}
+                  </Form.Select>
+                </div>
+              )}
+            </div>
+
+            {cargando ? (
+              <div className="text-center py-5">
+                <Spinner animation="border" variant="warning" />
+              </div>
+            ) : (
+              <div style={{ maxHeight: "60vh", overflowY: "auto" }} className="custom-scrollbar pe-2">
+                {/* Render Derived (reparaciones/repuestos) Tasks */}
                 {derivadasFiltradas.map((t) => {
                   const enEdicion = editandoId === t.id;
-                  return (
-                  <tr key={t.id} style={{ backgroundColor: "#fbfbf3" }}>
-                    <td>
-                      {enEdicion && t.tipo === "reparacion" ? (
-                        <Form.Control size="sm" type="date" value={derivadoEdit.fecha || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, fecha: e.target.value }))} />
-                      ) : (
-                        t.fecha ? t.fecha.split("-").reverse().join("/") : "-"
-                      )}
-                    </td>
-                    <td>{t.maquina || "-"}</td>
-                    <td className="text-start">
-                      {enEdicion ? (
-                        <Form.Control size="sm" value={derivadoEdit.tarea || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, tarea: e.target.value }))} />
-                      ) : (
-                        t.tarea || "-"
-                      )}
-                    </td>
-                    <td>{diasPendiente(t.fecha)}</td>
-                    <td>
-                      {enEdicion ? (
-                        <Form.Select size="sm" value={derivadoEdit.estado} onChange={(e) => setDerivadoEdit((p) => ({ ...p, estado: e.target.value }))}>
-                          {(t.tipo === "repuesto" ? ESTADOS_REPUESTO : ESTADOS).map((s) => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </Form.Select>
-                      ) : (
-                        <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
-                      )}
-                    </td>
-                    <td>
-                      {enEdicion ? (
-                        <Form.Control size="sm" value={derivadoEdit.observaciones || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, observaciones: e.target.value }))} />
-                      ) : t.observaciones ? (
-                        <Button size="sm" variant="outline-secondary" className="py-0 px-2" onClick={() => verObservacion(t.observaciones)}>Ver</Button>
-                      ) : (
-                        <span className="text-muted">-</span>
-                      )}
-                    </td>
-                    <td>
-                      <div className="d-flex gap-1 justify-content-center align-items-center flex-nowrap text-nowrap">
-                        {enEdicion ? (
-                          <Button size="sm" variant="outline-success" onClick={() => guardarDerivado(t)}>Listo</Button>
-                        ) : (
-                          <Button size="sm" variant="outline-warning" onClick={() => editarDerivado(t)}>Editar</Button>
-                        )}
-                        <Button size="sm" variant="outline-danger" onClick={() => borrarDerivado(t)}>Borrar</Button>
-                        <Button
-                          size="sm"
-                          variant={t.tipo === "repuesto" ? "outline-info" : "outline-secondary"}
-                          onClick={() => irAReparaciones(t)}
-                        >
-                          {t.tipo === "repuesto" ? "Repuestos" : "Reparación"}
-                        </Button>
+                  const dias = diasPendiente(t.fecha);
+                  const diasClass = dias <= 3 ? "fresh" : dias <= 7 ? "warning" : "danger";
+
+                  if (enEdicion) {
+                    return (
+                      <div key={t.id} className="task-item-card flex-column align-items-stretch gap-3 w-100 border-warning bg-light">
+                        <Row className="g-2">
+                          {t.tipo === "reparacion" && (
+                            <Col xs={12} md={3}>
+                              <Form.Label className="small fw-bold text-muted mb-1">Fecha</Form.Label>
+                              <Form.Control size="sm" type="date" value={derivadoEdit.fecha || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, fecha: e.target.value }))} />
+                            </Col>
+                          )}
+                          <Col xs={12} md={t.tipo === "reparacion" ? 9 : 12}>
+                            <Form.Label className="small fw-bold text-muted mb-1">Tarea</Form.Label>
+                            <Form.Control size="sm" value={derivadoEdit.tarea || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, tarea: e.target.value }))} />
+                          </Col>
+                          <Col xs={12} md={4}>
+                            <Form.Label className="small fw-bold text-muted mb-1">Estado</Form.Label>
+                            <Form.Select size="sm" value={derivadoEdit.estado} onChange={(e) => setDerivadoEdit((p) => ({ ...p, estado: e.target.value }))}>
+                              {(t.tipo === "repuesto" ? ESTADOS_REPUESTO : ESTADOS).map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </Form.Select>
+                          </Col>
+                          <Col xs={12} md={8}>
+                            <Form.Label className="small fw-bold text-muted mb-1">Observaciones</Form.Label>
+                            <Form.Control size="sm" value={derivadoEdit.observaciones || ""} onChange={(e) => setDerivadoEdit((p) => ({ ...p, observaciones: e.target.value }))} />
+                          </Col>
+                        </Row>
+                        <div className="d-flex justify-content-end gap-2 mt-2">
+                          <Button size="sm" variant="outline-secondary" className="rounded-pill px-3" onClick={() => setEditandoId(null)}>Cancelar</Button>
+                          <Button size="sm" variant="success" className="rounded-pill px-3" onClick={() => guardarDerivado(t)}>Guardar</Button>
+                        </div>
                       </div>
-                    </td>
-                  </tr>
+                    );
+                  }
+
+                  return (
+                    <div key={t.id} className="task-item-card d-flex flex-wrap flex-md-nowrap align-items-center justify-content-between gap-3" style={{ borderLeft: `4px solid ${modalResp?.color || "#dee2e6"}` }}>
+                      <div className="d-flex flex-column gap-1" style={{ flex: 1 }}>
+                        <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
+                          <span className="text-muted small fw-semibold">
+                            {t.fecha ? t.fecha.split("-").reverse().join("/") : "-"}
+                          </span>
+                          <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2 py-0" style={{ fontSize: '0.72rem' }}>
+                            {t.maquina || "Sin máquina"}
+                          </span>
+                          <span className="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2 py-0" style={{ fontSize: '0.72rem' }}>
+                            {t.tipo === "repuesto" ? "Repuesto derivado" : "Reparación derivada"}
+                          </span>
+                          <span className={`days-badge ${diasClass}`}>
+                            <i className="bi bi-clock" /> {dias} {dias === 1 ? "día" : "días"}
+                          </span>
+                        </div>
+                        <div className="fw-semibold text-dark fs-6">{t.tarea}</div>
+                        {t.observaciones && (
+                          <div className="text-muted small mt-1">
+                            <i className="bi bi-info-circle me-1" /> {t.observaciones}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="d-flex align-items-center gap-3">
+                        <span className="state-badge" style={{ backgroundColor: (COLOR_ESTADO[t.estado] || "#6c757d") + "1a", color: COLOR_ESTADO[t.estado] || "#6c757d", border: `1px solid ${COLOR_ESTADO[t.estado]}33` }}>
+                          {t.estado}
+                        </span>
+
+                        <div className="d-flex gap-1">
+                          <Button size="sm" variant="outline-warning" className="border-0 rounded-circle" onClick={() => editarDerivado(t)} title="Editar"><i className="bi bi-pencil-fill" /></Button>
+                          <Button size="sm" variant="outline-danger" className="border-0 rounded-circle" onClick={() => borrarDerivado(t)} title="Eliminar"><i className="bi bi-trash-fill" /></Button>
+                          <Button size="sm" variant="outline-info" className="border-0 rounded-circle" onClick={() => irAReparaciones(t)} title={t.tipo === "repuesto" ? "Ver Repuestos" : "Ver Reparación"}><i className="bi bi-gear-fill" /></Button>
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
-                {tareasFiltradas.length === 0 && derivadasFiltradas.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-muted py-3">Sin tareas cargadas</td>
-                  </tr>
-                ) : (
-                  tareasFiltradas.map((t) => {
-                    const editando = editandoId === t.id;
+
+                {/* Render Manual Tasks */}
+                {tareasFiltradas.map((t) => {
+                  const editando = editandoId === t.id;
+                  const dias = diasPendiente(t.fecha, t.fechaTerminado);
+                  const diasClass = dias <= 3 ? "fresh" : dias <= 7 ? "warning" : "danger";
+
+                  if (editando) {
                     return (
-                      <tr key={t.id}>
-                        <td>
-                          {editando ? (
+                      <div key={t.id} className="task-item-card flex-column align-items-stretch gap-3 w-100 border-warning bg-light">
+                        <Row className="g-2">
+                          <Col xs={12} md={3}>
+                            <Form.Label className="small fw-bold text-muted mb-1">Fecha</Form.Label>
                             <Form.Control size="sm" type="date" value={t.fecha} onChange={(e) => editar(t.id, "fecha", e.target.value)} />
-                          ) : (
-                            t.fecha ? t.fecha.split("-").reverse().join("/") : "-"
-                          )}
-                        </td>
-                        <td>
-                          {editando ? (
+                          </Col>
+                          <Col xs={12} md={5}>
+                            <Form.Label className="small fw-bold text-muted mb-1">Maquina</Form.Label>
                             <Form.Select
                               size="sm"
                               value={t.maquina || ""}
@@ -740,60 +809,80 @@ export default function Pendientes() {
                               {maquinasReparaciones.map((m) => (<option key={m} value={m}>{m}</option>))}
                               <option value="Otra">Otra</option>
                             </Form.Select>
-                          ) : (
-                            t.maquina || "-"
-                          )}
-                        </td>
-                        <td className={editando ? "" : "text-start"}>
-                          {editando ? (
-                            <Form.Control size="sm" value={t.tarea} onChange={(e) => editar(t.id, "tarea", e.target.value)} />
-                          ) : (
-                            t.tarea || "-"
-                          )}
-                        </td>
-                        <td>{diasPendiente(t.fecha, t.fechaTerminado)}</td>
-                        <td>
-                          {editando ? (
+                          </Col>
+                          <Col xs={12} md={4}>
+                            <Form.Label className="small fw-bold text-muted mb-1">Estado</Form.Label>
                             <Form.Select size="sm" value={t.estado} onChange={(e) => editar(t.id, "estado", e.target.value)}>
                               {ESTADOS.map((s) => (<option key={s} value={s}>{s}</option>))}
                             </Form.Select>
-                          ) : (
-                            <span style={{ color: COLOR_ESTADO[t.estado] || "#dee2e6", fontWeight: 600 }}>{t.estado || "-"}</span>
-                          )}
-                        </td>
-                        <td>
-                          {editando ? (
+                          </Col>
+                          <Col xs={12} md={6}>
+                            <Form.Label className="small fw-bold text-muted mb-1">Tarea</Form.Label>
+                            <Form.Control size="sm" value={t.tarea} onChange={(e) => editar(t.id, "tarea", e.target.value)} />
+                          </Col>
+                          <Col xs={12} md={6}>
+                            <Form.Label className="small fw-bold text-muted mb-1">Observaciones</Form.Label>
                             <Form.Control size="sm" value={t.observaciones} onChange={(e) => editar(t.id, "observaciones", e.target.value)} />
-                          ) : t.observaciones ? (
-                            <Button size="sm" variant="outline-secondary" className="py-0 px-2" onClick={() => verObservacion(t.observaciones)}>Ver</Button>
-                          ) : (
-                            <span className="text-muted">-</span>
-                          )}
-                        </td>
-                        <td>
-                          <div className="d-flex gap-1 justify-content-center">
-                            {editando ? (
-                              <Button size="sm" variant="outline-success" onClick={finalizarEdicion}>Listo</Button>
-                            ) : (
-                              <Button size="sm" variant="outline-warning" onClick={() => setEditandoId(t.id)}>Editar</Button>
-                            )}
-                            <Button size="sm" variant="outline-danger" onClick={() => borrar(t.id)}>Borrar</Button>
-                          </div>
-                        </td>
-                      </tr>
+                          </Col>
+                        </Row>
+                        <div className="d-flex justify-content-end gap-2 mt-2">
+                          <Button size="sm" variant="outline-secondary" className="rounded-pill px-3" onClick={() => cancelarRef.current()}>Cancelar</Button>
+                          <Button size="sm" variant="success" className="rounded-pill px-3" onClick={finalizarEdicion}>Guardar</Button>
+                        </div>
+                      </div>
                     );
-                  })
-                )}
-              </tbody>
-            </Table>
-          </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer className="justify-content-center">
-          <Button variant="outline-secondary" onClick={cerrar}>Cerrar</Button>
-        </Modal.Footer>
-      </Modal>
+                  }
 
-    </Container>
+                  return (
+                    <div key={t.id} className="task-item-card d-flex flex-wrap flex-md-nowrap align-items-center justify-content-between gap-3">
+                      <div className="d-flex flex-column gap-1" style={{ flex: 1 }}>
+                        <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
+                          <span className="text-muted small fw-semibold">
+                            {t.fecha ? t.fecha.split("-").reverse().join("/") : "-"}
+                          </span>
+                          <span className="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2 py-0" style={{ fontSize: '0.72rem' }}>
+                            {t.maquina || "Sin máquina"}
+                          </span>
+                          <span className={`days-badge ${diasClass}`}>
+                            <i className="bi bi-clock" /> {dias} {dias === 1 ? "día" : "días"}
+                          </span>
+                        </div>
+                        <div className="fw-semibold text-dark fs-6">{t.tarea}</div>
+                        {t.observaciones && (
+                          <div className="text-muted small mt-1">
+                            <i className="bi bi-info-circle me-1" /> {t.observaciones}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="d-flex align-items-center gap-3">
+                        <span className="state-badge" style={{ backgroundColor: (COLOR_ESTADO[t.estado] || "#6c757d") + "1a", color: COLOR_ESTADO[t.estado] || "#6c757d", border: `1px solid ${COLOR_ESTADO[t.estado]}33` }}>
+                          {t.estado}
+                        </span>
+
+                        <div className="d-flex gap-1">
+                          <Button size="sm" variant="outline-warning" className="border-0 rounded-circle" onClick={() => setEditandoId(t.id)} title="Editar"><i className="bi bi-pencil-fill" /></Button>
+                          <Button size="sm" variant="outline-danger" className="border-0 rounded-circle" onClick={() => borrar(t.id)} title="Eliminar"><i className="bi bi-trash-fill" /></Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {derivadasFiltradas.length === 0 && tareasFiltradas.length === 0 && (
+                  <div className="text-center py-5 text-muted">
+                    <i className="bi bi-card-checklist fs-2 mb-2 d-block" />
+                    No hay tareas registradas con los filtros actuales
+                  </div>
+                )}
+              </div>
+            )}
+          </Modal.Body>
+          <Modal.Footer className="border-0 pt-0 justify-content-center">
+            <Button variant="outline-secondary" className="rounded-pill px-4" onClick={cerrar}>Cerrar planilla</Button>
+          </Modal.Footer>
+        </Modal>
+      </Container>
+    </>
   );
 }

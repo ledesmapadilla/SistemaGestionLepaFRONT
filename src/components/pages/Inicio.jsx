@@ -19,7 +19,7 @@ const Inicio = () => {
       <img
         src={logosimple}
         alt="LEPA"
-        onClick={() => navigate("/obras")}
+        onClick={() => navigate("/pendientes")}
         style={{
           position: "absolute",
           top: "50%",
