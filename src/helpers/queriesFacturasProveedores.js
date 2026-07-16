@@ -3,8 +3,12 @@ import { API } from "./api";
 
 const url = API.facturasProveedores;
 
-export const listarFacturasProveedores = async () => {
-  const res = await authFetch(url);
+export const listarFacturasProveedores = async (estadoPago) => {
+  let queryUrl = url;
+  if (estadoPago) {
+    queryUrl += `?estadoPago=${estadoPago}`;
+  }
+  const res = await authFetch(queryUrl);
   if (!res?.ok) throw new Error("Error al listar facturas de proveedores");
   return res.json();
 };

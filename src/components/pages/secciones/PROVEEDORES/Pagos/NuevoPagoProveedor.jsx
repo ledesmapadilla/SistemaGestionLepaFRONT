@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 import AsyncButton from "../../../../shared/AsyncButton";
 import { crearPagoProveedor, listarPagosProveedores } from "../../../../../helpers/queriesPagosProveedores";
 import { listarFacturasProveedores } from "../../../../../helpers/queriesFacturasProveedores";
-import { listarCobros, actualizarEstadoCheque } from "../../../../../helpers/queriesCobros";
+import { listarChequesEnCartera, actualizarEstadoCheque } from "../../../../../helpers/queriesCobros";
 import { crearChequePropio, listarChequesPropio } from "../../../../../helpers/queriesChequesPropio";
 
 const hoy = new Date().toLocaleDateString("en-CA");
@@ -89,10 +89,10 @@ const NuevoPagoProveedor = () => {
   useEffect(() => {
     const cargar = async () => {
       try {
-        const [facturasResult, pagosResult, cobrosResult, chequesProResult] = await Promise.allSettled([
-          listarFacturasProveedores(),
+        const [facturasResult, pagosResult, chequesCarteraResult, chequesProResult] = await Promise.allSettled([
+          listarFacturasProveedores("Pendiente"),
           listarPagosProveedores(),
-          listarCobros(),
+          listarChequesEnCartera(),
           listarChequesPropio(),
         ]);
 
@@ -121,26 +121,8 @@ const NuevoPagoProveedor = () => {
           setChequesPropioCargados(chequesProResult.value);
         }
 
-        if (cobrosResult.status === "fulfilled") {
-          const filas = [];
-          cobrosResult.value.forEach((cobro) => {
-            (cobro.mediosPago || []).forEach((m, medioIndex) => {
-              if ((m.medioPago === "Cheque" || m.medioPago === "E-Cheq") &&
-                  (m.estado === "En cartera" || !m.estado)) {
-                filas.push({
-                  _id: `${cobro._id}-${medioIndex}`,
-                  cobroId: cobro._id,
-                  medioIndex,
-                  cliente: cobro.cliente,
-                  numeroCheque: m.numeroCheque || "",
-                  valor: m.monto,
-                  fechaVencimiento: m.fechaCobro || "",
-                  tipo: m.medioPago,
-                });
-              }
-            });
-          });
-          setChequesEnCartera(filas);
+        if (chequesCarteraResult.status === "fulfilled") {
+          setChequesEnCartera(chequesCarteraResult.value);
         }
       } catch (error) {
         console.error(error);

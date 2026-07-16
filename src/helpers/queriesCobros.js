@@ -9,6 +9,12 @@ export const listarCobros = async () => {
   return res.json();
 };
 
+export const listarChequesEnCartera = async () => {
+  const res = await authFetch(`${cobrosBackend}/cheques-en-cartera`);
+  if (!res?.ok) throw new Error("Error al listar cheques en cartera");
+  return res.json();
+};
+
 export const crearCobro = async (cobro) => {
   try {
     return await authFetch(cobrosBackend, {
