@@ -3,8 +3,12 @@ import { API } from "./api";
 
 const base = API.pagosProveedores;
 
-export const listarPagosProveedores = async () => {
-  const res = await authFetch(base);
+export const listarPagosProveedores = async (proveedor) => {
+  let queryUrl = base;
+  if (proveedor) {
+    queryUrl += `?proveedor=${encodeURIComponent(proveedor)}`;
+  }
+  const res = await authFetch(queryUrl);
   if (!res?.ok) throw new Error("Error al listar pagos de proveedores");
   return res.json();
 };

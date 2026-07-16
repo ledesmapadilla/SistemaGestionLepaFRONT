@@ -143,12 +143,32 @@ const NuevoPagoProveedor = () => {
       setFacturaElegida("");
       return;
     }
-    const idsSeleccionados = facturasSeleccionadas.map((f) => f._id);
-    const filtradas = todasFacturas.filter(
-      (f) => f.proveedor === proveedorSeleccionado && !idsSeleccionados.includes(f._id)
-    );
-    setFacturasDisponibles(filtradas);
-    setFacturaElegida("");
+
+    const cargarPagosYFiltrar = async () => {
+      try {
+        const pagosProveedor = await listarPagosProveedores(proveedorSeleccionado);
+        const mapa = {};
+        pagosProveedor.forEach((pago) => {
+          (pago.pagos || []).forEach((item) => {
+            const id = (item.factura?._id ?? item.factura)?.toString();
+            if (id) mapa[id] = (mapa[id] || 0) + (item.montoPagado || 0);
+          });
+        });
+        
+        setPagadoPorFactura((prev) => ({ ...prev, ...mapa }));
+
+        const idsSeleccionados = facturasSeleccionadas.map((f) => f._id);
+        const filtradas = todasFacturas.filter(
+          (f) => f.proveedor === proveedorSeleccionado && !idsSeleccionados.includes(f._id)
+        );
+        setFacturasDisponibles(filtradas);
+        setFacturaElegida("");
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    cargarPagosYFiltrar();
   }, [proveedorSeleccionado, todasFacturas, facturasSeleccionadas]);
 
   // Se eliminó el useEffect que sincronizaba automáticamente el monto del medio de pago único
