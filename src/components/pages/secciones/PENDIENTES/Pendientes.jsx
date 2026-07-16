@@ -495,10 +495,9 @@ export default function Pendientes() {
 
   return (
     <Container className="py-4">
-      <h2 className="mb-1 fw-bold text-center">Pendientes</h2>
-      <p className="text-muted mb-4 text-center">Gestión visual por responsable</p>
+      <h2 className="mb-3 fw-bold text-center">Pendientes</h2>
 
-      <Row xs={1} sm={2} md={3} lg={3} className="g-4 mx-auto justify-content-center" style={{ maxWidth: 900 }}>
+      <Row xs={1} sm={2} md={3} lg={3} className="g-3 mx-auto justify-content-center" style={{ maxWidth: 900 }}>
         {RESPONSABLES.map((r) => {
           const activeTasks = obtenerTareasActivasDeResponsable(r.nombre);
 
@@ -517,21 +516,21 @@ export default function Pendientes() {
                   e.currentTarget.style.boxShadow = "";
                 }}
               >
-                <Card.Body className="d-flex flex-column align-items-center text-center py-4">
+                <Card.Body className="d-flex flex-column align-items-center text-center py-3">
                   <div
-                    className="rounded-circle d-flex align-items-center justify-content-center mb-3"
-                    style={{ width: 64, height: 64, backgroundColor: r.color + "1a" }}
+                    className="rounded-circle d-flex align-items-center justify-content-center mb-2"
+                    style={{ width: 44, height: 44, backgroundColor: r.color + "1a" }}
                   >
-                    <i className="bi bi-person-fill fs-2" style={{ color: r.color }} />
+                    <i className="bi bi-person-fill fs-5" style={{ color: r.color }} />
                   </div>
-                  <Card.Title className="fw-semibold mb-2">{r.nombre}</Card.Title>
+                  <Card.Title className="fw-semibold mb-2" style={{ fontSize: "1rem" }}>{r.nombre}</Card.Title>
 
                   {activeTasks.length === 0 ? (
                     <span className="text-muted fst-italic small">Sin pendientes</span>
                   ) : (
-                    <div className="text-start w-100" style={{ fontSize: "0.75rem" }}>
+                    <div className="text-start w-100" style={{ fontSize: "0.8rem", lineHeight: 1.5 }}>
                       {activeTasks.map((t) => (
-                        <div key={t.id} className="text-truncate fw-semibold text-dark">
+                        <div key={t.id} className="text-truncate fw-semibold" style={{ color: "#000000" }}>
                           • {t.maquina ? `${t.maquina} - ${t.tarea}` : t.tarea}
                         </div>
                       ))}
