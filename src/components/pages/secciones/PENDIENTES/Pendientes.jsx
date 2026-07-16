@@ -18,6 +18,10 @@ const RESPONSABLES = [
   { nombre: "Agustín", color: "#0dcaf0" },
 ];
 
+// Tareas que se listan en cada tarjeta antes de cortar con la leyenda "+ N tareas más".
+// El tope existe para que el panel entre en una pantalla sin scroll.
+const TAREAS_VISIBLES = 4;
+
 const ESTADOS = ["Pendiente", "En proceso", "Terminado"];
 const ESTADOS_REPUESTO = ["Pedido", "Pendiente", "En taller", "Colocado"];
 
@@ -546,11 +550,17 @@ export default function Pendientes() {
                     <span className="text-muted fst-italic small">Sin pendientes</span>
                   ) : (
                     <div className="text-start w-100" style={{ fontSize: "0.8rem", lineHeight: 1.5 }}>
-                      {activeTasks.map((t) => (
+                      {activeTasks.slice(0, TAREAS_VISIBLES).map((t) => (
                         <div key={t.id} className="text-truncate" style={{ color: "#adb5bd" }}>
                           • {t.maquina ? `${t.maquina} - ${t.tarea}` : t.tarea}
                         </div>
                       ))}
+                      {activeTasks.length > TAREAS_VISIBLES && (
+                        <div className="fst-italic" style={{ color: "#adb5bd" }}>
+                          + {activeTasks.length - TAREAS_VISIBLES}{" "}
+                          {activeTasks.length - TAREAS_VISIBLES === 1 ? "tarea más" : "tareas más"}
+                        </div>
+                      )}
                     </div>
                   )}
                 </Card.Body>
@@ -559,37 +569,39 @@ export default function Pendientes() {
             </Col>
           );
         })}
-
-        {/* Acceso directo a Obras, solo cuando se entra desde el logo de Inicio. */}
-        {desdeInicio && (
-          <Col key="iniciar">
-            <Card
-              className="h-100 shadow-sm border-0"
-              style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
-              onClick={() => navigate("/obras")}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-4px)";
-                e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.15)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "";
-              }}
-            >
-              <Card.Body className="d-flex flex-column align-items-center justify-content-center text-center py-3">
-                <div
-                  className="rounded-circle d-flex align-items-center justify-content-center mb-2"
-                  style={{ width: 44, height: 44, backgroundColor: "#F59E0B1a" }}
-                >
-                  <i className="bi bi-play-fill fs-5" style={{ color: "#F59E0B" }} />
-                </div>
-                <Card.Title className="fw-semibold mb-0" style={{ fontSize: "1rem" }}>Iniciar</Card.Title>
-              </Card.Body>
-              <div style={{ height: 4, backgroundColor: "#F59E0B", borderRadius: "0 0 .375rem .375rem" }} />
-            </Card>
-          </Col>
-        )}
       </Row>
+
+      {/* Pestaña lateral izquierda a media altura: acceso a Obras.
+          Solo cuando se entra desde el logo de Inicio (mismo patrón que BotonFoco). */}
+      {desdeInicio && (
+        <button
+          type="button"
+          title="Comenzar"
+          aria-label="Comenzar"
+          onClick={() => navigate("/obras")}
+          style={{
+            position: "fixed",
+            top: "50%",
+            transform: "translateY(-50%)",
+            left: 0,
+            height: "64px",
+            padding: "0 18px 0 14px",
+            borderRadius: "0 16px 16px 0",
+            backgroundColor: "#F59E0B",
+            border: "1px solid #d97706",
+            borderLeft: "none",
+            boxShadow: "3px 4px 12px rgba(0,0,0,0.2)",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            cursor: "pointer",
+            zIndex: 1040,
+          }}
+        >
+          <i className="bi bi-play-fill" style={{ fontSize: "1.4rem", color: "#111111" }} />
+          <span className="fw-bold" style={{ color: "#111111" }}>Comenzar</span>
+        </button>
+      )}
 
       {/* ── Modal de tareas del responsable ── */}
       <Modal show={!!modalResp} onHide={cerrar} centered size="xl" scrollable>
