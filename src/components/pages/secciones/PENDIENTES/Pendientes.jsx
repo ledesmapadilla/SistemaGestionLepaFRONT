@@ -495,7 +495,7 @@ export default function Pendientes() {
 
   return (
     <Container className="py-4">
-      <h2 className="mb-1 fw-bold text-center">Panel de Control de Pendientes</h2>
+      <h2 className="mb-1 fw-bold text-center">Pendientes</h2>
       <p className="text-muted mb-4 text-center">Gestión visual por responsable</p>
 
       <Row xs={1} sm={2} md={3} lg={3} className="g-4 mx-auto justify-content-center" style={{ maxWidth: 900 }}>
@@ -524,25 +524,17 @@ export default function Pendientes() {
                   >
                     <i className="bi bi-person-fill fs-2" style={{ color: r.color }} />
                   </div>
-                  <Card.Title className="fw-semibold mb-1">{r.nombre}</Card.Title>
-                  <Card.Text className="text-muted small mb-0">
-                    {activeTasks.length === 0
-                      ? "Sin pendientes"
-                      : `${activeTasks.length} ${activeTasks.length === 1 ? "tarea activa" : "tareas activas"}`}
-                  </Card.Text>
+                  <Card.Title className="fw-semibold mb-2">{r.nombre}</Card.Title>
 
-                  {activeTasks.length > 0 && (
-                    <div className="text-start w-100 mt-3" style={{ fontSize: "0.75rem" }}>
-                      {activeTasks.slice(0, 4).map((t) => (
+                  {activeTasks.length === 0 ? (
+                    <span className="text-muted fst-italic small">Sin pendientes</span>
+                  ) : (
+                    <div className="text-start w-100" style={{ fontSize: "0.75rem" }}>
+                      {activeTasks.map((t) => (
                         <div key={t.id} className="text-truncate fw-semibold text-dark">
                           • {t.maquina ? `${t.maquina} - ${t.tarea}` : t.tarea}
                         </div>
                       ))}
-                      {activeTasks.length > 4 && (
-                        <div className="text-muted fst-italic" style={{ fontSize: "0.7rem" }}>
-                          + {activeTasks.length - 4} más...
-                        </div>
-                      )}
                     </div>
                   )}
                 </Card.Body>
