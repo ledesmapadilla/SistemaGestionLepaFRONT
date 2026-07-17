@@ -513,7 +513,7 @@ export default function Pendientes() {
 
   return (
     <Container className="py-4">
-      <h2 className="mb-3 fw-bold text-center">Pendientes</h2>
+      <h2 className="mb-5 fw-bold text-center">Pendientes</h2>
 
       <Row xs={1} sm={2} md={3} lg={3} className="g-3 mx-auto justify-content-center" style={{ maxWidth: 900 }}>
         {RESPONSABLES.map((r) => {
