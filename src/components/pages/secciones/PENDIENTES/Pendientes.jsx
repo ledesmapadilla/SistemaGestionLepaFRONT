@@ -327,7 +327,16 @@ export default function Pendientes() {
 
   const limpiarFiltros = () => { setFiltroEstado("activas"); setFiltroMaquina(""); setFiltroTarea(""); };
   const abrir = (r) => { setModalResp(r); setEditandoId(null); limpiarFiltros(); };
-  const cerrar = () => { descartarSiNueva(); setModalResp(null); setEditandoId(null); limpiarFiltros(); };
+  const cerrar = () => {
+    descartarSiNueva();
+    setModalResp(null);
+    setEditandoId(null);
+    limpiarFiltros();
+    // Si Pendientes se abrió como modal (botón del foco), cerrar la planilla del
+    // responsable cierra también ese modal contenedor. En la página /pendientes
+    // el contenedor no está abierto, así que esto no tiene efecto.
+    pendientesModal?.cerrar();
+  };
 
   // Navega al módulo de reparaciones abriendo la máquina (y los repuestos) correspondientes.
   const irAReparaciones = (t) => {
