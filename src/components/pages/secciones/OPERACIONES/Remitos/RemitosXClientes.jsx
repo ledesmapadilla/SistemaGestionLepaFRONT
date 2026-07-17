@@ -136,7 +136,7 @@ const RemitosXClientes = () => {
             {datosAgrupados.length > 0 ? (
               datosAgrupados.map((item, index) => (
                 <tr key={index}>
-                  <td className="fw-bold">{item.razonSocial}</td>
+                  <td>{item.razonSocial}</td>
                   <td className={item.monto > 0 ? "" : "text-success"}>
                     ${formatoMiles(item.monto)}
                   </td>
