@@ -243,6 +243,12 @@ export default function Pendientes() {
   const derivadasFiltradas = filasDerivadas.filter((f) => f.id === editandoId || coincideFiltro(f));
   const tareasFiltradas = tareas.filter((f) => f.id === editandoId || coincideFiltro(f));
 
+  // Filas de la planilla en una sola lista, de la fecha más reciente a la más vieja.
+  // Las derivadas de reparaciones/repuestos se distinguen de las manuales por tener `tipo`.
+  const filasPlanilla = [...derivadasFiltradas, ...tareasFiltradas].sort((a, b) =>
+    (b.fecha || "").localeCompare(a.fecha || "")
+  );
+
   const setTareas = (nuevas) =>
     setTareasPorResp((prev) => ({ ...prev, [modalResp.nombre]: nuevas }));
 
@@ -702,7 +708,14 @@ export default function Pendientes() {
                 </tr>
               </thead>
               <tbody>
-                {derivadasFiltradas.map((t) => {
+                {filasPlanilla.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="text-muted py-3">Sin tareas cargadas</td>
+                  </tr>
+                )}
+                {filasPlanilla.map((t) => {
+                  // Fila derivada de una reparación o repuesto.
+                  if (t.tipo) {
                   const enEdicion = editandoId === t.id;
                   return (
                   <tr key={t.id} style={{ backgroundColor: "#fbfbf3" }}>
@@ -761,15 +774,11 @@ export default function Pendientes() {
                     </td>
                   </tr>
                   );
-                })}
-                {tareasFiltradas.length === 0 && derivadasFiltradas.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-muted py-3">Sin tareas cargadas</td>
-                  </tr>
-                ) : (
-                  tareasFiltradas.map((t) => {
-                    const editando = editandoId === t.id;
-                    return (
+                  }
+
+                  // Fila de tarea manual.
+                  const editando = editandoId === t.id;
+                  return (
                       <tr key={t.id}>
                         <td>
                           {editando ? (
@@ -830,9 +839,8 @@ export default function Pendientes() {
                           </div>
                         </td>
                       </tr>
-                    );
-                  })
-                )}
+                  );
+                })}
               </tbody>
             </Table>
           </div>
