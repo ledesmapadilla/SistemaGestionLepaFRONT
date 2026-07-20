@@ -191,7 +191,10 @@ const VerRemitos = () => {
     const leftAlign = { horizontal: "left", vertical: "center" };
     const colWidths = [12, 12, 18, 16, 16, 10, 10, 14, 14, 14, 12, 24];
 
-    const filas = remitos.flatMap((remito) =>
+    const filas = remitos
+      .slice()
+      .sort((a, b) => new Date(fechaRemito(b)) - new Date(fechaRemito(a)))
+      .flatMap((remito) =>
       remito.items.map((item) => [
         remito.remito,
         mostrarFechaDMY(item.fecha || remito.fecha),
