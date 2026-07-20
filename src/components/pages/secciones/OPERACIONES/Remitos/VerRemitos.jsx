@@ -213,19 +213,18 @@ const VerRemitos = () => {
   const remitosFiltrados = filtroRemito ? remitos.filter((r) => String(r.remito).includes(filtroRemito)) : remitos;
 
   const exportarExcel = () => {
-    const headers = ["N° Remito", "Fecha", "Maquinista", "$/hs Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Gasoil (lts)", "Observaciones"];
-    const cols = ["A","B","C","D","E","F","G","H","I","J","K","L","M"];
+    const headers = ["N° Remito", "Fecha", "Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Gasoil (lts)", "Observaciones"];
+    const cols = ["A","B","C","D","E","F","G","H","I","J","K","L"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
-    const colWidths = [12, 12, 18, 14, 16, 16, 10, 10, 14, 14, 14, 12, 24];
+    const colWidths = [12, 12, 18, 16, 16, 10, 10, 14, 14, 14, 12, 24];
 
     const filas = remitos.flatMap((remito) =>
       remito.items.map((item) => [
         remito.remito,
         mostrarFechaDMY(item.fecha || remito.fecha),
         item.personal || "-",
-        item.costoHoraPersonal || null,
         item.maquina || "-",
         item.servicio || "-",
         item.cantidad,
@@ -256,8 +255,8 @@ const VerRemitos = () => {
     });
 
     // Filas desde la 7: datos
-    // Columnas con moneda: D(3)=$ Hora, I(8)=$ Unitario, J(9)=$ Total
-    const currencyCols = new Set([3, 8, 9]);
+    // Columnas con moneda: H(7)=$ Unitario, I(8)=$ Total
+    const currencyCols = new Set([7, 8]);
     filas.forEach((fila, rowIdx) => {
       fila.forEach((val, colIdx) => {
         const isCurrency = currencyCols.has(colIdx) && val !== null && val !== "-";
@@ -321,7 +320,6 @@ const VerRemitos = () => {
               <th>N° Remito</th>
               <th>Fecha</th>
               <th>Maquinista</th>
-              <th>$/hs Maquinista</th>
               <th>Máquina</th>
               <th>Servicio</th>
               <th>Cant.</th>
@@ -374,7 +372,6 @@ const VerRemitos = () => {
                   .join(" / ");
 
                 const precioUnitarioComun = campoPrecio((i) => i.precioUnitario);
-                const costoHoraComun = campoPrecio((i) => i.costoHoraPersonal);
 
                 return (
                   <tr key={remito._id}>
@@ -383,11 +380,6 @@ const VerRemitos = () => {
                       {mostrarFechaDMY(item0.fecha || remito.fecha)}
                     </td>
                     <td>{campo((i) => i.personal)}</td>
-                    <td>
-                      {costoHoraComun
-                        ? `$${formatoMiles(costoHoraComun)}`
-                        : "-"}
-                    </td>
                     <td>{campo((i) => i.maquina)}</td>
                     <td>{campo((i) => i.servicio)}</td>
                     <td>{totalCantidad || "-"}</td>
