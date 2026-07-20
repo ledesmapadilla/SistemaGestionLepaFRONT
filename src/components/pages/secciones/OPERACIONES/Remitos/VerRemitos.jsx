@@ -7,7 +7,6 @@ import Swal from "sweetalert2";
 import {
   listarRemitosPorObra,
   eliminarRemito,
-  eliminarItemRemito,
 } from "../../../../../helpers/queriesRemitos";
 import { obtenerObra } from "../../../../../helpers/queriesObras";
 
@@ -91,37 +90,6 @@ const VerRemitos = () => {
     });
     setRemitoEditando({ ...remito });
     setShowModalRemito(true);
-  };
-
-  const handleEliminarItem = async (remitoId, itemId) => {
-    const result = await Swal.fire({
-      title: "¿Seguro querés borrar este remito?",
-
-      icon: "warning",
-      showCancelButton: true,
-      customClass: { confirmButton: 'swal-btn-danger' },
-      confirmButtonText: "Sí, borrar",
-      cancelButtonText: "Cancelar",
-    });
-
-    if (!result.isConfirmed) return;
-
-    const remitoPadre = remitos.find((r) => r._id === remitoId);
-
-    if (remitoPadre.items.length === 1) {
-      await eliminarRemito(remitoId);
-    } else {
-      await eliminarItemRemito(remitoId, itemId);
-    }
-
-    await Swal.fire({
-      icon: "success",
-      title: "Eliminado",
-      timer: 1000,
-      showConfirmButton: false,
-    });
-
-    cargarRemitos();
   };
 
   const handleEliminarRemito = async (remitoId) => {
@@ -210,7 +178,10 @@ const VerRemitos = () => {
       })()
     : calcularTotalNoFacturado();
 
-  const remitosFiltrados = filtroRemito ? remitos.filter((r) => String(r.remito).includes(filtroRemito)) : remitos;
+  const fechaRemito = (r) => r.items?.[0]?.fecha || r.fecha || "";
+  const remitosFiltrados = (filtroRemito ? remitos.filter((r) => String(r.remito).includes(filtroRemito)) : remitos)
+    .slice()
+    .sort((a, b) => new Date(fechaRemito(b)) - new Date(fechaRemito(a)));
 
   const exportarExcel = () => {
     const headers = ["N° Remito", "Fecha", "Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Gasoil (lts)", "Observaciones"];
@@ -238,7 +209,6 @@ const VerRemitos = () => {
     );
 
     const ws = {};
-    const mergeAll = (row) => ({ s: { r: row - 1, c: 0 }, e: { r: row - 1, c: cols.length - 1 } });
 
     // Fila 1: título
     ws["A1"] = { v: "LISTADO DE REMITOS", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
@@ -336,7 +306,6 @@ const VerRemitos = () => {
             {remitosFiltrados.length > 0 ? (
               remitosFiltrados.map((remito) => {
                 const items = remito.items;
-                const esUnico = items.length === 1;
                 const item0 = items[0];
 
                 const totalImporte = items.reduce(
