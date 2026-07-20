@@ -5,9 +5,6 @@ import {
   Spinner,
   Container,
   Form,
-  Row,
-  Col,
-  InputGroup,
 } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +17,21 @@ import {
 } from "../../../../../helpers/queriesRemitos.js";
 
 import "../../../../../styles/verRemitos.css";
+
+const selectActivo = { backgroundImage: "none" };
+
+const estiloX = {
+  position: "absolute",
+  right: "10px",
+  top: "50%",
+  transform: "translateY(-50%)",
+  cursor: "pointer",
+  color: "#fff",
+  fontSize: "14px",
+  fontWeight: "900",
+  zIndex: 5,
+  userSelect: "none",
+};
 
 const TodosLosRemitos = () => {
   const [remitos, setRemitos] = useState([]);
@@ -217,119 +229,59 @@ const TodosLosRemitos = () => {
         <h6 className="text-center">Listado de todos los remitos</h6>
       </div>
 
-      {/* --- 3. BARRA DE BUSCADORES ALINEADA --- */}
-      <div className=" mx-5 p-3 rounded mb-3 shadow-sm">
-        <Row className="g-2 align-items-center">
-          
-          {/* Columna 1: Cliente (md=2) */}
-          <Col md={2}>
-            <InputGroup size="sm"> {/* size="sm" para que sean más compactos */}
-              <Form.Control
-                type="text"
-                placeholder="Razón Social..."
-                value={busquedaCliente}
-                onChange={(e) => setBusquedaCliente(e.target.value)}
-              />
-              {busquedaCliente && (
-                <Button
-                  variant="outline-warning"
-                  onClick={() => setBusquedaCliente("")}
-                >
-                  ✕
-                </Button>
-              )}
-            </InputGroup>
-          </Col>
+      {/* --- BARRA DE BUSCADORES --- */}
+      <div className="d-flex flex-wrap gap-3 mb-3 align-items-center justify-content-center">
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Razón Social..."
+          value={busquedaCliente}
+          onChange={(e) => setBusquedaCliente(e.target.value)}
+          style={{ width: "200px" }}
+        />
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Nombre de Obra..."
+          value={busquedaObra}
+          onChange={(e) => setBusquedaObra(e.target.value)}
+          style={{ width: "200px" }}
+        />
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="N° Remito..."
+          value={busquedaRemito}
+          onChange={(e) => setBusquedaRemito(e.target.value)}
+          style={{ width: "150px" }}
+        />
+        <Form.Control
+          size="sm"
+          type="date"
+          value={busquedaFecha}
+          onChange={(e) => setBusquedaFecha(e.target.value)}
+          style={{ width: "170px" }}
+        />
+        <div style={{ position: "relative", width: "170px" }}>
+          <Form.Select
+            size="sm"
+            value={busquedaEstado}
+            onChange={(e) => setBusquedaEstado(e.target.value)}
+            style={busquedaEstado ? selectActivo : {}}
+          >
+            <option value="">Estado...</option>
+            <option value="Sin facturar">Sin facturar</option>
+            <option value="Facturado">Facturado</option>
+          </Form.Select>
+          {busquedaEstado && (
+            <span onClick={() => setBusquedaEstado("")} style={estiloX}>✕</span>
+          )}
+        </div>
 
-          {/* Columna 2: Obra (md=2) */}
-          <Col md={2}>
-            <InputGroup size="sm">
-              <Form.Control
-                type="text"
-                placeholder="Nombre de Obra..."
-                value={busquedaObra}
-                onChange={(e) => setBusquedaObra(e.target.value)}
-              />
-              {busquedaObra && (
-                <Button
-                  variant="outline-warning"
-                  onClick={() => setBusquedaObra("")}
-                >
-                  ✕
-                </Button>
-              )}
-            </InputGroup>
-          </Col>
-
-          {/* Columna 3: Remito (md=2) */}
-          <Col md={2}>
-            <InputGroup size="sm">
-              <Form.Control
-                type="number"
-                placeholder="N° Remito..."
-                value={busquedaRemito}
-                onChange={(e) => setBusquedaRemito(e.target.value)}
-              />
-              {busquedaRemito && (
-                <Button
-                  variant="outline-warning"
-                  onClick={() => setBusquedaRemito("")}
-                >
-                  ✕
-                </Button>
-              )}
-            </InputGroup>
-          </Col>
-
-          {/* Columna 4: Fecha (md=2) */}
-          <Col md={2}>
-            <InputGroup size="sm">
-              {/* Quitamos el ícono si quieres ahorrar espacio, o lo dejamos */}
-              <Form.Control
-                type="date"
-                value={busquedaFecha}
-                onChange={(e) => setBusquedaFecha(e.target.value)}
-              />
-              {busquedaFecha && (
-                <Button
-                  variant="outline-warning"
-                  onClick={() => setBusquedaFecha("")}
-                >
-                  ✕
-                </Button>
-              )}
-            </InputGroup>
-          </Col>
-
-          {/* Columna 5: Estado (md=2) */}
-          <Col md={2}>
-            <InputGroup size="sm">
-              <Form.Select
-                value={busquedaEstado}
-                onChange={(e) => setBusquedaEstado(e.target.value)}
-                style={{ cursor: "pointer" }}
-              >
-                <option value="">Estado...</option>
-                <option value="Sin facturar">Sin facturar</option>
-                <option value="Facturado">Facturado</option>
-              </Form.Select>
-              {busquedaEstado && (
-                <Button
-                  variant="outline-warning"
-                  onClick={() => setBusquedaEstado("")}
-                >
-                  ✕
-                </Button>
-              )}
-            </InputGroup>
-          </Col>
-
-          {/* Columna 6: Botones (md=2) */}
-          <Col md={2} className="d-flex justify-content-end gap-2">
-            <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
-            <Button variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
-          </Col>
-        </Row>
+        <div className="d-flex gap-2 ms-auto">
+          <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
+          <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+        </div>
       </div>
 
       <div className="table-responsive shadow-sm">
