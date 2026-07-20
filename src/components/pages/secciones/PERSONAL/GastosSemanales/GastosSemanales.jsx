@@ -54,12 +54,15 @@ const parseHoraMin = (str) => {
 
 // Dif. de un día en minutos: jornada esperada - (sale - entra). null si falta
 // dato. La jornada esperada es 9h de lun a vie y 4h el sábado (8:00 a 12:00).
+// El sábado solo descuenta cuando se trabaja menos de la jornada; trabajar más
+// de las 12 hs no suma horas extra (se limita a 0).
 const difMinDia = (entra, sale, esSabado = false) => {
   const e = parseHoraMin(entra);
   const s = parseHoraMin(sale);
   if (e == null || s == null) return null;
   const base = (esSabado ? 4 : 9) * 60;
-  return base - (s - e);
+  const dif = base - (s - e);
+  return esSabado ? Math.max(0, dif) : dif;
 };
 
 // minutos -> "hh:mm" (con signo)
