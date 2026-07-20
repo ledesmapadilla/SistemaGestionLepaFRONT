@@ -98,7 +98,16 @@ const FacturacionProveedor = () => {
     }
   };
 
-  const eliminar = async (id) => {
+  const eliminar = async (f) => {
+    if (f.estadoPago === "Pagada") {
+      Swal.fire({
+        icon: "warning",
+        title: "Factura con pago asociado",
+        text: "Esta factura ya está pagada. Primero eliminá el pago en Pagos a Proveedores y luego vas a poder borrar la factura.",
+      });
+      return;
+    }
+
     const result = await Swal.fire({
       title: "¿Borrar factura?",
       icon: "warning",
@@ -109,10 +118,17 @@ const FacturacionProveedor = () => {
     });
 
     if (result.isConfirmed) {
-      const respuesta = await borrarFacturaProveedor(id);
+      const respuesta = await borrarFacturaProveedor(f._id);
       if (respuesta?.ok) {
-        setFacturas(facturas.filter((f) => f._id !== id));
+        setFacturas(facturas.filter((x) => x._id !== f._id));
         Swal.fire({ icon: "success", title: "Factura eliminada", timer: 2000, showConfirmButton: false });
+      } else {
+        const err = await respuesta?.json().catch(() => ({}));
+        Swal.fire({
+          icon: "warning",
+          title: "No se pudo borrar",
+          text: err?.msg || "No se pudo eliminar la factura.",
+        });
       }
     }
   };
@@ -272,7 +288,7 @@ const FacturacionProveedor = () => {
                   <td className="d-flex gap-1 justify-content-center align-items-center">
                     <Button variant="outline-success" size="sm" onClick={() => setFacturaVerId(f._id)}>Ver</Button>
                     <Button variant="outline-warning" size="sm" onClick={() => abrirEditar(f)}>Editar</Button>
-                    <Button variant="outline-danger" size="sm" onClick={() => eliminar(f._id)}>Borrar</Button>
+                    <Button variant="outline-danger" size="sm" onClick={() => eliminar(f)}>Borrar</Button>
                   </td>
                 </tr>
               ))
