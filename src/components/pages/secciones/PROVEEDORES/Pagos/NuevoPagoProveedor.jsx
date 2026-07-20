@@ -198,6 +198,7 @@ const NuevoPagoProveedor = () => {
 
   const esCheque = (tipo) => ["Cheque propio", "Cheque tercero", "E-Cheq propio", "E-Cheq tercero"].includes(tipo);
   const esChequeTercero = (tipo) => ["Cheque tercero", "E-Cheq tercero"].includes(tipo);
+  const esChequePropio = (tipo) => ["Cheque propio", "E-Cheq propio"].includes(tipo);
 
   const tipoCobroParaTercero = (tipo) => tipo === "Cheque tercero" ? "Cheque" : "E-Cheq";
 
@@ -683,7 +684,9 @@ const NuevoPagoProveedor = () => {
                     )}
                   </td>
                   <td style={{ minWidth: "120px" }}>
-                    {esCheque(m.medioPago) ? (
+                    {esChequePropio(m.medioPago) ? (
+                      <span className="small">{proveedorSeleccionado || "—"}</span>
+                    ) : esCheque(m.medioPago) ? (
                       m.chequeId ? (
                         <span className="small">{m.clienteCheque}</span>
                       ) : (
