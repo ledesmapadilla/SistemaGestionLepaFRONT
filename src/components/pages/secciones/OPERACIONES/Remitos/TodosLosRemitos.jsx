@@ -225,7 +225,7 @@ const TodosLosRemitos = () => {
 
   return (
     <Container fluid className="my-3 px-4 container-remitos">
-      <div className="mb-2">
+      <div className="mb-4">
         <h6 className="text-center">Listado de todos los remitos</h6>
       </div>
 
@@ -255,13 +255,22 @@ const TodosLosRemitos = () => {
           onChange={(e) => setBusquedaRemito(e.target.value)}
           style={{ width: "150px" }}
         />
-        <Form.Control
-          size="sm"
-          type="date"
-          value={busquedaFecha}
-          onChange={(e) => setBusquedaFecha(e.target.value)}
-          style={{ width: "170px" }}
-        />
+        <div style={{ position: "relative", width: "170px" }}>
+          <Form.Control
+            size="sm"
+            type="date"
+            value={busquedaFecha}
+            onChange={(e) => setBusquedaFecha(e.target.value)}
+          />
+          {busquedaFecha && (
+            <span
+              onClick={() => setBusquedaFecha("")}
+              style={{ ...estiloX, right: "34px" }}
+            >
+              ✕
+            </span>
+          )}
+        </div>
         <div style={{ position: "relative", width: "170px" }}>
           <Form.Select
             size="sm"
