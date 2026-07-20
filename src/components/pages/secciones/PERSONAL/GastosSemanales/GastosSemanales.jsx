@@ -223,7 +223,19 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
     setEditandoIdx(null);
   };
 
-  const borrar = (idx) => setExtras((prev) => prev.filter((_, i) => i !== idx));
+  const borrar = async (idx) => {
+    const res = await Swal.fire({
+      title: "¿Borrar extra?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc3545",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Sí, borrar",
+      cancelButtonText: "Cancelar",
+    });
+    if (!res.isConfirmed) return;
+    setExtras((prev) => prev.filter((_, i) => i !== idx));
+  };
 
   const handleGuardar = async () => {
     await onGuardar(extras);
