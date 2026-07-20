@@ -259,14 +259,14 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
   return (
     <Modal show={show} onHide={onHide} centered size="lg">
       <Modal.Header closeButton>
-        <div className="d-flex align-items-center flex-wrap gap-3 w-100 pe-2">
-          <Modal.Title className="mb-0" style={{ fontSize: "1.05rem" }}>Extras - {personalNombre}</Modal.Title>
-          <div className="d-flex align-items-center gap-2 ms-auto" style={{ fontSize: "0.72rem" }}>
+        <div className="position-relative w-100 pe-4" style={{ minHeight: 32 }}>
+          <Modal.Title className="mb-0" style={{ fontSize: "0.95rem", lineHeight: "32px" }}>Extras - {personalNombre}</Modal.Title>
+          <div className="position-absolute top-50 start-50 translate-middle d-flex align-items-center gap-1" style={{ fontSize: "0.68rem" }}>
             <span className="text-muted">$/hs</span>
-            <div style={{ width: 95 }}>
-              <CeldaMoneda value={precioHora} onChange={setPrecioHora} textStyle={{ minHeight: 30, padding: "3px 6px", fontSize: "0.8rem" }} />
+            <div style={{ width: 78 }}>
+              <CeldaMoneda value={precioHora} onChange={setPrecioHora} textStyle={{ minHeight: 26, padding: "2px 4px", fontSize: "0.72rem" }} />
             </div>
-            <span className="text-muted">Horas</span>
+            <span className="text-muted">Hs</span>
             <Form.Control
               size="sm"
               type="number"
@@ -276,13 +276,13 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
               onChange={(e) => setHorasCalc(e.target.value)}
               placeholder="0"
               className="text-center"
-              style={{ width: 65 }}
+              style={{ width: 50, fontSize: "0.72rem", padding: "2px 4px" }}
             />
             <span className="text-muted">Total</span>
-            <div className="text-center" style={{ minWidth: 95, padding: "3px 6px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, fontSize: "0.8rem" }}>
+            <div className="text-center" style={{ minWidth: 78, padding: "2px 4px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, fontSize: "0.72rem" }}>
               {pesos(totalCalc)}
             </div>
-            <Button size="sm" variant="outline-primary" onClick={agregarDesdeCalc} disabled={!totalCalc || editandoIdx !== null}>+</Button>
+            <Button size="sm" variant="outline-primary" style={{ padding: "1px 7px", fontSize: "0.8rem" }} onClick={agregarDesdeCalc} disabled={!totalCalc || editandoIdx !== null}>+</Button>
           </div>
         </div>
       </Modal.Header>
