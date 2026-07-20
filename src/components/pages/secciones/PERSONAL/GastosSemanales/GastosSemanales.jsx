@@ -260,7 +260,7 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
     <Modal show={show} onHide={onHide} centered size="lg">
       <Modal.Header closeButton>
         <div className="position-relative w-100 pe-4" style={{ minHeight: 32 }}>
-          <Modal.Title className="mb-0" style={{ fontSize: "0.95rem", lineHeight: "32px" }}>Extras - {personalNombre}</Modal.Title>
+          <Modal.Title className="mb-0" style={{ lineHeight: "32px" }}>Extras - {personalNombre}</Modal.Title>
           <div className="position-absolute top-50 start-50 translate-middle d-flex align-items-center gap-1" style={{ fontSize: "0.68rem" }}>
             <span className="text-muted">$/hs</span>
             <div style={{ width: 78 }}>
