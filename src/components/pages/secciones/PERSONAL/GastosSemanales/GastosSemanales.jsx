@@ -259,24 +259,14 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
   return (
     <Modal show={show} onHide={onHide} centered size="lg">
       <Modal.Header closeButton>
-        <Modal.Title>Extras - {personalNombre}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div className="d-flex align-items-end flex-wrap gap-3 mb-3 pb-3" style={{ borderBottom: "1px solid #495057" }}>
-          <div>
-            <Form.Label className="mb-1 text-muted" style={{ fontSize: "0.72rem" }}>$/hs</Form.Label>
-            <Form.Control
-              size="sm"
-              type="number"
-              min="0"
-              value={precioHora === 0 ? "" : precioHora}
-              onChange={(e) => setPrecioHora(e.target.value === "" ? 0 : Number(e.target.value))}
-              className="text-center"
-              style={{ width: 110 }}
-            />
-          </div>
-          <div>
-            <Form.Label className="mb-1 text-muted" style={{ fontSize: "0.72rem" }}>Horas</Form.Label>
+        <div className="d-flex align-items-center flex-wrap gap-3 w-100 pe-2">
+          <Modal.Title className="mb-0" style={{ fontSize: "1.05rem" }}>Extras - {personalNombre}</Modal.Title>
+          <div className="d-flex align-items-center gap-2 ms-auto" style={{ fontSize: "0.72rem" }}>
+            <span className="text-muted">$/hs</span>
+            <div style={{ width: 95 }}>
+              <CeldaMoneda value={precioHora} onChange={setPrecioHora} textStyle={{ minHeight: 30, padding: "3px 6px", fontSize: "0.8rem" }} />
+            </div>
+            <span className="text-muted">Horas</span>
             <Form.Control
               size="sm"
               type="number"
@@ -286,19 +276,17 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
               onChange={(e) => setHorasCalc(e.target.value)}
               placeholder="0"
               className="text-center"
-              style={{ width: 90 }}
+              style={{ width: 65 }}
             />
-          </div>
-          <div>
-            <Form.Label className="mb-1 text-muted" style={{ fontSize: "0.72rem" }}>Total</Form.Label>
-            <div className="text-center" style={{ minWidth: 120, padding: "4px 8px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600 }}>
+            <span className="text-muted">Total</span>
+            <div className="text-center" style={{ minWidth: 95, padding: "3px 6px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, fontSize: "0.8rem" }}>
               {pesos(totalCalc)}
             </div>
+            <Button size="sm" variant="outline-primary" onClick={agregarDesdeCalc} disabled={!totalCalc || editandoIdx !== null}>+</Button>
           </div>
-          <Button size="sm" variant="outline-primary" onClick={agregarDesdeCalc} disabled={!totalCalc || editandoIdx !== null}>
-            + Agregar
-          </Button>
         </div>
+      </Modal.Header>
+      <Modal.Body>
         <div style={{ maxHeight: "55vh", overflowY: "auto" }}>
           <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
             <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
