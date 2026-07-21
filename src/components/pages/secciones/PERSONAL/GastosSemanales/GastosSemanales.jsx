@@ -271,34 +271,32 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
   return (
     <Modal show={show} onHide={onHide} centered size="lg">
       <Modal.Header closeButton>
-        <div className="position-relative w-100 pe-4" style={{ minHeight: 32 }}>
-          <Modal.Title className="mb-0" style={{ lineHeight: "32px" }}>Extras - {personalNombre}</Modal.Title>
-          <div className="position-absolute top-50 start-50 translate-middle d-flex align-items-center gap-1" style={{ fontSize: "0.68rem" }}>
-            <span className="text-muted">$/hs</span>
-            <div style={{ width: 78 }}>
-              <CeldaMoneda value={precioHora} onChange={setPrecioHora} textStyle={{ minHeight: 26, padding: "2px 4px", fontSize: "0.72rem" }} />
-            </div>
-            <span className="text-muted">Hs</span>
-            <Form.Control
-              size="sm"
-              type="number"
-              min="0"
-              step="0.5"
-              value={horasCalc}
-              onChange={(e) => setHorasCalc(e.target.value)}
-              placeholder="0"
-              className="text-center"
-              style={{ width: 50, fontSize: "0.72rem", padding: "2px 4px" }}
-            />
-            <span className="text-muted">Total</span>
-            <div className="text-center" style={{ minWidth: 78, padding: "2px 4px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, fontSize: "0.72rem" }}>
-              {pesos(totalCalc)}
-            </div>
-            <Button size="sm" variant="outline-primary" style={{ padding: "1px 7px", fontSize: "0.8rem" }} onClick={agregarDesdeCalc} disabled={!totalCalc || editandoIdx !== null}>+</Button>
-          </div>
-        </div>
+        <Modal.Title className="mb-0">Extras - {personalNombre}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        <div className="d-flex justify-content-center align-items-center gap-1 flex-wrap mb-3" style={{ fontSize: "0.68rem" }}>
+          <span className="text-muted">$/hs</span>
+          <div style={{ width: 78 }}>
+            <CeldaMoneda value={precioHora} onChange={setPrecioHora} textStyle={{ minHeight: 26, padding: "2px 4px", fontSize: "0.72rem" }} />
+          </div>
+          <span className="text-muted">Hs</span>
+          <Form.Control
+            size="sm"
+            type="number"
+            min="0"
+            step="0.5"
+            value={horasCalc}
+            onChange={(e) => setHorasCalc(e.target.value)}
+            placeholder="0"
+            className="text-center"
+            style={{ width: 50, fontSize: "0.72rem", padding: "2px 4px" }}
+          />
+          <span className="text-muted">Total</span>
+          <div className="text-center" style={{ minWidth: 78, padding: "2px 4px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, fontSize: "0.72rem" }}>
+            {pesos(totalCalc)}
+          </div>
+          <Button size="sm" variant="outline-primary" style={{ padding: "1px 7px", fontSize: "0.8rem" }} onClick={agregarDesdeCalc} disabled={!totalCalc || editandoIdx !== null}>+</Button>
+        </div>
         <div style={{ maxHeight: "55vh", overflowY: "auto" }}>
           <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
             <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
