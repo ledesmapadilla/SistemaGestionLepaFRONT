@@ -252,7 +252,7 @@ const Personal = () => {
     <>
     <div className="w-75 mx-auto my-2">
         <h6 className="text-center mb-3">Personal</h6>
-        <div className="d-flex justify-content-between align-items-center mb-3">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", marginBottom: "1rem", gap: "0.5rem" }}>
           <div className="d-flex align-items-center gap-3">
             <Form.Control
               size="sm"
@@ -273,9 +273,9 @@ const Personal = () => {
               />
               <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={!soloActivos ? "fw-semibold" : "text-muted"}>Todos</span>
             </div>
-            <span className="badge bg-success fw-normal ms-5" style={{ fontSize: "0.85rem" }}>Activos: {totalActivos}</span>
           </div>
-          <div className="d-flex gap-2">
+          <span className="badge bg-success fw-normal" style={{ fontSize: "0.85rem" }}>Activos: {totalActivos}</span>
+          <div className="d-flex gap-2 justify-content-end">
             <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
             <Button size="sm" variant="outline-primary" onClick={abrirCrear}>Crear Personal</Button>
           </div>
