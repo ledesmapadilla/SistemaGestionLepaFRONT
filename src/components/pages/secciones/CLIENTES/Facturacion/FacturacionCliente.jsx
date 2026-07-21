@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { listarFacturas, editarFactura, borrarFactura } from "../../../../../helpers/queriesFacturas";
+import { listarCobros } from "../../../../../helpers/queriesCobros";
 import AsyncButton from "../../../../shared/AsyncButton";
 
 const hoy = new Date().toLocaleDateString("en-CA");
@@ -37,6 +38,7 @@ const calcularTotalRemito = (items = []) =>
 const FacturacionCliente = () => {
   const navigate = useNavigate();
   const [facturas, setFacturas] = useState([]);
+  const [facturasEnCobro, setFacturasEnCobro] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [facturaVerId, setFacturaVerId] = useState(null);
   const facturaVer = facturas.find((f) => f._id === facturaVerId) || null;
@@ -52,8 +54,19 @@ const FacturacionCliente = () => {
 
   const cargarFacturas = async () => {
     try {
-      const data = await listarFacturas();
+      const [data, cobros] = await Promise.all([
+        listarFacturas(),
+        listarCobros().catch(() => []),
+      ]);
       setFacturas(data);
+      const ids = new Set();
+      (cobros || []).forEach((c) =>
+        (c.pagos || []).forEach((p) => {
+          const id = p.factura?._id ?? p.factura;
+          if (id) ids.add(String(id));
+        })
+      );
+      setFacturasEnCobro(ids);
     } catch (error) {
       console.error(error);
     } finally {
@@ -90,6 +103,15 @@ const FacturacionCliente = () => {
   };
 
   const eliminar = async (id) => {
+    if (facturasEnCobro.has(String(id))) {
+      Swal.fire({
+        icon: "warning",
+        title: "Factura con cobro asociado",
+        text: "Esta factura ya fue cobrada. Primero eliminá el cobro en Cobros y luego vas a poder borrar la factura.",
+      });
+      return;
+    }
+
     const result = await Swal.fire({
       title: "¿Borrar factura?",
       text: "Los remitos volverán a estado 'sin facturar'",
