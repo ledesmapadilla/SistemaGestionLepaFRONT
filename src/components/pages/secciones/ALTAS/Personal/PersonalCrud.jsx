@@ -60,6 +60,7 @@ const Personal = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [busqueda, setBusqueda] = useState("");
+  const [soloActivos, setSoloActivos] = useState(true);
   const [editando, setEditando] = useState(false);
   const [personalId, setPersonalId] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -223,7 +224,9 @@ const Personal = () => {
   const personalFiltrado = personal.filter((persona) => {
     const texto = busqueda.trim().toLowerCase();
     const nombre = persona.nombre?.toLowerCase() || "";
-    return nombre.startsWith(texto);
+    if (!nombre.startsWith(texto)) return false;
+    if (soloActivos && persona.activo === false) return false;
+    return true;
   });
 
   const formatoMiles = (valor) => {
@@ -248,14 +251,27 @@ const Personal = () => {
     <div className="w-75 mx-auto my-2">
         <h6 className="text-center mb-3">Personal</h6>
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <Form.Control
-            size="sm"
-            type="search"
-            placeholder="Buscar por nombre"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            style={{ width: "220px" }}
-          />
+          <div className="d-flex align-items-center gap-3">
+            <Form.Control
+              size="sm"
+              type="search"
+              placeholder="Buscar por nombre"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              style={{ width: "220px" }}
+            />
+            <div className="d-flex align-items-center gap-2">
+              <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={soloActivos ? "fw-semibold" : "text-muted"}>Solo activos</span>
+              <Form.Check
+                type="switch"
+                id="switch-activos-personal"
+                className="mb-0"
+                checked={!soloActivos}
+                onChange={(e) => setSoloActivos(!e.target.checked)}
+              />
+              <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={!soloActivos ? "fw-semibold" : "text-muted"}>Todos</span>
+            </div>
+          </div>
           <div className="d-flex gap-2">
             <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
             <Button size="sm" variant="outline-primary" onClick={abrirCrear}>Crear Personal</Button>
