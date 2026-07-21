@@ -273,7 +273,7 @@ const Personal = () => {
               />
               <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={!soloActivos ? "fw-semibold" : "text-muted"}>Todos</span>
             </div>
-            <span className="badge bg-success fw-normal ms-3" style={{ fontSize: "0.85rem" }}>Activos: {totalActivos}</span>
+            <span className="badge bg-success fw-normal ms-5" style={{ fontSize: "0.85rem" }}>Activos: {totalActivos}</span>
           </div>
           <div className="d-flex gap-2">
             <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
@@ -312,7 +312,7 @@ const Personal = () => {
                     const valSemanal = ultimoSemanal(persona.semanal);
                     return (
                     <tr key={persona._id}>
-                      <td className="fw-bold">{persona.nombre}</td>
+                      <td>{persona.nombre}</td>
                       <td className="text-nowrap">{formatoMiles(valSemanal)}</td>
                       <td className="text-nowrap">{formatoMiles(valSemanal / 44)}</td>
                       <td className="text-nowrap">{ultimoCantJornales(persona.semanal) > 0 ? formatoMiles(valSemanal / ultimoCantJornales(persona.semanal)) : "-"}</td>
