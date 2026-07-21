@@ -273,7 +273,7 @@ const Personal = () => {
               />
               <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={!soloActivos ? "fw-semibold" : "text-muted"}>Todos</span>
             </div>
-            <span className="badge bg-success" style={{ fontSize: "0.85rem" }}>Activos: {totalActivos}</span>
+            <span className="badge bg-success fw-normal ms-3" style={{ fontSize: "0.85rem" }}>Activos: {totalActivos}</span>
           </div>
           <div className="d-flex gap-2">
             <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
