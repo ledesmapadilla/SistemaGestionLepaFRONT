@@ -297,7 +297,7 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
           </div>
           <Button size="sm" variant="outline-primary" style={{ padding: "1px 7px", fontSize: "0.8rem" }} onClick={agregarDesdeCalc} disabled={!totalCalc || editandoIdx !== null}>+</Button>
         </div>
-        <div style={{ maxHeight: "55vh", overflowY: "auto" }}>
+        <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
           <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
             <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
               <tr>
