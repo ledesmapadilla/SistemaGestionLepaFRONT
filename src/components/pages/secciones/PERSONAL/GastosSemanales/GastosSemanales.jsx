@@ -270,7 +270,7 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
 
   return (
     <Modal show={show} onHide={onHide} centered size="lg">
-      <Modal.Header closeButton>
+      <Modal.Header closeButton className="py-2">
         <Modal.Title className="mb-0">Extras - {personalNombre}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
