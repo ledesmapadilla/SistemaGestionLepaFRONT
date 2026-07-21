@@ -1016,11 +1016,16 @@ const GastosSemanales = () => {
     const headers = ["Personal", "Semanal Teórico", "Ausentismo", "Extras", "A Pagar", "Pagado", "Observaciones"];
     const cols = "ABCDEFG";
     const moneda = { numFmt: "#,##0" };
-    const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
-    const estIzq = { alignment: { horizontal: "left", vertical: "center" } };
-    const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
+    const bordeFino = { style: "thin", color: { rgb: "BFBFBF" } };
+    const borde = { top: bordeFino, bottom: bordeFino, left: bordeFino, right: bordeFino };
+    const cebraA = "FFFFFF";
+    const cebraB = "F2F2F2";
+    const estCentro = { alignment: { horizontal: "center", vertical: "center" }, border: borde };
+    const estIzq = { alignment: { horizontal: "left", vertical: "center" }, border: borde };
+    const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" }, border: borde };
     const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
-    const estTotal = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" }, numFmt: "#,##0" };
+    const estTotal = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" }, numFmt: "#,##0", border: borde };
+    const fillFila = (rowIdx) => ({ fill: { fgColor: { rgb: rowIdx % 2 === 0 ? cebraA : cebraB } } });
 
     const wb = XLSXStyle.utils.book_new();
     const ws = {};
@@ -1035,13 +1040,14 @@ const GastosSemanales = () => {
 
     registros.forEach((r, rowIdx) => {
       const row = rowIdx + 5;
-      ws[`A${row}`] = { v: r.personal || "", t: "s", s: estIzq };
-      ws[`B${row}`] = { v: Number(r.semanal) || 0, t: "n", s: { ...estCentro, ...moneda } };
-      ws[`C${row}`] = { v: Number(r.ausentismo) || 0, t: "n", s: { ...estCentro, ...moneda } };
-      ws[`D${row}`] = { v: netoExtras(r.extras), t: "n", s: { ...estCentro, ...moneda } };
-      ws[`E${row}`] = { v: calcularPagar(r), t: "n", s: { ...estCentro, ...moneda } };
-      ws[`F${row}`] = { v: Number(r.pagado) || 0, t: "n", s: { ...estCentro, ...moneda } };
-      ws[`G${row}`] = { v: r.observaciones || "", t: "s", s: estCentro };
+      const cebra = fillFila(rowIdx);
+      ws[`A${row}`] = { v: r.personal || "", t: "s", s: { ...estIzq, ...cebra } };
+      ws[`B${row}`] = { v: Number(r.semanal) || 0, t: "n", s: { ...estCentro, ...moneda, ...cebra } };
+      ws[`C${row}`] = { v: Number(r.ausentismo) || 0, t: "n", s: { ...estCentro, ...moneda, ...cebra } };
+      ws[`D${row}`] = { v: netoExtras(r.extras), t: "n", s: { ...estCentro, ...moneda, ...cebra } };
+      ws[`E${row}`] = { v: calcularPagar(r), t: "n", s: { ...estCentro, ...moneda, ...cebra } };
+      ws[`F${row}`] = { v: Number(r.pagado) || 0, t: "n", s: { ...estCentro, ...moneda, ...cebra } };
+      ws[`G${row}`] = { v: r.observaciones || "", t: "s", s: { ...estCentro, ...cebra } };
     });
 
     const totalRow = registros.length + 5;
