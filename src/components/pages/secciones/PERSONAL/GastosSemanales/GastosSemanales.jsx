@@ -295,7 +295,7 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
           <div className="text-center" style={{ minWidth: 78, padding: "2px 4px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, fontSize: "0.72rem" }}>
             {pesos(totalCalc)}
           </div>
-          <Button size="sm" variant="outline-primary" style={{ padding: "1px 7px", fontSize: "0.8rem" }} onClick={agregarDesdeCalc} disabled={!totalCalc || editandoIdx !== null}>+</Button>
+          <Button size="sm" variant="outline-primary" style={{ padding: "1px 10px", fontSize: "0.72rem" }} onClick={agregarDesdeCalc} disabled={!totalCalc || editandoIdx !== null}>Agregar</Button>
         </div>
         <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
           <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
