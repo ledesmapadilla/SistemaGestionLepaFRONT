@@ -229,6 +229,8 @@ const Personal = () => {
     return true;
   });
 
+  const totalActivos = personal.filter((p) => p.activo !== false).length;
+
   const formatoMiles = (valor) => {
     // Si el valor es nulo, indefinido o 0, devolvemos el guion solo
     if (
@@ -271,6 +273,7 @@ const Personal = () => {
               />
               <span style={{ fontSize: "0.85rem", userSelect: "none" }} className={!soloActivos ? "fw-semibold" : "text-muted"}>Todos</span>
             </div>
+            <span className="badge bg-success" style={{ fontSize: "0.85rem" }}>Activos: {totalActivos}</span>
           </div>
           <div className="d-flex gap-2">
             <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
