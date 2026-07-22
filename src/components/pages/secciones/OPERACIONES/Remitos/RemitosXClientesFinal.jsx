@@ -7,6 +7,16 @@ import XLSXStyle from "xlsx-js-style";
 import Swal from "sweetalert2";
 import "../../../../../styles/verRemitos.css";
 
+// Fecha efectiva del remito: la fecha de item más reciente (los items
+// siempre tienen fecha; remito.fecha es opcional y suele venir vacío).
+const fechaRemito = (r) => {
+  const fechasItems = (r.items || [])
+    .map((i) => i.fecha)
+    .filter(Boolean);
+  if (fechasItems.length) return fechasItems.sort().at(-1);
+  return r.fecha || "";
+};
+
 const RemitosXClientesFinal = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -71,10 +81,12 @@ const RemitosXClientesFinal = () => {
       setTotalObra(totalGlobal);
 
       // 2. FILTRAMOS (Para mostrar en tabla solo los "Sin facturar")
-      // Ordenados por fecha de remito, del más nuevo al más antiguo
+      // Ordenados por fecha de remito, del más nuevo al más antiguo.
+      // La fecha real vive en los items (remito.fecha es opcional), así que
+      // usamos la fecha de item más reciente como fecha del remito.
       const soloPendientes = (data || [])
         .filter((r) => r.estado === "Sin facturar")
-        .sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""));
+        .sort((a, b) => fechaRemito(b).localeCompare(fechaRemito(a)));
       setRemitos(soloPendientes);
 
     } catch (error) {

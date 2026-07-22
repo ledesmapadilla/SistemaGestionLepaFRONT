@@ -61,9 +61,15 @@ const RemitosXClientesObras = () => {
 
             acc[nombreObra].monto += saldoRemito;
             acc[nombreObra].cantidadRemitos += 1;
-            // Guardamos la fecha de remito más reciente de la obra
-            if ((remito.fecha || "") > acc[nombreObra].ultimaFecha) {
-              acc[nombreObra].ultimaFecha = remito.fecha || "";
+            // Guardamos la fecha de remito más reciente de la obra.
+            // La fecha real vive en los items (remito.fecha es opcional).
+            const fechaRemito = (remito.items || [])
+              .map((i) => i.fecha)
+              .filter(Boolean)
+              .sort()
+              .at(-1) || remito.fecha || "";
+            if (fechaRemito > acc[nombreObra].ultimaFecha) {
+              acc[nombreObra].ultimaFecha = fechaRemito;
             }
           }
         }
