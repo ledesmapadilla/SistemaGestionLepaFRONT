@@ -55,17 +55,24 @@ const RemitosXClientesObras = () => {
                 monto: 0,
                 cantidadRemitos: 0,
                 obraData: remito.obra,
+                ultimaFecha: "",
               };
             }
 
             acc[nombreObra].monto += saldoRemito;
             acc[nombreObra].cantidadRemitos += 1;
+            // Guardamos la fecha de remito más reciente de la obra
+            if ((remito.fecha || "") > acc[nombreObra].ultimaFecha) {
+              acc[nombreObra].ultimaFecha = remito.fecha || "";
+            }
           }
         }
         return acc;
       }, {});
 
-      const resultado = Object.values(agrupado);
+      // Ordenadas por fecha de remito más reciente, del más nuevo al más antiguo
+      const resultado = Object.values(agrupado)
+        .sort((a, b) => (b.ultimaFecha || "").localeCompare(a.ultimaFecha || ""));
       setDatosAgrupados(resultado);
     } catch (error) {
       console.error("Error al agrupar por obras:", error);

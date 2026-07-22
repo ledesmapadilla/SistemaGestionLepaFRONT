@@ -54,11 +54,16 @@ const RemitosXClientes = () => {
               razonSocial,
               monto: 0,
               cantidadRemitos: 0,
+              ultimaFecha: "",
             };
           }
 
           acc[razonSocial].monto += saldoRemito;
           acc[razonSocial].cantidadRemitos += 1;
+          // Guardamos la fecha de remito más reciente del cliente
+          if ((remito.fecha || "") > acc[razonSocial].ultimaFecha) {
+            acc[razonSocial].ultimaFecha = remito.fecha || "";
+          }
         }
 
         return acc;
@@ -66,7 +71,10 @@ const RemitosXClientes = () => {
 
       // 4. Convertimos a array. Se incluyen los clientes con al menos un remito
       // pendiente contado (monto > 0 o remito global sin precio con monto 0).
-      const resultadoFinal = Object.values(agrupado).filter((c) => c.cantidadRemitos > 0);
+      // Ordenados por fecha de remito más reciente, del más nuevo al más antiguo.
+      const resultadoFinal = Object.values(agrupado)
+        .filter((c) => c.cantidadRemitos > 0)
+        .sort((a, b) => (b.ultimaFecha || "").localeCompare(a.ultimaFecha || ""));
 
       setDatosAgrupados(resultadoFinal);
     } catch (error) {

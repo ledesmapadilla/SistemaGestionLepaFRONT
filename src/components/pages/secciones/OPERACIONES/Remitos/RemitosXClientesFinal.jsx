@@ -71,7 +71,10 @@ const RemitosXClientesFinal = () => {
       setTotalObra(totalGlobal);
 
       // 2. FILTRAMOS (Para mostrar en tabla solo los "Sin facturar")
-      const soloPendientes = (data || []).filter((r) => r.estado === "Sin facturar");
+      // Ordenados por fecha de remito, del más nuevo al más antiguo
+      const soloPendientes = (data || [])
+        .filter((r) => r.estado === "Sin facturar")
+        .sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""));
       setRemitos(soloPendientes);
 
     } catch (error) {
