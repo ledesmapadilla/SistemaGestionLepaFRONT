@@ -11,10 +11,10 @@ import "../../../../../styles/verRemitos.css";
 // siempre tienen fecha; remito.fecha es opcional y suele venir vacío).
 const fechaRemito = (r) => {
   const fechasItems = (r.items || [])
-    .map((i) => i.fecha)
+    .map((i) => (i.fecha || "").toString().slice(0, 10))
     .filter(Boolean);
   if (fechasItems.length) return fechasItems.sort().at(-1);
-  return r.fecha || "";
+  return (r.fecha || "").toString().slice(0, 10);
 };
 
 const RemitosXClientesFinal = () => {
@@ -81,11 +81,20 @@ const RemitosXClientesFinal = () => {
       setTotalObra(totalGlobal);
 
       // 2. FILTRAMOS (Para mostrar en tabla solo los "Sin facturar")
-      // Ordenados por fecha de remito, del más nuevo al más antiguo.
-      // La fecha real vive en los items (remito.fecha es opcional), así que
-      // usamos la fecha de item más reciente como fecha del remito.
+      // Ordenados por fecha, del más nuevo al más antiguo.
+      // La fecha real vive en los items (remito.fecha es opcional). Como un
+      // remito puede tener muchos items con distintas fechas, ordenamos:
+      //   a) los items dentro de cada remito (fecha desc)
+      //   b) los remitos entre sí por su item más reciente (fecha desc)
+      const fechaItem = (it) => (it?.fecha || "").toString().slice(0, 10);
       const soloPendientes = (data || [])
         .filter((r) => r.estado === "Sin facturar")
+        .map((r) => ({
+          ...r,
+          items: [...(r.items || [])].sort((a, b) =>
+            fechaItem(b).localeCompare(fechaItem(a))
+          ),
+        }))
         .sort((a, b) => fechaRemito(b).localeCompare(fechaRemito(a)));
       setRemitos(soloPendientes);
 

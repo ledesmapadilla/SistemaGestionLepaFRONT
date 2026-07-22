@@ -63,10 +63,10 @@ const RemitosXClientes = () => {
           // Guardamos la fecha de remito más reciente del cliente.
           // La fecha real vive en los items (remito.fecha es opcional).
           const fechaRemito = (remito.items || [])
-            .map((i) => i.fecha)
+            .map((i) => (i.fecha || "").toString().slice(0, 10))
             .filter(Boolean)
             .sort()
-            .at(-1) || remito.fecha || "";
+            .at(-1) || (remito.fecha || "").toString().slice(0, 10);
           if (fechaRemito > acc[razonSocial].ultimaFecha) {
             acc[razonSocial].ultimaFecha = fechaRemito;
           }
