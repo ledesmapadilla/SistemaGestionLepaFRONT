@@ -177,6 +177,14 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
     return await guardarReparaciones(maquina?._id, nuevasFilas);
   };
 
+  const guardarDetalle = async (filaId, detalle) => {
+    const nuevasFilas = filas.map((f) =>
+      f.id === filaId ? { ...f, detalle } : f
+    );
+    setFilas(nuevasFilas);
+    return await guardarReparaciones(maquina?._id, nuevasFilas);
+  };
+
   const reparacionesUnicas = useMemo(
     () => [...new Set(filas.map((f) => f.reparacion).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
     [filas]
@@ -297,6 +305,7 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
       maquinaParada: !!pendEdit.maquinaParada,
       observaciones: pendEdit.observaciones || "",
       repuestos: [],
+      detalle: [],
       pendResp: t.responsable,   // vínculo con la tarea de Pendientes
       pendTaskId: t.taskId,
     };
@@ -405,14 +414,17 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
     XLSXStyle.writeFile(wb, `HistorialReparaciones_${maquina?.maquina || ""}.xlsx`);
   };
 
-  if (detalleSel)
+  if (detalleSel) {
+    const fila = filas.find((f) => f.id === detalleSel);
     return (
       <DetalleReparacion
         maquina={maquina}
-        reparacion={detalleSel}
+        reparacion={fila}
         onVolver={() => setDetalleSel(null)}
+        onGuardar={(det) => guardarDetalle(detalleSel, det)}
       />
     );
+  }
 
   if (repuestosSel) {
     const fila = filas.find((f) => f.id === repuestosSel);
@@ -662,7 +674,7 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
                 <Button
                   size="sm"
                   variant="outline-secondary"
-                  onClick={() => setDetalleSel(f)}
+                  onClick={() => setDetalleSel(f.id)}
                 >
                   +
                 </Button>
