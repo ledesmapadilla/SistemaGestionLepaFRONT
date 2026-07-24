@@ -28,6 +28,7 @@ function DetalleReparacion({ maquina, reparacion, onVolver, onGuardar }) {
         timer: 1500,
         timerProgressBar: true,
       });
+      onVolver();
     } else {
       Swal.fire({ icon: "error", title: "Error", text: "No se pudieron guardar los cambios" });
     }
@@ -67,7 +68,7 @@ function DetalleReparacion({ maquina, reparacion, onVolver, onGuardar }) {
         <Form.Label className="text-muted small">Detalle</Form.Label>
         <Form.Control
           as="textarea"
-          rows={16}
+          rows={8}
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           placeholder="Escribí acá todo el detalle de la reparación..."
