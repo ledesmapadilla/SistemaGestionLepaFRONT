@@ -208,14 +208,14 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
         <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
           <tr>
             <th style={{ width: 40 }}>#</th>
-            <th>Repuesto</th>
-            <th style={{ width: 110 }}>Cantidad</th>
-            <th style={{ width: 150 }}>Precio</th>
-            <th style={{ width: 200 }}>Proveedor</th>
-            <th style={{ width: 180 }}>Responsable</th>
-            <th style={{ width: 140 }}>Estado</th>
-            <th style={{ width: 220 }}>Observaciones</th>
-            <th style={{ width: 160 }}>Acciones</th>
+            <th style={{ minWidth: 300 }}>Repuesto</th>
+            <th style={{ width: 80 }}>Cantidad</th>
+            <th style={{ width: 120 }}>Precio</th>
+            <th style={{ width: 150 }}>Proveedor</th>
+            <th style={{ width: 150 }}>Responsable</th>
+            <th style={{ width: 110 }}>Estado</th>
+            <th style={{ width: 170 }}>Observaciones</th>
+            <th style={{ width: 150 }}>Acciones</th>
           </tr>
         </thead>
         <tbody>
