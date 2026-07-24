@@ -564,6 +564,11 @@ const ServiceMaquinas = () => {
         errors={errors}
         editando={editando}
         maquinas={maquinas}
+        horometroMin={
+          maquinaSeleccionada
+            ? getDatosHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina).horometro
+            : null
+        }
         isSubmitting={isSubmitting}
       />
 

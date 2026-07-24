@@ -12,6 +12,7 @@ const ServiceMaquinaModal = ({
   errors,
   editando,
   maquinas,
+  horometroMin,
   isSubmitting,
 }) => {
   return (
@@ -59,9 +60,12 @@ const ServiceMaquinaModal = ({
                 <Form.Control
                   type="number"
                   className="text-center"
-                  min={0}
+                  min={horometroMin ?? 0}
                   {...register("horometro", {
                     min: { value: 0, message: "El horómetro no puede ser negativo" },
+                    validate: (v) =>
+                      !v || horometroMin == null || Number(v) >= horometroMin ||
+                      `No puede ser menor a ${Number(horometroMin).toLocaleString("es-AR")}`,
                   })}
                 />
                 <Form.Text className="text-danger d-block text-center">

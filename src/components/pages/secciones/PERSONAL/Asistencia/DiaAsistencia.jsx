@@ -43,8 +43,6 @@ const DiaAsistencia = () => {
   const [busquedaPersona, setBusquedaPersona] = useState("");
 
   const keyDia = diaKey(anio, mes, dia);
-  const hoyKey = diaKey(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
-  const editandoHoy = keyDia === hoyKey;
   const esSabado = new Date(anio, mes, dia).getDay() === 6;
 
   const filtrarPersonalParaDia = (key, lista) =>
@@ -120,28 +118,25 @@ const DiaAsistencia = () => {
       typeof updater === "function" ? updater(prev ?? borradorInicial) : updater
     );
 
+  // Mayor horómetro ya registrado por máquina hasta el día que se está cargando.
+  // Solo se miran fechas anteriores, para poder completar un día viejo sin que
+  // lo bloquee un valor posterior más alto (mismo criterio que el backend).
   const maxPorMaquina = useMemo(() => {
     const mapa = {};
+    const acumular = (nombre, valor) => {
+      const val = Number(valor);
+      if (!nombre || valor === "" || valor == null || isNaN(val) || val <= 0) return;
+      const k = nombre.toLowerCase().trim();
+      if (mapa[k] == null || val > mapa[k]) mapa[k] = val;
+    };
     Object.entries(registros).forEach(([fecha, filas]) => {
-      if (fecha === keyDia) return;
-      filas.forEach((fila) => {
-        if (fila.maquina && fila.horometro !== "" && fila.horometro != null) {
-          const val = Number(fila.horometro);
-          if (!isNaN(val) && val > 0) {
-            const k = fila.maquina.toLowerCase().trim();
-            if (mapa[k] == null || val > mapa[k]) mapa[k] = val;
-          }
-        }
-      });
+      if (fecha >= keyDia) return;
+      filas.forEach((fila) => acumular(fila.maquina, fila.horometro));
     });
     listaServices.forEach((s) => {
-      if (s.maquina?.maquina && s.horometro != null) {
-        const val = Number(s.horometro);
-        if (!isNaN(val) && val > 0) {
-          const k = s.maquina.maquina.toLowerCase().trim();
-          if (mapa[k] == null || val > mapa[k]) mapa[k] = val;
-        }
-      }
+      const fecha = s.fecha ? String(s.fecha).slice(0, 10) : null;
+      if (fecha && fecha > keyDia) return;
+      acumular(s.maquina?.maquina, s.horometro);
     });
     return mapa;
   }, [registros, listaServices, keyDia]);
@@ -149,24 +144,23 @@ const DiaAsistencia = () => {
   const volver = () => navigate("/personal/asistencia", { state: { anio, mes } });
 
   const guardar = async () => {
-    if (editandoHoy) {
-      const invalidos = borrador.filter((fila) => {
-        if (!fila.maquina || fila.horometro === "" || fila.horometro == null) return false;
-        const max = maxPorMaquina[fila.maquina.toLowerCase().trim()];
-        return max != null && Number(fila.horometro) < max;
-      });
+    // El horómetro no puede retroceder: vale para cualquier día, no solo para hoy.
+    const invalidos = borrador.filter((fila) => {
+      if (!fila.maquina || fila.horometro === "" || fila.horometro == null) return false;
+      const max = maxPorMaquina[fila.maquina.toLowerCase().trim()];
+      return max != null && Number(fila.horometro) < max;
+    });
 
-      if (invalidos.length > 0) {
-        const detalle = invalidos
-          .map((f) => `${f.maquina}: mín ${Number(maxPorMaquina[f.maquina.toLowerCase().trim()]).toLocaleString("es-AR")} hs`)
-          .join("\n");
-        Swal.fire({
-          icon: "warning",
-          title: "Horómetro inválido",
-          text: `El valor ingresado es menor al registrado:\n${detalle}`,
-        });
-        return;
-      }
+    if (invalidos.length > 0) {
+      const detalle = invalidos
+        .map((f) => `${f.maquina}: mín ${Number(maxPorMaquina[f.maquina.toLowerCase().trim()]).toLocaleString("es-AR")} hs`)
+        .join("\n");
+      Swal.fire({
+        icon: "warning",
+        title: "Horómetro inválido",
+        text: `El valor ingresado es menor al registrado:\n${detalle}`,
+      });
+      return;
     }
 
     const vistosGuardar = new Set();
@@ -178,7 +172,14 @@ const DiaAsistencia = () => {
     });
     const respuesta = await guardarAsistenciaAPI(keyDia, borradorDedup);
     if (!respuesta?.ok) {
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudo guardar la asistencia" });
+      // El backend revalida el horómetro contra todo el histórico (no solo los
+      // días cargados en pantalla), así que su mensaje es el que hay que mostrar.
+      const err = await respuesta?.json().catch(() => null);
+      Swal.fire({
+        icon: respuesta?.status === 400 ? "warning" : "error",
+        title: respuesta?.status === 400 ? "Horómetro inválido" : "Error",
+        text: err?.msg || "No se pudo guardar la asistencia",
+      });
       return;
     }
     await Swal.fire({ icon: "success", title: "Guardado", text: "Asistencia guardada correctamente", timer: 1500, showConfirmButton: false });
