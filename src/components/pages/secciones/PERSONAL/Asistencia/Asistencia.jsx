@@ -1,11 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Modal, Form, Table, Spinner } from "react-bootstrap";
-import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
-import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
-import { listarObras } from "../../../../../helpers/queriesObras.js";
-import { listarAsistencia } from "../../../../../helpers/queriesAsistencia.js";
-import { listarServices } from "../../../../../helpers/queriesServiceMaquinas.js";
+import { listarAsistencia, listarDatosAsistencia } from "../../../../../helpers/queriesAsistencia.js";
 import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
 
 const MESES = [
@@ -17,6 +13,23 @@ const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 const diaKey = (anio, mes, dia) =>
   `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+
+// Documentos de asistencia a un mapa por fecha, aplicando los defaults de la
+// planilla (Zamorano siempre con remito y con hora de salida).
+const mapearRegistros = (docs) => {
+  const mapa = {};
+  docs.forEach((doc) => {
+    const [yy, mm, dd] = doc.fecha.split("-").map(Number);
+    const esSabadoDoc = new Date(yy, mm - 1, dd).getDay() === 6;
+    mapa[doc.fecha] = doc.registros.map((r, i) => ({
+      ...r,
+      id: r.id || i,
+      remito: r.personal?.toLowerCase().includes("zamorano") || !r.obra || r.obra === "Taller" ? true : r.remito,
+      sale: r.personal?.toLowerCase().includes("zamorano") && !r.sale ? (esSabadoDoc ? "12:00" : "17:00") : r.sale,
+    }));
+  });
+  return mapa;
+};
 
 const Asistencia = () => {
   const hoy = new Date();
@@ -36,47 +49,42 @@ const Asistencia = () => {
   const navigate = useNavigate();
   const anios = Array.from({ length: 10 }, (_, i) => 2026 + i);
   const loading = loadingDatos || loadingMes;
+  // El mes inicial ya viene en la carga de arriba; este ref evita pedirlo de nuevo.
+  const primeraCarga = useRef(true);
 
-  // Carga referencia (personal, máquinas, obras, services) — solo al montar.
-  // Se conservan para pasarlas a la página del día sin que ésta vuelva a pedirlas.
+  // Carga inicial: personal, máquinas, obras, services y el mes vienen en una
+  // sola llamada. Los datos de referencia se conservan para pasárselos a la
+  // página del día sin que ésta vuelva a pedirlos.
   useEffect(() => {
     const cargar = async () => {
-      const [resP, resM, resO, resSvc] = await Promise.all([
-        listarPersonal(),
-        listarMaquinas(),
-        listarObras(),
-        listarServices(),
-      ]);
-      if (resP?.ok) setListaPersonal(await resP.json());
-      if (resM?.ok) setListaMaquinas(await resM.json());
-      if (resO?.ok) setListaObras(await resO.json());
-      if (resSvc?.ok) setListaServices(await resSvc.json());
+      const res = await listarDatosAsistencia(anio, mes);
+      if (res?.ok) {
+        const datos = await res.json();
+        setListaPersonal(datos.personal || []);
+        setListaMaquinas(datos.maquinas || []);
+        setListaObras(datos.obras || []);
+        setListaServices(datos.services || []);
+        setRegistros(mapearRegistros(datos.asistencia || []));
+      }
       setLoadingDatos(false);
+      setLoadingMes(false);
     };
     cargar();
+    // Solo al montar: el cambio de mes lo maneja el efecto de abajo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Carga asistencia solo del mes/año seleccionado — se recarga al cambiar mes
+  // Al cambiar de mes solo se pide la asistencia de ese mes; el resto ya está.
   useEffect(() => {
+    if (primeraCarga.current) {
+      primeraCarga.current = false;
+      return;
+    }
     const cargarAsistencia = async () => {
       setLoadingMes(true);
       setRegistros({});
       const resA = await listarAsistencia(anio, mes);
-      if (resA?.ok) {
-        const docs = await resA.json();
-        const mapa = {};
-        docs.forEach((doc) => {
-          const [yy, mm, dd] = doc.fecha.split("-").map(Number);
-          const esSabadoDoc = new Date(yy, mm - 1, dd).getDay() === 6;
-          mapa[doc.fecha] = doc.registros.map((r, i) => ({
-            ...r,
-            id: r.id || i,
-            remito: r.personal?.toLowerCase().includes("zamorano") || !r.obra || r.obra === "Taller" ? true : r.remito,
-            sale: r.personal?.toLowerCase().includes("zamorano") && !r.sale ? (esSabadoDoc ? "12:00" : "17:00") : r.sale,
-          }));
-        });
-        setRegistros(mapa);
-      }
+      if (resA?.ok) setRegistros(mapearRegistros(await resA.json()));
       setLoadingMes(false);
     };
     cargarAsistencia();

@@ -13,6 +13,18 @@ export const listarAsistencia = async (anio, mes) => {
   }
 };
 
+// Todo lo que necesita la pantalla de Asistencia (personal, máquinas, obras,
+// services y el mes) en un solo pedido, para no pagar varios arranques en frío.
+export const listarDatosAsistencia = async (anio, mes) => {
+  try {
+    const params = anio !== undefined && mes !== undefined ? `?anio=${anio}&mes=${mes}` : "";
+    return await authFetch(`${URL}/pantalla${params}`);
+  } catch (error) {
+    console.error("Error al listar los datos de asistencia:", error);
+    return null;
+  }
+};
+
 export const obtenerAsistenciaPorFecha = async (fecha) => {
   try {
     return await authFetch(`${URL}?fecha=${fecha}`);
