@@ -177,9 +177,9 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
     return await guardarReparaciones(maquina?._id, nuevasFilas);
   };
 
-  const guardarDetalle = async (filaId, detalle) => {
+  const guardarDetalle = async (filaId, detalleTexto) => {
     const nuevasFilas = filas.map((f) =>
-      f.id === filaId ? { ...f, detalle } : f
+      f.id === filaId ? { ...f, detalleTexto } : f
     );
     setFilas(nuevasFilas);
     return await guardarReparaciones(maquina?._id, nuevasFilas);
@@ -305,7 +305,7 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
       maquinaParada: !!pendEdit.maquinaParada,
       observaciones: pendEdit.observaciones || "",
       repuestos: [],
-      detalle: [],
+      detalleTexto: "",
       pendResp: t.responsable,   // vínculo con la tarea de Pendientes
       pendTaskId: t.taskId,
     };
@@ -421,7 +421,7 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
         maquina={maquina}
         reparacion={fila}
         onVolver={() => setDetalleSel(null)}
-        onGuardar={(det) => guardarDetalle(detalleSel, det)}
+        onGuardar={(texto) => guardarDetalle(detalleSel, texto)}
       />
     );
   }
