@@ -192,18 +192,18 @@ function Pendientes({ onVolver }) {
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
         <>
-          <div className="w-75 mx-auto" style={{ maxHeight: "65vh", overflowY: "auto" }}>
+          <div className="mx-auto" style={{ maxHeight: "65vh", overflowY: "auto", overflowX: "auto" }}>
             <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
               <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                 <tr>
                   <th style={{ width: 45 }}>#</th>
-                  <th style={{ width: 140 }}>Fecha</th>
-                  <th>Reparación</th>
-                  <th style={{ width: 180 }}>Máquina</th>
-                  <th style={{ width: 150 }}>Responsable</th>
-                  <th style={{ width: 120 }}>Repuestos</th>
-                  <th style={{ width: 120 }}>Máquina parada</th>
-                  <th style={{ width: 140 }}>Estado</th>
+                  <th style={{ width: 100 }}>Fecha</th>
+                  <th style={{ minWidth: 340 }}>Reparación</th>
+                  <th style={{ width: 130 }}>Máquina</th>
+                  <th style={{ width: 130 }}>Responsable</th>
+                  <th style={{ width: 95 }}>Repuestos</th>
+                  <th style={{ width: 100 }}>Máquina parada</th>
+                  <th style={{ width: 115 }}>Estado</th>
                 </tr>
               </thead>
               <tbody>
@@ -218,7 +218,7 @@ function Pendientes({ onVolver }) {
                   <tr key={idx}>
                     <td className="text-muted">{idx + 1}</td>
                     <td>{f.fecha ? f.fecha.split("-").reverse().join("/") : "-"}</td>
-                    <td className="text-start">
+                    <td className="text-start" style={{ whiteSpace: "nowrap" }}>
                       {f.dePendientes && (
                         <span
                           className="badge bg-info text-dark me-1"
