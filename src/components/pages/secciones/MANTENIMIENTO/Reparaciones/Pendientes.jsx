@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Container, Button, Table, Spinner } from "react-bootstrap";
+import { useState, useEffect, useMemo } from "react";
+import { Container, Button, Table, Form, Spinner } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
 import { obtenerTodasReparaciones } from "../../../../../helpers/queriesReparaciones";
 import { obtenerTodosPendientes } from "../../../../../helpers/queriesPendientes";
@@ -17,10 +17,35 @@ const COLOR_ESTADO_REPUESTO = {
   Colocado: "#198754",
 };
 
+// Estilo estándar del proyecto para el ✕ que limpia un select de filtro.
+const estiloX = {
+  position: "absolute",
+  right: "10px",
+  top: "50%",
+  transform: "translateY(-50%)",
+  cursor: "pointer",
+  color: "#fff",
+  fontSize: "14px",
+  fontWeight: "900",
+  zIndex: 5,
+  userSelect: "none",
+};
+const selectActivo = { backgroundImage: "none" };
+
+// Valores únicos de un campo, ordenados, para poblar un select de filtro.
+const opcionesDe = (filas, campo) =>
+  [...new Set(filas.map((f) => f[campo]).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b, "es", { numeric: true })
+  );
+
 function Pendientes({ onVolver }) {
   const [filas, setFilas] = useState([]);
   const [repuestos, setRepuestos] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [filtroReparacion, setFiltroReparacion] = useState("");
+  const [filtroMaquina, setFiltroMaquina] = useState("");
+  const [filtroResponsable, setFiltroResponsable] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("");
 
   useEffect(() => {
     const cargar = async () => {
@@ -78,6 +103,8 @@ function Pendientes({ onVolver }) {
           (Array.isArray(docsPend) ? docsPend : []).forEach((doc) => {
             (doc.tareas || []).forEach((t) => {
               if ((t.estado || "") === "Terminado") return;
+              // "Otra" no es una máquina del taller: esas tareas no van al listado.
+              if ((t.maquina || "").trim().toLowerCase() === "otra") return;
               const clave = `${(t.maquina || "").trim().toLowerCase()}|${(t.tarea || "").trim().toLowerCase()}`;
               if (yaEsReparacion.has(clave)) return;
               rows.push({
@@ -105,6 +132,24 @@ function Pendientes({ onVolver }) {
     };
     cargar();
   }, []);
+
+  // Opciones de cada filtro, a partir de las filas cargadas.
+  const reparacionesUnicas = useMemo(() => opcionesDe(filas, "reparacion"), [filas]);
+  const maquinasUnicas = useMemo(() => opcionesDe(filas, "maquina"), [filas]);
+  const responsablesUnicos = useMemo(() => opcionesDe(filas, "responsable"), [filas]);
+  const estadosUnicos = useMemo(() => opcionesDe(filas, "estado"), [filas]);
+
+  const filasFiltradas = useMemo(
+    () =>
+      filas.filter(
+        (f) =>
+          (!filtroReparacion || f.reparacion === filtroReparacion) &&
+          (!filtroMaquina || f.maquina === filtroMaquina) &&
+          (!filtroResponsable || f.responsable === filtroResponsable) &&
+          (!filtroEstado || f.estado === filtroEstado)
+      ),
+    [filas, filtroReparacion, filtroMaquina, filtroResponsable, filtroEstado]
+  );
 
   const exportarExcel = () => {
     const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
@@ -137,7 +182,7 @@ function Pendientes({ onVolver }) {
     const hojaReparaciones = crearHoja(
       "Reparaciones pendientes",
       ["#", "Fecha", "Reparación", "Máquina", "Responsable", "Repuestos", "Máquina parada", "Estado"],
-      filas.map((f, idx) => [
+      filasFiltradas.map((f, idx) => [
         { v: idx + 1, t: "n", s: estCentro },
         { v: fmtFecha(f.fecha), t: "s", s: estCentro },
         { v: f.reparacion || "", t: "s", s: estIzq },
@@ -192,6 +237,73 @@ function Pendientes({ onVolver }) {
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
         <>
+          <div className="d-flex gap-2 mb-3 flex-wrap">
+            <div style={{ position: "relative", width: "280px" }}>
+              <Form.Select
+                size="sm"
+                value={filtroReparacion}
+                onChange={(e) => setFiltroReparacion(e.target.value)}
+                style={filtroReparacion ? selectActivo : {}}
+              >
+                <option value="">Reparación (todas)</option>
+                {reparacionesUnicas.map((o) => (
+                  <option key={o} value={o}>{o}</option>
+                ))}
+              </Form.Select>
+              {filtroReparacion && (
+                <span onClick={() => setFiltroReparacion("")} style={estiloX}>✕</span>
+              )}
+            </div>
+            <div style={{ position: "relative", width: "220px" }}>
+              <Form.Select
+                size="sm"
+                value={filtroMaquina}
+                onChange={(e) => setFiltroMaquina(e.target.value)}
+                style={filtroMaquina ? selectActivo : {}}
+              >
+                <option value="">Máquina (todas)</option>
+                {maquinasUnicas.map((o) => (
+                  <option key={o} value={o}>{o}</option>
+                ))}
+              </Form.Select>
+              {filtroMaquina && (
+                <span onClick={() => setFiltroMaquina("")} style={estiloX}>✕</span>
+              )}
+            </div>
+            <div style={{ position: "relative", width: "220px" }}>
+              <Form.Select
+                size="sm"
+                value={filtroResponsable}
+                onChange={(e) => setFiltroResponsable(e.target.value)}
+                style={filtroResponsable ? selectActivo : {}}
+              >
+                <option value="">Responsable (todos)</option>
+                {responsablesUnicos.map((o) => (
+                  <option key={o} value={o}>{o}</option>
+                ))}
+              </Form.Select>
+              {filtroResponsable && (
+                <span onClick={() => setFiltroResponsable("")} style={estiloX}>✕</span>
+              )}
+            </div>
+            <div style={{ position: "relative", width: "220px" }}>
+              <Form.Select
+                size="sm"
+                value={filtroEstado}
+                onChange={(e) => setFiltroEstado(e.target.value)}
+                style={filtroEstado ? selectActivo : {}}
+              >
+                <option value="">Estado (todos)</option>
+                {estadosUnicos.map((o) => (
+                  <option key={o} value={o}>{o}</option>
+                ))}
+              </Form.Select>
+              {filtroEstado && (
+                <span onClick={() => setFiltroEstado("")} style={estiloX}>✕</span>
+              )}
+            </div>
+          </div>
+
           <div className="mx-auto" style={{ maxHeight: "65vh", overflowY: "auto", overflowX: "auto" }}>
             <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
               <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
@@ -207,14 +319,14 @@ function Pendientes({ onVolver }) {
                 </tr>
               </thead>
               <tbody>
-                {filas.length === 0 && (
+                {filasFiltradas.length === 0 && (
                   <tr>
                     <td colSpan={8} className="text-muted py-3">
                       No hay reparaciones pendientes
                     </td>
                   </tr>
                 )}
-                {filas.map((f, idx) => (
+                {filasFiltradas.map((f, idx) => (
                   <tr key={idx}>
                     <td className="text-muted">{idx + 1}</td>
                     <td>{f.fecha ? f.fecha.split("-").reverse().join("/") : "-"}</td>
