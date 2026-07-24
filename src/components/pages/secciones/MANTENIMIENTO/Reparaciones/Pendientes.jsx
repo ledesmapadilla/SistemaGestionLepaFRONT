@@ -48,6 +48,9 @@ function Pendientes({ onVolver }) {
                   fecha: r.fecha || "",
                   reparacion: r.reparacion || "",
                   maquina,
+                  // Las reparaciones se asignan siempre a Zamorano (misma regla
+                  // que usan las tarjetas de Pendientes por responsable).
+                  responsable: "Zamorano",
                   tieneRepuestos: (r.repuestos || []).length > 0,
                   maquinaParada: !!r.maquinaParada,
                   estado: r.estado || "",
@@ -133,16 +136,18 @@ function Pendientes({ onVolver }) {
 
     const hojaReparaciones = crearHoja(
       "Reparaciones pendientes",
-      ["Fecha", "Reparación", "Máquina", "Repuestos", "Máquina parada", "Estado"],
-      filas.map((f) => [
+      ["#", "Fecha", "Reparación", "Máquina", "Responsable", "Repuestos", "Máquina parada", "Estado"],
+      filas.map((f, idx) => [
+        { v: idx + 1, t: "n", s: estCentro },
         { v: fmtFecha(f.fecha), t: "s", s: estCentro },
         { v: f.reparacion || "", t: "s", s: estIzq },
         { v: f.maquina || "", t: "s", s: estCentro },
+        { v: f.responsable || "", t: "s", s: estCentro },
         { v: f.tieneRepuestos ? "Sí" : "No", t: "s", s: estCentro },
         { v: f.maquinaParada ? "Sí" : "No", t: "s", s: estCentro },
         { v: f.estado || "", t: "s", s: estCentro },
       ]),
-      [{ wch: 14 }, { wch: 36 }, { wch: 18 }, { wch: 12 }, { wch: 14 }, { wch: 14 }]
+      [{ wch: 5 }, { wch: 14 }, { wch: 36 }, { wch: 18 }, { wch: 20 }, { wch: 12 }, { wch: 14 }, { wch: 14 }]
     );
 
     const hojaRepuestos = crearHoja(
@@ -191,9 +196,11 @@ function Pendientes({ onVolver }) {
             <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
               <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                 <tr>
+                  <th style={{ width: 45 }}>#</th>
                   <th style={{ width: 140 }}>Fecha</th>
                   <th>Reparación</th>
                   <th style={{ width: 180 }}>Máquina</th>
+                  <th style={{ width: 150 }}>Responsable</th>
                   <th style={{ width: 120 }}>Repuestos</th>
                   <th style={{ width: 120 }}>Máquina parada</th>
                   <th style={{ width: 140 }}>Estado</th>
@@ -202,13 +209,14 @@ function Pendientes({ onVolver }) {
               <tbody>
                 {filas.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-muted py-3">
+                    <td colSpan={8} className="text-muted py-3">
                       No hay reparaciones pendientes
                     </td>
                   </tr>
                 )}
                 {filas.map((f, idx) => (
                   <tr key={idx}>
+                    <td className="text-muted">{idx + 1}</td>
                     <td>{f.fecha ? f.fecha.split("-").reverse().join("/") : "-"}</td>
                     <td className="text-start">
                       {f.dePendientes && (
@@ -222,6 +230,7 @@ function Pendientes({ onVolver }) {
                       {f.reparacion || "-"}
                     </td>
                     <td>{f.maquina}</td>
+                    <td>{f.responsable || "-"}</td>
                     <td style={{ color: f.tieneRepuestos ? "#198754" : "#6c757d", fontWeight: 600 }}>
                       {f.tieneRepuestos ? "Sí" : "No"}
                     </td>
