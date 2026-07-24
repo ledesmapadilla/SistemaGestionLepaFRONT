@@ -12,6 +12,7 @@ import {
 } from "../../../../../helpers/queriesServiceMaquinas.js";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
 import { listarAsistencia } from "../../../../../helpers/queriesAsistencia.js";
+import { confirmarSaltoHorometro, saltoDe } from "../../../../../helpers/horometroAvisos.js";
 import ServiceMaquinaModal from "./ServiceMaquinaModal.jsx";
 import HorasModal from "./HorasModal.jsx";
 import HistorialModal from "./HistorialModal.jsx";
@@ -171,6 +172,13 @@ const ServiceMaquinas = () => {
 
   const onSubmitService = async (data) => {
     try {
+      const salto = saltoDe(
+        maquinaSeleccionada.maquina,
+        getDatosHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina).horometro,
+        data.horometro
+      );
+      if (!(await confirmarSaltoHorometro(salto ? [salto] : []))) return;
+
       const payload = {
         maquina: maquinaSeleccionada._id,
         fecha: data.fecha,
@@ -298,6 +306,13 @@ const ServiceMaquinas = () => {
 
   const onSubmit = async (data) => {
     try {
+      const salto = saltoDe(
+        maquinaSeleccionada.maquina,
+        getDatosHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina).horometro,
+        data.horometro
+      );
+      if (!(await confirmarSaltoHorometro(salto ? [salto] : []))) return;
+
       const payload = {
         maquina: maquinaSeleccionada._id,
         fecha: data.fecha || undefined,
@@ -348,6 +363,13 @@ const ServiceMaquinas = () => {
 
   const onSubmitHoras = async (data) => {
     try {
+      const salto = saltoDe(
+        maquinaSeleccionada.maquina,
+        getDatosHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina).horometro,
+        data.horometro
+      );
+      if (!(await confirmarSaltoHorometro(salto ? [salto] : []))) return;
+
       const hoy = new Date().toISOString().slice(0, 10);
       const payload = {
         maquina: maquinaSeleccionada._id,

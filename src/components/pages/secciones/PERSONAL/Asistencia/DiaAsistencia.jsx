@@ -6,6 +6,7 @@ import XLSXStyle from "xlsx-js-style";
 import { guardarAsistencia as guardarAsistenciaAPI } from "../../../../../helpers/queriesAsistencia.js";
 import { calcularHorometroZamorano } from "../../../../../helpers/horometroUtils.js";
 import { semanalVigente } from "../../../../../helpers/semanalUtils.js";
+import { confirmarSaltoHorometro, saltoDe } from "../../../../../helpers/horometroAvisos.js";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
 
 const MESES = [
@@ -162,6 +163,16 @@ const DiaAsistencia = () => {
       });
       return;
     }
+
+    // Salto de más de 24 hs contra la última lectura: se avisa y se pide confirmar.
+    const saltos = borrador
+      .map((fila) =>
+        fila.maquina
+          ? saltoDe(fila.maquina, maxPorMaquina[fila.maquina.toLowerCase().trim()], fila.horometro)
+          : null
+      )
+      .filter(Boolean);
+    if (!(await confirmarSaltoHorometro(saltos))) return;
 
     const vistosGuardar = new Set();
     const borradorDedup = borrador.filter((f) => {
