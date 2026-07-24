@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Container, Button, Table, Spinner } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
 import { obtenerTodasReparaciones } from "../../../../../helpers/queriesReparaciones";
+import { obtenerTodosPendientes } from "../../../../../helpers/queriesPendientes";
 
 const COLOR_ESTADO = {
   Pendiente: "#6c757d",
@@ -25,14 +26,23 @@ function Pendientes({ onVolver }) {
     const cargar = async () => {
       setCargando(true);
       try {
-        const res = await obtenerTodasReparaciones();
+        const [res, resPend] = await Promise.all([
+          obtenerTodasReparaciones(),
+          obtenerTodosPendientes(),
+        ]);
+        const rows = [];
+        const reps = [];
+        // Clave máquina + nombre de cada reparación ya cargada, para no repetir
+        // las tareas de Pendientes que ya existen como reparación.
+        const yaEsReparacion = new Set();
         if (res?.ok) {
           const data = await res.json();
-          const rows = [];
-          const reps = [];
           (Array.isArray(data) ? data : []).forEach((doc) => {
             const maquina = doc.maquina?.maquina || "-";
             (doc.reparaciones || []).forEach((r) => {
+              yaEsReparacion.add(
+                `${maquina.trim().toLowerCase()}|${(r.reparacion || "").trim().toLowerCase()}`
+              );
               if ((r.estado || "") !== "Terminado") {
                 rows.push({
                   fecha: r.fecha || "",
@@ -57,11 +67,33 @@ function Pendientes({ onVolver }) {
               });
             });
           });
-          rows.sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
-          reps.sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
-          setFilas(rows);
-          setRepuestos(reps);
         }
+        // Tareas cargadas desde Pendientes (colección por responsable): se listan
+        // acá también, salvo las que ya figuran como reparación de esa máquina.
+        if (resPend?.ok) {
+          const docsPend = await resPend.json();
+          (Array.isArray(docsPend) ? docsPend : []).forEach((doc) => {
+            (doc.tareas || []).forEach((t) => {
+              if ((t.estado || "") === "Terminado") return;
+              const clave = `${(t.maquina || "").trim().toLowerCase()}|${(t.tarea || "").trim().toLowerCase()}`;
+              if (yaEsReparacion.has(clave)) return;
+              rows.push({
+                fecha: t.fecha || "",
+                reparacion: t.tarea || "",
+                maquina: t.maquina || "-",
+                tieneRepuestos: false,
+                maquinaParada: false,
+                estado: t.estado || "",
+                dePendientes: true,
+                responsable: doc.responsable || "",
+              });
+            });
+          });
+        }
+        rows.sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
+        reps.sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
+        setFilas(rows);
+        setRepuestos(reps);
       } catch (error) {
         console.error("Error al cargar pendientes:", error);
       } finally {
@@ -178,7 +210,17 @@ function Pendientes({ onVolver }) {
                 {filas.map((f, idx) => (
                   <tr key={idx}>
                     <td>{f.fecha ? f.fecha.split("-").reverse().join("/") : "-"}</td>
-                    <td className="text-start">{f.reparacion || "-"}</td>
+                    <td className="text-start">
+                      {f.dePendientes && (
+                        <span
+                          className="badge bg-info text-dark me-1"
+                          title={`Tarea cargada en Pendientes${f.responsable ? ` (${f.responsable})` : ""}`}
+                        >
+                          P
+                        </span>
+                      )}
+                      {f.reparacion || "-"}
+                    </td>
                     <td>{f.maquina}</td>
                     <td style={{ color: f.tieneRepuestos ? "#198754" : "#6c757d", fontWeight: 600 }}>
                       {f.tieneRepuestos ? "Sí" : "No"}
