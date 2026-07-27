@@ -70,6 +70,7 @@ const Obras = () => {
   const [obraId, setObraId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [nombreObraOriginal, setNombreObraOriginal] = useState("");
+  const [modalidadOriginal, setModalidadOriginal] = useState("");
 
   // Clientes
   const [clientes, setClientes] = useState([]);
@@ -143,6 +144,7 @@ const Obras = () => {
     setEditando(false);
     setVerDetalle(false);
     setObraId(null);
+    setModalidadOriginal("");
     reset(valoresIniciales);
     setPrecios([]);
     setClienteSeleccionado(null);
@@ -154,8 +156,47 @@ const Obras = () => {
       Swal.fire({ icon: "warning", title: "Precios obligatorios", text: "Debés cargar al menos un precio antes de guardar." });
       return;
     }
+
+    // Cambio de modalidad en edición: avisar qué va a pasar con los remitos.
+    const cambiaModalidad = editando && data.modalidad !== modalidadOriginal;
+    if (cambiaModalidad) {
+      const aPrecioCerrado = data.modalidad === "Precio cerrado";
+      const confirmacion = await Swal.fire({
+        icon: "warning",
+        title: `¿Cambiar la modalidad a "${data.modalidad}"?`,
+        html: aPrecioCerrado
+          ? "Los remitos <b>sin facturar</b> de la obra pasarán a <b>Obra propia</b> y se creará el remito automático con el precio de la obra.<br><br>Los remitos ya facturados no se modifican."
+          : "Los remitos de <b>Obra propia</b> pasarán a <b>Sin facturar</b> y se borrará el remito automático del precio de la obra.<br><br>Los remitos ya facturados no se modifican.",
+        showCancelButton: true,
+        confirmButtonText: "Sí, cambiar",
+        cancelButtonText: "Cancelar",
+      });
+      if (!confirmacion.isConfirmed) return;
+    }
+
+    // Al pasar a precio cerrado, asegurar la fila de precio de la obra.
+    let preciosAGuardar = precios;
+    if (
+      cambiaModalidad &&
+      data.modalidad === "Precio cerrado" &&
+      !precios.some((p) => p.clasificacion === "Precio cerrado")
+    ) {
+      preciosAGuardar = [
+        ...precios,
+        {
+          clasificacion: "Precio cerrado",
+          trabajo: "Precio de la obra",
+          precio: "",
+          unidad: "Global",
+          observaciones: "",
+          fecha: hoy(),
+        },
+      ];
+      setPrecios(preciosAGuardar);
+    }
+
     try {
-      const preciosNormalizados = precios.map((p) => {
+      const preciosNormalizados = preciosAGuardar.map((p) => {
         if (p.clasificacion === "Precio cerrado") {
           const esNumero = p.precio !== "" && !isNaN(Number(p.precio));
           return {
@@ -206,7 +247,7 @@ const Obras = () => {
         try {
           const hoyStr = hoy();
 
-          const filaPrecioCerrado = precios.find((p) => p.clasificacion === "Precio cerrado");
+          const filaPrecioCerrado = preciosAGuardar.find((p) => p.clasificacion === "Precio cerrado");
           const precioObra = filaPrecioCerrado?.precio;
           const esNumerico = precioObra && precioObra !== "No definido por el momento" && !isNaN(Number(precioObra));
 
@@ -241,13 +282,34 @@ const Obras = () => {
 
       cerrarModal();
       const remitosActualizados = obraGuardada.remitosActualizados || 0;
+      const cambio = resData.cambioModalidad;
+
+      const detalles = [];
+      if (cambio) {
+        if (cambio.remitosMigrados > 0) {
+          detalles.push(
+            cambio.hasta === "Precio cerrado"
+              ? `${cambio.remitosMigrados} remito(s) pasaron a "Obra propia".`
+              : `${cambio.remitosMigrados} remito(s) pasaron a "Sin facturar".`
+          );
+        }
+        if (cambio.remitoAutoCreado)
+          detalles.push(`Se creó el remito automático N° ${cambio.remitoAutoCreado}.`);
+        if (cambio.remitoAutoBorrado)
+          detalles.push(`Se borró el remito automático N° ${cambio.remitoAutoBorrado}.`);
+        if (cambio.remitosFacturadosSinTocar > 0)
+          detalles.push(
+            `${cambio.remitosFacturadosSinTocar} remito(s) facturados no se modificaron.`
+          );
+      }
+      if (editando && remitosActualizados > 0)
+        detalles.push(`Se actualizaron precios en ${remitosActualizados} remito(s).`);
+
       Swal.fire({
         icon: "success",
         title: editando ? "Obra actualizada" : "Obra creada",
-        text: editando && remitosActualizados > 0
-          ? `Se actualizaron precios en ${remitosActualizados} remito(s).`
-          : undefined,
-        timer: remitosActualizados > 0 ? 3000 : 2000,
+        html: detalles.length > 0 ? detalles.join("<br>") : undefined,
+        timer: detalles.length > 0 ? 4000 : 2000,
         showConfirmButton: false,
       });
     } catch (error) {
@@ -259,6 +321,7 @@ const Obras = () => {
     setEditando(true);
     setObraId(obra._id);
     setNombreObraOriginal(obra.nombreobra);
+    setModalidadOriginal(obra.modalidad || "");
     setClienteSeleccionado({
       value: obra.razonsocial,
       label: obra.razonsocial,
@@ -281,6 +344,7 @@ const Obras = () => {
     setEditando(false);
     setVerDetalle(false);
     setObraId(null);
+    setModalidadOriginal("");
     reset(valoresIniciales);
     setPrecios([]);
     setShowModal(true);
