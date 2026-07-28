@@ -43,7 +43,7 @@ const tarjetas = [
     color: "#0d6efd",
   },
   {
-    titulo: "Camiones",
+    titulo: "Camiones y carretones",
     icono: "bi-truck",
     ruta: "/mantenimiento/cubiertas/camiones",
     color: "#198754",

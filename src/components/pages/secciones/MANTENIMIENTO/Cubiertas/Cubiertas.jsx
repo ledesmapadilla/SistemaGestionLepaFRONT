@@ -18,7 +18,7 @@ const hoy = () => new Date().toLocaleDateString("en-CA");
 const VACIO_ALTA  = { nombreCubierta: "", fecha: hoy() };
 const VACIO_NUEVA = { cubierta: "", maquina: "", fecha: hoy(), observaciones: "" };
 
-export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas camiones" }) {
+export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas camiones y carretones" }) {
   const navigate = useNavigate();
   const [registros, setRegistros] = useState([]);
   const [catalogo, setCatalogo]   = useState([]);
