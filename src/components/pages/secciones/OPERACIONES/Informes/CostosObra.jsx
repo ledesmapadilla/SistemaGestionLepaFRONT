@@ -293,7 +293,6 @@ const CostosObra = () => {
         Swal.fire({
           icon: "success",
           title: "Obra analizada",
-          text: `${obraSeleccionada.nombreobra} quedó como "${nuevoEstado}"`,
           timer: 2000,
           showConfirmButton: false,
         });

@@ -161,6 +161,9 @@ const ModalObras = ({
                   >
                     <option value="En curso">En curso</option>
                     <option value="Terminada, para análisis">Terminada, para análisis</option>
+                    <option value="Terminada +">Terminada +</option>
+                    <option value="Terminada -">Terminada -</option>
+                    <option value="Terminada sin análisis">Terminada sin análisis</option>
                   </Form.Select>
                 ) : (
                   <Form.Control

@@ -105,6 +105,7 @@ const CrudObras = ({
               <option value="Terminada, para análisis">Terminada, para análisis</option>
               <option value="Terminada +">Terminada +</option>
               <option value="Terminada -">Terminada -</option>
+              <option value="Terminada sin análisis">Terminada sin análisis</option>
             </Form.Select>
           </div>
           <div className="d-flex gap-2 ms-2">
@@ -136,7 +137,7 @@ const CrudObras = ({
                   <td>{obra.razonsocial}</td>
                   <td>{obra.nombreobra}</td>
                   <td>{obra.contacto}</td>
-                  <td style={{ whiteSpace: "nowrap" }} className={obra.estado === "Terminada +" ? "text-success" : (obra.estado === "Terminada -" || obra.estado === "Terminada (-)") ? "text-danger" : ""}>{obra.estado}</td>
+                  <td style={{ whiteSpace: "nowrap" }} className={obra.estado === "Terminada +" ? "text-success" : (obra.estado === "Terminada -" || obra.estado === "Terminada (-)") ? "text-danger" : obra.estado === "Terminada sin análisis" ? "text-muted" : ""}>{obra.estado}</td>
                   <td className="d-flex gap-1 justify-content-center align-items-center">
                     <Button
                       size="sm"
