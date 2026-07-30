@@ -35,10 +35,39 @@ const IconoRetropala = ({ color, className }) => (
   </svg>
 );
 
+const IconoPalaCargadora = ({ color, className }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    width="1em"
+    height="1em"
+  >
+    {/* Ruedas (iguales, como toda pala cargadora) */}
+    <circle cx="5.5" cy="16.5" r="3.3" />
+    <circle cx="5.5" cy="16.5" r="1" />
+    <circle cx="14" cy="16.5" r="3.3" />
+    <circle cx="14" cy="16.5" r="1" />
+
+    {/* Chasis y cabina */}
+    <path d="M 3.5 13.5 L 15.5 13.5" />
+    <path d="M 5 13.5 L 5 9 L 9 9 L 9 13.5" />
+
+    {/* Brazo y balde delantero */}
+    <path d="M 9.5 11 L 18 14.5" />
+    <polygon points="17.5,13.5 21.5,13.5 20.8,18 17.5,18" fill={color + "33"} />
+  </svg>
+);
+
 const tarjetas = [
   {
     titulo: "Palas cargadoras",
-    icono: "bi-truck-front-fill",
+    icono: (props) => <IconoPalaCargadora {...props} />,
     ruta: "/mantenimiento/cubiertas/palas",
     color: "#0d6efd",
   },
