@@ -380,10 +380,10 @@ export default function Baterias() {
           <Modal.Title>Detalle de batería</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p><strong>Nombre batería:</strong> {registroVer?.bateria?.nombreBateria || "-"}</p>
-          <p><strong>Marca:</strong> {registroVer?.bateria?.marca || "-"}</p>
-          <p><strong>Máquina:</strong> {registroVer?.maquinaLabel || registroVer?.maquina?.maquina || "-"}</p>
-          <p><strong>Observaciones:</strong> {registroVer?.observaciones || "-"}</p>
+          <p>Nombre batería: {registroVer?.bateria?.nombreBateria || "-"}</p>
+          <p>Marca: {registroVer?.bateria?.marca || "-"}</p>
+          <p>Máquina: {registroVer?.maquinaLabel || registroVer?.maquina?.maquina || "-"}</p>
+          <p>Observaciones: {registroVer?.observaciones || "-"}</p>
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={() => setShowVer(false)}>Cerrar</Button>
