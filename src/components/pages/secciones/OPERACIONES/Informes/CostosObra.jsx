@@ -13,6 +13,14 @@ import { valorSemanalVigente } from "../../../../../helpers/semanalUtils.js";
 import "../../../../../styles/verRemitos.css";
 import CostoObraTabla from "./CostoObraTabla"; 
 
+// Color del estado y texto/variante del botón según en qué punto del análisis está la obra
+const estiloEstado = (estado) => {
+  if (estado === "Terminada +") return { clase: "text-success", variante: "outline-success", label: "Analizada +" };
+  if (estado === "Terminada -") return { clase: "text-danger", variante: "outline-danger", label: "Analizada -" };
+  if (estado === "Terminada sin análisis") return { clase: "text-muted", variante: "outline-secondary", label: "Sin info" };
+  return { clase: "", variante: "outline-primary", label: "Análisis" };
+};
+
 const buscarPrecioVigente = (precios, clasificacion, trabajo, fechaRef) => {
   const candidatos = precios.filter(
     (p) => p.clasificacion === clasificacion && (!trabajo || p.trabajo === trabajo)
@@ -306,6 +314,47 @@ const CostosObra = () => {
     }
   };
 
+  const handleSinInformacion = async (comentario) => {
+    if (!obraSeleccionada) return;
+    const nuevoEstado = "Terminada sin análisis";
+    try {
+      const resp = await editarObra(obraSeleccionada._id, {
+        estado: nuevoEstado,
+        comentariosAnalisis: comentario,
+      });
+      if (resp?.ok) {
+        setObras((prev) =>
+          prev.map((o) =>
+            o._id === obraSeleccionada._id
+              ? { ...o, estado: nuevoEstado, comentariosAnalisis: comentario }
+              : o
+          )
+        );
+        handleVolver();
+        Swal.fire({
+          icon: "success",
+          title: "Obra cerrada sin análisis",
+          text: `${obraSeleccionada.nombreobra} quedó como "${nuevoEstado}"`,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo cambiar el estado de la obra",
+        });
+      }
+    } catch (error) {
+      console.error("Error al marcar obra sin análisis:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error inesperado",
+        text: "No se pudo procesar la solicitud",
+      });
+    }
+  };
+
   const handleVolverAClientes = () => {
     setRazonSocialSeleccionada(null);
     setFiltroEstado("Terminada, para análisis");
@@ -347,6 +396,7 @@ const CostosObra = () => {
             onVolver={handleVolver}
             onVerGastos={handleVerGastos}
             onAnalizada={handleAnalizada}
+            onSinInformacion={handleSinInformacion}
         />
     );
   }
@@ -442,14 +492,14 @@ const CostosObra = () => {
                 obrasFiltradas.map((obra) => (
                   <tr key={obra._id}>
                     <td>{obra.nombreobra}</td>
-                    <td className={obra.estado === "Terminada +" ? "text-success" : obra.estado === "Terminada -" ? "text-danger" : ""}>{obra.estado}</td>
+                    <td className={estiloEstado(obra.estado).clase}>{obra.estado}</td>
                     <td>
                       <Button
                         size="sm"
-                        variant={obra.estado === "Terminada +" ? "outline-success" : obra.estado === "Terminada -" ? "outline-danger" : "outline-primary"}
+                        variant={estiloEstado(obra.estado).variante}
                         onClick={() => handleAnalisis(obra)}
                       >
-                        {obra.estado === "Terminada +" ? "Analizada +" : obra.estado === "Terminada -" ? "Analizada -" : "Análisis"}
+                        {estiloEstado(obra.estado).label}
                       </Button>
                     </td>
                   </tr>
