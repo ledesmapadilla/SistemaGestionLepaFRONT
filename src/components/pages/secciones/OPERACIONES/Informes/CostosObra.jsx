@@ -17,7 +17,7 @@ import CostoObraTabla from "./CostoObraTabla";
 const estiloEstado = (estado) => {
   if (estado === "Terminada +") return { clase: "text-success", variante: "outline-success", label: "Analizada +" };
   if (estado === "Terminada -") return { clase: "text-danger", variante: "outline-danger", label: "Analizada -" };
-  if (estado === "Terminada sin análisis") return { clase: "text-muted", variante: "outline-secondary", label: "Sin info" };
+  if (estado === "Terminada, sin análisis") return { clase: "text-primary", variante: "outline-primary", label: "Sin info" };
   return { clase: "", variante: "outline-primary", label: "Análisis" };
 };
 
@@ -315,7 +315,7 @@ const CostosObra = () => {
 
   const handleSinInformacion = async (comentario) => {
     if (!obraSeleccionada) return;
-    const nuevoEstado = "Terminada sin análisis";
+    const nuevoEstado = "Terminada, sin análisis";
     try {
       const resp = await editarObra(obraSeleccionada._id, {
         estado: nuevoEstado,
