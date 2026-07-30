@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Table, Form, Spinner, Button } from "react-bootstrap";
 // Importamos useNavigate para poder redirigir
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import { listarObras, editarObra } from "../../../../../helpers/queriesObras.js";
 import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos.js";
 import { listarGastosPorObra } from "../../../../../helpers/queriesGastos.js";
@@ -281,9 +282,27 @@ const CostosObra = () => {
           )
         );
         handleVolver();
+        Swal.fire({
+          icon: "success",
+          title: "Obra analizada",
+          text: `${obraSeleccionada.nombreobra} quedó como "${nuevoEstado}"`,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo marcar la obra como analizada",
+        });
       }
     } catch (error) {
       console.error("Error al marcar obra como analizada:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error inesperado",
+        text: "No se pudo procesar la solicitud",
+      });
     }
   };
 
