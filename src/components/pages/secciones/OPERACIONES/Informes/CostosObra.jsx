@@ -332,8 +332,7 @@ const CostosObra = () => {
         handleVolver();
         Swal.fire({
           icon: "success",
-          title: "Obra cerrada sin análisis",
-          text: `${obraSeleccionada.nombreobra} quedó como "${nuevoEstado}"`,
+          title: "Obra analizada",
           timer: 2000,
           showConfirmButton: false,
         });
