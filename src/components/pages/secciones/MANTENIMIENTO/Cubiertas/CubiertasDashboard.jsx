@@ -7,12 +7,12 @@ const IconoRetropala = ({ color, className }) => (
     viewBox="0 0 24 24"
     fill="none"
     stroke={color}
-    strokeWidth="2"
+    strokeWidth="1.4"
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    width="1em"
-    height="1em"
+    width="1.4em"
+    height="1.4em"
   >
     {/* Rueda Trasera (Grande) */}
     <circle cx="5.5" cy="15.5" r="3.5" />
