@@ -119,28 +119,43 @@ const DiaAsistencia = () => {
       typeof updater === "function" ? updater(prev ?? borradorInicial) : updater
     );
 
-  // Mayor horómetro ya registrado por máquina hasta el día que se está cargando.
-  // Solo se miran fechas anteriores, para poder completar un día viejo sin que
-  // lo bloquee un valor posterior más alto (mismo criterio que el backend).
-  const maxPorMaquina = useMemo(() => {
+  // Horómetro ya registrado por máquina hasta el día que se está cargando:
+  // `max` valida que el valor no retroceda y `ultimo` (la lectura más reciente,
+  // con su fecha) mide el salto. Hacen falta los dos: la asistencia que hay en
+  // pantalla es solo la del mes, así que la última lectura puede venir de un
+  // service viejo y el salto tiene que medirse contra su fecha real, no contra
+  // el día anterior. Solo se miran fechas anteriores, para poder completar un
+  // día viejo sin que lo bloquee un valor posterior más alto (mismo criterio
+  // que el backend).
+  const horometroPrevio = useMemo(() => {
     const mapa = {};
-    const acumular = (nombre, valor) => {
+    const acumular = (nombre, valor, fecha) => {
       const val = Number(valor);
       if (!nombre || valor === "" || valor == null || isNaN(val) || val <= 0) return;
       const k = nombre.toLowerCase().trim();
-      if (mapa[k] == null || val > mapa[k]) mapa[k] = val;
+      const previo = mapa[k] || { max: null, ultimo: null };
+      if (previo.max == null || val > previo.max) previo.max = val;
+      const masReciente =
+        fecha &&
+        (!previo.ultimo ||
+          fecha > previo.ultimo.fecha ||
+          (fecha === previo.ultimo.fecha && val > previo.ultimo.valor));
+      if (masReciente) previo.ultimo = { valor: val, fecha };
+      mapa[k] = previo;
     };
     Object.entries(registros).forEach(([fecha, filas]) => {
       if (fecha >= keyDia) return;
-      filas.forEach((fila) => acumular(fila.maquina, fila.horometro));
+      filas.forEach((fila) => acumular(fila.maquina, fila.horometro, fecha));
     });
     listaServices.forEach((s) => {
       const fecha = s.fecha ? String(s.fecha).slice(0, 10) : null;
       if (fecha && fecha > keyDia) return;
-      acumular(s.maquina?.maquina, s.horometro);
+      acumular(s.maquina?.maquina, s.horometro, fecha);
     });
     return mapa;
   }, [registros, listaServices, keyDia]);
+
+  const previoDe = (maquina) => horometroPrevio[maquina.toLowerCase().trim()] || null;
 
   const volver = () => navigate("/personal/asistencia", { state: { anio, mes } });
 
@@ -148,13 +163,13 @@ const DiaAsistencia = () => {
     // El horómetro no puede retroceder: vale para cualquier día, no solo para hoy.
     const invalidos = borrador.filter((fila) => {
       if (!fila.maquina || fila.horometro === "" || fila.horometro == null) return false;
-      const max = maxPorMaquina[fila.maquina.toLowerCase().trim()];
+      const max = previoDe(fila.maquina)?.max;
       return max != null && Number(fila.horometro) < max;
     });
 
     if (invalidos.length > 0) {
       const detalle = invalidos
-        .map((f) => `${f.maquina}: mín ${Number(maxPorMaquina[f.maquina.toLowerCase().trim()]).toLocaleString("es-AR")} hs`)
+        .map((f) => `${f.maquina}: mín ${Number(previoDe(f.maquina).max).toLocaleString("es-AR")} hs`)
         .join("\n");
       Swal.fire({
         icon: "warning",
@@ -164,11 +179,11 @@ const DiaAsistencia = () => {
       return;
     }
 
-    // Salto de más de 24 hs contra la última lectura: se avisa y se pide confirmar.
+    // Más de 24 hs por día desde la última lectura: se avisa y se pide confirmar.
     const saltos = borrador
       .map((fila) =>
         fila.maquina
-          ? saltoDe(fila.maquina, maxPorMaquina[fila.maquina.toLowerCase().trim()], fila.horometro)
+          ? saltoDe(fila.maquina, previoDe(fila.maquina)?.ultimo, fila.horometro, keyDia)
           : null
       )
       .filter(Boolean);

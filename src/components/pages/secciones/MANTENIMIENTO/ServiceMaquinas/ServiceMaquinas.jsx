@@ -157,6 +157,13 @@ const ServiceMaquinas = () => {
     return { fecha: null, horometro: null };
   };
 
+  // Última lectura conocida, con su fecha: el salto se mide contra los días
+  // transcurridos desde ahí, no contra un tope fijo de 24 hs.
+  const referenciaHorometro = (maquinaId, maquinaNombre) => {
+    const { fecha, horometro } = getDatosHorometro(maquinaId, maquinaNombre);
+    return { valor: horometro, fecha };
+  };
+
   // --- Modal Nuevo Service ---
   const cerrarServiceModal = () => {
     setShowServiceModal(false);
@@ -174,8 +181,9 @@ const ServiceMaquinas = () => {
     try {
       const salto = saltoDe(
         maquinaSeleccionada.maquina,
-        getDatosHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina).horometro,
-        data.horometro
+        referenciaHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina),
+        data.horometro,
+        data.fecha
       );
       if (!(await confirmarSaltoHorometro(salto ? [salto] : []))) return;
 
@@ -308,8 +316,9 @@ const ServiceMaquinas = () => {
     try {
       const salto = saltoDe(
         maquinaSeleccionada.maquina,
-        getDatosHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina).horometro,
-        data.horometro
+        referenciaHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina),
+        data.horometro,
+        data.fecha
       );
       if (!(await confirmarSaltoHorometro(salto ? [salto] : []))) return;
 
@@ -363,14 +372,15 @@ const ServiceMaquinas = () => {
 
   const onSubmitHoras = async (data) => {
     try {
+      const hoy = new Date().toISOString().slice(0, 10);
       const salto = saltoDe(
         maquinaSeleccionada.maquina,
-        getDatosHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina).horometro,
-        data.horometro
+        referenciaHorometro(maquinaSeleccionada._id, maquinaSeleccionada.maquina),
+        data.horometro,
+        hoy
       );
       if (!(await confirmarSaltoHorometro(salto ? [salto] : []))) return;
 
-      const hoy = new Date().toISOString().slice(0, 10);
       const payload = {
         maquina: maquinaSeleccionada._id,
         fecha: hoy,
