@@ -544,16 +544,16 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
       <Table striped bordered hover size="sm" className="text-center align-middle mb-0" style={{ tableLayout: "fixed", width: "100%" }}>
         <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
           <tr>
-            <th style={{ width: "9%" }}>Fecha</th>
-            <th style={{ width: "20%" }}>Reparación</th>
+            <th style={{ width: "8%" }}>Fecha</th>
+            <th style={{ width: "28%" }}>Reparación</th>
             <th style={{ width: "5%" }}>Detalle</th>
-            <th style={{ width: "10%" }}>Parte</th>
-            <th style={{ width: "9%" }}>Prioridad</th>
-            <th style={{ width: "10%" }}>Estado</th>
-            <th style={{ width: "13%" }}>Observaciones</th>
+            <th style={{ width: "9%" }}>Parte</th>
+            <th style={{ width: "8%" }}>Prioridad</th>
+            <th style={{ width: "9%" }}>Estado</th>
+            <th style={{ width: "11%" }}>Observaciones</th>
             <th style={{ width: "7%" }}>Máquina parada</th>
             <th style={{ width: "5%" }}>Repuestos</th>
-            <th style={{ width: "12%" }}>Acciones</th>
+            <th style={{ width: "10%" }}>Acciones</th>
           </tr>
         </thead>
         <tbody>
