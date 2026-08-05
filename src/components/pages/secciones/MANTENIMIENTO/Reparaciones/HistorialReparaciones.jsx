@@ -19,6 +19,7 @@ const PARTES = [
   "Tren rodante",
   "Cabina",
   "Chapa",
+  "Pernos y bujes",
   "Otra",
 ];
 const PRIORIDADES = ["Normal", "Urgente", "Crítico"];
