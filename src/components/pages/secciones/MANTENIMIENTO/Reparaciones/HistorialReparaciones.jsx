@@ -190,8 +190,13 @@ function HistorialReparaciones({ maquina, onVolver, onCambio, abrirRepuestosDe }
     () => [...new Set(filas.map((f) => f.reparacion).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
     [filas]
   );
+  // El filtro ofrece todas las partes del listado, más las que existan en datos
+  // viejos y ya no estén en PARTES.
   const partesUnicas = useMemo(
-    () => [...new Set(filas.map((f) => f.parte).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+    () =>
+      [...new Set([...PARTES, ...filas.map((f) => f.parte).filter(Boolean)])].sort((a, b) =>
+        a.localeCompare(b)
+      ),
     [filas]
   );
   const filasFiltradas = useMemo(
