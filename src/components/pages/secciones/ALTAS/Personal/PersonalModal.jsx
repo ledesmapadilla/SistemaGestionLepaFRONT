@@ -27,6 +27,7 @@ const PersonalModal = ({
   onSubmit,
   handleSubmit,
   register,
+  unregister,
   watch,
   setValue,
   errors,
@@ -40,10 +41,15 @@ const PersonalModal = ({
   const [historial, setHistorial] = useState([]);
   const [activo, setActivo] = useState(true);
   const [editandoSemanal, setEditandoSemanal] = useState(false);
+  const [errorHistorial, setErrorHistorial] = useState("");
   const semanalValor = watch ? watch("semanal") : "";
 
   useEffect(() => {
     if (show && editando) {
+      // En modo editar el semanal se maneja con la tabla de historial: si estos
+      // campos quedaron registrados por el modo crear, su validación bloquea el
+      // submit sin mostrar ningún error.
+      unregister?.(["semanal", "cantJornales"]);
       const persona = personal.find((p) => p._id === personalId);
       const raw = persona?.semanal;
       let arr = [];
@@ -58,7 +64,14 @@ const PersonalModal = ({
       setHistorial([]);
       setActivo(true);
     }
-  }, [show, editando, personalId, personal]);
+    setErrorHistorial("");
+  }, [show, editando, personalId, personal, unregister]);
+
+  // La cant. de jornales es obligatoria en las filas nuevas y en la fila vigente
+  // (la última). Las filas históricas anteriores se pueden completar, pero no
+  // se exigen para no bloquear la edición de personal cargado desde antes.
+  const jornalesObligatorio = (fila, index) =>
+    !fila.disabled || index === historial.length - 1;
 
   const agregarFila = () => {
     const today = new Date();
@@ -70,6 +83,7 @@ const PersonalModal = ({
     const nuevo = [...historial];
     nuevo[index] = { ...nuevo[index], [campo]: value };
     setHistorial(nuevo);
+    setErrorHistorial("");
   };
 
   const eliminarFilaNueva = (index) => {
@@ -81,12 +95,18 @@ const PersonalModal = ({
       const filasNuevas = historial.filter((f) => !f.disabled);
       const faltaValor = filasNuevas.some((f) => !f.valor && f.valor !== 0);
       const faltaFecha = filasNuevas.some((f) => !f.fecha);
-      const faltaJornales = filasNuevas.some(
-        (f) => !(Number(f.cantJornales) > 0)
-      );
-      if (faltaValor || faltaFecha || faltaJornales) {
+      if (faltaValor || faltaFecha) {
+        setErrorHistorial("Completá el valor y la fecha de las filas nuevas");
         return;
       }
+      const faltaJornales = historial.some(
+        (f, i) => jornalesObligatorio(f, i) && !(Number(f.cantJornales) > 0)
+      );
+      if (faltaJornales) {
+        setErrorHistorial("La cant. de jornales es obligatoria");
+        return;
+      }
+      setErrorHistorial("");
       const semanalArray = historial.map(({ disabled, ...rest }) => ({
         valor: Number(rest.valor),
         fecha: rest.fecha,
@@ -199,19 +219,19 @@ const PersonalModal = ({
                           )}
                         </td>
                         <td>
-                          {fila.disabled ? (
-                            fila.cantJornales || "-"
-                          ) : (
-                            <Form.Control
-                              type="number"
-                              step="0.5"
-                              min="0.5"
-                              required
-                              className="text-center"
-                              value={fila.cantJornales}
-                              onChange={(e) => actualizarFila(index, "cantJornales", e.target.value)}
-                            />
-                          )}
+                          <Form.Control
+                            type="number"
+                            step="0.5"
+                            min="0"
+                            required={jornalesObligatorio(fila, index)}
+                            isInvalid={
+                              jornalesObligatorio(fila, index) &&
+                              !(Number(fila.cantJornales) > 0)
+                            }
+                            className="text-center"
+                            value={fila.cantJornales ?? ""}
+                            onChange={(e) => actualizarFila(index, "cantJornales", e.target.value)}
+                          />
                         </td>
                         <td>
                           {fila.disabled ? (
@@ -245,6 +265,11 @@ const PersonalModal = ({
                   )}
                 </tbody>
               </Table>
+              {errorHistorial && (
+                <div className="text-danger text-center mb-2" style={{ fontSize: "0.85rem" }}>
+                  {errorHistorial}
+                </div>
+              )}
               <div className="text-center">
                 <Button variant="outline-primary" size="sm" onClick={agregarFila}>
                   + Agregar fila
