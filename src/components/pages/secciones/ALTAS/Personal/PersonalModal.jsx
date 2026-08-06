@@ -27,7 +27,6 @@ const PersonalModal = ({
   onSubmit,
   handleSubmit,
   register,
-  unregister,
   watch,
   setValue,
   errors,
@@ -41,15 +40,10 @@ const PersonalModal = ({
   const [historial, setHistorial] = useState([]);
   const [activo, setActivo] = useState(true);
   const [editandoSemanal, setEditandoSemanal] = useState(false);
-  const [errorHistorial, setErrorHistorial] = useState("");
   const semanalValor = watch ? watch("semanal") : "";
 
   useEffect(() => {
     if (show && editando) {
-      // En modo editar el semanal se maneja con la tabla de historial: si estos
-      // campos quedaron registrados por el modo crear, su validación bloquea el
-      // submit sin mostrar ningún error.
-      unregister?.(["semanal", "cantJornales"]);
       const persona = personal.find((p) => p._id === personalId);
       const raw = persona?.semanal;
       let arr = [];
@@ -64,14 +58,7 @@ const PersonalModal = ({
       setHistorial([]);
       setActivo(true);
     }
-    setErrorHistorial("");
-  }, [show, editando, personalId, personal, unregister]);
-
-  // La cant. de jornales es obligatoria en las filas nuevas y en la fila vigente
-  // (la última). Las filas históricas anteriores se pueden completar, pero no
-  // se exigen para no bloquear la edición de personal cargado desde antes.
-  const jornalesObligatorio = (fila, index) =>
-    !fila.disabled || index === historial.length - 1;
+  }, [show, editando, personalId, personal]);
 
   const agregarFila = () => {
     const today = new Date();
@@ -83,7 +70,6 @@ const PersonalModal = ({
     const nuevo = [...historial];
     nuevo[index] = { ...nuevo[index], [campo]: value };
     setHistorial(nuevo);
-    setErrorHistorial("");
   };
 
   const eliminarFilaNueva = (index) => {
@@ -96,17 +82,8 @@ const PersonalModal = ({
       const faltaValor = filasNuevas.some((f) => !f.valor && f.valor !== 0);
       const faltaFecha = filasNuevas.some((f) => !f.fecha);
       if (faltaValor || faltaFecha) {
-        setErrorHistorial("Completá el valor y la fecha de las filas nuevas");
         return;
       }
-      const faltaJornales = historial.some(
-        (f, i) => jornalesObligatorio(f, i) && !(Number(f.cantJornales) > 0)
-      );
-      if (faltaJornales) {
-        setErrorHistorial("La cant. de jornales es obligatoria");
-        return;
-      }
-      setErrorHistorial("");
       const semanalArray = historial.map(({ disabled, ...rest }) => ({
         valor: Number(rest.valor),
         fecha: rest.fecha,
@@ -136,7 +113,7 @@ const PersonalModal = ({
       <Form onSubmit={handleSubmit(handleGuardar)}>
         <Modal.Body>
           <Form.Group className="mb-3">
-            <Form.Label className="d-block text-center">Nombre*</Form.Label>
+            <Form.Label className="d-block text-center fw-bold">Nombre*</Form.Label>
             <Form.Control
               className="text-center"
               {...register("nombre", {
@@ -160,19 +137,19 @@ const PersonalModal = ({
               <Table bordered size="sm" className="align-middle mb-3">
                 <tbody>
                   <tr>
-                    <td>Semanal</td>
+                    <td className="fw-bold">Semanal</td>
                     <td>{formatoMiles(ultimoValor)}</td>
                   </tr>
                   <tr>
-                    <td>Hora</td>
+                    <td className="fw-bold">Hora</td>
                     <td>{formatoMiles(ultimoValor / 44)}</td>
                   </tr>
                   <tr>
-                    <td>Jornal</td>
+                    <td className="fw-bold">Jornal</td>
                     <td>{jornal > 0 ? formatoMiles(jornal) : "-"}</td>
                   </tr>
                   <tr>
-                    <td>Estado</td>
+                    <td className="fw-bold">Estado</td>
                     <td>
                       <Form.Check
                         type="switch"
@@ -186,13 +163,13 @@ const PersonalModal = ({
                 </tbody>
               </Table>
 
-              <h6 className="text-center fw-normal">Historial Semanal</h6>
+              <h6 className="text-center fw-bold">Historial Semanal</h6>
               <Table bordered size="sm" className="text-center align-middle">
                 <thead className="table-dark">
                   <tr>
-                    <th className="fw-normal">Valor</th>
-                    <th className="fw-normal">Cant. Jornales*</th>
-                    <th className="fw-normal">Fecha</th>
+                    <th>Valor</th>
+                    <th>Cant. Jornales</th>
+                    <th>Fecha</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -219,19 +196,18 @@ const PersonalModal = ({
                           )}
                         </td>
                         <td>
-                          <Form.Control
-                            type="number"
-                            step="0.5"
-                            min="0"
-                            required={jornalesObligatorio(fila, index)}
-                            isInvalid={
-                              jornalesObligatorio(fila, index) &&
-                              !(Number(fila.cantJornales) > 0)
-                            }
-                            className="text-center"
-                            value={fila.cantJornales ?? ""}
-                            onChange={(e) => actualizarFila(index, "cantJornales", e.target.value)}
-                          />
+                          {fila.disabled ? (
+                            fila.cantJornales || "-"
+                          ) : (
+                            <Form.Control
+                              type="number"
+                              step="0.5"
+                              min="0"
+                              className="text-center"
+                              value={fila.cantJornales}
+                              onChange={(e) => actualizarFila(index, "cantJornales", e.target.value)}
+                            />
+                          )}
                         </td>
                         <td>
                           {fila.disabled ? (
@@ -265,11 +241,6 @@ const PersonalModal = ({
                   )}
                 </tbody>
               </Table>
-              {errorHistorial && (
-                <div className="text-danger text-center mb-2" style={{ fontSize: "0.85rem" }}>
-                  {errorHistorial}
-                </div>
-              )}
               <div className="text-center">
                 <Button variant="outline-primary" size="sm" onClick={agregarFila}>
                   + Agregar fila
@@ -279,7 +250,7 @@ const PersonalModal = ({
           ) : (
             <>
               <Form.Group className="mb-3">
-                <Form.Label className="d-block text-center">Semanal*</Form.Label>
+                <Form.Label className="d-block text-center fw-bold">Semanal*</Form.Label>
                 <Form.Control
                   className="text-center"
                   type="text"
@@ -308,7 +279,7 @@ const PersonalModal = ({
                 </Form.Text>
               </Form.Group>
               <Form.Group className="mb-3">
-                <Form.Label className="d-block text-center">Cant. de jornales semanales*</Form.Label>
+                <Form.Label className="d-block text-center fw-bold">Cant. de jornales semanales*</Form.Label>
                 <Form.Control
                   className="text-center w-50 mx-auto"
                   type="number"

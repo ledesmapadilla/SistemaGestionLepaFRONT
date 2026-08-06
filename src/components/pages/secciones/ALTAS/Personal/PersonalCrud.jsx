@@ -46,7 +46,6 @@ const Personal = () => {
 
   const {
     register,
-    unregister,
     handleSubmit,
     reset,
     watch,
@@ -426,7 +425,6 @@ const Personal = () => {
         onSubmit={onSubmit}
         handleSubmit={handleSubmit}
         register={register}
-        unregister={unregister}
         watch={watch}
         setValue={setValue}
         errors={errors}
