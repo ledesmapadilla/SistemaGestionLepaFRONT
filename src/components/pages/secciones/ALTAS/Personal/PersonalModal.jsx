@@ -66,10 +66,9 @@ const PersonalModal = ({
     }
   }, [show, editando, personalId, personal, unregister]);
 
-  // La cant. de jornales se puede cargar (y es obligatoria) en las filas nuevas
-  // y en la fila vigente, que es la última. El resto del historial no se toca.
-  const jornalesEditable = (fila, index) =>
-    !fila.disabled || index === historial.length - 1;
+  // El historial ya guardado no se toca: la cant. de jornales solo se carga
+  // (y es obligatoria) en las filas nuevas.
+  const jornalesEditable = (fila) => !fila.disabled;
 
   const agregarFila = () => {
     const today = new Date();
@@ -95,8 +94,8 @@ const PersonalModal = ({
       if (faltaValor || faltaFecha) {
         return;
       }
-      const faltaJornales = historial.some(
-        (f, i) => jornalesEditable(f, i) && !(Number(f.cantJornales) > 0)
+      const faltaJornales = filasNuevas.some(
+        (f) => !(Number(f.cantJornales) > 0)
       );
       if (faltaJornales) {
         Swal.fire({
@@ -218,7 +217,7 @@ const PersonalModal = ({
                           )}
                         </td>
                         <td>
-                          {jornalesEditable(fila, index) ? (
+                          {jornalesEditable(fila) ? (
                             <Form.Control
                               type="number"
                               step="0.5"
