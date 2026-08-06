@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, Table, Spinner } from "react-bootstrap";
+import Swal from "sweetalert2";
 
 const formatoMiles = (valor) => {
   if (
@@ -41,7 +42,6 @@ const PersonalModal = ({
   const [historial, setHistorial] = useState([]);
   const [activo, setActivo] = useState(true);
   const [editandoSemanal, setEditandoSemanal] = useState(false);
-  const [errorHistorial, setErrorHistorial] = useState("");
   const semanalValor = watch ? watch("semanal") : "";
 
   useEffect(() => {
@@ -64,7 +64,6 @@ const PersonalModal = ({
       setHistorial([]);
       setActivo(true);
     }
-    setErrorHistorial("");
   }, [show, editando, personalId, personal, unregister]);
 
   // La cant. de jornales se puede cargar (y es obligatoria) en las filas nuevas
@@ -82,7 +81,6 @@ const PersonalModal = ({
     const nuevo = [...historial];
     nuevo[index] = { ...nuevo[index], [campo]: value };
     setHistorial(nuevo);
-    setErrorHistorial("");
   };
 
   const eliminarFilaNueva = (index) => {
@@ -95,17 +93,19 @@ const PersonalModal = ({
       const faltaValor = filasNuevas.some((f) => !f.valor && f.valor !== 0);
       const faltaFecha = filasNuevas.some((f) => !f.fecha);
       if (faltaValor || faltaFecha) {
-        setErrorHistorial("Completá el valor y la fecha de las filas nuevas");
         return;
       }
       const faltaJornales = historial.some(
         (f, i) => jornalesEditable(f, i) && !(Number(f.cantJornales) > 0)
       );
       if (faltaJornales) {
-        setErrorHistorial("La cant. de jornales es obligatoria");
+        Swal.fire({
+          icon: "warning",
+          title: "Falta la cant. de jornales",
+          text: "Completá la cantidad de jornales semanales para poder guardar",
+        });
         return;
       }
-      setErrorHistorial("");
       const semanalArray = historial.map(({ disabled, ...rest }) => ({
         valor: Number(rest.valor),
         fecha: rest.fecha,
@@ -223,9 +223,7 @@ const PersonalModal = ({
                               type="number"
                               step="0.5"
                               min="0"
-                              required
                               className="text-center"
-                              isInvalid={!(Number(fila.cantJornales) > 0)}
                               value={fila.cantJornales ?? ""}
                               onChange={(e) => actualizarFila(index, "cantJornales", e.target.value)}
                             />
@@ -265,11 +263,6 @@ const PersonalModal = ({
                   )}
                 </tbody>
               </Table>
-              {errorHistorial && (
-                <div className="text-danger text-center mb-2" style={{ fontSize: "0.85rem" }}>
-                  {errorHistorial}
-                </div>
-              )}
               <div className="text-center">
                 <Button variant="outline-primary" size="sm" onClick={agregarFila}>
                   + Agregar fila
