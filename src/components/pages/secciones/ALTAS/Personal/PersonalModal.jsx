@@ -81,7 +81,10 @@ const PersonalModal = ({
       const filasNuevas = historial.filter((f) => !f.disabled);
       const faltaValor = filasNuevas.some((f) => !f.valor && f.valor !== 0);
       const faltaFecha = filasNuevas.some((f) => !f.fecha);
-      if (faltaValor || faltaFecha) {
+      const faltaJornales = filasNuevas.some(
+        (f) => !(Number(f.cantJornales) > 0)
+      );
+      if (faltaValor || faltaFecha || faltaJornales) {
         return;
       }
       const semanalArray = historial.map(({ disabled, ...rest }) => ({
@@ -113,7 +116,7 @@ const PersonalModal = ({
       <Form onSubmit={handleSubmit(handleGuardar)}>
         <Modal.Body>
           <Form.Group className="mb-3">
-            <Form.Label className="d-block text-center fw-bold">Nombre*</Form.Label>
+            <Form.Label className="d-block text-center">Nombre*</Form.Label>
             <Form.Control
               className="text-center"
               {...register("nombre", {
@@ -137,19 +140,19 @@ const PersonalModal = ({
               <Table bordered size="sm" className="align-middle mb-3">
                 <tbody>
                   <tr>
-                    <td className="fw-bold">Semanal</td>
+                    <td>Semanal</td>
                     <td>{formatoMiles(ultimoValor)}</td>
                   </tr>
                   <tr>
-                    <td className="fw-bold">Hora</td>
+                    <td>Hora</td>
                     <td>{formatoMiles(ultimoValor / 44)}</td>
                   </tr>
                   <tr>
-                    <td className="fw-bold">Jornal</td>
+                    <td>Jornal</td>
                     <td>{jornal > 0 ? formatoMiles(jornal) : "-"}</td>
                   </tr>
                   <tr>
-                    <td className="fw-bold">Estado</td>
+                    <td>Estado</td>
                     <td>
                       <Form.Check
                         type="switch"
@@ -163,13 +166,13 @@ const PersonalModal = ({
                 </tbody>
               </Table>
 
-              <h6 className="text-center fw-bold">Historial Semanal</h6>
+              <h6 className="text-center fw-normal">Historial Semanal</h6>
               <Table bordered size="sm" className="text-center align-middle">
                 <thead className="table-dark">
                   <tr>
-                    <th>Valor</th>
-                    <th>Cant. Jornales</th>
-                    <th>Fecha</th>
+                    <th className="fw-normal">Valor</th>
+                    <th className="fw-normal">Cant. Jornales*</th>
+                    <th className="fw-normal">Fecha</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -202,7 +205,8 @@ const PersonalModal = ({
                             <Form.Control
                               type="number"
                               step="0.5"
-                              min="0"
+                              min="0.5"
+                              required
                               className="text-center"
                               value={fila.cantJornales}
                               onChange={(e) => actualizarFila(index, "cantJornales", e.target.value)}
@@ -250,7 +254,7 @@ const PersonalModal = ({
           ) : (
             <>
               <Form.Group className="mb-3">
-                <Form.Label className="d-block text-center fw-bold">Semanal*</Form.Label>
+                <Form.Label className="d-block text-center">Semanal*</Form.Label>
                 <Form.Control
                   className="text-center"
                   type="text"
@@ -279,7 +283,7 @@ const PersonalModal = ({
                 </Form.Text>
               </Form.Group>
               <Form.Group className="mb-3">
-                <Form.Label className="d-block text-center fw-bold">Cant. de jornales semanales*</Form.Label>
+                <Form.Label className="d-block text-center">Cant. de jornales semanales*</Form.Label>
                 <Form.Control
                   className="text-center w-50 mx-auto"
                   type="number"
