@@ -118,6 +118,12 @@ const pesos = (n) => {
   return v.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 };
 
+// El mismo punto de la primera columna, para que se lea que el número sale de
+// las filas marcadas.
+const PuntoVerde = () => (
+  <span style={{ color: "#198754", fontSize: 14, lineHeight: 1 }}>●</span>
+);
+
 const formVacio = () => ({
   fecha: new Date().toLocaleDateString("en-CA"),
   descuentaAumenta: "aumenta",
@@ -1052,6 +1058,10 @@ const GastosSemanales = () => {
   const totalPagado = registros.reduce((s, r) => s + (Number(r.pagado) || 0), 0);
   const totalProveedores = proveedoresGuardados.reduce((s, p) => s + (Number(p.pago) || 0), 0);
   const totalGeneral = totalPagar + totalProveedores;
+  // Suma de las filas marcadas con el punto verde de la primera columna.
+  const sumaSeleccion = registros
+    .filter((r) => r.seleccionado)
+    .reduce((s, r) => s + calcularPagar(r), 0);
 
   const exportarExcel = () => {
     const titulo = `Gastos Semanales - ${labelSemana}`;
@@ -1124,12 +1134,13 @@ const GastosSemanales = () => {
         <>
           <div className="d-flex justify-content-center align-items-center gap-4 mb-3 flex-wrap">
             {[
-              { label: "Total Personal", valor: totalPagar, principal: false },
-              { label: "Total Proveedores", valor: totalProveedores, principal: false },
-              { label: "Total General", valor: totalGeneral, principal: true },
+              { key: "personal", label: "Total Personal:", valor: totalPagar, principal: false },
+              { key: "proveedores", label: "Total Proveedores:", valor: totalProveedores, principal: false },
+              { key: "general", label: "Total General:", valor: totalGeneral, principal: true },
+              { key: "suma", label: <>Suma <PuntoVerde /></>, valor: sumaSeleccion, principal: true },
             ].map((t) => (
-              <div key={t.label} className="d-flex align-items-center gap-2">
-                <span className="text-muted" style={{ fontSize: t.principal ? "0.85rem" : "0.75rem" }}>{t.label}:</span>
+              <div key={t.key} className="d-flex align-items-center gap-2">
+                <span className="text-muted" style={{ fontSize: t.principal ? "0.85rem" : "0.75rem" }}>{t.label}</span>
                 <div style={{ minWidth: t.principal ? 130 : 110, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: t.principal ? "#ffc107" : "#9ca3af", textAlign: "center", fontSize: t.principal ? "0.95rem" : "0.8rem" }}>
                   {pesos(t.valor)}
                 </div>
@@ -1144,10 +1155,11 @@ const GastosSemanales = () => {
               }}>+ Agregar personal</Button>
               <Button variant="outline-info" size="sm" onClick={() => setVerProveedores(true)}>Gastos Proveedores</Button>
             </div>
+            {/* Lo que queda por pagar una vez descontadas las filas marcadas. */}
             <div className="d-flex align-items-center gap-2">
-              <span className="text-muted" style={{ fontSize: "0.85rem" }}>Suma</span>
+              <span className="text-muted" style={{ fontSize: "0.85rem" }}>Total gral. − <PuntoVerde /></span>
               <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, textAlign: "center", fontSize: "0.95rem" }}>
-                {pesos(registros.filter((r) => r.seleccionado).reduce((s, r) => s + calcularPagar(r), 0))}
+                {pesos(totalGeneral - sumaSeleccion)}
               </div>
             </div>
           </div>
