@@ -1132,32 +1132,54 @@ const GastosSemanales = () => {
         <Spinner animation="border" className="d-block mx-auto my-5" />
       ) : (
         <>
-          <div className="d-flex justify-content-center align-items-center gap-4 mb-3 flex-wrap">
-            {[
-              { key: "personal", label: "Total Personal:", valor: totalPagar, principal: false },
-              { key: "proveedores", label: "Total Proveedores:", valor: totalProveedores, principal: false },
-              { key: "general", label: "Total General:", valor: totalGeneral, principal: true },
-              { key: "suma", label: <>Suma <PuntoVerde /></>, valor: sumaSeleccion, principal: true },
-            ].map((t) => (
-              <div key={t.key} className="d-flex align-items-center gap-2">
-                <span className="text-muted" style={{ fontSize: t.principal ? "0.85rem" : "0.75rem" }}>{t.label}</span>
-                <div style={{ minWidth: t.principal ? 130 : 110, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: t.principal ? "#ffc107" : "#9ca3af", textAlign: "center", fontSize: t.principal ? "0.95rem" : "0.8rem" }}>
-                  {pesos(t.valor)}
-                </div>
+          {/* Izquierda: los totales de la semana y los botones. Derecha, detrás
+              de una línea fina: los dos números que dependen de las filas
+              marcadas con el punto verde. */}
+          <div className="d-flex align-items-stretch gap-3 mb-2">
+            <div className="flex-grow-1">
+              <div className="d-flex justify-content-center align-items-center gap-4 mb-3 flex-wrap">
+                {[
+                  { key: "personal", label: "Total Personal:", valor: totalPagar, principal: false },
+                  { key: "proveedores", label: "Total Proveedores:", valor: totalProveedores, principal: false },
+                  { key: "general", label: "Total General:", valor: totalGeneral, principal: true },
+                ].map((t) => (
+                  <div key={t.key} className="d-flex align-items-center gap-2">
+                    <span className="text-muted" style={{ fontSize: t.principal ? "0.85rem" : "0.75rem" }}>{t.label}</span>
+                    <div style={{ minWidth: t.principal ? 130 : 110, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: t.principal ? "#ffc107" : "#9ca3af", textAlign: "center", fontSize: t.principal ? "0.95rem" : "0.8rem" }}>
+                      {pesos(t.valor)}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="d-flex justify-content-between align-items-center mb-2">
-            <div className="d-flex gap-2">
-              <Button variant="outline-primary" size="sm" onClick={() => {
-                modificado.current = true;
-                setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, nuevo: true }]);
-              }}>+ Agregar personal</Button>
-              <Button variant="outline-info" size="sm" onClick={() => setVerProveedores(true)}>Gastos Proveedores</Button>
+              <div className="d-flex gap-2">
+                <Button variant="outline-primary" size="sm" onClick={() => {
+                  modificado.current = true;
+                  setRegistros((prev) => [...prev, { personal: "", semanal: 0, ausentismo: 0, extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, nuevo: true }]);
+                }}>+ Agregar personal</Button>
+                <Button variant="outline-info" size="sm" onClick={() => setVerProveedores(true)}>Gastos Proveedores</Button>
+              </div>
             </div>
-            {/* Lo que queda por pagar una vez descontadas las filas marcadas. */}
-            <div className="d-flex align-items-center gap-2">
-              <span className="text-muted" style={{ fontSize: "0.85rem" }}>Total gral. − <PuntoVerde /></span>
+
+            {/* Grilla de dos columnas para que las cajas queden alineadas entre
+                sí aunque las etiquetas midan distinto. */}
+            <div
+              style={{
+                borderLeft: "1px solid #495057",
+                paddingLeft: "1rem",
+                display: "grid",
+                gridTemplateColumns: "auto auto",
+                columnGap: 8,
+                rowGap: 12,
+                alignItems: "center",
+                alignContent: "center",
+              }}
+            >
+              <span className="text-muted" style={{ fontSize: "0.85rem", justifySelf: "end" }}>Suma <PuntoVerde />:</span>
+              <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, textAlign: "center", fontSize: "0.95rem" }}>
+                {pesos(sumaSeleccion)}
+              </div>
+              {/* Lo que queda por pagar una vez descontadas las filas marcadas. */}
+              <span className="text-muted" style={{ fontSize: "0.85rem", justifySelf: "end" }}>Total gral. − (<PuntoVerde />):</span>
               <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, textAlign: "center", fontSize: "0.95rem" }}>
                 {pesos(totalGeneral - sumaSeleccion)}
               </div>
