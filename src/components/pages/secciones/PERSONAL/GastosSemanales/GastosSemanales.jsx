@@ -753,8 +753,11 @@ const GastosSemanales = () => {
     sabado.setDate(sabado.getDate() + 5);
     const sabadoKey = toKey(sabado);
     const lunesKey = toKey(fechaLunes);
+    // Fecha de alta del legajo ("YYYY-MM-DD"). `fechaAlta` es el campo que carga
+    // el backend al crear; `createdAt` es el respaldo para altas viejas.
+    const altaKey = (p) => p.fechaAlta || (p.createdAt ? String(p.createdAt).slice(0, 10) : "");
     const personalVisible = personal.filter((p) => {
-      if (p.createdAt && p.createdAt.slice(0, 10) > sabadoKey) {
+      if (altaKey(p) > sabadoKey) {
         return false;
       }
       if (p.activo === false && p.fechaDesactivado && p.fechaDesactivado < lunesKey) {
@@ -782,8 +785,29 @@ const GastosSemanales = () => {
       return c > 0 && c <= 5;
     };
 
+    // Alta a mitad de semana: los días anteriores a la fecha de alta no se pagan,
+    // así el "A Pagar" sale proporcional a los días efectivamente trabajados.
+    const fechaAltaMap = {};
+    personalVisible.forEach((p) => {
+      const alta = altaKey(p);
+      // Solo interesa cuando el alta cae dentro de la semana que se está viendo.
+      if (alta && alta > lunesKey) fechaAltaMap[normNombre(p.nombre)] = alta;
+    });
+    const esAnteriorAlAlta = (nombre, dKey) => {
+      const alta = fechaAltaMap[normNombre(nombre)];
+      return !!alta && dKey < alta;
+    };
+
     const ausenciasMap = {};
     const tieneRegistro = new Set(); // `${normNombre}|${dKey}` con registro de asistencia
+    // Ausencia ya computada por persona y día, para poder completarla después
+    // (altas / bajas) sin contar dos veces el mismo día.
+    const ausenciaDia = {};
+    const sumarAusencia = (k, dKey, cantidad) => {
+      if (cantidad <= 0) return;
+      ausenciasMap[k] = (ausenciasMap[k] || 0) + cantidad;
+      ausenciaDia[`${k}|${dKey}`] = (ausenciaDia[`${k}|${dKey}`] || 0) + cantidad;
+    };
     diasSemana.forEach((d, idx) => {
       const esSabado = d.getDay() === 6;
       const doc = asistenciaDocs[idx];
@@ -795,8 +819,8 @@ const GastosSemanales = () => {
         tieneRegistro.add(`${k}|${dKey}`);
         if (esSabado && noTrabajaSabado(r.personal)) return; // no trabaja sábados
         if (!ausenciasMap[k]) ausenciasMap[k] = 0;
-        if (r.ausente) ausenciasMap[k] += esSabado ? 0.5 : 1;
-        if (r.mediaFalta) ausenciasMap[k] += 0.5;
+        if (r.ausente) sumarAusencia(k, dKey, esSabado ? 0.5 : 1);
+        if (r.mediaFalta) sumarAusencia(k, dKey, 0.5);
       });
     });
 
@@ -810,9 +834,24 @@ const GastosSemanales = () => {
           const k = normNombre(p.nombre);
           if (esSabado && noTrabajaSabado(p.nombre)) return; // no trabaja sábados
           if (!tieneRegistro.has(`${k}|${dKey}`)) {
-            ausenciasMap[k] = (ausenciasMap[k] || 0) + (esSabado ? 0.5 : 1);
+            sumarAusencia(k, dKey, esSabado ? 0.5 : 1);
           }
         }
+      });
+    });
+
+    // Altas a mitad de semana: los días anteriores a la fecha de alta se computan
+    // como falta completa, así "A Pagar" queda proporcional a los días trabajados
+    // (no se paga la semana entera a quien recién entró).
+    diasSemana.forEach((d) => {
+      const esSabado = d.getDay() === 6;
+      const dKey = toKey(d);
+      personalVisible.forEach((p) => {
+        if (!esAnteriorAlAlta(p.nombre, dKey)) return;
+        const k = normNombre(p.nombre);
+        if (esSabado && noTrabajaSabado(p.nombre)) return; // no trabaja sábados
+        const completo = esSabado ? 0.5 : 1;
+        sumarAusencia(k, dKey, completo - (ausenciaDia[`${k}|${dKey}`] || 0));
       });
     });
 
@@ -824,10 +863,12 @@ const GastosSemanales = () => {
       const doc = asistenciaDocs[idx];
       if (!doc?.registros) return;
       const esSabado = d.getDay() === 6;
+      const dKey = toKey(d);
       doc.registros.forEach((r) => {
         if (!r.personal || r.ausente || r.mediaFalta) return;
         if (r.personal.toLowerCase().includes("zamorano")) return;
         if (esSabado && noTrabajaSabado(r.personal)) return; // no trabaja sábados
+        if (esAnteriorAlAlta(r.personal, dKey)) return; // aún no estaba dado de alta
         const dm = difMinDia(r.entra, r.sale, esSabado);
         if (dm == null) return;
         const k = normNombre(r.personal);
@@ -887,13 +928,13 @@ const GastosSemanales = () => {
     const filaDePersonal = (p) => {
       const semanal = semanalVigente(p.semanal, sabadoKey)?.valor || 0;
       const k = normNombre(p.nombre);
-      const base = { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[k] || 0, cantJornales: cantJornalesMap[k] || 0 };
+      const base = { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[k] || 0, cantJornales: cantJornalesMap[k] || 0, fechaAlta: fechaAltaMap[k] || "" };
       base.extras = conExtraDif(base, sabadoKey);
       return base;
     };
     const filaSoloAsistencia = (nombre) => {
       const k = normNombre(nombre);
-      const base = { personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[k] || 0, cantJornales: cantJornalesMap[k] || 0 };
+      const base = { personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[k] || 0, cantJornales: cantJornalesMap[k] || 0, fechaAlta: fechaAltaMap[k] || "" };
       base.extras = conExtraDif(base, sabadoKey);
       return base;
     };
@@ -940,6 +981,7 @@ const GastosSemanales = () => {
           ausentismo: calcAusentismo(r.personal),
           difMin: difMinsMap[k] || 0,
           cantJornales: cantJornalesMap[k] || 0,
+          fechaAlta: fechaAltaMap[k] || "",
         };
         fila.extras = conExtraDif(fila, sabadoKey);
         return fila;
@@ -1265,12 +1307,16 @@ const GastosSemanales = () => {
                 (r) => r.personal?.trim().toLowerCase() === verPersonal?.trim().toLowerCase()
               )
             );
+            const regGasto = registros.find((x) => normNombre(x.personal) === normNombre(verPersonal || ""));
+            // Días anteriores al alta: no computan (la persona todavía no estaba).
+            const fechaAltaVer = regGasto?.fechaAlta || "";
+            const previoAlAlta = (d) => !!fechaAltaVer && toKey(d) < fechaAltaVer;
             const totalDifMin = esZamoranoPerson ? 0 : regsModal.reduce((s, reg, idx) => {
               if (!reg || reg.ausente || reg.mediaFalta) return s;
+              if (previoAlAlta(diasModal[idx])) return s;
               const dm = difMinDia(reg.entra, reg.sale, diasModal[idx].getDay() === 6);
               return dm == null ? s : s + dm;
             }, 0);
-            const regGasto = registros.find((x) => normNombre(x.personal) === normNombre(verPersonal || ""));
             const montoDif = regGasto ? difMonto({ ...regGasto, difMin: totalDifMin }) : 0;
             // Trabaja 5 días o menos => no trabaja sábados (fila gris).
             const cantJornalesVer = Number(regGasto?.cantJornales) || 0;
@@ -1313,12 +1359,15 @@ const GastosSemanales = () => {
                   {diasModal.map((d, idx) => {
                     const label = `${DIAS[d.getDay()]} ${formatFecha(d)}`;
                     const grisSabado = d.getDay() === 6 && noTrabajaSabadoVer;
-                    const estiloFila = grisSabado ? { opacity: 0.5, filter: "grayscale(1)" } : undefined;
+                    const antesDelAlta = previoAlAlta(d);
+                    const gris = grisSabado || antesDelAlta;
+                    const estiloFila = gris ? { opacity: 0.5, filter: "grayscale(1)" } : undefined;
+                    const tituloGris = antesDelAlta ? "Aún no estaba dado de alta" : grisSabado ? "No trabaja sábados" : undefined;
                     const reg = regsModal[idx];
-                    if (!reg) return (
-                      <tr key={idx} style={estiloFila} title={grisSabado ? "No trabaja sábados" : undefined}>
+                    if (!reg || antesDelAlta) return (
+                      <tr key={idx} style={estiloFila} title={tituloGris}>
                         <td>{label}</td>
-                        <td colSpan={8} className="text-muted">{grisSabado ? "No trabaja" : "Sin registro"}</td>
+                        <td colSpan={8} className="text-muted">{antesDelAlta ? "Sin alta" : grisSabado ? "No trabaja" : "Sin registro"}</td>
                       </tr>
                     );
                     const esZamorano = reg.personal?.toLowerCase().includes("zamorano");
@@ -1326,7 +1375,7 @@ const GastosSemanales = () => {
                     const colorEstado = reg.ausente ? "#dc3545" : reg.mediaFalta ? "#ffc107" : "#198754";
                     const difDia = esZamorano || reg.ausente || reg.mediaFalta ? null : difMinDia(reg.entra, reg.sale, d.getDay() === 6);
                     return (
-                      <tr key={idx} style={estiloFila} title={grisSabado ? "No trabaja sábados" : undefined}>
+                      <tr key={idx} style={estiloFila} title={tituloGris}>
                         <td>{label}</td>
                         <td style={{ color: colorEstado, fontWeight: 600 }}>{estado}</td>
                         <td>{reg.entra || "-"}</td>

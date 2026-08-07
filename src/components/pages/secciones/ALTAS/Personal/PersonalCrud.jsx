@@ -369,31 +369,31 @@ const Personal = () => {
               <Table bordered size="sm" className="align-middle mb-3">
                 <tbody>
                   <tr>
-                    <td className="fw-bold">Semanal</td>
+                    <td>Semanal</td>
                     <td>{formatoMiles(val)}</td>
                   </tr>
                   <tr>
-                    <td className="fw-bold">Hora</td>
+                    <td>Hora</td>
                     <td>{formatoMiles(val / 44)}</td>
                   </tr>
                   <tr>
-                    <td className="fw-bold">Cant. jornales semanales</td>
+                    <td>Cant. jornales semanales</td>
                     <td>{ultimoCantJornales(personaVer?.semanal) || "-"}</td>
                   </tr>
                   <tr>
-                    <td className="fw-bold">Jornal</td>
+                    <td>Jornal</td>
                     <td>{ultimoCantJornales(personaVer?.semanal) > 0 ? formatoMiles(val / ultimoCantJornales(personaVer?.semanal)) : "-"}</td>
                   </tr>
                 </tbody>
               </Table>
             );
           })()}
-          <h6 className="text-center fw-bold">Historial Semanal</h6>
+          <h6 className="text-center fw-normal">Historial Semanal</h6>
           <Table bordered size="sm" className="text-center align-middle">
             <thead className="table-dark">
               <tr>
-                <th>Valor</th>
-                <th>Fecha</th>
+                <th className="fw-normal">Valor</th>
+                <th className="fw-normal">Fecha</th>
               </tr>
             </thead>
             <tbody>
