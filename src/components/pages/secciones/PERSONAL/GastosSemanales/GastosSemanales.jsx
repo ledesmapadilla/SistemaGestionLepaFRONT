@@ -582,7 +582,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
               </div>
               <div className="d-flex align-items-center gap-2" style={{ justifySelf: "end" }}>
                 <span className="text-muted" style={{ fontSize: "0.85rem" }}>Suma</span>
-                <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, textAlign: "center", fontSize: "0.95rem" }}>
+                <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", textAlign: "center", fontSize: "0.95rem" }}>
                   {pesos(sumaSeleccion)}
                 </div>
               </div>
@@ -1175,12 +1175,12 @@ const GastosSemanales = () => {
               }}
             >
               <span className="text-muted" style={{ fontSize: "0.85rem", justifySelf: "end" }}>Suma (<PuntoVerde />):</span>
-              <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, textAlign: "center", fontSize: "0.95rem" }}>
+              <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", textAlign: "center", fontSize: "0.95rem" }}>
                 {pesos(sumaSeleccion)}
               </div>
               {/* Lo que queda por pagar una vez descontadas las filas marcadas. */}
               <span className="text-muted" style={{ fontSize: "0.85rem", justifySelf: "end" }}>Total gral. − (<PuntoVerde />):</span>
-              <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", fontWeight: 600, textAlign: "center", fontSize: "0.95rem" }}>
+              <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", textAlign: "center", fontSize: "0.95rem" }}>
                 {pesos(totalGeneral - sumaSeleccion)}
               </div>
             </div>
