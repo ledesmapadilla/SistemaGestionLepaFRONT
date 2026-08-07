@@ -7,6 +7,13 @@ import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/q
 import { obtenerTodasReparaciones, guardarReparaciones } from "../../../../helpers/queriesReparaciones";
 import { listarMaquinas } from "../../../../helpers/queriesMaquinas";
 import { usePendientesModal } from "../../../../context/PendientesModalContext";
+import { hoverPestana, TRANSICION_PESTANA } from "../../../shared/pestanaLateral";
+
+// Pestaña lateral "Comenzar": celeste, a diferencia de las dos grises.
+const COMENZAR_FONDO = "#0dcaf0";
+const COMENZAR_FONDO_HOVER = "#0aa2c0";
+const COMENZAR_SOMBRA = "3px 4px 12px rgba(0,0,0,0.2)";
+const COMENZAR_SOMBRA_HOVER = "5px 6px 16px rgba(0,0,0,0.32)";
 
 // Mismos responsables que el select de repuestos.
 const RESPONSABLES = [
@@ -609,6 +616,13 @@ export default function Pendientes() {
           title="Comenzar"
           aria-label="Comenzar"
           onClick={() => navigate("/obras")}
+          {...hoverPestana({
+            lado: "izquierda",
+            fondo: COMENZAR_FONDO,
+            fondoHover: COMENZAR_FONDO_HOVER,
+            sombra: COMENZAR_SOMBRA,
+            sombraHover: COMENZAR_SOMBRA_HOVER,
+          })}
           style={{
             position: "fixed",
             top: "50%",
@@ -617,10 +631,11 @@ export default function Pendientes() {
             height: "64px",
             padding: "0 18px 0 14px",
             borderRadius: "0 16px 16px 0",
-            backgroundColor: "#0dcaf0",
+            backgroundColor: COMENZAR_FONDO,
             border: "1px solid #0aa2c0",
             borderLeft: "none",
-            boxShadow: "3px 4px 12px rgba(0,0,0,0.2)",
+            boxShadow: COMENZAR_SOMBRA,
+            transition: TRANSICION_PESTANA,
             display: "flex",
             alignItems: "center",
             gap: "8px",
