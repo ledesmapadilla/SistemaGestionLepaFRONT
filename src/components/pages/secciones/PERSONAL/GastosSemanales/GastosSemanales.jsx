@@ -1190,7 +1190,7 @@ const GastosSemanales = () => {
                         </span>
                       )}
                     </td>
-                    <td><CeldaMoneda value={r.semanal} onChange={(v) => actualizar(idx, "semanal", v)} textStyle={{ fontSize: "0.7rem", color: "#9ca3af" }} /></td>
+                    <td><CeldaMoneda value={r.semanal} onChange={(v) => actualizar(idx, "semanal", v)} textStyle={{ fontSize: "0.62rem", color: "#9ca3af" }} /></td>
                     <td><CeldaMoneda value={r.ausentismo} onChange={(v) => actualizar(idx, "ausentismo", v)} /></td>
                     <td>
                       {r.extras?.length > 0 ? (
@@ -1206,7 +1206,11 @@ const GastosSemanales = () => {
                         </div>
                       )}
                     </td>
-                    <td style={{ color: calcularPagar(r) < 0 ? "#dc3545" : "#198754", fontSize: "1.1rem" }}>
+                    {/* Celeste suave para destacar la columna del monto a pagar.
+                        Semitransparente para que el rayado de la tabla siga
+                        viéndose por debajo. El rojo se reserva para los
+                        negativos, que son una anomalía. */}
+                    <td style={{ color: calcularPagar(r) < 0 ? "#dc3545" : "#fff", fontSize: "1.1rem", background: "rgba(13, 202, 240, 0.15)" }}>
                       {pesos(calcularPagar(r))}
                     </td>
                     <td><CeldaMoneda value={r.pagado || 0} onChange={(v) => actualizar(idx, "pagado", v)} defaultValue={calcularPagar(r)} textStyle={{ fontSize: "0.82rem" }} /></td>
