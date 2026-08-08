@@ -6,7 +6,7 @@ import { listarAsistenciaRango } from "../../../../../helpers/queriesAsistencia.
 import { obtenerGastoSemanalPorSemana, guardarGastoSemanal } from "../../../../../helpers/queriesGastoSemanal.js";
 import { obtenerCuentaCorrienteProveedor } from "../../../../../helpers/queriesCuentaCorrienteProveedor.js";
 import { crearPagoEfectivoProveedor, borrarPagoProveedor } from "../../../../../helpers/queriesPagosProveedores.js";
-import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
+import { difMinDia, minsAHHMM, colorDif } from "../../../../../helpers/jornadaUtils.js";
 import { semanalVigente } from "../../../../../helpers/semanalUtils.js";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
 import XLSXStyle from "xlsx-js-style";
@@ -43,40 +43,6 @@ const normNombre = (s) =>
 
 const netoExtras = (extras) =>
   (extras || []).reduce((s, e) => s + (e.descuentaAumenta === "aumenta" ? 1 : -1) * (Number(e.monto) || 0), 0);
-
-// "hh:mm" -> minutos; null si no es válido
-const parseHoraMin = (str) => {
-  if (!str) return null;
-  const [h, m] = String(str).split(":").map(Number);
-  if (isNaN(h)) return null;
-  return h * 60 + (isNaN(m) ? 0 : m);
-};
-
-// A partir de esta hora de salida el sábado se considera jornada completa y se
-// le descuenta la hora de almuerzo (que la jornada corta de 4 hs no incluye).
-const SABADO_ALMUERZO_DESDE = 15 * 60;
-
-// Dif. de un día en minutos: jornada esperada - (sale - entra). null si falta
-// dato. La jornada esperada es 9h de lun a vie y 4h el sábado (8:00 a 12:00).
-// El sábado se computa igual que el resto de los días: descuenta si se trabaja
-// menos de la jornada y suma horas extra si se trabaja después de las 12.
-const difMinDia = (entra, sale, esSabado = false) => {
-  const e = parseHoraMin(entra);
-  const s = parseHoraMin(sale);
-  if (e == null || s == null) return null;
-  const base = (esSabado ? 4 : 9) * 60;
-  const almuerzo = esSabado && s > SABADO_ALMUERZO_DESDE ? 60 : 0;
-  return base - (s - e - almuerzo);
-};
-
-// minutos -> "hh:mm" (con signo)
-const minsAHHMM = (mins) => {
-  const neg = mins < 0;
-  const abs = Math.abs(mins);
-  const h = Math.floor(abs / 60);
-  const m = abs % 60;
-  return `${neg ? "-" : ""}${h}:${String(m).padStart(2, "0")}`;
-};
 
 // Valor de la hora: jornal (semanal / cantJornales) dividido 8 (la hora de
 // almuerzo de la jornada de 9 hs no se paga).
@@ -778,14 +744,12 @@ const GastosSemanales = () => {
     const nombresPersonalDB = new Set(personalVisible.map((p) => normNombre(p.nombre)));
 
     const jornalMap = {};
-    const semanalMap = {};
     const cantJornalesMap = {};
     personalVisible.forEach((p) => {
       const vigente = semanalVigente(p.semanal, sabadoKey);
       const semanal = vigente ? vigente.valor : 0;
       const cant = vigente ? Number(vigente.cantJornales || 0) : 0;
       jornalMap[normNombre(p.nombre)] = cant > 0 ? semanal / cant : 0;
-      semanalMap[normNombre(p.nombre)] = semanal;
       cantJornalesMap[normNombre(p.nombre)] = cant;
     });
 
@@ -865,9 +829,9 @@ const GastosSemanales = () => {
       });
     });
 
-    // Suma de la Dif. horaria de la semana (9h - jornada real) por persona.
-    // No aplica a Zamorano (se paga por horómetro) ni a días ausente/media falta
-    // (eso ya lo descuenta el ausentismo).
+    // Suma de la Dif. horaria de la semana (jornada esperada - jornada real) por
+    // persona. No aplica a los días ausente/media falta (eso ya lo descuenta el
+    // ausentismo). Zamorano se computa igual que el resto, con su jornada propia.
     const difMinsMap = {};
     diasSemana.forEach((d, idx) => {
       const doc = asistenciaDocs[idx];
@@ -876,31 +840,13 @@ const GastosSemanales = () => {
       const dKey = toKey(d);
       doc.registros.forEach((r) => {
         if (!r.personal || r.ausente || r.mediaFalta) return;
-        if (r.personal.toLowerCase().includes("zamorano")) return;
         if (esSabado && noTrabajaSabado(r.personal)) return; // no trabaja sábados
         if (esAnteriorAlAlta(r.personal, dKey)) return; // aún no estaba dado de alta
-        const dm = difMinDia(r.entra, r.sale, esSabado);
+        const dm = difMinDia(r.entra, r.sale, esSabado, r.personal);
         if (dm == null) return;
         const k = normNombre(r.personal);
         difMinsMap[k] = (difMinsMap[k] || 0) + dm;
       });
-    });
-
-    let zamoranoMins = 0;
-    diasSemana.forEach((d, idx) => {
-      const esSabado = d.getDay() === 6;
-      const doc = asistenciaDocs[idx];
-      if (!doc?.registros) return;
-      const reg = doc.registros.find((r) => r.personal?.toLowerCase().includes("zamorano"));
-      if (!reg) return;
-      if (esSabado && noTrabajaSabado(reg.personal)) return; // no trabaja sábados
-      if (reg.ausente) {
-        zamoranoMins += esSabado ? 240 : 480;
-      } else if (reg.mediaFalta) {
-        zamoranoMins += 240;
-      } else {
-        zamoranoMins += horometroStrAMins(calcularHorometroZamorano(reg.entra, reg.sale, esSabado));
-      }
     });
 
     // Map normKey -> nombre original, así una misma persona escrita distinto
@@ -922,14 +868,6 @@ const GastosSemanales = () => {
 
     const calcAusentismo = (nombre) => {
       const key = normNombre(nombre);
-      if (nombre.toLowerCase().includes("zamorano")) {
-        const semanal = semanalMap[key] || 0;
-        // Valor hora = semanal / horas reales de la semana (cantJornales × 8h por jornada).
-        // 5 días → /40, 5.5 días → /44, etc.
-        const horasSemana = (cantJornalesMap[key] || 0) * 8;
-        const horas = zamoranoMins / 60;
-        return horasSemana > 0 ? Math.round(horas * (semanal / horasSemana)) : 0;
-      }
       const jornal = jornalMap[key] || 0;
       const ausencias = ausenciasMap[key] || 0;
       return Math.round(ausencias * jornal);
@@ -1343,7 +1281,6 @@ const GastosSemanales = () => {
               d.setDate(d.getDate() + i);
               return d;
             });
-            const esZamoranoPerson = verPersonal?.toLowerCase().includes("zamorano");
             const regsModal = diasModal.map((_, idx) =>
               asistenciaSemana[idx]?.registros?.find(
                 (r) => r.personal?.trim().toLowerCase() === verPersonal?.trim().toLowerCase()
@@ -1353,10 +1290,10 @@ const GastosSemanales = () => {
             // Días anteriores al alta: no computan (la persona todavía no estaba).
             const fechaAltaVer = regGasto?.fechaAlta || "";
             const previoAlAlta = (d) => !!fechaAltaVer && toKey(d) < fechaAltaVer;
-            const totalDifMin = esZamoranoPerson ? 0 : regsModal.reduce((s, reg, idx) => {
+            const totalDifMin = regsModal.reduce((s, reg, idx) => {
               if (!reg || reg.ausente || reg.mediaFalta) return s;
               if (previoAlAlta(diasModal[idx])) return s;
-              const dm = difMinDia(reg.entra, reg.sale, diasModal[idx].getDay() === 6);
+              const dm = difMinDia(reg.entra, reg.sale, diasModal[idx].getDay() === 6, verPersonal);
               return dm == null ? s : s + dm;
             }, 0);
             const montoDif = regGasto ? difMonto({ ...regGasto, difMin: totalDifMin }) : 0;
@@ -1364,23 +1301,10 @@ const GastosSemanales = () => {
             const cantJornalesVer = Number(regGasto?.cantJornales) || 0;
             const noTrabajaSabadoVer = cantJornalesVer > 0 && cantJornalesVer <= 5;
             let totalHorometroStr = null;
-            if (esZamoranoPerson) {
-              const totalMins = regsModal.reduce((s, reg, idx) => {
-                if (!reg) return s;
-                return s + horometroStrAMins(calcularHorometroZamorano(reg.entra, reg.sale, diasModal[idx].getDay() === 6));
-              }, 0);
-              const neg = totalMins < 0;
-              const abs = Math.abs(totalMins);
-              const h = Math.floor(abs / 60);
-              const m = abs % 60;
-              const str = m === 0 ? `${h}` : `${h}:${String(m).padStart(2, "0")}`;
-              totalHorometroStr = neg ? `-${str}` : `+${str}`;
-            } else {
-              const regsConHorometro = regsModal.filter((r) => r && r.horometro !== "" && r.horometro != null);
-              if (regsConHorometro.length > 0) {
-                const total = regsConHorometro.reduce((s, r) => s + Number(r.horometro || 0), 0);
-                totalHorometroStr = total.toLocaleString("es-AR");
-              }
+            const regsConHorometro = regsModal.filter((r) => r && r.horometro !== "" && r.horometro != null);
+            if (regsConHorometro.length > 0) {
+              const total = regsConHorometro.reduce((s, r) => s + Number(r.horometro || 0), 0);
+              totalHorometroStr = total.toLocaleString("es-AR");
             }
             return (
               <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
@@ -1412,42 +1336,39 @@ const GastosSemanales = () => {
                         <td colSpan={8} className="text-muted">{antesDelAlta ? "Sin alta" : grisSabado ? "No trabaja" : "Sin registro"}</td>
                       </tr>
                     );
-                    const esZamorano = reg.personal?.toLowerCase().includes("zamorano");
                     const estado = reg.ausente ? "Ausente" : reg.mediaFalta ? "Media falta" : "Presente";
                     const colorEstado = reg.ausente ? "#dc3545" : reg.mediaFalta ? "#ffc107" : "#198754";
-                    const difDia = esZamorano || reg.ausente || reg.mediaFalta ? null : difMinDia(reg.entra, reg.sale, d.getDay() === 6);
+                    const difDia = reg.ausente || reg.mediaFalta ? null : difMinDia(reg.entra, reg.sale, d.getDay() === 6, reg.personal);
                     return (
                       <tr key={idx} style={estiloFila} title={tituloGris}>
                         <td>{label}</td>
                         <td style={{ color: colorEstado, fontWeight: 600 }}>{estado}</td>
                         <td>{reg.entra || "-"}</td>
                         <td>{reg.sale || "-"}</td>
-                        <td style={difDia != null ? { color: difDia < 0 ? "#198754" : difDia > 0 ? "#dc3545" : undefined, fontWeight: 600 } : {}}>
+                        <td style={difDia != null ? { color: colorDif(difDia), fontWeight: 600 } : {}}>
                           {difDia != null ? minsAHHMM(difDia) : "-"}
                         </td>
                         <td>{reg.maquina || "-"}</td>
-                        <td>{esZamorano ? calcularHorometroZamorano(reg.entra, reg.sale, d.getDay() === 6) : (reg.horometro || "-")}</td>
+                        <td>{reg.horometro || "-"}</td>
                         <td>{reg.obra || "-"}</td>
                         <td>{reg.observaciones || "-"}</td>
                       </tr>
                     );
                   })}
                 </tbody>
-                {(totalHorometroStr !== null || (!esZamoranoPerson && totalDifMin !== 0)) && (
+                {(totalHorometroStr !== null || totalDifMin !== 0) && (
                   <tfoot>
                     {totalHorometroStr !== null && (
                       <tr className="table-dark fw-bold">
                         <td colSpan={6} className="text-end">Total horómetro</td>
-                        <td style={{ color: esZamoranoPerson && totalHorometroStr.startsWith("-") ? "#198754" : esZamoranoPerson ? "#dc3545" : undefined }}>
-                          {totalHorometroStr}
-                        </td>
+                        <td>{totalHorometroStr}</td>
                         <td colSpan={2} />
                       </tr>
                     )}
-                    {!esZamoranoPerson && totalDifMin !== 0 && (
+                    {totalDifMin !== 0 && (
                       <tr className="table-dark fw-bold">
                         <td colSpan={4} className="text-end">Total Dif.</td>
-                        <td style={{ color: totalDifMin < 0 ? "#198754" : "#dc3545" }}>{minsAHHMM(totalDifMin)}</td>
+                        <td style={{ color: colorDif(totalDifMin) }}>{minsAHHMM(totalDifMin)}</td>
                         <td colSpan={4} style={{ color: montoDif >= 0 ? "#198754" : "#dc3545" }}>{pesos(montoDif)}</td>
                       </tr>
                     )}

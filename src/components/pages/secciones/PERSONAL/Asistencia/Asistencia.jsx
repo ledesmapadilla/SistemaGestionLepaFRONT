@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Modal, Form, Table, Spinner } from "react-bootstrap";
 import { listarAsistencia, listarDatosAsistencia } from "../../../../../helpers/queriesAsistencia.js";
-import { calcularHorometroZamorano, horometroStrAMins } from "../../../../../helpers/horometroUtils.js";
+import { difMinDia, minsAHHMM, colorDif } from "../../../../../helpers/jornadaUtils.js";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -133,15 +133,6 @@ const Asistencia = () => {
   const normNombre = (s) =>
     (s || "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-  const minsAHoras = (mins) => {
-    const neg = mins < 0;
-    const abs = Math.abs(mins);
-    const h = Math.floor(abs / 60);
-    const m = abs % 60;
-    const str = m === 0 ? `${h} hs` : `${h}:${String(m).padStart(2, "0")} hs`;
-    return neg ? `-${str}` : str;
-  };
-
   const abrirResumen = (diasSemana) => {
     const nombresEnAlta = new Set(listaPersonal.map((p) => normNombre(p.nombre)));
     const mapa = {};
@@ -152,32 +143,33 @@ const Asistencia = () => {
       regs.forEach((r) => {
         if (!r.personal) return;
         const keyNombre = normNombre(r.personal);
-        if (!mapa[keyNombre]) mapa[keyNombre] = { nombre: r.personal, ausentes: 0, sinRemito: 0, observaciones: [], horometroMins: 0 };
+        if (!mapa[keyNombre]) mapa[keyNombre] = { nombre: r.personal, ausentes: 0, sinRemito: 0, observaciones: [], difMins: 0 };
         if (r.ausente) mapa[keyNombre].ausentes += esSabado ? 0.5 : 1;
         if (r.mediaFalta) mapa[keyNombre].ausentes += 0.5;
         if (!r.remito) mapa[keyNombre].sinRemito += 1;
         if (r.observaciones) mapa[keyNombre].observaciones.push(r.observaciones);
-        if (r.personal.toLowerCase().includes("zamorano"))
-          mapa[keyNombre].horometroMins += horometroStrAMins(calcularHorometroZamorano(r.entra, r.sale, esSabado));
+        // La Dif. de los días ausente/media falta no cuenta: eso ya lo refleja
+        // la columna Ausentes (y en Gastos Semanales, el ausentismo).
+        if (!r.ausente && !r.mediaFalta) {
+          const dm = difMinDia(r.entra, r.sale, esSabado, r.personal);
+          if (dm != null) mapa[keyNombre].difMins += dm;
+        }
       });
       // Agregar personas que deberían estar ese día aunque no tengan registro guardado
       filtrarPersonalParaDia(key).forEach((p) => {
         const keyNombre = normNombre(p.nombre);
-        if (!mapa[keyNombre]) mapa[keyNombre] = { nombre: p.nombre, ausentes: 0, sinRemito: 0, observaciones: [], horometroMins: 0 };
+        if (!mapa[keyNombre]) mapa[keyNombre] = { nombre: p.nombre, ausentes: 0, sinRemito: 0, observaciones: [], difMins: 0 };
       });
     });
     const filas = Object.values(mapa)
       .filter((datos) => nombresEnAlta.has(normNombre(datos.nombre)))
-      .map((datos) => {
-        const esZamorano = datos.nombre.toLowerCase().includes("zamorano");
-        return {
-          nombre: datos.nombre,
-          ausentes: esZamorano ? 0 : datos.ausentes,
-          sinRemito: datos.sinRemito,
-          observaciones: datos.observaciones.join(" / "),
-          totalHs: esZamorano ? minsAHoras(datos.horometroMins) : null,
-        };
-      });
+      .map((datos) => ({
+        nombre: datos.nombre,
+        ausentes: datos.ausentes,
+        sinRemito: datos.sinRemito,
+        observaciones: datos.observaciones.join(" / "),
+        difMins: datos.difMins,
+      }));
     const desde = diasSemana[0];
     const hasta = diasSemana[diasSemana.length - 1];
     setSemanaResumen({ filas, label: `${desde} al ${hasta} de ${MESES[mes].toLowerCase()} ${anio}` });
@@ -352,7 +344,7 @@ const Asistencia = () => {
                 <th>Personal</th>
                 <th>Ausentes</th>
                 <th>Sin Remito</th>
-                <th>Total hs</th>
+                <th>Dif.</th>
               </tr>
             </thead>
             <tbody>
@@ -361,8 +353,8 @@ const Asistencia = () => {
                   <td>{f.nombre}</td>
                   <td>{f.ausentes || "-"}</td>
                   <td>{f.sinRemito || "-"}</td>
-                  <td style={f.totalHs ? { fontWeight: 700, color: f.totalHs.startsWith("-") ? "#dc3545" : "#198754" } : {}}>
-                    {f.totalHs ?? "-"}
+                  <td style={f.difMins ? { fontWeight: 700, color: colorDif(f.difMins) } : {}}>
+                    {f.difMins ? minsAHHMM(f.difMins) : "-"}
                   </td>
                 </tr>
               ))}

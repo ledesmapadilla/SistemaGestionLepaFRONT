@@ -4,7 +4,7 @@ import { Button, Form, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
 import { guardarAsistencia as guardarAsistenciaAPI } from "../../../../../helpers/queriesAsistencia.js";
-import { calcularHorometroZamorano } from "../../../../../helpers/horometroUtils.js";
+import { difMinDia, minsAHHMM, colorDif } from "../../../../../helpers/jornadaUtils.js";
 import { semanalVigente } from "../../../../../helpers/semanalUtils.js";
 import { confirmarSaltoHorometro, saltoDe } from "../../../../../helpers/horometroAvisos.js";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
@@ -245,9 +245,7 @@ const DiaAsistencia = () => {
         fila.entra,
         fila.sale,
         fila.maquina,
-        fila.personal?.toLowerCase().includes("zamorano")
-          ? calcularHorometroZamorano(fila.entra, fila.sale, esSabado)
-          : fila.horometro,
+        fila.horometro,
         fila.obra,
         fila.observaciones,
       ];
@@ -262,28 +260,6 @@ const DiaAsistencia = () => {
 
     XLSXStyle.utils.book_append_sheet(wb, ws, "Asistencia");
     XLSXStyle.writeFile(wb, `Asistencia_${dia}_${MESES[mes]}_${anio}.xlsx`);
-  };
-
-  // Parsea "hh:mm" a minutos; null si no es válido
-  const parseHoraMin = (str) => {
-    if (!str) return null;
-    const [h, m] = String(str).split(":").map(Number);
-    if (isNaN(h)) return null;
-    return h * 60 + (isNaN(m) ? 0 : m);
-  };
-
-  // Dif. = jornada esperada - (sale - entra), en formato hh:mm (puede ser
-  // negativo). La jornada es 9h de lun a vie y 4h el sábado (8:00 a 12:00).
-  const calcularDif = (entra, sale, esSab = false) => {
-    const e = parseHoraMin(entra);
-    const s = parseHoraMin(sale);
-    if (e == null || s == null) return "";
-    const dif = (esSab ? 4 : 9) * 60 - (s - e);
-    const neg = dif < 0;
-    const abs = Math.abs(dif);
-    const h = Math.floor(abs / 60);
-    const m = abs % 60;
-    return `${neg ? "-" : ""}${h}:${String(m).padStart(2, "0")}`;
   };
 
   if (!st) return null;
@@ -464,12 +440,11 @@ const DiaAsistencia = () => {
                 </td>
                 <td>
                   {(() => {
-                    if (fila.personal?.toLowerCase().includes("zamorano")) return "-";
-                    const dif = calcularDif(fila.entra, fila.sale, esSabado);
-                    if (!dif) return "-";
+                    const dif = difMinDia(fila.entra, fila.sale, esSabado, fila.personal);
+                    if (dif == null) return "-";
                     return (
-                      <span style={{ fontWeight: 600, color: dif.startsWith("-") ? "#dc3545" : "#198754" }}>
-                        {dif}
+                      <span style={{ fontWeight: 600, color: colorDif(dif) }}>
+                        {minsAHHMM(dif)}
                       </span>
                     );
                   })()}
@@ -487,18 +462,12 @@ const DiaAsistencia = () => {
                   </Form.Select>
                 </td>
                 <td>
-                  {fila.personal?.toLowerCase().includes("zamorano") ? (
-                    <span style={{ color: "#dc3545", fontSize: "1.2rem", fontWeight: 700 }}>
-                      {calcularHorometroZamorano(fila.entra, fila.sale, esSabado)}
-                    </span>
-                  ) : (
-                    <Form.Control
-                      size="sm"
-                      type="number"
-                      value={fila.horometro}
-                      onChange={(e) => actualizarCelda(fila.id, "horometro", e.target.value)}
-                    />
-                  )}
+                  <Form.Control
+                    size="sm"
+                    type="number"
+                    value={fila.horometro}
+                    onChange={(e) => actualizarCelda(fila.id, "horometro", e.target.value)}
+                  />
                 </td>
                 <td>
                   <Form.Select
