@@ -52,17 +52,21 @@ const parseHoraMin = (str) => {
   return h * 60 + (isNaN(m) ? 0 : m);
 };
 
+// A partir de esta hora de salida el sábado se considera jornada completa y se
+// le descuenta la hora de almuerzo (que la jornada corta de 4 hs no incluye).
+const SABADO_ALMUERZO_DESDE = 15 * 60;
+
 // Dif. de un día en minutos: jornada esperada - (sale - entra). null si falta
 // dato. La jornada esperada es 9h de lun a vie y 4h el sábado (8:00 a 12:00).
-// El sábado solo descuenta cuando se trabaja menos de la jornada; trabajar más
-// de las 12 hs no suma horas extra (se limita a 0).
+// El sábado se computa igual que el resto de los días: descuenta si se trabaja
+// menos de la jornada y suma horas extra si se trabaja después de las 12.
 const difMinDia = (entra, sale, esSabado = false) => {
   const e = parseHoraMin(entra);
   const s = parseHoraMin(sale);
   if (e == null || s == null) return null;
   const base = (esSabado ? 4 : 9) * 60;
-  const dif = base - (s - e);
-  return esSabado ? Math.max(0, dif) : dif;
+  const almuerzo = esSabado && s > SABADO_ALMUERZO_DESDE ? 60 : 0;
+  return base - (s - e - almuerzo);
 };
 
 // minutos -> "hh:mm" (con signo)
