@@ -5,7 +5,6 @@ import NavDropdown from "react-bootstrap/NavDropdown";
 import logosimple from "../../assets/logosimple.jpg";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { usePendientesModal } from "../../context/PendientesModalContext";
 
 import "../../styles/menu.css";
 import { Link } from "react-router-dom";
@@ -13,7 +12,6 @@ import { Link } from "react-router-dom";
 function Menu() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
-  const pendientesModal = usePendientesModal();
 
   const handleLogout = () => {
     logout();
