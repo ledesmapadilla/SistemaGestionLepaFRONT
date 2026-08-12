@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
@@ -118,15 +118,26 @@ const GasoilModal = ({
     [personal, quienCargaSel]
   );
 
+  // El botón ya se deshabilita con isSubmitting, pero dos clicks muy seguidos
+  // pueden disparar dos submits antes de que React lo repinte. Este ref corta
+  // el segundo antes de que salga el request.
+  const guardando = useRef(false);
+
   const guardar = async (data) => {
-    await onGuardar({
-      fecha: data.fecha,
-      cliente: data.cliente,
-      obra: data.obra,
-      maquina: data.maquina,
-      litros: Number(data.litros),
-      quienCarga: data.quienCarga,
-    });
+    if (guardando.current) return;
+    guardando.current = true;
+    try {
+      await onGuardar({
+        fecha: data.fecha,
+        cliente: data.cliente,
+        obra: data.obra,
+        maquina: data.maquina,
+        litros: Number(data.litros),
+        quienCarga: data.quienCarga,
+      });
+    } finally {
+      guardando.current = false;
+    }
   };
 
   return (

@@ -135,7 +135,10 @@ const Gasoil = () => {
         prev.map((c) => (c._id === cargaEditando._id ? resData.carga : c))
       );
     } else {
-      setCargas((prev) => [resData.carga, ...prev]);
+      // Si por lo que sea llegara dos veces la misma carga, no la duplicamos.
+      setCargas((prev) =>
+        prev.some((c) => c._id === resData.carga._id) ? prev : [resData.carga, ...prev]
+      );
     }
 
     Swal.fire({
@@ -199,11 +202,6 @@ const Gasoil = () => {
     [cargas, filtroFecha, filtroCliente, filtroObra, filtroMaquina, filtroQuienCarga]
   );
 
-  const totalLitros = useMemo(
-    () => cargasFiltradas.reduce((s, c) => s + (Number(c.litros) || 0), 0),
-    [cargasFiltradas]
-  );
-
   const exportarExcel = () => {
     if (cargasFiltradas.length === 0) {
       Swal.fire({
@@ -257,19 +255,7 @@ const Gasoil = () => {
       });
     });
 
-    const filaTotal = cargasFiltradas.length + 4;
-    ws[`D${filaTotal}`] = {
-      v: "Total litros",
-      t: "s",
-      s: { font: { bold: true }, alignment: centerAlign },
-    };
-    ws[`E${filaTotal}`] = {
-      v: totalLitros,
-      t: "n",
-      s: { font: { bold: true }, alignment: centerAlign },
-    };
-
-    ws["!ref"] = `A1:F${filaTotal}`;
+    ws["!ref"] = `A1:F${cargasFiltradas.length + 3}`;
     ws["!cols"] = [
       { wch: 12 },
       { wch: 26 },
@@ -462,17 +448,6 @@ const Gasoil = () => {
               </tr>
             )}
           </tbody>
-          {cargasFiltradas.length > 0 && (
-            <tfoot>
-              <tr className="table-dark">
-                <th colSpan="4" className="text-end">
-                  Total litros
-                </th>
-                <th className="text-nowrap">{formatoLitros(totalLitros)}</th>
-                <th colSpan="2"></th>
-              </tr>
-            </tfoot>
-          )}
         </Table>
       </div>
 
