@@ -41,8 +41,25 @@ const normNombre = (s) =>
     .replace(/\s+/g, " ")
     .trim();
 
+// Formato viejo: `extras` se guardaba como un número (el neto de la semana) en
+// vez de un array de filas. Las semanas cargadas con ese formato se convierten a
+// una fila única para no perder el monto ni romper los cálculos.
+const normalizarExtras = (extras) => {
+  if (Array.isArray(extras)) return extras;
+  const monto = Number(extras) || 0;
+  if (!monto) return [];
+  return [
+    {
+      fecha: "",
+      descuentaAumenta: monto > 0 ? "aumenta" : "descuenta",
+      monto: Math.abs(monto),
+      detalle: "Extras",
+    },
+  ];
+};
+
 const netoExtras = (extras) =>
-  (extras || []).reduce((s, e) => s + (e.descuentaAumenta === "aumenta" ? 1 : -1) * (Number(e.monto) || 0), 0);
+  normalizarExtras(extras).reduce((s, e) => s + (e.descuentaAumenta === "aumenta" ? 1 : -1) * (Number(e.monto) || 0), 0);
 
 // Valor de la hora: jornal (semanal / cantJornales) dividido 8 (la hora de
 // almuerzo de la jornada de 9 hs no se paga).
@@ -59,7 +76,7 @@ const difMonto = (r) => Math.round(-((Number(r.difMin) || 0) / 60) * valorHora(r
 // La diferencia horaria se refleja como una fila de extra automática
 // (marcada con auto="dif"), no se suma aparte en calcularPagar.
 const AUTO_DIF = "dif";
-const sinExtraDif = (extras) => (extras || []).filter((e) => e.auto !== AUTO_DIF);
+const sinExtraDif = (extras) => normalizarExtras(extras).filter((e) => e.auto !== AUTO_DIF);
 const construirExtraDif = (r, fecha) => {
   const monto = difMonto(r);
   if (!monto) return null;
@@ -924,7 +941,7 @@ const GastosSemanales = () => {
         const k = normNombre(r.personal);
         const fila = {
           ...r,
-          extras: r.extras || [],
+          extras: normalizarExtras(r.extras),
           semanal: semanalActual !== null && semanalActual !== undefined ? semanalActual : r.semanal,
           ausentismo: calcAusentismo(r.personal),
           difMin: difMinsMap[k] || 0,
