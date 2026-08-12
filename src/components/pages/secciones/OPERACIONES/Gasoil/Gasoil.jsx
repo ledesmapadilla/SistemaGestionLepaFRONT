@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Container, Table, Button, Form, Spinner } from "react-bootstrap";
+import { Table, Button, Form, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import XLSXStyle from "xlsx-js-style";
 import Swal from "sweetalert2";
@@ -287,14 +287,23 @@ const Gasoil = () => {
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
   return (
-    <Container fluid className="my-3 px-4">
-      <div className="mb-4">
-        <h6 className="text-center">Cargas de gasoil</h6>
+    <div className="w-75 mx-auto my-2">
+      <h6 className="text-center mb-2">Cargas de gasoil</h6>
+
+      <div className="d-flex justify-content-end align-items-center mb-3">
+        <div className="d-flex gap-2">
+          <Button size="sm" variant="outline-light" onClick={exportarExcel}>
+            Excel
+          </Button>
+          <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>
+            Volver
+          </Button>
+        </div>
       </div>
 
       {/* --- BARRA DE FILTROS --- */}
-      <div className="d-flex flex-wrap gap-3 mb-3 align-items-center justify-content-center">
-        <div style={{ position: "relative", width: "170px" }}>
+      <div className="d-flex flex-wrap gap-3 mb-3 align-items-center">
+        <div style={{ position: "relative", width: "160px" }}>
           <Form.Control
             size="sm"
             type="date"
@@ -308,7 +317,7 @@ const Gasoil = () => {
           )}
         </div>
 
-        <div style={{ position: "relative", width: "220px" }}>
+        <div style={{ position: "relative", width: "200px" }}>
           <Form.Select
             size="sm"
             value={filtroCliente}
@@ -338,7 +347,7 @@ const Gasoil = () => {
           )}
         </div>
 
-        <div style={{ position: "relative", width: "220px" }}>
+        <div style={{ position: "relative", width: "200px" }}>
           <Form.Select
             size="sm"
             value={filtroObra}
@@ -359,7 +368,7 @@ const Gasoil = () => {
           )}
         </div>
 
-        <div style={{ position: "relative", width: "190px" }}>
+        <div style={{ position: "relative", width: "170px" }}>
           <Form.Select
             size="sm"
             value={filtroMaquina}
@@ -380,7 +389,7 @@ const Gasoil = () => {
           )}
         </div>
 
-        <div style={{ position: "relative", width: "200px" }}>
+        <div style={{ position: "relative", width: "180px" }}>
           <Form.Select
             size="sm"
             value={filtroQuienCarga}
@@ -401,20 +410,14 @@ const Gasoil = () => {
           )}
         </div>
 
-        <div className="d-flex gap-2 ms-auto">
-          <Button size="sm" variant="outline-light" onClick={exportarExcel}>
-            Excel
-          </Button>
-          <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>
-            Volver
-          </Button>
+        <div className="ms-auto">
           <Button size="sm" variant="outline-primary" onClick={abrirCrear}>
             Nueva carga
           </Button>
         </div>
       </div>
 
-      <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+      <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
         <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
           <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
             <tr>
@@ -482,7 +485,7 @@ const Gasoil = () => {
         maquinas={maquinas}
         personal={personal}
       />
-    </Container>
+    </div>
   );
 };
 
