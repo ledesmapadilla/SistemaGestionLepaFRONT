@@ -1,0 +1,247 @@
+import { useEffect, useMemo } from "react";
+import { Modal, Button, Form } from "react-bootstrap";
+import { useForm } from "react-hook-form";
+import AsyncButton from "../../../../shared/AsyncButton.jsx";
+
+const hoyLocal = () => new Date().toLocaleDateString("en-CA");
+
+const valoresIniciales = () => ({
+  fecha: hoyLocal(),
+  cliente: "",
+  obra: "",
+  maquina: "",
+  litros: "",
+  quienCarga: "",
+});
+
+const GasoilModal = ({
+  show,
+  onHide,
+  onGuardar,
+  cargaEditando,
+  obras = [],
+  maquinas = [],
+  personal = [],
+}) => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm({ defaultValues: valoresIniciales() });
+
+  useEffect(() => {
+    if (!show) return;
+    reset(
+      cargaEditando
+        ? {
+            fecha: cargaEditando.fecha || hoyLocal(),
+            cliente: cargaEditando.cliente || "",
+            obra: cargaEditando.obra || "",
+            maquina: cargaEditando.maquina || "",
+            litros: cargaEditando.litros ?? "",
+            quienCarga: cargaEditando.quienCarga || "",
+          }
+        : valoresIniciales()
+    );
+  }, [show, cargaEditando, reset]);
+
+  const clienteSel = watch("cliente");
+
+  const clientes = useMemo(
+    () =>
+      [...new Set(obras.map((o) => o.razonsocial).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b)
+      ),
+    [obras]
+  );
+
+  // Solo las obras del cliente elegido: evita cargar gasoil a una obra que no
+  // le corresponde al cliente.
+  const obrasDelCliente = useMemo(
+    () =>
+      obras
+        .filter((o) => !clienteSel || o.razonsocial === clienteSel)
+        .map((o) => o.nombreobra)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b)),
+    [obras, clienteSel]
+  );
+
+  const nombresMaquinas = useMemo(
+    () =>
+      [...new Set(maquinas.map((m) => m.maquina).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b)
+      ),
+    [maquinas]
+  );
+
+  const nombresPersonal = useMemo(
+    () =>
+      personal
+        .filter((p) => p.activo !== false)
+        .map((p) => p.nombre)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b)),
+    [personal]
+  );
+
+  const guardar = async (data) => {
+    await onGuardar({
+      fecha: data.fecha,
+      cliente: data.cliente,
+      obra: data.obra,
+      maquina: data.maquina,
+      litros: Number(data.litros),
+      quienCarga: data.quienCarga,
+    });
+  };
+
+  return (
+    <Modal show={show} onHide={onHide} centered>
+      <Modal.Header closeButton>
+        <Modal.Title style={{ fontSize: "1.2rem" }}>
+          {cargaEditando ? "Editar carga de gasoil" : "Nueva carga de gasoil"}
+        </Modal.Title>
+      </Modal.Header>
+
+      <Form onSubmit={handleSubmit(guardar)}>
+        <Modal.Body className="d-flex flex-column align-items-center">
+          <Form.Group className="mb-3 w-100" style={{ maxWidth: "180px" }}>
+            <Form.Label className="d-block text-center">Fecha*</Form.Label>
+            <Form.Control
+              size="sm"
+              type="date"
+              className="text-center"
+              max={hoyLocal()}
+              isInvalid={!!errors.fecha}
+              {...register("fecha", { required: "La fecha es obligatoria" })}
+            />
+            <Form.Text className="text-danger d-block text-center">
+              {errors.fecha?.message}
+            </Form.Text>
+          </Form.Group>
+
+          <Form.Group className="mb-3 w-100" style={{ maxWidth: "280px" }}>
+            <Form.Label className="d-block text-center">Cliente*</Form.Label>
+            <Form.Select
+              size="sm"
+              isInvalid={!!errors.cliente}
+              {...register("cliente", { required: "El cliente es obligatorio" })}
+              onChange={(e) => {
+                setValue("cliente", e.target.value, { shouldValidate: true });
+                setValue("obra", "");
+              }}
+            >
+              <option value="">Seleccionar...</option>
+              {clientes.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Form.Select>
+            <Form.Text className="text-danger d-block text-center">
+              {errors.cliente?.message}
+            </Form.Text>
+          </Form.Group>
+
+          <Form.Group className="mb-3 w-100" style={{ maxWidth: "280px" }}>
+            <Form.Label className="d-block text-center">Obra*</Form.Label>
+            <Form.Select
+              size="sm"
+              disabled={!clienteSel}
+              isInvalid={!!errors.obra}
+              {...register("obra", { required: "La obra es obligatoria" })}
+            >
+              <option value="">
+                {clienteSel ? "Seleccionar..." : "Elegí un cliente primero"}
+              </option>
+              {obrasDelCliente.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
+            </Form.Select>
+            <Form.Text className="text-danger d-block text-center">
+              {errors.obra?.message}
+            </Form.Text>
+          </Form.Group>
+
+          <Form.Group className="mb-3 w-100" style={{ maxWidth: "280px" }}>
+            <Form.Label className="d-block text-center">Máquina*</Form.Label>
+            <Form.Select
+              size="sm"
+              isInvalid={!!errors.maquina}
+              {...register("maquina", { required: "La máquina es obligatoria" })}
+            >
+              <option value="">Seleccionar...</option>
+              {nombresMaquinas.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </Form.Select>
+            <Form.Text className="text-danger d-block text-center">
+              {errors.maquina?.message}
+            </Form.Text>
+          </Form.Group>
+
+          <Form.Group className="mb-3 w-100" style={{ maxWidth: "120px" }}>
+            <Form.Label className="d-block text-center">Litros*</Form.Label>
+            <Form.Control
+              size="sm"
+              type="number"
+              step="0.01"
+              min="0"
+              className="text-center"
+              onFocus={(e) => {
+                const el = e.target;
+                setTimeout(() => el.select(), 0);
+              }}
+              isInvalid={!!errors.litros}
+              {...register("litros", {
+                required: "Los litros son obligatorios",
+                validate: (v) => Number(v) > 0 || "Los litros deben ser mayores a 0",
+              })}
+            />
+            <Form.Text className="text-danger d-block text-center">
+              {errors.litros?.message}
+            </Form.Text>
+          </Form.Group>
+
+          <Form.Group className="mb-3 w-100" style={{ maxWidth: "280px" }}>
+            <Form.Label className="d-block text-center">Quién carga*</Form.Label>
+            <Form.Select
+              size="sm"
+              isInvalid={!!errors.quienCarga}
+              {...register("quienCarga", { required: "Indicá quién carga" })}
+            >
+              <option value="">Seleccionar...</option>
+              {nombresPersonal.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </Form.Select>
+            <Form.Text className="text-danger d-block text-center">
+              {errors.quienCarga?.message}
+            </Form.Text>
+          </Form.Group>
+        </Modal.Body>
+
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={onHide} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <AsyncButton variant="outline-success" type="submit" loading={isSubmitting}>
+            Guardar
+          </AsyncButton>
+        </Modal.Footer>
+      </Form>
+    </Modal>
+  );
+};
+
+export default GasoilModal;

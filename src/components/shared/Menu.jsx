@@ -72,6 +72,10 @@ function Menu() {
                 </NavDropdown.Item>
               </NavDropdown>
 
+              <NavDropdown.Item as={Link} to="/gasoil" className="text-center">
+                Gasoil
+              </NavDropdown.Item>
+
               <NavDropdown.Item as={Link} to="/variables">
                 Variables
               </NavDropdown.Item>

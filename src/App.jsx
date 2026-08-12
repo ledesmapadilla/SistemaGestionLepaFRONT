@@ -41,6 +41,7 @@ const MaquinaTabla = lazy(() => import("./components/pages/secciones/ALTAS/Maqui
 const GastoTabla = lazy(() => import("./components/pages/secciones/OPERACIONES/Gastos/GastoTabla.jsx"));
 const TodosLosRemitos = lazy(() => import("./components/pages/secciones/OPERACIONES/Remitos/TodosLosRemitos.jsx"));
 const CostosObra = lazy(() => import("./components/pages/secciones/OPERACIONES/Informes/CostosObra.jsx"));
+const Gasoil = lazy(() => import("./components/pages/secciones/OPERACIONES/Gasoil/Gasoil.jsx"));
 const AceiteTabla = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/aceites/AceiteTabla.jsx"));
 const AceiteTablaCompra = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/aceites/AceiteTablaCompra.jsx"));
 const AceiteCrud = lazy(() => import("./components/pages/secciones/ALTAS/Aceites/AceiteCrud.jsx"));
@@ -141,6 +142,7 @@ function App() {
                       <Route path="/maquina" element={<MaquinaTabla />} />
                       <Route path="/gastos" element={<GastoTabla />} />
                       <Route path="/costos-obra" element={<CostosObra />} />
+                      <Route path="/gasoil" element={<Gasoil />} />
                       <Route path="/aceites" element={<AceiteCrud />} />
                       <Route path="/consumo-aceites" element={<AceiteTabla />} />
                       <Route path="/compras-aceites" element={<AceiteTablaCompra />} />
