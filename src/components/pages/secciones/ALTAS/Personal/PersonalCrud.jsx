@@ -12,10 +12,16 @@ import { eliminarPersonalDeAsistencias } from "../../../../../helpers/queriesAsi
 import Swal from "sweetalert2";
 import PersonalModal from "./PersonalModal.jsx";
 
+const fechaHoy = () => {
+  const hoy = new Date();
+  return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
+};
+
 const valoresIniciales = {
   nombre: "",
   semanal: "",
   cantJornales: "",
+  fechaAlta: "",
 };
 
 const ultimoSemanal = (val) => {
@@ -107,12 +113,13 @@ const Personal = () => {
         };
         respuesta = await editarPersonal(personalId, dataToSend);
       } else {
-        const today = new Date();
-        const hoy = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+        // El semanal inicial rige desde la fecha de alta, no desde el día de carga.
+        const alta = data.fechaAlta || fechaHoy();
         dataToSend = {
           nombre: data.nombre,
+          fechaAlta: alta,
           semanal: data.semanal
-            ? [{ valor: Number(data.semanal), fecha: hoy, cantJornales: Number(data.cantJornales) || 0 }]
+            ? [{ valor: Number(data.semanal), fecha: alta, cantJornales: Number(data.cantJornales) || 0 }]
             : [],
         };
         respuesta = await crearPersonal(dataToSend);
@@ -218,7 +225,7 @@ const Personal = () => {
   const abrirCrear = () => {
     setEditando(false);
     setPersonalId(null);
-    reset(valoresIniciales);
+    reset({ ...valoresIniciales, fechaAlta: fechaHoy() });
     setShowModal(true);
   };
 

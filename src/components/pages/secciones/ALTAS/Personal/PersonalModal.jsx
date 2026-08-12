@@ -49,7 +49,7 @@ const PersonalModal = ({
       // En modo editar el semanal se maneja con la tabla de historial: si estos
       // campos quedaron registrados por el modo crear, sus validaciones cortan
       // el submit sin mostrar ningún error.
-      unregister?.(["semanal", "cantJornales"]);
+      unregister?.(["semanal", "cantJornales", "fechaAlta"]);
       const persona = personal.find((p) => p._id === personalId);
       const raw = persona?.semanal;
       let arr = [];
@@ -136,7 +136,9 @@ const PersonalModal = ({
           <Form.Group className="mb-3">
             <Form.Label className="d-block text-center">Nombre*</Form.Label>
             <Form.Control
-              className="text-center"
+              size="sm"
+              className="text-center mx-auto"
+              style={{ maxWidth: "260px" }}
               {...register("nombre", {
                 required: "El nombre es obligatorio",
                 validate: (value) =>
@@ -271,9 +273,28 @@ const PersonalModal = ({
           ) : (
             <>
               <Form.Group className="mb-3">
+                <Form.Label className="d-block text-center">Fecha de alta*</Form.Label>
+                <Form.Control
+                  size="sm"
+                  className="text-center mx-auto"
+                  style={{ maxWidth: "180px" }}
+                  type="date"
+                  max={new Date().toISOString().slice(0, 10)}
+                  isInvalid={!!errors.fechaAlta}
+                  {...register("fechaAlta", {
+                    required: "La fecha de alta es obligatoria",
+                  })}
+                />
+                <Form.Text className="text-danger d-block text-center">
+                  {errors.fechaAlta?.message}
+                </Form.Text>
+              </Form.Group>
+              <Form.Group className="mb-3">
                 <Form.Label className="d-block text-center">Semanal*</Form.Label>
                 <Form.Control
-                  className="text-center"
+                  size="sm"
+                  className="text-center mx-auto"
+                  style={{ maxWidth: "180px" }}
                   type="text"
                   inputMode="decimal"
                   placeholder="$ 0"
@@ -302,7 +323,9 @@ const PersonalModal = ({
               <Form.Group className="mb-3">
                 <Form.Label className="d-block text-center">Cant. de jornales semanales*</Form.Label>
                 <Form.Control
-                  className="text-center w-50 mx-auto"
+                  size="sm"
+                  className="text-center mx-auto"
+                  style={{ maxWidth: "120px" }}
                   type="number"
                   step="0.5"
                   min="0"
