@@ -5,6 +5,18 @@ import AsyncButton from "../../../../shared/AsyncButton.jsx";
 
 const hoyLocal = () => new Date().toLocaleDateString("en-CA");
 
+// Los únicos que cargan gasoil.
+const QUIENES_CARGAN = ["Nacho", "Agustín", "Nelson", "Mauricio"];
+
+// Los acoplados no tienen motor y el Fiat es a nafta: no cargan gasoil. Se
+// listan por exclusión para que una máquina nueva aparezca sola en el select.
+const SIN_GASOIL = ["Carretón chico", "Carretón grande", "Batea 1", "Batea 2", "Fiat"];
+
+// Al editar una carga vieja, el valor guardado puede no estar más en la lista
+// (obra terminada, alguien que ya no carga). Lo agregamos para no perderlo.
+const conValorActual = (opciones, actual) =>
+  actual && !opciones.includes(actual) ? [actual, ...opciones] : opciones;
+
 const valoresIniciales = () => ({
   fecha: hoyLocal(),
   cliente: "",
@@ -21,7 +33,6 @@ const GasoilModal = ({
   cargaEditando,
   obras = [],
   maquinas = [],
-  personal = [],
 }) => {
   const {
     register,
@@ -49,43 +60,59 @@ const GasoilModal = ({
   }, [show, cargaEditando, reset]);
 
   const clienteSel = watch("cliente");
+  const obraSel = watch("obra");
+  const maquinaSel = watch("maquina");
+  const quienCargaSel = watch("quienCarga");
+
+  // Solo se carga gasoil a obras abiertas, así que el modal trabaja siempre
+  // sobre las que están en curso.
+  const obrasEnCurso = useMemo(
+    () => obras.filter((o) => o.estado === "En curso"),
+    [obras]
+  );
 
   const clientes = useMemo(
     () =>
-      [...new Set(obras.map((o) => o.razonsocial).filter(Boolean))].sort((a, b) =>
-        a.localeCompare(b)
+      conValorActual(
+        [...new Set(obrasEnCurso.map((o) => o.razonsocial).filter(Boolean))].sort((a, b) =>
+          a.localeCompare(b)
+        ),
+        clienteSel
       ),
-    [obras]
+    [obrasEnCurso, clienteSel]
   );
 
   // Solo las obras del cliente elegido: evita cargar gasoil a una obra que no
   // le corresponde al cliente.
   const obrasDelCliente = useMemo(
     () =>
-      obras
-        .filter((o) => !clienteSel || o.razonsocial === clienteSel)
-        .map((o) => o.nombreobra)
-        .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b)),
-    [obras, clienteSel]
+      conValorActual(
+        obrasEnCurso
+          .filter((o) => !clienteSel || o.razonsocial === clienteSel)
+          .map((o) => o.nombreobra)
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b)),
+        obraSel
+      ),
+    [obrasEnCurso, clienteSel, obraSel]
   );
 
   const nombresMaquinas = useMemo(
     () =>
-      [...new Set(maquinas.map((m) => m.maquina).filter(Boolean))].sort((a, b) =>
-        a.localeCompare(b)
+      conValorActual(
+        [
+          ...new Set(
+            maquinas.map((m) => m.maquina).filter((m) => m && !SIN_GASOIL.includes(m))
+          ),
+        ].sort((a, b) => a.localeCompare(b)),
+        maquinaSel
       ),
-    [maquinas]
+    [maquinas, maquinaSel]
   );
 
-  const nombresPersonal = useMemo(
-    () =>
-      personal
-        .filter((p) => p.activo !== false)
-        .map((p) => p.nombre)
-        .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b)),
-    [personal]
+  const quienesCargan = useMemo(
+    () => conValorActual(QUIENES_CARGAN, quienCargaSel),
+    [quienCargaSel]
   );
 
   const guardar = async (data) => {
@@ -219,7 +246,7 @@ const GasoilModal = ({
               {...register("quienCarga", { required: "Indicá quién carga" })}
             >
               <option value="">Seleccionar...</option>
-              {nombresPersonal.map((p) => (
+              {quienesCargan.map((p) => (
                 <option key={p} value={p}>
                   {p}
                 </option>
