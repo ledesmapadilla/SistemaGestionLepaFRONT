@@ -11,6 +11,7 @@ import {
 } from "../../../../../helpers/queriesCargaGasoil.js";
 import { listarObras } from "../../../../../helpers/queriesObras.js";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
+import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import GasoilModal from "./GasoilModal.jsx";
 
 const selectActivo = { backgroundImage: "none" };
@@ -47,6 +48,7 @@ const Gasoil = () => {
   const [cargas, setCargas] = useState([]);
   const [obras, setObras] = useState([]);
   const [maquinas, setMaquinas] = useState([]);
+  const [personal, setPersonal] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [filtroFecha, setFiltroFecha] = useState("");
@@ -60,15 +62,17 @@ const Gasoil = () => {
 
   const cargarDatos = async () => {
     try {
-      const [respCargas, respObras, respMaquinas] = await Promise.all([
+      const [respCargas, respObras, respMaquinas, respPersonal] = await Promise.all([
         listarCargasGasoil(),
         listarObras(),
         listarMaquinas(),
+        listarPersonal(),
       ]);
 
       if (respCargas?.ok) setCargas(await respCargas.json());
       if (respObras?.ok) setObras(await respObras.json());
       if (respMaquinas?.ok) setMaquinas(await respMaquinas.json());
+      if (respPersonal?.ok) setPersonal(await respPersonal.json());
     } catch (error) {
       console.error("Error al cargar gasoil:", error);
       Swal.fire({
@@ -479,6 +483,7 @@ const Gasoil = () => {
         cargaEditando={cargaEditando}
         obras={obras}
         maquinas={maquinas}
+        personal={personal}
       />
     </div>
   );

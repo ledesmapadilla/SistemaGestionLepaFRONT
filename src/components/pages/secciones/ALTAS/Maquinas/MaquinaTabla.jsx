@@ -22,6 +22,7 @@ const valoresIniciales = {
   chasis: "",
   motor: "",
   descripcion: "",
+  usaGasoil: true,
 };
 
 const MaquinaTabla = () => {
@@ -83,6 +84,7 @@ const MaquinaTabla = () => {
         chasis: data.chasis,
         motor: data.motor,
         descripcion: data.descripcion,
+        usaGasoil: !!data.usaGasoil,
       };
 
       if (editando) {
@@ -153,6 +155,7 @@ const MaquinaTabla = () => {
       chasis: item.chasis || "",
       motor: item.motor || "",
       descripcion: item.descripcion || "",
+      usaGasoil: item.usaGasoil !== false,
     });
     setShowModal(true);
   };

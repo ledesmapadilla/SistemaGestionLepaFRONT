@@ -5,12 +5,8 @@ import AsyncButton from "../../../../shared/AsyncButton.jsx";
 
 const hoyLocal = () => new Date().toLocaleDateString("en-CA");
 
-// Los únicos que cargan gasoil.
-const QUIENES_CARGAN = ["Nacho", "Agustín", "Nelson", "Mauricio"];
-
-// Los acoplados no tienen motor y el Fiat es a nafta: no cargan gasoil. Se
-// listan por exclusión para que una máquina nueva aparezca sola en el select.
-const SIN_GASOIL = ["Carretón chico", "Carretón grande", "Batea 1", "Batea 2", "Fiat"];
+// Los únicos que cargan gasoil, tal cual figuran en el alta de Personal.
+const QUIENES_CARGAN = ["Nacho", "Agustín", "Castillo, Nelson", "Ruiz, Mauricio"];
 
 // Al editar una carga vieja, el valor guardado puede no estar más en la lista
 // (obra terminada, alguien que ya no carga). Lo agregamos para no perderlo.
@@ -33,6 +29,7 @@ const GasoilModal = ({
   cargaEditando,
   obras = [],
   maquinas = [],
+  personal = [],
 }) => {
   const {
     register,
@@ -97,12 +94,14 @@ const GasoilModal = ({
     [obrasEnCurso, clienteSel, obraSel]
   );
 
+  // Las máquinas que cargan gasoil se marcan con el check "Carga gasoil" del
+  // alta de Máquinas. Las viejas, sin el campo, se toman como que sí cargan.
   const nombresMaquinas = useMemo(
     () =>
       conValorActual(
         [
           ...new Set(
-            maquinas.map((m) => m.maquina).filter((m) => m && !SIN_GASOIL.includes(m))
+            maquinas.filter((m) => m.usaGasoil !== false).map((m) => m.maquina).filter(Boolean)
           ),
         ].sort((a, b) => a.localeCompare(b)),
         maquinaSel
@@ -111,8 +110,12 @@ const GasoilModal = ({
   );
 
   const quienesCargan = useMemo(
-    () => conValorActual(QUIENES_CARGAN, quienCargaSel),
-    [quienCargaSel]
+    () =>
+      conValorActual(
+        QUIENES_CARGAN.filter((nombre) => personal.some((p) => p.nombre === nombre)),
+        quienCargaSel
+      ),
+    [personal, quienCargaSel]
   );
 
   const guardar = async (data) => {

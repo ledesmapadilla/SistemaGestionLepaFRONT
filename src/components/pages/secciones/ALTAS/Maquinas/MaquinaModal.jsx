@@ -118,7 +118,19 @@ const MaquinaModal = ({
               </Form.Group>
             </Col>
 
-            {/* Sexta Fila: Descripción */}
+            {/* Sexta Fila: Gasoil */}
+            <Col md={12}>
+              <Form.Group className="mb-3 d-flex justify-content-center">
+                <Form.Check
+                  type="checkbox"
+                  id="usaGasoil"
+                  label="Carga gasoil (aparece en el select de cargas de gasoil)"
+                  {...register("usaGasoil")}
+                />
+              </Form.Group>
+            </Col>
+
+            {/* Séptima Fila: Descripción */}
             <Col md={12}>
               <Form.Group className="mb-3">
                 <Form.Label className="d-block text-center fw-bold">Descripción adicional / Observaciones</Form.Label>
