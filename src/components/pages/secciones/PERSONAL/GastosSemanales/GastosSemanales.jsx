@@ -8,6 +8,7 @@ import { obtenerCuentaCorrienteProveedor } from "../../../../../helpers/queriesC
 import { crearPagoEfectivoProveedor, borrarPagoProveedor } from "../../../../../helpers/queriesPagosProveedores.js";
 import { difMinDia, minsAHHMM, colorDif } from "../../../../../helpers/jornadaUtils.js";
 import { semanalVigente } from "../../../../../helpers/semanalUtils.js";
+import { ordenarPersonal } from "../../../../../helpers/ordenPersonal.js";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
 import XLSXStyle from "xlsx-js-style";
 import Swal from "sweetalert2";
@@ -40,27 +41,6 @@ const normNombre = (s) =>
     .replace(/[.,;]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-
-// Orden de la lista: Zamorano primero, después el resto alfabético, y Nacho y
-// Agustín siempre al final. Se compara con el nombre normalizado para que no
-// dependa de cómo esté escrito (acentos, coma, mayúsculas).
-const ORDEN_PRIMERO = ["zamorano"];
-const ORDEN_ULTIMO = ["nacho", "agustin"];
-
-const prioridadOrden = (nombre) => {
-  const k = normNombre(nombre);
-  if (ORDEN_PRIMERO.some((n) => k.includes(n))) return 0;
-  if (ORDEN_ULTIMO.some((n) => k.includes(n))) return 2;
-  return 1;
-};
-
-const ordenarPersonal = (filas) =>
-  [...filas].sort((a, b) => {
-    const pa = prioridadOrden(a.personal);
-    const pb = prioridadOrden(b.personal);
-    if (pa !== pb) return pa - pb;
-    return (a.personal || "").localeCompare(b.personal || "", "es", { sensitivity: "base" });
-  });
 
 // Formato viejo: `extras` se guardaba como un número (el neto de la semana) en
 // vez de un array de filas. Las semanas cargadas con ese formato se convierten a

@@ -7,6 +7,7 @@ import { guardarAsistencia as guardarAsistenciaAPI } from "../../../../../helper
 import { difMinDia, minsAHHMM, colorDif } from "../../../../../helpers/jornadaUtils.js";
 import { semanalVigente } from "../../../../../helpers/semanalUtils.js";
 import { confirmarSaltoHorometro, saltoDe } from "../../../../../helpers/horometroAvisos.js";
+import { ordenarPersonal } from "../../../../../helpers/ordenPersonal.js";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
 
 const MESES = [
@@ -56,7 +57,7 @@ const DiaAsistencia = () => {
     });
 
   const personalDelDia = useMemo(
-    () => filtrarPersonalParaDia(keyDia, listaPersonal),
+    () => ordenarPersonal(filtrarPersonalParaDia(keyDia, listaPersonal), (p) => p?.nombre),
     [keyDia, listaPersonal]
   );
 
@@ -107,7 +108,10 @@ const DiaAsistencia = () => {
       .filter((p) => !vistos.has(p.nombre.trim().toLowerCase()))
       .map(filaDePersonal);
 
-    return [...filasDedup, ...faltantes].map((f) => ({ ...f }));
+    // Mismo orden que Gastos Semanales: Zamorano primero, alfabético, y Nacho y
+    // Agustín al final. Se ordena acá y no al guardar, así las filas quedan
+    // igual aunque el día se haya cargado en otro orden.
+    return ordenarPersonal([...filasDedup, ...faltantes]).map((f) => ({ ...f }));
   }, [registros, personalDelDia, listaPersonal, keyDia, esSabado]);
 
   const borrador = edits ?? borradorInicial;

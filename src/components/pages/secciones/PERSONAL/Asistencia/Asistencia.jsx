@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button, Modal, Form, Table, Spinner } from "react-bootstrap";
 import { listarAsistencia, listarDatosAsistencia } from "../../../../../helpers/queriesAsistencia.js";
 import { difMinDia, minsAHHMM, colorDif } from "../../../../../helpers/jornadaUtils.js";
+import { ordenarPersonal } from "../../../../../helpers/ordenPersonal.js";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -90,7 +91,8 @@ const Asistencia = () => {
     cargarAsistencia();
   }, [anio, mes]);
 
-  const personalVisible = listaPersonal;
+  // Ordenado acá, que es de donde sale la lista que se le pasa al detalle del día.
+  const personalVisible = ordenarPersonal(listaPersonal, (p) => p?.nombre);
 
   const diasEnMes = new Date(anio, mes + 1, 0).getDate();
   const primerDiaSemana = (new Date(anio, mes, 1).getDay() + 6) % 7;
@@ -121,7 +123,7 @@ const Asistencia = () => {
     navigate("/personal/asistencia-dia", {
       state: {
         anio, mes, dia,
-        personal: listaPersonal,
+        personal: personalVisible,
         maquinas: listaMaquinas,
         obras: listaObras,
         services: listaServices,
