@@ -271,7 +271,6 @@ const UsuariosCrud = () => {
                 <tr>
                   <th>Nombre</th>
                   <th>Usuario</th>
-                  <th>Contraseña</th>
                   <th>Rol</th>
                   <th></th>
                 </tr>
@@ -279,7 +278,7 @@ const UsuariosCrud = () => {
               <tbody>
                 {usuariosFiltrados.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="py-3">
+                    <td colSpan="4" className="py-3">
                       No hay usuarios cargados
                     </td>
                   </tr>
@@ -288,7 +287,6 @@ const UsuariosCrud = () => {
                     <tr key={usuario._id}>
                       <td className="fw-bold">{usuario.nombre}</td>
                       <td>{usuario.usuario}</td>
-                      <td>{usuario.contrasenaVisible}</td>
                       <td>{rolLabel(usuario.rol)}</td>
                       <td>
                         <div className="d-flex gap-2 justify-content-center">
