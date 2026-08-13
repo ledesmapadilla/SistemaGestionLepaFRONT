@@ -877,8 +877,13 @@ const GastosSemanales = () => {
         if (!nombresEnAsistencia.has(k)) nombresEnAsistencia.set(k, r.personal.trim());
       });
     });
+    // Solo los nombres que NO están en el legajo (los sueltos que se tipean en
+    // la planilla). Se compara contra todo el personal, no contra el visible:
+    // si no, el que está dado de baja antes de esta semana volvía a entrar por
+    // acá, porque sus filas de asistencia siguen guardadas en los días viejos.
+    const nombresTodoPersonal = new Set(personal.map((p) => normNombre(p.nombre)));
     const soloEnAsistencia = Array.from(nombresEnAsistencia.entries())
-      .filter(([k]) => !nombresPersonalDB.has(k))
+      .filter(([k]) => !nombresTodoPersonal.has(k))
       .map(([, nombre]) => nombre);
 
     setNombresPersonal(nombresPersonalDB);
@@ -939,6 +944,14 @@ const GastosSemanales = () => {
       return extrasManuales.length > 0 || r.pagado > 0 || !!r.observaciones;
     };
 
+    // Está en el legajo pero esta semana no le toca: de baja antes del lunes, o
+    // dado de alta después del sábado. Sus filas de asistencia viejas no lo
+    // devuelven a la lista.
+    const fueraDeLaSemana = (nombre) => {
+      const k = normNombre(nombre);
+      return nombresTodoPersonal.has(k) && !nombresPersonalDB.has(k);
+    };
+
     if (gastoDoc?.registros?.length) {
       const existentes = gastoDoc.registros.map((r) => {
         const semanalActual = semanalActualMap[normNombre(r.personal)];
@@ -956,9 +969,12 @@ const GastosSemanales = () => {
         return fila;
       });
 
-      const existentesFiltrados = existentes.filter(
-        (r) => tieneAlgunaAsistencia(r.personal) || tieneDatosCargados(r)
-      );
+      const existentesFiltrados = existentes.filter((r) => {
+        // Al que no le toca la semana solo se lo conserva si tiene algo cargado
+        // a mano, para no borrar de la base lo que alguien ya escribió.
+        if (fueraDeLaSemana(r.personal)) return tieneDatosCargados(r);
+        return tieneAlgunaAsistencia(r.personal) || tieneDatosCargados(r);
+      });
 
       const nombresExistentes = new Set(existentesFiltrados.map((r) => normNombre(r.personal)));
       const nuevosDePersonal = personalVisible
