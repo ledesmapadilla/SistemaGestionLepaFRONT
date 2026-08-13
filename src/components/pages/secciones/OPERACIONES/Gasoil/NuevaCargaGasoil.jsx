@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, Col, Form, ListGroup, Row, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import DatePicker, { registerLocale } from "react-datepicker";
+import { es } from "date-fns/locale";
 import Swal from "sweetalert2";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
 import {
   listarOpcionesGasoil,
   crearCargaGasoilPublica,
 } from "../../../../../helpers/queriesPublicoGasoil.js";
+import "react-datepicker/dist/react-datepicker.css";
+
+registerLocale("es", es);
 
 const hoyLocal = () => new Date().toLocaleDateString("en-CA");
 
@@ -15,6 +20,16 @@ const mostrarFechaDMY = (fecha) => {
   const [y, m, d] = fecha.split("-");
   return d ? `${d}-${m}-${y}` : fecha;
 };
+
+// "YYYY-MM-DD" ↔ Date, siempre en hora local: new Date("2026-08-13") lo
+// interpreta como UTC y en Argentina cae un día antes.
+const aDate = (ymd) => {
+  if (!ymd) return null;
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+
+const aYMD = (date) => (date ? date.toLocaleDateString("en-CA") : "");
 
 // El orden en que se van completando las tarjetas. Al elegir un valor se abre
 // sola la siguiente que falte, así se carga de arriba a abajo sin tocar de más.
@@ -54,7 +69,6 @@ const NuevaCargaGasoil = () => {
   const [opciones, setOpciones] = useState(null);
 
   const opcionesPedidas = useRef(false);
-  const fechaRef = useRef(null);
 
   const pedirOpciones = async () => {
     if (opcionesPedidas.current) return null;
@@ -137,27 +151,7 @@ const NuevaCargaGasoil = () => {
     setAbierto(null);
   };
 
-  // La fecha no abre panel propio: dispara el calendario nativo del teléfono.
-  // showPicker() no existe en todos los navegadores, de ahí el fallback.
-  const abrirCalendario = () => {
-    const el = fechaRef.current;
-    if (!el) return;
-    try {
-      el.showPicker();
-    } catch {
-      el.focus();
-      el.click();
-    }
-  };
-
-  const alternar = (campo) => {
-    if (campo === "fecha") {
-      setAbierto(null);
-      abrirCalendario();
-      return;
-    }
-    setAbierto((prev) => (prev === campo ? null : campo));
-  };
+  const alternar = (campo) => setAbierto((prev) => (prev === campo ? null : campo));
 
   const textoValor = (campo) => {
     if (!completo(campo)) {
@@ -170,6 +164,18 @@ const NuevaCargaGasoil = () => {
   };
 
   const guardar = async () => {
+    if (faltantes.length > 0) {
+      const lista = faltantes.map((campo) => ETIQUETAS[campo]);
+      await Swal.fire({
+        icon: "warning",
+        title: lista.length === 1 ? "Falta un dato" : "Faltan datos",
+        text: `Completá: ${lista.join(", ")}.`,
+      });
+      // Abre la primera que falta, para no tener que buscarla.
+      setAbierto(faltantes[0]);
+      return;
+    }
+
     const respuesta = await crearCargaGasoilPublica({
       fecha: valores.fecha,
       cliente: valores.cliente,
@@ -214,33 +220,16 @@ const NuevaCargaGasoil = () => {
       className="mx-auto px-3 py-3 d-flex flex-column justify-content-center"
       style={{ maxWidth: "480px", minHeight: "100dvh" }}
     >
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h6 className="mb-0">Nueva carga</h6>
-        <Button size="sm" variant="outline-secondary" onClick={() => navigate("/gasoil/carga")}>
-          Cancelar
-        </Button>
-      </div>
-
-      {/* Fuera de la vista pero renderizado: showPicker() no funciona sobre un
-          input con display:none. Es el que abre el calendario del teléfono. */}
-      <Form.Control
-        ref={fechaRef}
-        type="date"
-        max={hoyLocal()}
-        value={valores.fecha}
-        onChange={(e) => setValores((prev) => ({ ...prev, fecha: e.target.value }))}
-        style={{
-          position: "absolute",
-          opacity: 0,
-          width: 0,
-          height: 0,
-          padding: 0,
-          border: "none",
-          pointerEvents: "none",
-        }}
-        tabIndex={-1}
-        aria-hidden="true"
-      />
+      {/* Fijo arriba a la derecha: el contenido está centrado vertical y si
+          Cancelar viajara con él quedaría en medio de la pantalla. */}
+      <Button
+        size="sm"
+        variant="outline-secondary"
+        onClick={() => navigate("/gasoil/carga")}
+        style={{ position: "fixed", top: "12px", right: "12px", zIndex: 10 }}
+      >
+        Cancelar
+      </Button>
 
       {FILAS.map((fila, indiceFila) => (
         <div key={indiceFila}>
@@ -265,20 +254,23 @@ const NuevaCargaGasoil = () => {
                     className={`h-100 ${listo ? "bg-success-subtle" : "bg-body-tertiary"} ${borde}`}
                   >
                     <Card.Body className="p-2 text-center">
-                      <div className="text-muted text-uppercase" style={{ fontSize: "0.65rem" }}>
+                      {/* El título se distingue por mayúsculas, negrita y
+                          espaciado; "Tocar" por minúscula, cursiva y un gris
+                          más apagado. Así no se confunden entre sí. */}
+                      <div
+                        className="text-uppercase fw-bold"
+                        style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
+                      >
                         {ETIQUETAS[campo]}
                       </div>
-                      {/* "Tocar" va en text-body-tertiary, un gris más apagado
-                          que el text-muted de la etiqueta: se lee que falta
-                          completar sin competir con el título. */}
                       <div
                         title={textoValor(campo)}
                         className={`text-truncate ${
-                          listo ? "fw-semibold" : "text-body-tertiary"
+                          listo ? "fw-semibold" : "fst-italic text-body-tertiary"
                         }`}
                         style={{ fontSize: "0.85rem" }}
                       >
-                        {listo ? textoValor(campo) : "Tocar"}
+                        {listo ? textoValor(campo) : "tocar"}
                       </div>
                     </Card.Body>
                   </Card>
@@ -293,6 +285,21 @@ const NuevaCargaGasoil = () => {
               <Card.Header className="py-2 fw-semibold" style={{ fontSize: "0.9rem" }}>
                 {ETIQUETAS[abierto]}
               </Card.Header>
+
+              {abierto === "fecha" && (
+                <Card.Body className="d-flex justify-content-center">
+                  {/* Calendario propio en vez del nativo: al tocar un día queda
+                      elegido y se cierra, sin el botón "Establecer" que mete
+                      Android en su selector. */}
+                  <DatePicker
+                    inline
+                    locale="es"
+                    selected={aDate(valores.fecha)}
+                    maxDate={new Date()}
+                    onChange={(date) => elegir("fecha", aYMD(date))}
+                  />
+                </Card.Body>
+              )}
 
               {abierto === "litros" && (
                 <Card.Body className="d-flex flex-column align-items-center">
@@ -359,12 +366,9 @@ const NuevaCargaGasoil = () => {
       ))}
 
       <div className="d-flex justify-content-center mt-3">
-        <AsyncButton
-          variant="outline-success"
-          style={{ minWidth: "140px" }}
-          disabled={faltantes.length > 0}
-          onClick={guardar}
-        >
+        {/* Habilitado siempre: si falta algo lo dice, en vez de quedarse
+            apagado sin explicar por qué. */}
+        <AsyncButton variant="outline-success" style={{ minWidth: "140px" }} onClick={guardar}>
           Guardar
         </AsyncButton>
       </div>
