@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button, Card, Form, ListGroup, Spinner } from "react-bootstrap";
+import { Button, Card, Col, Form, ListGroup, Row, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
@@ -25,6 +25,10 @@ const mostrarFechaDMY = (fecha) => {
 // El orden en que se van completando las tarjetas. Al elegir un valor se abre
 // sola la siguiente que falte, así se carga de arriba a abajo sin tocar de más.
 const CAMPOS = ["fecha", "cliente", "obra", "maquina", "litros", "quienCarga"];
+
+// Tres por fila. Las alternativas no se despliegan dentro de la tarjeta (queda
+// muy angosta): se abren en un panel ancho debajo de la fila que se tocó.
+const FILAS = [CAMPOS.slice(0, 3), CAMPOS.slice(3)];
 
 const ETIQUETAS = {
   fecha: "Fecha",
@@ -205,116 +209,139 @@ const NuevaCargaGasoil = () => {
         </Button>
       </div>
 
-      {CAMPOS.map((campo) => {
-        const estaAbierto = abierto === campo;
-        const listo = completo(campo);
+      {FILAS.map((fila, indiceFila) => (
+        <div key={indiceFila}>
+          <Row className="g-2 mb-2">
+            {fila.map((campo) => {
+              const estaAbierto = abierto === campo;
+              const listo = completo(campo);
 
-        return (
-          <Card key={campo} className={`mb-2 ${listo ? "border-success" : ""}`}>
-            <Card.Body
-              role="button"
-              onClick={() => alternar(campo)}
-              className="py-3 d-flex justify-content-between align-items-center"
-            >
-              <div>
-                <div className="text-muted" style={{ fontSize: "0.75rem" }}>
-                  {ETIQUETAS[campo]}
-                </div>
-                <div
-                  style={{ fontSize: "1.05rem" }}
-                  className={listo ? "" : "text-muted fst-italic"}
-                >
-                  {textoValor(campo)}
-                </div>
-              </div>
-              <span className="text-muted ms-2">{estaAbierto ? "▲" : "▼"}</span>
-            </Card.Body>
+              // Una sola clase de borde: si se acumulan dos, cuál gana depende
+              // del orden del CSS de Bootstrap, no del orden acá.
+              const borde = estaAbierto
+                ? "border-success"
+                : listo
+                ? "border-success-subtle"
+                : "border-secondary-subtle";
 
-            {estaAbierto && campo === "fecha" && (
-              <Card.Body className="pt-0">
-                <div className="d-flex gap-2 mb-2">
-                  <Button
-                    size="sm"
-                    variant="outline-light"
-                    onClick={() => elegir("fecha", hoyLocal())}
+              return (
+                <Col xs={4} key={campo}>
+                  <Card
+                    role="button"
+                    onClick={() => alternar(campo)}
+                    className={`h-100 ${listo ? "bg-success-subtle" : "bg-body-tertiary"} ${borde}`}
                   >
-                    Hoy
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline-light"
-                    onClick={() => elegir("fecha", ayerLocal())}
-                  >
-                    Ayer
-                  </Button>
-                </div>
-                <Form.Control
-                  type="date"
-                  max={hoyLocal()}
-                  value={valores.fecha}
-                  onChange={(e) => setValores((prev) => ({ ...prev, fecha: e.target.value }))}
-                />
-              </Card.Body>
-            )}
+                    <Card.Body className="p-2 text-center">
+                      <div className="text-muted text-uppercase" style={{ fontSize: "0.65rem" }}>
+                        {ETIQUETAS[campo]}
+                      </div>
+                      <div
+                        title={textoValor(campo)}
+                        className={`text-truncate ${listo ? "fw-semibold" : "text-muted"}`}
+                        style={{ fontSize: "0.85rem" }}
+                      >
+                        {listo ? textoValor(campo) : "Tocar"}
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              );
+            })}
+          </Row>
 
-            {estaAbierto && campo === "litros" && (
-              <Card.Body className="pt-0">
-                <Form.Control
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  autoFocus
-                  placeholder="0"
-                  value={valores.litros}
-                  onFocus={(e) => {
-                    const el = e.target;
-                    setTimeout(() => el.select(), 0);
-                  }}
-                  onChange={(e) => setValores((prev) => ({ ...prev, litros: e.target.value }))}
-                />
-                <Button
-                  size="sm"
-                  variant="outline-success"
-                  className="mt-2 w-100"
-                  disabled={!(Number(valores.litros) > 0)}
-                  onClick={() => abrirSiguiente("litros")}
-                >
-                  Listo
-                </Button>
-              </Card.Body>
-            )}
+          {/* El panel de alternativas va debajo de la fila tocada, a lo ancho. */}
+          {fila.includes(abierto) && (
+            <Card className="mb-2 bg-body-tertiary border-success">
+              <Card.Header className="py-2 fw-semibold" style={{ fontSize: "0.9rem" }}>
+                {ETIQUETAS[abierto]}
+              </Card.Header>
 
-            {estaAbierto && !["fecha", "litros"].includes(campo) && (
-              <ListGroup variant="flush">
-                {cargandoOpciones ? (
-                  <ListGroup.Item className="text-center py-3">
-                    <Spinner animation="border" size="sm" />
-                  </ListGroup.Item>
-                ) : listaDe(campo).length > 0 ? (
-                  listaDe(campo).map((opcion) => (
-                    <ListGroup.Item
-                      key={opcion}
-                      action
-                      active={valores[campo] === opcion}
-                      onClick={() => elegir(campo, opcion)}
-                      className="py-3"
+              {abierto === "fecha" && (
+                <Card.Body>
+                  <div className="d-flex gap-2 mb-2">
+                    <Button
+                      size="sm"
+                      variant="outline-light"
+                      onClick={() => elegir("fecha", hoyLocal())}
                     >
-                      {opcion}
+                      Hoy
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline-light"
+                      onClick={() => elegir("fecha", ayerLocal())}
+                    >
+                      Ayer
+                    </Button>
+                  </div>
+                  <Form.Control
+                    type="date"
+                    max={hoyLocal()}
+                    value={valores.fecha}
+                    onChange={(e) => setValores((prev) => ({ ...prev, fecha: e.target.value }))}
+                  />
+                </Card.Body>
+              )}
+
+              {abierto === "litros" && (
+                <Card.Body>
+                  <Form.Control
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    autoFocus
+                    placeholder="0"
+                    value={valores.litros}
+                    onFocus={(e) => {
+                      const el = e.target;
+                      setTimeout(() => el.select(), 0);
+                    }}
+                    onChange={(e) => setValores((prev) => ({ ...prev, litros: e.target.value }))}
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline-success"
+                    className="mt-2 w-100"
+                    disabled={!(Number(valores.litros) > 0)}
+                    onClick={() => abrirSiguiente("litros")}
+                  >
+                    Listo
+                  </Button>
+                </Card.Body>
+              )}
+
+              {!["fecha", "litros"].includes(abierto) && (
+                <ListGroup variant="flush" style={{ maxHeight: "50vh", overflowY: "auto" }}>
+                  {cargandoOpciones ? (
+                    <ListGroup.Item className="text-center py-3 bg-transparent">
+                      <Spinner animation="border" size="sm" />
                     </ListGroup.Item>
-                  ))
-                ) : (
-                  <ListGroup.Item className="text-muted py-3">
-                    {campo === "obra"
-                      ? "Elegí un cliente primero"
-                      : "No hay opciones disponibles"}
-                  </ListGroup.Item>
-                )}
-              </ListGroup>
-            )}
-          </Card>
-        );
-      })}
+                  ) : listaDe(abierto).length > 0 ? (
+                    listaDe(abierto).map((opcion) => (
+                      <ListGroup.Item
+                        key={opcion}
+                        action
+                        active={valores[abierto] === opcion}
+                        onClick={() => elegir(abierto, opcion)}
+                        className="py-3 bg-transparent"
+                      >
+                        {opcion}
+                      </ListGroup.Item>
+                    ))
+                  ) : (
+                    <ListGroup.Item className="text-muted py-3 bg-transparent">
+                      {abierto === "obra"
+                        ? "Elegí un cliente primero"
+                        : "No hay opciones disponibles"}
+                    </ListGroup.Item>
+                  )}
+                </ListGroup>
+              )}
+            </Card>
+          )}
+        </div>
+      ))}
 
       <AsyncButton
         variant="success"
