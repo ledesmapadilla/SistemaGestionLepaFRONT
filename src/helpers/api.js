@@ -34,4 +34,6 @@ export const API = {
   pendientesResponsable: `${BASE}/api/pendientes-responsable`,
   entregaEPP: `${BASE}/api/entrega-epp`,
   cargasGasoil: `${BASE}/api/cargas-gasoil`,
+  // Sin token: solo lo que usa la página /gasoil/carga del celular.
+  publicoGasoil: `${BASE}/api/publico/gasoil`,
 };

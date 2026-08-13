@@ -99,6 +99,20 @@ function App() {
           {/* Login sin Menu ni Footer */}
           <Route path="/login" element={<Login />} />
 
+          {/* Carga de gasoil: se usa desde el celular como acceso directo, por
+              eso va sin login y sin Menu ni Footer. Solo puede dar de alta una
+              carga; el listado y la edición siguen protegidos en /gasoil. */}
+          <Route
+            path="/gasoil/carga"
+            element={
+              <ChunkErrorBoundary>
+                <Suspense fallback={<PageSpinner />}>
+                  <CargaGasoil />
+                </Suspense>
+              </ChunkErrorBoundary>
+            }
+          />
+
           {/* Inicio sin Menu, con Footer */}
           <Route element={<RutaProtegida />}>
             <Route path="/" element={
@@ -144,7 +158,6 @@ function App() {
                       <Route path="/gastos" element={<GastoTabla />} />
                       <Route path="/costos-obra" element={<CostosObra />} />
                       <Route path="/gasoil" element={<Gasoil />} />
-                      <Route path="/gasoil/carga" element={<CargaGasoil />} />
                       <Route path="/aceites" element={<AceiteCrud />} />
                       <Route path="/consumo-aceites" element={<AceiteTabla />} />
                       <Route path="/compras-aceites" element={<AceiteTablaCompra />} />

@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Card, Spinner } from "react-bootstrap";
 import Swal from "sweetalert2";
-import { crearCargaGasoil } from "../../../../../helpers/queriesCargaGasoil.js";
-import { listarObras } from "../../../../../helpers/queriesObras.js";
-import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
-import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
+import {
+  listarOpcionesGasoil,
+  crearCargaGasoilPublica,
+} from "../../../../../helpers/queriesPublicoGasoil.js";
 import GasoilModal from "./GasoilModal.jsx";
 
 // Página pensada para usar desde el celular: una sola tarjeta grande, sin tabla
 // ni filtros. El listado y la edición siguen estando en /gasoil.
+// Va sin login (ruta fuera de RutaProtegida) para poder instalarla como acceso
+// directo en el teléfono, así que pega contra los endpoints /api/publico/gasoil.
 const CargaGasoil = () => {
   const [obras, setObras] = useState([]);
   const [maquinas, setMaquinas] = useState([]);
@@ -18,29 +20,34 @@ const CargaGasoil = () => {
 
   const opcionesPedidas = useRef(false);
 
-  // Mismos campos que pide el modal: sin el array de precios de las obras ni el
-  // historial de sueldos del personal.
-  const cargarOpciones = async () => {
-    if (opcionesPedidas.current) return;
+  // Un solo request que trae obras en curso, máquinas que usan gasoil y los que
+  // cargan, ya filtrados por el backend. Devuelve las opciones en vez de
+  // guardarlas: así el setState queda en el callback y no en el cuerpo del efecto.
+  const pedirOpciones = async () => {
+    if (opcionesPedidas.current) return null;
     opcionesPedidas.current = true;
 
     try {
-      const [respObras, respMaquinas, respPersonal] = await Promise.all([
-        listarObras("?estado=En curso&campos=razonsocial,nombreobra,estado"),
-        listarMaquinas("?campos=maquina,usaGasoil"),
-        listarPersonal("?campos=nombre,activo"),
-      ]);
-
-      if (respObras?.ok) setObras(await respObras.json());
-      if (respMaquinas?.ok) setMaquinas(await respMaquinas.json());
-      if (respPersonal?.ok) setPersonal(await respPersonal.json());
-      setOpcionesListas(true);
-    } catch (error) {
-      console.error("Error al cargar opciones de gasoil:", error);
+      const respuesta = await listarOpcionesGasoil();
+      if (respuesta?.ok) return await respuesta.json();
       // Si falló, que el próximo intento de abrir el modal lo reintente.
       opcionesPedidas.current = false;
+    } catch (error) {
+      console.error("Error al cargar opciones de gasoil:", error);
+      opcionesPedidas.current = false;
     }
+    return null;
   };
+
+  const aplicarOpciones = (opciones) => {
+    if (!opciones) return;
+    setObras(opciones.obras || []);
+    setMaquinas(opciones.maquinas || []);
+    setPersonal(opciones.personal || []);
+    setOpcionesListas(true);
+  };
+
+  const cargarOpciones = () => pedirOpciones().then(aplicarOpciones);
 
   useEffect(() => {
     cargarOpciones();
@@ -52,7 +59,7 @@ const CargaGasoil = () => {
   };
 
   const guardarCarga = async (datos) => {
-    const respuesta = await crearCargaGasoil(datos);
+    const respuesta = await crearCargaGasoilPublica(datos);
 
     if (!respuesta) {
       Swal.fire({
