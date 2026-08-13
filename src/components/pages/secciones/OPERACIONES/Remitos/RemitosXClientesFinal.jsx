@@ -205,8 +205,8 @@ const RemitosXClientesFinal = () => {
   };
 
   const exportarExcel = () => {
-    const headers = ["N° Remito", "Fecha", "Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Gasoil (lts)", "O.C."];
-    const cols = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
+    const headers = ["N° Remito", "Fecha", "Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "O.C."];
+    const cols = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
@@ -222,7 +222,6 @@ const RemitosXClientesFinal = () => {
         item.unidad,
         item.precioUnitario,
         item.cantidad * item.precioUnitario,
-        item.gasoil || "-",
         remito.oc || "-",
       ])
     );
@@ -251,7 +250,7 @@ const RemitosXClientesFinal = () => {
     });
 
     ws["!ref"] = `A1:K${filas.length + 6}`;
-    ws["!cols"] = [{ wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 12 }];
+    ws["!cols"] = [{ wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 12 }];
 
     const libro = XLSXStyle.utils.book_new();
     XLSXStyle.utils.book_append_sheet(libro, ws, "Sin facturar");
@@ -303,7 +302,6 @@ const RemitosXClientesFinal = () => {
                 <th>Unidad</th>
                 <th>$ Un.</th>
                 <th>$ Total</th>
-                <th>Gasoil(lts)</th>
                 <th>O.C.</th>
               </tr>
             </thead>
@@ -321,14 +319,13 @@ const RemitosXClientesFinal = () => {
                       <td>{item.unidad}</td>
                       <td>${formatoMiles(item.precioUnitario)}</td>
                       <td>${formatoMiles(item.cantidad * item.precioUnitario)}</td>
-                      <td>{item.gasoil || "-"}</td>
                       <td>{remito.oc || "-"}</td>
                     </tr>
                   ))
                 )
               ) : (
                 <tr>
-                  <td colSpan="11" className="py-4 text-muted">
+                  <td colSpan="10" className="py-4 text-muted">
                     No hay remitos pendientes de facturación para esta obra.
                   </td>
                 </tr>

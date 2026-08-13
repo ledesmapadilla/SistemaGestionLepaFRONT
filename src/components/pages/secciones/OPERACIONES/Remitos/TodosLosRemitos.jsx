@@ -141,8 +141,8 @@ const TodosLosRemitos = () => {
   };
 
   const exportarExcel = () => {
-    const headers = ["Razón Social", "Obra", "N° Remito", "Fecha", "Maquinista", "$/hs Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Gasoil (lts)"];
-    const cols = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N"];
+    const headers = ["Razón Social", "Obra", "N° Remito", "Fecha", "Maquinista", "$/hs Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado"];
+    const cols = ["A","B","C","D","E","F","G","H","I","J","K","L","M"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
@@ -162,7 +162,6 @@ const TodosLosRemitos = () => {
         item.precioUnitario,
         item.cantidad * item.precioUnitario,
         remito.estado,
-        item.gasoil || "-",
       ])
     );
 
@@ -188,7 +187,7 @@ const TodosLosRemitos = () => {
     });
 
     ws["!ref"] = `A1:N${filas.length + 3}`;
-    ws["!cols"] = [{ wch: 22 }, { wch: 22 }, { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 12 }];
+    ws["!cols"] = [{ wch: 22 }, { wch: 22 }, { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
 
     const libro = XLSXStyle.utils.book_new();
     XLSXStyle.utils.book_append_sheet(libro, ws, "Remitos");
@@ -318,7 +317,6 @@ const TodosLosRemitos = () => {
               <th>$ un</th>
               <th>$ total</th>
               <th>Estado</th>
-              <th>Gasoil</th>
               <th></th>
             </tr>
           </thead>
@@ -354,7 +352,6 @@ const TodosLosRemitos = () => {
                         {remito.estado}
                       </span>
                     </td>
-                    <td>{item.gasoil || "-"}</td>
                     <td>
                       <div className="d-flex justify-content-center gap-1">
                         <Button
@@ -382,7 +379,7 @@ const TodosLosRemitos = () => {
               )
             ) : (
               <tr>
-                <td colSpan="15" className="py-4">
+                <td colSpan="14" className="py-4">
                   No se encontraron remitos con esa búsqueda.
                 </td>
               </tr>

@@ -17,6 +17,9 @@ const filaVacia = {
   cantidad: "",
   maquina: "",
   unidad: "",
+  // Ya no se carga desde el remito (el gasoil tiene su propio módulo), pero el
+  // campo sigue viajando: al editar un remito viejo conserva los litros que
+  // tenía guardados en vez de pisarlos con 0.
   gasoil: "",
   personal: "",
   costoHoraPersonal: "",
@@ -530,7 +533,6 @@ const RemitosModal = ({
               <th>Maquinista</th>
               <th style={{ width: "70px" }}>Cant.</th>
               <th>Unidad</th>
-              <th>Gasoil</th>
               <th>Observaciones</th>
               <th></th>
             </tr>
@@ -710,27 +712,6 @@ const RemitosModal = ({
                 </td>
 
                 <td>{fila.unidad}</td>
-
-                <td>
-                  <Form.Group>
-                    <div className="input-group">
-                      <span
-                        className="input-group-text "
-                        style={{ fontSize: "0.8rem" }}
-                      >
-                        lts
-                      </span>
-                      <Form.Control
-                        type="number"
-                        value={fila.gasoil}
-                        onChange={(e) =>
-                          actualizarFila(index, "gasoil", e.target.value)
-                        }
-                        placeholder=""
-                      />
-                    </div>
-                  </Form.Group>
-                </td>
 
                 <td>
                   <Form.Control

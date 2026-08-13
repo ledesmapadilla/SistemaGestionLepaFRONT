@@ -147,18 +147,6 @@ const VerRemitos = () => {
 
   const totalObra = calcularTotalObra();
 
-  const calcularTotalGasoil = () => {
-    return remitos.reduce((total, remito) => {
-      const gasoilRemito = (remito.items || []).reduce(
-        (acc, item) => acc + Number(item.gasoil || 0),
-        0,
-      );
-      return total + gasoilRemito;
-    }, 0);
-  };
-
-  const totalGasoil = calcularTotalGasoil();
-
   const mostrarFechaDMY = (fecha) => {
     if (!fecha) return "-";
     const soloFecha = fecha.toString().slice(0, 10);
@@ -184,12 +172,12 @@ const VerRemitos = () => {
     .sort((a, b) => new Date(fechaRemito(b)) - new Date(fechaRemito(a)));
 
   const exportarExcel = () => {
-    const headers = ["N° Remito", "Fecha", "Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Gasoil (lts)", "Observaciones"];
-    const cols = ["A","B","C","D","E","F","G","H","I","J","K","L"];
+    const headers = ["N° Remito", "Fecha", "Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Observaciones"];
+    const cols = ["A","B","C","D","E","F","G","H","I","J","K"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
-    const colWidths = [12, 12, 18, 16, 16, 10, 10, 14, 14, 14, 12, 24];
+    const colWidths = [12, 12, 18, 16, 16, 10, 10, 14, 14, 14, 24];
 
     const filas = remitos
       .slice()
@@ -206,7 +194,6 @@ const VerRemitos = () => {
         item.precioUnitario,
         item.cantidad * item.precioUnitario,
         remito.estado,
-        item.gasoil || "-",
         item.observaciones || "-",
       ])
     );
@@ -300,7 +287,6 @@ const VerRemitos = () => {
               <th>$ un</th>
               <th>$ total</th>
               <th>Estado</th>
-              <th>Gasoil(lts)</th>
               <th>Observaciones</th>
               <th>Acciones</th>
             </tr>
@@ -319,11 +305,6 @@ const VerRemitos = () => {
                   (sum, i) => sum + Number(i.cantidad || 0),
                   0,
                 );
-                const totalGasoilRemito = items.reduce(
-                  (acc, i) => acc + Number(i.gasoil || 0),
-                  0,
-                );
-
                 const campo = (fn) => {
                   const valores = items.map(fn).filter(Boolean);
                   if (!valores.length) return "-";
@@ -367,7 +348,6 @@ const VerRemitos = () => {
                         : "Sin definir"}
                     </td>
                     <td>{remito.estado}</td>
-                    <td>{totalGasoilRemito || "-"}</td>
                     <td>
                       {obsTexto ? (
                         <Button
@@ -411,20 +391,10 @@ const VerRemitos = () => {
               })
             ) : (
               <tr>
-                <td colSpan="14">No hay remitos</td>
+                <td colSpan="13">No hay remitos</td>
               </tr>
             )}
           </tbody>
-
-          <tfoot>
-            <tr>
-              <td colSpan={11} className="text-end">
-                Total Gasoil:
-              </td>
-              <td>{formatoMiles(totalGasoil)} lts</td>
-              <td></td>
-            </tr>
-          </tfoot>
         </Table>
       </div>
 
@@ -482,7 +452,6 @@ const VerRemitos = () => {
                 <th>Unidad</th>
                 <th>$ Unitario</th>
                 <th>$ Total</th>
-                <th>Gasoil (lts)</th>
                 <th>Observaciones</th>
               </tr>
             </thead>
@@ -498,7 +467,6 @@ const VerRemitos = () => {
                   <td>{item.unidad || "-"}</td>
                   <td>{item.precioUnitario ? `$${formatoMiles(item.precioUnitario)}` : "-"}</td>
                   <td>{item.cantidad && item.precioUnitario ? `$${formatoMiles(item.cantidad * item.precioUnitario)}` : "-"}</td>
-                  <td>{item.gasoil || "-"}</td>
                   <td>{item.observaciones || "-"}</td>
                 </tr>
               ))}
@@ -509,7 +477,7 @@ const VerRemitos = () => {
                 <td className="fw-bold">
                   ${formatoMiles((remitoVer?.items || []).reduce((sum, i) => sum + i.cantidad * i.precioUnitario, 0))}
                 </td>
-                <td colSpan={2}></td>
+                <td></td>
               </tr>
             </tfoot>
           </Table>
