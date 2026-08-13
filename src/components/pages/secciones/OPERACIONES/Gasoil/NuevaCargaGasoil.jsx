@@ -55,7 +55,8 @@ const NuevaCargaGasoil = () => {
   const navigate = useNavigate();
 
   const [valores, setValores] = useState(VALORES_INICIALES);
-  const [abierto, setAbierto] = useState("cliente");
+  // Arranca con todas cerradas: la pantalla se ve entera antes de tocar nada.
+  const [abierto, setAbierto] = useState(null);
   const [opciones, setOpciones] = useState(null);
 
   const opcionesPedidas = useRef(false);
@@ -124,28 +125,21 @@ const NuevaCargaGasoil = () => {
     return [];
   };
 
-  const estaCompleto = (base, campo) => base[campo] !== "" && base[campo] != null;
-
-  const completo = (campo) => estaCompleto(valores, campo);
+  const completo = (campo) => valores[campo] !== "" && valores[campo] != null;
 
   const faltantes = CAMPOS.filter((campo) => !completo(campo));
 
-  // `base` se pasa explícito porque al elegir un valor hay que decidir con los
-  // valores nuevos, no con los del render anterior: si se cambia el cliente, la
-  // obra se limpia y hay que volver a pedirla en vez de saltearla.
-  const abrirSiguiente = (campoActual, base = valores) => {
-    const desde = CAMPOS.indexOf(campoActual) + 1;
-    const siguiente = CAMPOS.slice(desde).find((campo) => !estaCompleto(base, campo));
-    setAbierto(siguiente || null);
-  };
-
+  // Al elegir se cierra el panel y no se abre ninguno: el orden lo decide quien
+  // carga, tocando la tarjeta que quiera.
   const elegir = (campo, valor) => {
-    const nuevos = { ...valores, [campo]: valor };
-    // Cambiar de cliente invalida la obra que estaba elegida.
-    if (campo === "cliente" && valores.cliente !== valor) nuevos.obra = "";
-
-    setValores(nuevos);
-    abrirSiguiente(campo, nuevos);
+    setValores((prev) => {
+      // Cambiar de cliente invalida la obra que estaba elegida.
+      if (campo === "cliente" && prev.cliente !== valor) {
+        return { ...prev, cliente: valor, obra: "" };
+      }
+      return { ...prev, [campo]: valor };
+    });
+    setAbierto(null);
   };
 
   const alternar = (campo) => setAbierto((prev) => (prev === campo ? null : campo));
@@ -274,25 +268,33 @@ const NuevaCargaGasoil = () => {
                       Ayer
                     </Button>
                   </div>
+                  {/* El input de fecha reporta "" hasta que la fecha está
+                      completa, así que solo cierra cuando ya es válida. */}
                   <Form.Control
                     type="date"
                     max={hoyLocal()}
                     value={valores.fecha}
-                    onChange={(e) => setValores((prev) => ({ ...prev, fecha: e.target.value }))}
+                    onChange={(e) => {
+                      if (e.target.value) elegir("fecha", e.target.value);
+                      else setValores((prev) => ({ ...prev, fecha: "" }));
+                    }}
                   />
                 </Card.Body>
               )}
 
               {abierto === "litros" && (
-                <Card.Body>
+                <Card.Body className="d-flex flex-column align-items-center">
+                  {/* Sin placeholder: un 0 en gris se lee como si ya hubiera un
+                      valor cargado. Arranca vacío. */}
                   <Form.Control
                     type="number"
                     inputMode="decimal"
                     step="0.01"
                     min="0"
                     autoFocus
-                    placeholder="0"
                     value={valores.litros}
+                    className="text-center"
+                    style={{ maxWidth: "130px", height: "60px", fontSize: "1.6rem" }}
                     onFocus={(e) => {
                       const el = e.target;
                       setTimeout(() => el.select(), 0);
@@ -302,9 +304,10 @@ const NuevaCargaGasoil = () => {
                   <Button
                     size="sm"
                     variant="outline-success"
-                    className="mt-2 w-100"
+                    className="mt-2"
+                    style={{ maxWidth: "130px", width: "100%" }}
                     disabled={!(Number(valores.litros) > 0)}
-                    onClick={() => abrirSiguiente("litros")}
+                    onClick={() => setAbierto(null)}
                   >
                     Listo
                   </Button>
