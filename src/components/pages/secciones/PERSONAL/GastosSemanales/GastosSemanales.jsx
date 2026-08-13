@@ -924,15 +924,19 @@ const GastosSemanales = () => {
       });
     };
 
-    const inactivosExcluidos = new Set(
-      personal
-        .filter((p) => p.activo === false && p.fechaDesactivado && p.fechaDesactivado < lunesKey)
-        .map((p) => normNombre(p.nombre))
-    );
-
+    // Solo se lista quien tiene al menos un día de asistencia cargado en la
+    // semana. El que no aparece en ninguna planilla no va a la liquidación.
     const tieneAlgunaAsistencia = (nombre) => {
       const k = normNombre(nombre);
       return Array.from(tieneRegistro).some((x) => x.startsWith(`${k}|`));
+    };
+
+    // Excepción para las filas ya guardadas: si tienen algo cargado a mano no se
+    // sacan aunque falte la asistencia, porque el autoguardado escribe esta
+    // misma lista y se perderían los datos.
+    const tieneDatosCargados = (r) => {
+      const extrasManuales = (r.extras || []).filter((e) => e.auto !== AUTO_DIF);
+      return extrasManuales.length > 0 || r.pagado > 0 || !!r.observaciones;
     };
 
     if (gastoDoc?.registros?.length) {
@@ -952,28 +956,23 @@ const GastosSemanales = () => {
         return fila;
       });
 
-      const existentesFiltrados = existentes.filter((r) => {
-        const k = normNombre(r.personal);
-        if (inactivosExcluidos.has(k)) {
-          const extrasManuales = (r.extras || []).filter((e) => e.auto !== AUTO_DIF);
-          if (tieneAlgunaAsistencia(r.personal) || extrasManuales.length > 0 || r.pagado > 0 || r.observaciones) {
-            return true;
-          }
-          return false;
-        }
-        return true;
-      });
+      const existentesFiltrados = existentes.filter(
+        (r) => tieneAlgunaAsistencia(r.personal) || tieneDatosCargados(r)
+      );
 
       const nombresExistentes = new Set(existentesFiltrados.map((r) => normNombre(r.personal)));
       const nuevosDePersonal = personalVisible
         .filter((p) => !nombresExistentes.has(normNombre(p.nombre)))
+        .filter((p) => tieneAlgunaAsistencia(p.nombre))
         .map(filaDePersonal);
       const nuevosDeAsistencia = soloEnAsistencia
         .filter((n) => !nombresExistentes.has(normNombre(n)))
         .map(filaSoloAsistencia);
       setRegistros(dedupPorNombre([...existentesFiltrados, ...nuevosDePersonal, ...nuevosDeAsistencia]));
     } else {
-      const filasPersonal = personalVisible.map(filaDePersonal);
+      const filasPersonal = personalVisible
+        .filter((p) => tieneAlgunaAsistencia(p.nombre))
+        .map(filaDePersonal);
       const filasAsistencia = soloEnAsistencia.map(filaSoloAsistencia);
       setRegistros(dedupPorNombre([...filasPersonal, ...filasAsistencia]));
     }
