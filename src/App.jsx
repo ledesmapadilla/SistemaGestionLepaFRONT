@@ -43,6 +43,7 @@ const TodosLosRemitos = lazy(() => import("./components/pages/secciones/OPERACIO
 const CostosObra = lazy(() => import("./components/pages/secciones/OPERACIONES/Informes/CostosObra.jsx"));
 const Gasoil = lazy(() => import("./components/pages/secciones/OPERACIONES/Gasoil/Gasoil.jsx"));
 const CargaGasoil = lazy(() => import("./components/pages/secciones/OPERACIONES/Gasoil/CargaGasoil.jsx"));
+const NuevaCargaGasoil = lazy(() => import("./components/pages/secciones/OPERACIONES/Gasoil/NuevaCargaGasoil.jsx"));
 const AceiteTabla = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/aceites/AceiteTabla.jsx"));
 const AceiteTablaCompra = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/aceites/AceiteTablaCompra.jsx"));
 const AceiteCrud = lazy(() => import("./components/pages/secciones/ALTAS/Aceites/AceiteCrud.jsx"));
@@ -108,6 +109,16 @@ function App() {
               <ChunkErrorBoundary>
                 <Suspense fallback={<PageSpinner />}>
                   <CargaGasoil />
+                </Suspense>
+              </ChunkErrorBoundary>
+            }
+          />
+          <Route
+            path="/gasoil/carga/nueva"
+            element={
+              <ChunkErrorBoundary>
+                <Suspense fallback={<PageSpinner />}>
+                  <NuevaCargaGasoil />
                 </Suspense>
               </ChunkErrorBoundary>
             }
