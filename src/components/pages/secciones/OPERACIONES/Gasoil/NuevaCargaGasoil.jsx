@@ -254,18 +254,19 @@ const NuevaCargaGasoil = () => {
                     onClick={() => alternar(campo)}
                     className={`h-100 ${listo ? "bg-success-subtle" : "bg-body-tertiary"} ${borde}`}
                   >
-                    <Card.Body className="p-2 text-center">
-                      <div className="text-muted text-uppercase" style={{ fontSize: "0.65rem" }}>
+                    <Card.Body
+                      className="px-2 py-3 text-center d-flex flex-column justify-content-center"
+                      style={{ minHeight: "86px" }}
+                    >
+                      <div className="text-muted text-uppercase mb-1" style={{ fontSize: "0.75rem" }}>
                         {ETIQUETAS[campo]}
                       </div>
                       {/* "Tocar" va en text-body-tertiary, un gris más apagado
                           que el text-muted de la etiqueta. */}
                       <div
                         title={textoValor(campo)}
-                        className={`text-truncate ${
-                          listo ? "fw-semibold" : "text-body-tertiary"
-                        }`}
-                        style={{ fontSize: "0.85rem" }}
+                        className={`gasoil-valor ${listo ? "fw-semibold" : "text-body-tertiary"}`}
+                        style={{ fontSize: "1.05rem", lineHeight: 1.2 }}
                       >
                         {listo ? textoValor(campo) : "Tocar"}
                       </div>

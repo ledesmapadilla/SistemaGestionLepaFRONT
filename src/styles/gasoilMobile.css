@@ -6,3 +6,13 @@
   min-height: 100vh;
   min-height: 100dvh;
 }
+
+/* El valor de la tarjeta puede ocupar dos renglones. Con la letra grande y la
+   tarjeta angosta, truncar en una línea dejaba ver dos o tres palabras. */
+.gasoil-valor {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
