@@ -30,7 +30,7 @@ const ETIQUETAS = {
   obra: "Obra",
   maquina: "Máquina",
   litros: "Litros",
-  quienCarga: "Carga",
+  quienCarga: "Nombre",
 };
 
 const VALORES_INICIALES = {
