@@ -291,7 +291,9 @@ const NuevaCargaGasoil = () => {
             <Card className="mb-2 bg-body-tertiary border-success">
               <Card.Header
                 className="py-2 fw-semibold"
-                style={{ fontSize: "0.9rem", borderBottom: "1px solid #ffc107" }}
+                // 0.5px: en el celular, con pantalla de doble densidad, se ve
+                // como una línea de un solo píxel real.
+                style={{ fontSize: "0.9rem", borderBottom: "0.5px solid #ffc107" }}
               >
                 {ETIQUETAS[abierto]}
               </Card.Header>
