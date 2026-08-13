@@ -3,9 +3,9 @@ import { API } from "./api";
 
 const URL_MAQUINAS = API.maquinas;
 
-export const listarMaquinas = async () => {
+export const listarMaquinas = async (query = "") => {
   try {
-    return await authFetch(URL_MAQUINAS);
+    return await authFetch(`${URL_MAQUINAS}${query}`);
   } catch (error) {
     console.error("Error al listar máquinas:", error);
     return null;

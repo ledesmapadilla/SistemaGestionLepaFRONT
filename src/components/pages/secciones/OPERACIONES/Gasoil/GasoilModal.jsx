@@ -27,6 +27,7 @@ const GasoilModal = ({
   onHide,
   onGuardar,
   cargaEditando,
+  cargandoOpciones = false,
   obras = [],
   maquinas = [],
   personal = [],
@@ -169,6 +170,7 @@ const GasoilModal = ({
             <Form.Label className="d-block text-center">Cliente*</Form.Label>
             <Form.Select
               size="sm"
+              disabled={cargandoOpciones}
               isInvalid={!!errors.cliente}
               {...register("cliente", { required: "El cliente es obligatorio" })}
               onChange={(e) => {
@@ -176,7 +178,7 @@ const GasoilModal = ({
                 setValue("obra", "");
               }}
             >
-              <option value="">Seleccionar...</option>
+              <option value="">{cargandoOpciones ? "Cargando..." : "Seleccionar..."}</option>
               {clientes.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -214,10 +216,11 @@ const GasoilModal = ({
             <Form.Label className="d-block text-center">Máquina*</Form.Label>
             <Form.Select
               size="sm"
+              disabled={cargandoOpciones}
               isInvalid={!!errors.maquina}
               {...register("maquina", { required: "La máquina es obligatoria" })}
             >
-              <option value="">Seleccionar...</option>
+              <option value="">{cargandoOpciones ? "Cargando..." : "Seleccionar..."}</option>
               {nombresMaquinas.map((m) => (
                 <option key={m} value={m}>
                   {m}
@@ -256,10 +259,11 @@ const GasoilModal = ({
             <Form.Label className="d-block text-center">Quién carga*</Form.Label>
             <Form.Select
               size="sm"
+              disabled={cargandoOpciones}
               isInvalid={!!errors.quienCarga}
               {...register("quienCarga", { required: "Indicá quién carga" })}
             >
-              <option value="">Seleccionar...</option>
+              <option value="">{cargandoOpciones ? "Cargando..." : "Seleccionar..."}</option>
               {quienesCargan.map((p) => (
                 <option key={p} value={p}>
                   {p}

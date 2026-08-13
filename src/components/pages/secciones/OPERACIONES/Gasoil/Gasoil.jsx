@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Table, Button, Form, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import XLSXStyle from "xlsx-js-style";
@@ -50,6 +50,7 @@ const Gasoil = () => {
   const [maquinas, setMaquinas] = useState([]);
   const [personal, setPersonal] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [opcionesListas, setOpcionesListas] = useState(false);
 
   const [filtroFecha, setFiltroFecha] = useState("");
   const [filtroCliente, setFiltroCliente] = useState("");
@@ -60,19 +61,14 @@ const Gasoil = () => {
   const [showModal, setShowModal] = useState(false);
   const [cargaEditando, setCargaEditando] = useState(null);
 
-  const cargarDatos = async () => {
-    try {
-      const [respCargas, respObras, respMaquinas, respPersonal] = await Promise.all([
-        listarCargasGasoil(),
-        listarObras(),
-        listarMaquinas(),
-        listarPersonal(),
-      ]);
+  // Obras, máquinas y personal son solo para los selects del modal. Si la
+  // tabla los esperara, la página tardaría lo que tarda el request más lento.
+  const datosModalPedidos = useRef(false);
 
+  const cargarCargas = async () => {
+    try {
+      const respCargas = await listarCargasGasoil();
       if (respCargas?.ok) setCargas(await respCargas.json());
-      if (respObras?.ok) setObras(await respObras.json());
-      if (respMaquinas?.ok) setMaquinas(await respMaquinas.json());
-      if (respPersonal?.ok) setPersonal(await respPersonal.json());
     } catch (error) {
       console.error("Error al cargar gasoil:", error);
       Swal.fire({
@@ -85,16 +81,44 @@ const Gasoil = () => {
     }
   };
 
+  // Pedimos solo los campos que usan los selects: sin el array de precios de
+  // las obras ni el historial de sueldos del personal.
+  const cargarDatosModal = async () => {
+    if (datosModalPedidos.current) return;
+    datosModalPedidos.current = true;
+
+    try {
+      const [respObras, respMaquinas, respPersonal] = await Promise.all([
+        listarObras("?estado=En curso&campos=razonsocial,nombreobra,estado"),
+        listarMaquinas("?campos=maquina,usaGasoil"),
+        listarPersonal("?campos=nombre,activo"),
+      ]);
+
+      if (respObras?.ok) setObras(await respObras.json());
+      if (respMaquinas?.ok) setMaquinas(await respMaquinas.json());
+      if (respPersonal?.ok) setPersonal(await respPersonal.json());
+      setOpcionesListas(true);
+    } catch (error) {
+      console.error("Error al cargar datos del modal de gasoil:", error);
+      // Si falló, que el próximo intento de abrir el modal lo reintente.
+      datosModalPedidos.current = false;
+    }
+  };
+
   useEffect(() => {
-    cargarDatos();
+    cargarCargas();
+    // Sin await: se pide en paralelo pero la tabla no lo espera.
+    cargarDatosModal();
   }, []);
 
   const abrirCrear = () => {
+    cargarDatosModal();
     setCargaEditando(null);
     setShowModal(true);
   };
 
   const abrirEditar = (carga) => {
+    cargarDatosModal();
     setCargaEditando(carga);
     setShowModal(true);
   };
@@ -456,6 +480,7 @@ const Gasoil = () => {
         onHide={cerrarModal}
         onGuardar={guardarCarga}
         cargaEditando={cargaEditando}
+        cargandoOpciones={!opcionesListas}
         obras={obras}
         maquinas={maquinas}
         personal={personal}
