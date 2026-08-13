@@ -268,9 +268,14 @@ const NuevaCargaGasoil = () => {
                       <div className="text-muted text-uppercase" style={{ fontSize: "0.65rem" }}>
                         {ETIQUETAS[campo]}
                       </div>
+                      {/* "Tocar" va en text-body-tertiary, un gris más apagado
+                          que el text-muted de la etiqueta: se lee que falta
+                          completar sin competir con el título. */}
                       <div
                         title={textoValor(campo)}
-                        className={`text-truncate ${listo ? "fw-semibold" : "text-muted"}`}
+                        className={`text-truncate ${
+                          listo ? "fw-semibold" : "text-body-tertiary"
+                        }`}
                         style={{ fontSize: "0.85rem" }}
                       >
                         {listo ? textoValor(campo) : "Tocar"}
