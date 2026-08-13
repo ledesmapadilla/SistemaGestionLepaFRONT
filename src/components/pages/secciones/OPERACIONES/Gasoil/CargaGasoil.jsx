@@ -9,14 +9,15 @@ const CargaGasoil = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="mx-auto px-3 py-4" style={{ maxWidth: "480px" }}>
-      <h6 className="text-center mb-4">Carga de gasoil</h6>
-
+    <div
+      className="d-flex align-items-center justify-content-center px-3"
+      style={{ minHeight: "100dvh" }}
+    >
       <Card
         role="button"
         onClick={() => navigate("/gasoil/carga/nueva")}
-        className="text-center border-success"
-        style={{ cursor: "pointer" }}
+        className="text-center border-success w-100"
+        style={{ cursor: "pointer", maxWidth: "320px" }}
       >
         <Card.Body className="py-5">
           <div style={{ fontSize: "2.5rem", lineHeight: 1 }}>⛽</div>

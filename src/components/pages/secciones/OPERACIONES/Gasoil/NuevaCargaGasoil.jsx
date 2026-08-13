@@ -10,12 +10,6 @@ import {
 
 const hoyLocal = () => new Date().toLocaleDateString("en-CA");
 
-const ayerLocal = () => {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toLocaleDateString("en-CA");
-};
-
 const mostrarFechaDMY = (fecha) => {
   if (!fecha) return "";
   const [y, m, d] = fecha.split("-");
@@ -60,6 +54,7 @@ const NuevaCargaGasoil = () => {
   const [opciones, setOpciones] = useState(null);
 
   const opcionesPedidas = useRef(false);
+  const fechaRef = useRef(null);
 
   const pedirOpciones = async () => {
     if (opcionesPedidas.current) return null;
@@ -142,7 +137,27 @@ const NuevaCargaGasoil = () => {
     setAbierto(null);
   };
 
-  const alternar = (campo) => setAbierto((prev) => (prev === campo ? null : campo));
+  // La fecha no abre panel propio: dispara el calendario nativo del teléfono.
+  // showPicker() no existe en todos los navegadores, de ahí el fallback.
+  const abrirCalendario = () => {
+    const el = fechaRef.current;
+    if (!el) return;
+    try {
+      el.showPicker();
+    } catch {
+      el.focus();
+      el.click();
+    }
+  };
+
+  const alternar = (campo) => {
+    if (campo === "fecha") {
+      setAbierto(null);
+      abrirCalendario();
+      return;
+    }
+    setAbierto((prev) => (prev === campo ? null : campo));
+  };
 
   const textoValor = (campo) => {
     if (!completo(campo)) {
@@ -195,13 +210,37 @@ const NuevaCargaGasoil = () => {
   const cargandoOpciones = opciones === null;
 
   return (
-    <div className="mx-auto px-3 py-3" style={{ maxWidth: "480px" }}>
+    <div
+      className="mx-auto px-3 py-3 d-flex flex-column justify-content-center"
+      style={{ maxWidth: "480px", minHeight: "100dvh" }}
+    >
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h6 className="mb-0">Nueva carga</h6>
         <Button size="sm" variant="outline-secondary" onClick={() => navigate("/gasoil/carga")}>
           Cancelar
         </Button>
       </div>
+
+      {/* Fuera de la vista pero renderizado: showPicker() no funciona sobre un
+          input con display:none. Es el que abre el calendario del teléfono. */}
+      <Form.Control
+        ref={fechaRef}
+        type="date"
+        max={hoyLocal()}
+        value={valores.fecha}
+        onChange={(e) => setValores((prev) => ({ ...prev, fecha: e.target.value }))}
+        style={{
+          position: "absolute",
+          opacity: 0,
+          width: 0,
+          height: 0,
+          padding: 0,
+          border: "none",
+          pointerEvents: "none",
+        }}
+        tabIndex={-1}
+        aria-hidden="true"
+      />
 
       {FILAS.map((fila, indiceFila) => (
         <div key={indiceFila}>
@@ -249,38 +288,6 @@ const NuevaCargaGasoil = () => {
               <Card.Header className="py-2 fw-semibold" style={{ fontSize: "0.9rem" }}>
                 {ETIQUETAS[abierto]}
               </Card.Header>
-
-              {abierto === "fecha" && (
-                <Card.Body>
-                  <div className="d-flex gap-2 mb-2">
-                    <Button
-                      size="sm"
-                      variant="outline-light"
-                      onClick={() => elegir("fecha", hoyLocal())}
-                    >
-                      Hoy
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline-light"
-                      onClick={() => elegir("fecha", ayerLocal())}
-                    >
-                      Ayer
-                    </Button>
-                  </div>
-                  {/* El input de fecha reporta "" hasta que la fecha está
-                      completa, así que solo cierra cuando ya es válida. */}
-                  <Form.Control
-                    type="date"
-                    max={hoyLocal()}
-                    value={valores.fecha}
-                    onChange={(e) => {
-                      if (e.target.value) elegir("fecha", e.target.value);
-                      else setValores((prev) => ({ ...prev, fecha: "" }));
-                    }}
-                  />
-                </Card.Body>
-              )}
 
               {abierto === "litros" && (
                 <Card.Body className="d-flex flex-column align-items-center">
@@ -346,16 +353,16 @@ const NuevaCargaGasoil = () => {
         </div>
       ))}
 
-      <AsyncButton
-        variant="success"
-        className="w-100 mt-3 py-2"
-        disabled={faltantes.length > 0}
-        onClick={guardar}
-      >
-        {faltantes.length > 0
-          ? `Falta completar ${ETIQUETAS[faltantes[0]]}`
-          : "Guardar carga"}
-      </AsyncButton>
+      <div className="d-flex justify-content-center mt-3">
+        <AsyncButton
+          variant="outline-success"
+          style={{ minWidth: "140px" }}
+          disabled={faltantes.length > 0}
+          onClick={guardar}
+        >
+          Guardar
+        </AsyncButton>
+      </div>
     </div>
   );
 };
