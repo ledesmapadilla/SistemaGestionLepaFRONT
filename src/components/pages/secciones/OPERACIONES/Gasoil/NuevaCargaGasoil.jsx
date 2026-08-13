@@ -9,6 +9,7 @@ import {
   listarOpcionesGasoil,
   crearCargaGasoilPublica,
 } from "../../../../../helpers/queriesPublicoGasoil.js";
+import useAltoVista from "../../../../../helpers/useAltoVista.js";
 import "react-datepicker/dist/react-datepicker.css";
 import "../../../../../styles/gasoilMobile.css";
 
@@ -63,6 +64,7 @@ const VALORES_INICIALES = {
 // Va sin login, igual que /gasoil/carga.
 const NuevaCargaGasoil = () => {
   const navigate = useNavigate();
+  useAltoVista();
 
   const [valores, setValores] = useState(VALORES_INICIALES);
   // Arranca con todas cerradas: la pantalla se ve entera antes de tocar nada.
@@ -341,8 +343,16 @@ const NuevaCargaGasoil = () => {
                 </Card.Body>
               )}
 
+              {/* La lista scrollea adentro del panel en vez de estirar la
+                  página: así el alto total no depende de cuántas obras haya. */}
               {!["fecha", "litros"].includes(abierto) && (
-                <ListGroup variant="flush" style={{ maxHeight: "50vh", overflowY: "auto" }}>
+                <ListGroup
+                  variant="flush"
+                  style={{
+                    maxHeight: "calc(var(--alto-vista, 100dvh) * 0.45)",
+                    overflowY: "auto",
+                  }}
+                >
                   {cargandoOpciones ? (
                     <ListGroup.Item className="text-center py-3 bg-transparent">
                       <Spinner animation="border" size="sm" />

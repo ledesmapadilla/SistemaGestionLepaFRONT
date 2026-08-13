@@ -2,9 +2,13 @@
    Van las dos declaraciones a propósito: el navegador que no entiende dvh se
    queda con vh, y el que lo entiende pisa el valor. Con dvh solo, el que no lo
    soporta descarta la regla entera y la pantalla queda pegada arriba. */
+/* Las tres declaraciones son escalones de respaldo: el navegador se queda con
+   la última que entiende. --alto-vista lo escribe useAltoVista con el alto real
+   de la ventana, que es lo único que no cuenta la barra de direcciones. */
 .gasoil-centrado {
   min-height: 100vh;
   min-height: 100dvh;
+  min-height: var(--alto-vista, 100dvh);
 }
 
 /* El valor de la tarjeta puede ocupar dos renglones. Con la letra grande y la

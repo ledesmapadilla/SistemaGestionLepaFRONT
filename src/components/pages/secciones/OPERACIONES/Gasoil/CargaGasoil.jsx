@@ -1,5 +1,6 @@
 import { Card } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import useAltoVista from "../../../../../helpers/useAltoVista.js";
 import "../../../../../styles/gasoilMobile.css";
 
 // Página pensada para usar desde el celular: una sola tarjeta grande, sin tabla
@@ -8,6 +9,7 @@ import "../../../../../styles/gasoilMobile.css";
 // directo en el teléfono, así que pega contra los endpoints /api/publico/gasoil.
 const CargaGasoil = () => {
   const navigate = useNavigate();
+  useAltoVista();
 
   return (
     <div className="gasoil-centrado d-flex align-items-center justify-content-center px-3">
