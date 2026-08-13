@@ -299,6 +299,7 @@ const Personal = () => {
             >
               <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                 <tr>
+                  <th>Fecha de alta</th>
                   <th>Nombre</th>
                   <th>Semanal</th>
                   <th>Hora</th>
@@ -311,7 +312,7 @@ const Personal = () => {
               <tbody>
                 {personalFiltrado.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="py-3">
+                    <td colSpan="8" className="py-3">
                       No hay personal cargado
                     </td>
                   </tr>
@@ -320,6 +321,7 @@ const Personal = () => {
                     const valSemanal = ultimoSemanal(persona.semanal);
                     return (
                     <tr key={persona._id}>
+                      <td className="text-nowrap">{formatearFecha(persona.fechaAlta)}</td>
                       <td>{persona.nombre}</td>
                       <td className="text-nowrap">{formatoMiles(valSemanal)}</td>
                       <td className="text-nowrap">{formatoMiles(valSemanal / 44)}</td>
