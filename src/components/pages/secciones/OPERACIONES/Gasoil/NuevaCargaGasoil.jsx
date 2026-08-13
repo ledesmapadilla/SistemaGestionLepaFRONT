@@ -289,7 +289,7 @@ const NuevaCargaGasoil = () => {
             <Card className="mb-2 bg-body-tertiary border-success">
               <Card.Header
                 className="py-2 fw-semibold"
-                style={{ fontSize: "0.9rem", borderBottom: "2px solid #ffc107" }}
+                style={{ fontSize: "0.9rem", borderBottom: "1px solid #ffc107" }}
               >
                 {ETIQUETAS[abierto]}
               </Card.Header>
