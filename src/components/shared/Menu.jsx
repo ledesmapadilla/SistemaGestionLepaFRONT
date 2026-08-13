@@ -80,14 +80,7 @@ function Menu() {
 
             <Nav.Link as={Link} to="/departamento-mantenimiento" className="mx-2">Mantenimiento</Nav.Link>
 
-            <NavDropdown title="Gasoil" id="nav-dropdown" className="mx-2">
-              <NavDropdown.Item as={Link} to="/gasoil">
-                Cargas de gasoil
-              </NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/gasoil/carga">
-                Carga de gasoil
-              </NavDropdown.Item>
-            </NavDropdown>
+            <Nav.Link as={Link} to="/gasoil" className="mx-2">Gasoil</Nav.Link>
 
             <NavDropdown title="Contable" id="nav-dropdown" className="mx-2">
               <NavDropdown.Item as={Link} to="/cheques">
