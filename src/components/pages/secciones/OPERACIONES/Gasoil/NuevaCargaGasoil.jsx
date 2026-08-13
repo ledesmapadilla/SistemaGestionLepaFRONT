@@ -280,7 +280,10 @@ const NuevaCargaGasoil = () => {
           {/* El panel de alternativas va debajo de la fila tocada, a lo ancho. */}
           {fila.includes(abierto) && (
             <Card className="mb-2 bg-body-tertiary border-success">
-              <Card.Header className="py-2 fw-semibold" style={{ fontSize: "0.9rem" }}>
+              <Card.Header
+                className="py-2 fw-semibold"
+                style={{ fontSize: "0.9rem", borderBottom: "2px solid #ffc107" }}
+              >
                 {ETIQUETAS[abierto]}
               </Card.Header>
 
