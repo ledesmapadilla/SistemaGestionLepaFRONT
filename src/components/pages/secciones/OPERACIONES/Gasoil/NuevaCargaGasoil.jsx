@@ -10,6 +10,7 @@ import {
   crearCargaGasoilPublica,
 } from "../../../../../helpers/queriesPublicoGasoil.js";
 import "react-datepicker/dist/react-datepicker.css";
+import "../../../../../styles/gasoilMobile.css";
 
 registerLocale("es", es);
 
@@ -217,8 +218,8 @@ const NuevaCargaGasoil = () => {
 
   return (
     <div
-      className="mx-auto px-3 py-3 d-flex flex-column justify-content-center"
-      style={{ maxWidth: "480px", minHeight: "100dvh" }}
+      className="gasoil-centrado mx-auto px-3 py-3 d-flex flex-column justify-content-center"
+      style={{ maxWidth: "480px" }}
     >
       {/* Fijo arriba a la derecha: el contenido está centrado vertical y si
           Cancelar viajara con él quedaría en medio de la pantalla. */}
@@ -254,23 +255,19 @@ const NuevaCargaGasoil = () => {
                     className={`h-100 ${listo ? "bg-success-subtle" : "bg-body-tertiary"} ${borde}`}
                   >
                     <Card.Body className="p-2 text-center">
-                      {/* El título se distingue por mayúsculas, negrita y
-                          espaciado; "Tocar" por minúscula, cursiva y un gris
-                          más apagado. Así no se confunden entre sí. */}
-                      <div
-                        className="text-uppercase fw-bold"
-                        style={{ fontSize: "0.65rem", letterSpacing: "0.05em" }}
-                      >
+                      <div className="text-muted text-uppercase" style={{ fontSize: "0.65rem" }}>
                         {ETIQUETAS[campo]}
                       </div>
+                      {/* "Tocar" va en text-body-tertiary, un gris más apagado
+                          que el text-muted de la etiqueta. */}
                       <div
                         title={textoValor(campo)}
                         className={`text-truncate ${
-                          listo ? "fw-semibold" : "fst-italic text-body-tertiary"
+                          listo ? "fw-semibold" : "text-body-tertiary"
                         }`}
                         style={{ fontSize: "0.85rem" }}
                       >
-                        {listo ? textoValor(campo) : "tocar"}
+                        {listo ? textoValor(campo) : "Tocar"}
                       </div>
                     </Card.Body>
                   </Card>

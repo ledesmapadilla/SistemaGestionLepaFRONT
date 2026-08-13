@@ -1,0 +1,8 @@
+/* Pantallas de carga de gasoil del celular, centradas en el alto de la vista.
+   Van las dos declaraciones a propósito: el navegador que no entiende dvh se
+   queda con vh, y el que lo entiende pisa el valor. Con dvh solo, el que no lo
+   soporta descarta la regla entera y la pantalla queda pegada arriba. */
+.gasoil-centrado {
+  min-height: 100vh;
+  min-height: 100dvh;
+}

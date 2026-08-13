@@ -1,5 +1,6 @@
 import { Card } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import "../../../../../styles/gasoilMobile.css";
 
 // Página pensada para usar desde el celular: una sola tarjeta grande, sin tabla
 // ni filtros. El listado y la edición siguen estando en /gasoil.
@@ -9,10 +10,7 @@ const CargaGasoil = () => {
   const navigate = useNavigate();
 
   return (
-    <div
-      className="d-flex align-items-center justify-content-center px-3"
-      style={{ minHeight: "100dvh" }}
-    >
+    <div className="gasoil-centrado d-flex align-items-center justify-content-center px-3">
       <Card
         role="button"
         onClick={() => navigate("/gasoil/carga/nueva")}
