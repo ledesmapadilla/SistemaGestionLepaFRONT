@@ -75,6 +75,30 @@ const buscarPrecioVigente = (precios, clasificacion, trabajo, fechaRef) => {
   return conFecha.length > 0 ? conFecha[0].p : candidatos[candidatos.length - 1];
 };
 
+// Quién estaba trabajando en la fecha de la fila: ya dado de alta y todavía no
+// desactivado. Las fechas son "YYYY-MM-DD" en los dos lados, así que se comparan
+// como texto.
+const activoEnFecha = (persona, fecha) => {
+  if (persona.fechaAlta && persona.fechaAlta > fecha) return false;
+  if (persona.activo === false) {
+    if (!persona.fechaDesactivado || persona.fechaDesactivado <= fecha) return false;
+  }
+  return true;
+};
+
+// Sin fecha todavía no se puede saber quién correspondía, así que se muestran
+// todos. Al maquinista ya guardado se lo conserva aunque hoy esté de baja: si
+// no, al abrir un remito viejo el select aparecería vacío y se perdería el dato.
+const personalParaFila = (personalDisponible, fecha, seleccionado) => {
+  const lista = fecha
+    ? personalDisponible.filter((p) => activoEnFecha(p, fecha))
+    : personalDisponible;
+
+  if (!seleccionado || seleccionado === "No aplica") return lista;
+  if (lista.some((p) => p.nombre === seleccionado)) return lista;
+  return [{ _id: `guardado-${seleccionado}`, nombre: seleccionado }, ...lista];
+};
+
 const buscarCostoHoraVigente = (personalDisponible, nombrePersonal, fechaRef) => {
   if (!nombrePersonal || !fechaRef) return 0;
   const persona = personalDisponible.find((p) => p.nombre === nombrePersonal);
@@ -650,11 +674,13 @@ const RemitosModal = ({
                   >
                     <option value="">—</option>
                     <option value="No aplica">No aplica</option>
-                    {personalDisponible.map((persona) => (
-                      <option key={persona._id} value={persona.nombre}>
-                        {persona.nombre}
-                      </option>
-                    ))}
+                    {personalParaFila(personalDisponible, fila.fecha, fila.personal).map(
+                      (persona) => (
+                        <option key={persona._id} value={persona.nombre}>
+                          {persona.nombre}
+                        </option>
+                      )
+                    )}
                   </Form.Select>
                   <Form.Control.Feedback type="invalid">
                     {erroresFilas[index]?.personal}
