@@ -261,12 +261,19 @@ const NuevaCargaGasoil = () => {
                       <div className="text-muted text-uppercase mb-1" style={{ fontSize: "0.75rem" }}>
                         {ETIQUETAS[campo]}
                       </div>
-                      {/* "Tocar" va en text-body-tertiary, un gris más apagado
-                          que el text-muted de la etiqueta. */}
+                      {/* "Tocar" en cursiva y gris apagado. El opacity va sobre
+                          text-body-tertiary en vez de un gris fijo, así sigue
+                          funcionando si alguna vez cambia el tema. */}
                       <div
                         title={textoValor(campo)}
-                        className={`gasoil-valor ${listo ? "fw-semibold" : "text-body-tertiary"}`}
-                        style={{ fontSize: "1.05rem", lineHeight: 1.2 }}
+                        className={`gasoil-valor ${
+                          listo ? "fw-semibold" : "fst-italic text-body-tertiary"
+                        }`}
+                        style={{
+                          fontSize: "1.05rem",
+                          lineHeight: 1.2,
+                          opacity: listo ? 1 : 0.7,
+                        }}
                       >
                         {listo ? textoValor(campo) : "Tocar"}
                       </div>
