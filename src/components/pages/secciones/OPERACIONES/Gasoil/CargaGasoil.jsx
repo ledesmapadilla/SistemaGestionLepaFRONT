@@ -16,12 +16,16 @@ const CargaGasoil = () => {
       <Card
         role="button"
         onClick={() => navigate("/gasoil/carga/nueva")}
-        className="text-center border-success w-100"
-        style={{ cursor: "pointer", maxWidth: "320px" }}
+        className="text-center border-success rounded-4 w-100"
+        style={{
+          cursor: "pointer",
+          maxWidth: "240px",
+          backgroundColor: "rgba(25, 135, 84, 0.15)",
+        }}
       >
-        <Card.Body className="py-5">
-          <div style={{ fontSize: "2.5rem", lineHeight: 1 }}>⛽</div>
-          <Card.Title className="mt-3 mb-0" style={{ fontSize: "1.4rem" }}>
+        <Card.Body className="py-4">
+          <div style={{ fontSize: "2rem", lineHeight: 1 }}>⛽</div>
+          <Card.Title className="mt-2 mb-0" style={{ fontSize: "1.15rem" }}>
             Nueva carga
           </Card.Title>
         </Card.Body>
