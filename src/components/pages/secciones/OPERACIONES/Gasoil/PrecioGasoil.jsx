@@ -26,6 +26,20 @@ const mostrarFechaDMY = (fecha) => {
   return d ? `${d}-${m}-${y}` : fecha;
 };
 
+// El input de precio es de texto, no numérico: type="number" no admite puntos
+// de miles, así que no podría mostrar el formato adentro de la caja.
+const formatearEntrada = (texto) => {
+  const limpio = (texto || "").replace(/[^\d,]/g, "");
+  const [entera, decimal] = limpio.split(",");
+  const enteraFmt = entera ? Number(entera).toLocaleString("es-AR") : "";
+  return decimal !== undefined ? `${enteraFmt},${decimal.slice(0, 2)}` : enteraFmt;
+};
+
+const aNumero = (texto) => {
+  const limpio = (texto || "").replace(/\./g, "").replace(",", ".");
+  return limpio === "" ? NaN : Number(limpio);
+};
+
 // El vigente es el de fecha más reciente, no el último cargado: mismo criterio
 // que usa la tabla de Variables.
 const masReciente = (historial) => {
@@ -43,7 +57,8 @@ const PrecioGasoil = () => {
   const [fecha, setFecha] = useState(hoyLocal());
   const [precio, setPrecio] = useState("");
   const [observaciones, setObservaciones] = useState("");
-  const [error, setError] = useState("");
+  // Un error por campo, para poder mostrarlo debajo del que falta.
+  const [errores, setErrores] = useState({});
 
   const cargar = async () => {
     try {
@@ -77,7 +92,7 @@ const PrecioGasoil = () => {
     setFecha(hoyLocal());
     setPrecio("");
     setObservaciones("");
-    setError("");
+    setErrores({});
     setShowEditar(true);
   };
 
@@ -105,15 +120,18 @@ const PrecioGasoil = () => {
   };
 
   const guardarPrecio = async () => {
-    if (!fecha) return setError("La fecha es obligatoria");
-    if (precio === "" || isNaN(Number(precio)) || Number(precio) <= 0) {
-      return setError("El precio debe ser un número mayor a 0");
-    }
-    setError("");
+    const valor = aNumero(precio);
+    const nuevosErrores = {};
+    if (!fecha) nuevosErrores.fecha = "Falta la fecha";
+    if (precio === "") nuevosErrores.precio = "Falta el precio";
+    else if (isNaN(valor) || valor <= 0) nuevosErrores.precio = "Tiene que ser mayor a 0";
+
+    setErrores(nuevosErrores);
+    if (Object.keys(nuevosErrores).length > 0) return;
 
     const actualizada = await guardarHistorial([
       ...historial,
-      { valor: Number(precio), fecha, observaciones: observaciones.trim() },
+      { valor, fecha, observaciones: observaciones.trim() },
     ]);
 
     if (!actualizada) {
@@ -189,42 +207,48 @@ const PrecioGasoil = () => {
           <Modal.Title style={{ fontSize: "1.2rem" }}>Precio gasoil</Modal.Title>
         </Modal.Header>
 
-        <Modal.Body>
-          <Form.Group className="mb-3" style={{ maxWidth: "180px" }}>
-            <Form.Label>Fecha*</Form.Label>
+        <Modal.Body className="d-flex flex-column align-items-center">
+          <Form.Group className="mb-3 w-100" style={{ maxWidth: "180px" }}>
+            <Form.Label className="d-block text-center">Fecha*</Form.Label>
             <Form.Control
               type="date"
+              className="text-center"
               value={fecha}
               max={hoyLocal()}
               onChange={(e) => setFecha(e.target.value)}
             />
+            {errores.fecha && (
+              <div className="text-danger text-center mt-1" style={{ fontSize: "0.85rem" }}>
+                {errores.fecha}
+              </div>
+            )}
           </Form.Group>
 
-          <Form.Group className="mb-3" style={{ maxWidth: "180px" }}>
-            <Form.Label>Precio gasoil*</Form.Label>
+          <Form.Group className="mb-3 w-100" style={{ maxWidth: "180px" }}>
+            <Form.Label className="d-block text-center">Precio gasoil*</Form.Label>
             <InputGroup>
               <InputGroup.Text>$</InputGroup.Text>
               <Form.Control
-                type="number"
-                step="0.01"
-                min="0"
+                type="text"
+                inputMode="decimal"
+                className="text-center"
                 value={precio}
                 onFocus={(e) => {
                   const el = e.target;
                   setTimeout(() => el.select(), 0);
                 }}
-                onChange={(e) => setPrecio(e.target.value)}
+                onChange={(e) => setPrecio(formatearEntrada(e.target.value))}
               />
             </InputGroup>
-            {/* El input numérico no puede mostrar separadores de miles, así que
-                el valor con formato va debajo mientras se escribe. */}
-            {precio !== "" && !isNaN(Number(precio)) && (
-              <Form.Text className="text-muted">{formatoMoneda(precio)}</Form.Text>
+            {errores.precio && (
+              <div className="text-danger text-center mt-1" style={{ fontSize: "0.85rem" }}>
+                {errores.precio}
+              </div>
             )}
           </Form.Group>
 
-          <Form.Group style={{ maxWidth: "320px" }}>
-            <Form.Label>Observaciones</Form.Label>
+          <Form.Group className="w-100" style={{ maxWidth: "320px" }}>
+            <Form.Label className="d-block text-center">Observaciones</Form.Label>
             <Form.Control
               as="textarea"
               rows={2}
@@ -232,8 +256,6 @@ const PrecioGasoil = () => {
               onChange={(e) => setObservaciones(e.target.value)}
             />
           </Form.Group>
-
-          {error && <div className="text-danger mt-2">{error}</div>}
         </Modal.Body>
 
         <Modal.Footer className="justify-content-center">
@@ -247,7 +269,7 @@ const PrecioGasoil = () => {
       </Modal>
 
       {/* ---- MODAL HISTORIAL ---- */}
-      <Modal show={showHistorial} onHide={() => setShowHistorial(false)} centered size="sm">
+      <Modal show={showHistorial} onHide={() => setShowHistorial(false)} centered size="lg">
         <Modal.Header closeButton>
           <Modal.Title style={{ fontSize: "1.2rem" }}>Historial precio gasoil</Modal.Title>
         </Modal.Header>
