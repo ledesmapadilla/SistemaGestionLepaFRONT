@@ -209,9 +209,16 @@ const Gasoil = () => {
     [cargas, filtroCliente]
   );
 
+  // Las máquinas dependen de la obra filtrada: solo las que efectivamente
+  // cargaron gasoil en esa obra, no todo el parque.
+  const cargasDeLaObra = useMemo(
+    () => (filtroObra ? cargasDelCliente.filter((c) => c.obra === filtroObra) : cargasDelCliente),
+    [cargasDelCliente, filtroObra]
+  );
+
   const opcionesCliente = useMemo(() => opcionesDe(cargas, "cliente"), [cargas]);
   const opcionesObra = useMemo(() => opcionesDe(cargasDelCliente, "obra"), [cargasDelCliente]);
-  const opcionesMaquina = useMemo(() => opcionesDe(cargas, "maquina"), [cargas]);
+  const opcionesMaquina = useMemo(() => opcionesDe(cargasDeLaObra, "maquina"), [cargasDeLaObra]);
   const opcionesQuienCarga = useMemo(() => opcionesDe(cargas, "quienCarga"), [cargas]);
 
   const cargasFiltradas = useMemo(
@@ -336,7 +343,10 @@ const Gasoil = () => {
             value={filtroCliente}
             onChange={(e) => {
               setFiltroCliente(e.target.value);
+              // Obra y máquina cuelgan del cliente: si quedaran puestas,
+              // filtrarían por algo que ya no está en la lista.
               setFiltroObra("");
+              setFiltroMaquina("");
             }}
             style={filtroCliente ? selectActivo : {}}
           >
@@ -352,6 +362,7 @@ const Gasoil = () => {
               onClick={() => {
                 setFiltroCliente("");
                 setFiltroObra("");
+                setFiltroMaquina("");
               }}
               style={estiloX}
             >
@@ -364,7 +375,10 @@ const Gasoil = () => {
           <Form.Select
             size="sm"
             value={filtroObra}
-            onChange={(e) => setFiltroObra(e.target.value)}
+            onChange={(e) => {
+              setFiltroObra(e.target.value);
+              setFiltroMaquina("");
+            }}
             style={filtroObra ? selectActivo : {}}
           >
             <option value="">Obra...</option>
@@ -375,7 +389,13 @@ const Gasoil = () => {
             ))}
           </Form.Select>
           {filtroObra && (
-            <span onClick={() => setFiltroObra("")} style={estiloX}>
+            <span
+              onClick={() => {
+                setFiltroObra("");
+                setFiltroMaquina("");
+              }}
+              style={estiloX}
+            >
               ✕
             </span>
           )}
