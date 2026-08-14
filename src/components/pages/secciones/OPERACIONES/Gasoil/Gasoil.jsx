@@ -301,7 +301,7 @@ const Gasoil = () => {
     <div className="w-75 mx-auto my-2">
       <h6 className="text-center mb-2">Cargas de gasoil</h6>
 
-      <div className="d-flex justify-content-end align-items-center gap-3 flex-wrap mb-3">
+      <div className="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
         <PrecioGasoil />
 
         <div className="d-flex gap-2">

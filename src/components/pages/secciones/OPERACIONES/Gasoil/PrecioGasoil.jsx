@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Form, Modal, Spinner, Table } from "react-bootstrap";
+import { Button, Form, InputGroup, Modal, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
 import {
@@ -190,7 +190,7 @@ const PrecioGasoil = () => {
         </Modal.Header>
 
         <Modal.Body>
-          <Form.Group className="mb-3">
+          <Form.Group className="mb-3" style={{ maxWidth: "180px" }}>
             <Form.Label>Fecha*</Form.Label>
             <Form.Control
               type="date"
@@ -200,22 +200,30 @@ const PrecioGasoil = () => {
             />
           </Form.Group>
 
-          <Form.Group className="mb-3">
+          <Form.Group className="mb-3" style={{ maxWidth: "180px" }}>
             <Form.Label>Precio gasoil*</Form.Label>
-            <Form.Control
-              type="number"
-              step="0.01"
-              min="0"
-              value={precio}
-              onFocus={(e) => {
-                const el = e.target;
-                setTimeout(() => el.select(), 0);
-              }}
-              onChange={(e) => setPrecio(e.target.value)}
-            />
+            <InputGroup>
+              <InputGroup.Text>$</InputGroup.Text>
+              <Form.Control
+                type="number"
+                step="0.01"
+                min="0"
+                value={precio}
+                onFocus={(e) => {
+                  const el = e.target;
+                  setTimeout(() => el.select(), 0);
+                }}
+                onChange={(e) => setPrecio(e.target.value)}
+              />
+            </InputGroup>
+            {/* El input numérico no puede mostrar separadores de miles, así que
+                el valor con formato va debajo mientras se escribe. */}
+            {precio !== "" && !isNaN(Number(precio)) && (
+              <Form.Text className="text-muted">{formatoMoneda(precio)}</Form.Text>
+            )}
           </Form.Group>
 
-          <Form.Group>
+          <Form.Group style={{ maxWidth: "320px" }}>
             <Form.Label>Observaciones</Form.Label>
             <Form.Control
               as="textarea"
@@ -239,7 +247,7 @@ const PrecioGasoil = () => {
       </Modal>
 
       {/* ---- MODAL HISTORIAL ---- */}
-      <Modal show={showHistorial} onHide={() => setShowHistorial(false)} centered size="lg">
+      <Modal show={showHistorial} onHide={() => setShowHistorial(false)} centered size="sm">
         <Modal.Header closeButton>
           <Modal.Title style={{ fontSize: "1.2rem" }}>Historial precio gasoil</Modal.Title>
         </Modal.Header>
