@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
+import { conClienteInterno, obrasDeCliente } from "../../../../../helpers/gasoilInterno.js";
 
 const hoyLocal = () => new Date().toLocaleDateString("en-CA");
 
@@ -69,11 +70,14 @@ const GasoilModal = ({
     [obras]
   );
 
+  // Lepa va siempre al final, tenga o no obras en curso: es el consumo interno.
   const clientes = useMemo(
     () =>
       conValorActual(
-        [...new Set(obrasEnCurso.map((o) => o.razonsocial).filter(Boolean))].sort((a, b) =>
-          a.localeCompare(b)
+        conClienteInterno(
+          [...new Set(obrasEnCurso.map((o) => o.razonsocial).filter(Boolean))].sort((a, b) =>
+            a.localeCompare(b)
+          )
         ),
         clienteSel
       ),
@@ -81,15 +85,18 @@ const GasoilModal = ({
   );
 
   // Solo las obras del cliente elegido: evita cargar gasoil a una obra que no
-  // le corresponde al cliente.
+  // le corresponde al cliente. Para Lepa, la única opción es "Uso interno".
   const obrasDelCliente = useMemo(
     () =>
       conValorActual(
-        obrasEnCurso
-          .filter((o) => !clienteSel || o.razonsocial === clienteSel)
-          .map((o) => o.nombreobra)
-          .filter(Boolean)
-          .sort((a, b) => a.localeCompare(b)),
+        obrasDeCliente(
+          clienteSel,
+          obrasEnCurso
+            .filter((o) => !clienteSel || o.razonsocial === clienteSel)
+            .map((o) => o.nombreobra)
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b))
+        ),
         obraSel
       ),
     [obrasEnCurso, clienteSel, obraSel]

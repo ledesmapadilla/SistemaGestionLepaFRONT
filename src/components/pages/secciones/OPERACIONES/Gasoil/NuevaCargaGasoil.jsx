@@ -10,6 +10,7 @@ import {
   crearCargaGasoilPublica,
 } from "../../../../../helpers/queriesPublicoGasoil.js";
 import useAltoVista from "../../../../../helpers/useAltoVista.js";
+import { conClienteInterno, obrasDeCliente } from "../../../../../helpers/gasoilInterno.js";
 import "react-datepicker/dist/react-datepicker.css";
 import "../../../../../styles/gasoilMobile.css";
 
@@ -96,23 +97,29 @@ const NuevaCargaGasoil = () => {
 
   const obras = useMemo(() => opciones?.obras || [], [opciones]);
 
+  // Lepa va siempre al final, tenga o no obras en curso: es el consumo interno.
   const clientes = useMemo(
     () =>
-      [...new Set(obras.map((o) => o.razonsocial).filter(Boolean))].sort((a, b) =>
-        a.localeCompare(b)
+      conClienteInterno(
+        [...new Set(obras.map((o) => o.razonsocial).filter(Boolean))].sort((a, b) =>
+          a.localeCompare(b)
+        )
       ),
     [obras]
   );
 
   // Solo las obras del cliente elegido: no se puede cargar gasoil a una obra
-  // que no le corresponde.
+  // que no le corresponde. Para Lepa, la única opción es "Uso interno".
   const obrasDelCliente = useMemo(
     () =>
-      obras
-        .filter((o) => o.razonsocial === valores.cliente)
-        .map((o) => o.nombreobra)
-        .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b)),
+      obrasDeCliente(
+        valores.cliente,
+        obras
+          .filter((o) => o.razonsocial === valores.cliente)
+          .map((o) => o.nombreobra)
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b))
+      ),
     [obras, valores.cliente]
   );
 

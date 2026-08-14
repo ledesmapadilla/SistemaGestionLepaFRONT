@@ -12,6 +12,7 @@ import {
 import { listarObras } from "../../../../../helpers/queriesObras.js";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
+import { OBRA_INTERNA } from "../../../../../helpers/gasoilInterno.js";
 import GasoilModal from "./GasoilModal.jsx";
 import PrecioGasoil from "./PrecioGasoil.jsx";
 
@@ -211,9 +212,13 @@ const Gasoil = () => {
 
   // Base de toda la pantalla: filtros, tabla y Excel salen de acá. Mientras las
   // obras no hayan llegado no se filtra, para no mostrar la tabla vacía.
+  // "Uso interno" no es una obra de la base, así que nunca está en obrasEnCurso:
+  // se deja pasar a mano para que el consumo propio no desaparezca del listado.
   const cargasVisibles = useMemo(
     () =>
-      soloEnCurso && opcionesListas ? cargas.filter((c) => obrasEnCurso.has(c.obra)) : cargas,
+      soloEnCurso && opcionesListas
+        ? cargas.filter((c) => obrasEnCurso.has(c.obra) || c.obra === OBRA_INTERNA)
+        : cargas,
     [cargas, soloEnCurso, opcionesListas, obrasEnCurso]
   );
 
