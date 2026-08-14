@@ -4,6 +4,7 @@ import { Button, Modal, Form, Table, Spinner } from "react-bootstrap";
 import { listarAsistencia, listarDatosAsistencia } from "../../../../../helpers/queriesAsistencia.js";
 import { difMinDia, minsAHHMM, colorDif } from "../../../../../helpers/jornadaUtils.js";
 import { ordenarPersonal } from "../../../../../helpers/ordenPersonal.js";
+import { semanalVigente } from "../../../../../helpers/semanalUtils.js";
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -132,20 +133,45 @@ const Asistencia = () => {
     });
   };
 
+  // Misma normalización que usan Gastos Semanales y el orden de personal: sin
+  // acentos ni puntuación, para que "Di Farco, Juan" y "Di Farco Juan" sean uno.
   const normNombre = (s) =>
-    (s || "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    (s || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[.,;]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
 
   const abrirResumen = (diasSemana) => {
     const nombresEnAlta = new Set(listaPersonal.map((p) => normNombre(p.nombre)));
+    // Quien tiene 5 jornales o menos no trabaja sábados: ese día no le suma.
+    // El criterio es el mismo que aplica Gastos Semanales.
+    const ultimoDia = diaKey(anio, mes, diasSemana[diasSemana.length - 1]);
+    const cantJornalesMap = {};
+    listaPersonal.forEach((p) => {
+      const vigente = semanalVigente(p.semanal, ultimoDia);
+      cantJornalesMap[normNombre(p.nombre)] = vigente ? Number(vigente.cantJornales || 0) : 0;
+    });
+    const noTrabajaSabado = (nombre) => {
+      const c = cantJornalesMap[normNombre(nombre)] || 0;
+      return c > 0 && c <= 5;
+    };
+
     const mapa = {};
+    const nuevaFila = (nombre) => ({ nombre, ausentes: 0, sinRemito: 0, observaciones: [], difMins: 0, trabajados: 0 });
     diasSemana.forEach((d) => {
       const key = diaKey(anio, mes, d);
-      const esSabado = new Date(anio, mes, d).getDay() === 6;
+      const diaSemana = new Date(anio, mes, d).getDay();
+      const esSabado = diaSemana === 6;
+      const esDomingo = diaSemana === 0;
       const regs = registros[key] || [];
       regs.forEach((r) => {
         if (!r.personal) return;
         const keyNombre = normNombre(r.personal);
-        if (!mapa[keyNombre]) mapa[keyNombre] = { nombre: r.personal, ausentes: 0, sinRemito: 0, observaciones: [], difMins: 0 };
+        if (!mapa[keyNombre]) mapa[keyNombre] = nuevaFila(r.personal);
         if (r.ausente) mapa[keyNombre].ausentes += esSabado ? 0.5 : 1;
         if (r.mediaFalta) mapa[keyNombre].ausentes += 0.5;
         if (!r.remito) mapa[keyNombre].sinRemito += 1;
@@ -158,20 +184,33 @@ const Asistencia = () => {
         }
       });
       // Agregar personas que deberían estar ese día aunque no tengan registro guardado
+      const registroPorNombre = {};
+      regs.forEach((r) => { if (r.personal) registroPorNombre[normNombre(r.personal)] = r; });
       filtrarPersonalParaDia(key).forEach((p) => {
         const keyNombre = normNombre(p.nombre);
-        if (!mapa[keyNombre]) mapa[keyNombre] = { nombre: p.nombre, ausentes: 0, sinRemito: 0, observaciones: [], difMins: 0 };
+        if (!mapa[keyNombre]) mapa[keyNombre] = nuevaFila(p.nombre);
+        // Días trabajados: solo cuentan los días ya cargados (los futuros o sin
+        // planilla no suman) y sin domingos. El sábado vale medio día, igual que
+        // en el ausentismo de Gastos Semanales.
+        if (esDomingo || regs.length === 0) return;
+        if (esSabado && noTrabajaSabado(p.nombre)) return;
+        const reg = registroPorNombre[keyNombre];
+        if (reg?.ausente) return;
+        const peso = esSabado ? 0.5 : 1;
+        mapa[keyNombre].trabajados += reg?.mediaFalta ? Math.max(peso - 0.5, 0) : peso;
       });
     });
-    const filas = Object.values(mapa)
-      .filter((datos) => nombresEnAlta.has(normNombre(datos.nombre)))
-      .map((datos) => ({
-        nombre: datos.nombre,
-        ausentes: datos.ausentes,
-        sinRemito: datos.sinRemito,
-        observaciones: datos.observaciones.join(" / "),
-        difMins: datos.difMins,
-      }));
+    const filas = ordenarPersonal(
+      Object.values(mapa).filter((datos) => nombresEnAlta.has(normNombre(datos.nombre))),
+      (f) => f.nombre
+    ).map((datos) => ({
+      nombre: datos.nombre,
+      ausentes: datos.ausentes,
+      sinRemito: datos.sinRemito,
+      observaciones: datos.observaciones.join(" / "),
+      difMins: datos.difMins,
+      trabajados: datos.trabajados,
+    }));
     const desde = diasSemana[0];
     const hasta = diasSemana[diasSemana.length - 1];
     setSemanaResumen({ filas, label: `${desde} al ${hasta} de ${MESES[mes].toLowerCase()} ${anio}` });
@@ -340,10 +379,11 @@ const Asistencia = () => {
           <Modal.Title>Resumen {semanaResumen?.label}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Table striped bordered hover className="text-center align-middle mx-auto" style={{ width: "80%" }}>
+          <Table striped bordered hover className="text-center align-middle mx-auto" style={{ width: "90%" }}>
             <thead className="table-dark">
               <tr>
                 <th>Personal</th>
+                <th>Días Trabajados</th>
                 <th>Ausentes</th>
                 <th>Sin Remito</th>
                 <th>Dif.</th>
@@ -353,6 +393,7 @@ const Asistencia = () => {
               {semanaResumen?.filas.map((f, i) => (
                 <tr key={i}>
                   <td>{f.nombre}</td>
+                  <td>{f.trabajados}</td>
                   <td>{f.ausentes || "-"}</td>
                   <td>{f.sinRemito || "-"}</td>
                   <td style={f.difMins ? { fontWeight: 700, color: colorDif(f.difMins) } : {}}>
