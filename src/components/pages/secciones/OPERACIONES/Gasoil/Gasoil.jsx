@@ -53,6 +53,9 @@ const Gasoil = () => {
   const [loading, setLoading] = useState(true);
   const [opcionesListas, setOpcionesListas] = useState(false);
 
+  // Por defecto solo las cargas de obras en curso; el switch muestra todas.
+  const [soloEnCurso, setSoloEnCurso] = useState(true);
+
   const [filtroFecha, setFiltroFecha] = useState("");
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroObra, setFiltroObra] = useState("");
@@ -202,11 +205,24 @@ const Gasoil = () => {
     }
   };
 
+  // `obras` ya viene filtrado por estado "En curso" desde el backend, así que
+  // alcanza con mirar si el nombre de la obra está en esa lista.
+  const obrasEnCurso = useMemo(() => new Set(obras.map((o) => o.nombreobra)), [obras]);
+
+  // Base de toda la pantalla: filtros, tabla y Excel salen de acá. Mientras las
+  // obras no hayan llegado no se filtra, para no mostrar la tabla vacía.
+  const cargasVisibles = useMemo(
+    () =>
+      soloEnCurso && opcionesListas ? cargas.filter((c) => obrasEnCurso.has(c.obra)) : cargas,
+    [cargas, soloEnCurso, opcionesListas, obrasEnCurso]
+  );
+
   // Las opciones de obra dependen del cliente filtrado, así no aparecen obras
   // de otros clientes en la lista.
   const cargasDelCliente = useMemo(
-    () => (filtroCliente ? cargas.filter((c) => c.cliente === filtroCliente) : cargas),
-    [cargas, filtroCliente]
+    () =>
+      filtroCliente ? cargasVisibles.filter((c) => c.cliente === filtroCliente) : cargasVisibles,
+    [cargasVisibles, filtroCliente]
   );
 
   // Las máquinas dependen de la obra filtrada: solo las que efectivamente
@@ -216,14 +232,17 @@ const Gasoil = () => {
     [cargasDelCliente, filtroObra]
   );
 
-  const opcionesCliente = useMemo(() => opcionesDe(cargas, "cliente"), [cargas]);
+  const opcionesCliente = useMemo(() => opcionesDe(cargasVisibles, "cliente"), [cargasVisibles]);
   const opcionesObra = useMemo(() => opcionesDe(cargasDelCliente, "obra"), [cargasDelCliente]);
   const opcionesMaquina = useMemo(() => opcionesDe(cargasDeLaObra, "maquina"), [cargasDeLaObra]);
-  const opcionesQuienCarga = useMemo(() => opcionesDe(cargas, "quienCarga"), [cargas]);
+  const opcionesQuienCarga = useMemo(
+    () => opcionesDe(cargasVisibles, "quienCarga"),
+    [cargasVisibles]
+  );
 
   const cargasFiltradas = useMemo(
     () =>
-      cargas.filter((c) => {
+      cargasVisibles.filter((c) => {
         if (filtroFecha && c.fecha !== filtroFecha) return false;
         if (filtroCliente && c.cliente !== filtroCliente) return false;
         if (filtroObra && c.obra !== filtroObra) return false;
@@ -231,7 +250,7 @@ const Gasoil = () => {
         if (filtroQuienCarga && c.quienCarga !== filtroQuienCarga) return false;
         return true;
       }),
-    [cargas, filtroFecha, filtroCliente, filtroObra, filtroMaquina, filtroQuienCarga]
+    [cargasVisibles, filtroFecha, filtroCliente, filtroObra, filtroMaquina, filtroQuienCarga]
   );
 
   const exportarExcel = () => {
@@ -308,10 +327,42 @@ const Gasoil = () => {
     <div className="w-75 mx-auto my-2">
       <h6 className="text-center mb-2">Cargas de gasoil</h6>
 
-      <div className="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+      {/* Grilla de 3 columnas para que el switch quede centrado en la página,
+          sin que lo corran de lugar el precio ni los botones. */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr auto 1fr",
+          alignItems: "center",
+          gap: "0.5rem",
+          marginBottom: "1rem",
+        }}
+      >
         <PrecioGasoil />
 
-        <div className="d-flex gap-2">
+        <div className="d-flex align-items-center gap-2">
+          <span
+            style={{ fontSize: "0.85rem", userSelect: "none" }}
+            className={soloEnCurso ? "fw-semibold" : "text-muted"}
+          >
+            En curso
+          </span>
+          <Form.Check
+            type="switch"
+            id="switch-obras-gasoil"
+            className="mb-0"
+            checked={!soloEnCurso}
+            onChange={(e) => setSoloEnCurso(!e.target.checked)}
+          />
+          <span
+            style={{ fontSize: "0.85rem", userSelect: "none" }}
+            className={!soloEnCurso ? "fw-semibold" : "text-muted"}
+          >
+            Todas
+          </span>
+        </div>
+
+        <div className="d-flex gap-2 justify-content-end">
           <Button size="sm" variant="outline-light" onClick={exportarExcel}>
             Excel
           </Button>
