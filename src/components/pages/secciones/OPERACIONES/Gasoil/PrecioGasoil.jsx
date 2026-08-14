@@ -171,6 +171,7 @@ const PrecioGasoil = () => {
     }
 
     setVariable(actualizada);
+    setShowHistorial(false);
     Swal.fire({
       icon: "success",
       title: "Precio borrado",
