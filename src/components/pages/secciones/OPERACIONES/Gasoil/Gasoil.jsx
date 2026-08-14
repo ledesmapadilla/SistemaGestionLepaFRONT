@@ -13,6 +13,7 @@ import { listarObras } from "../../../../../helpers/queriesObras.js";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import GasoilModal from "./GasoilModal.jsx";
+import PrecioGasoil from "./PrecioGasoil.jsx";
 
 const selectActivo = { backgroundImage: "none" };
 
@@ -300,7 +301,9 @@ const Gasoil = () => {
     <div className="w-75 mx-auto my-2">
       <h6 className="text-center mb-2">Cargas de gasoil</h6>
 
-      <div className="d-flex justify-content-end align-items-center mb-3">
+      <div className="d-flex justify-content-end align-items-center gap-3 flex-wrap mb-3">
+        <PrecioGasoil />
+
         <div className="d-flex gap-2">
           <Button size="sm" variant="outline-light" onClick={exportarExcel}>
             Excel
