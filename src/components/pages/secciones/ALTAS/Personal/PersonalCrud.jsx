@@ -9,6 +9,7 @@ import {
   borrarPersonal as borrarPersonalAPI,
 } from "../../../../../helpers/queriesPersonal.js";
 import { eliminarPersonalDeAsistencias } from "../../../../../helpers/queriesAsistencia.js";
+import { valorHoraDe } from "../../../../../helpers/semanalUtils.js";
 import Swal from "sweetalert2";
 import PersonalModal from "./PersonalModal.jsx";
 
@@ -324,7 +325,7 @@ const Personal = () => {
                       <td className="text-nowrap">{formatearFecha(persona.fechaAlta)}</td>
                       <td>{persona.nombre}</td>
                       <td className="text-nowrap">{formatoMiles(valSemanal)}</td>
-                      <td className="text-nowrap">{formatoMiles(valSemanal / 44)}</td>
+                      <td className="text-nowrap">{formatoMiles(valorHoraDe(valSemanal, ultimoCantJornales(persona.semanal)))}</td>
                       <td className="text-nowrap">{ultimoCantJornales(persona.semanal) > 0 ? formatoMiles(valSemanal / ultimoCantJornales(persona.semanal)) : "-"}</td>
                       <td className="text-nowrap">{ultimaFecha(persona.semanal)}</td>
                       <td>
@@ -383,7 +384,7 @@ const Personal = () => {
                   </tr>
                   <tr>
                     <td>Hora</td>
-                    <td>{formatoMiles(val / 44)}</td>
+                    <td>{formatoMiles(valorHoraDe(val, ultimoCantJornales(personaVer?.semanal)))}</td>
                   </tr>
                   <tr>
                     <td>Cant. jornales semanales</td>

@@ -9,7 +9,7 @@ import { listarGastosPorObra } from "../../../../../helpers/queriesGastos.js";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { listarAceites } from "../../../../../helpers/queriesAceites.js";
 import { listarPagosProveedoresPorObra } from "../../../../../helpers/queriesPagosProveedores";
-import { valorSemanalVigente } from "../../../../../helpers/semanalUtils.js";
+import { valorHoraVigente, valorJornalVigente } from "../../../../../helpers/semanalUtils.js";
 import "../../../../../styles/verRemitos.css";
 import CostoObraTabla from "./CostoObraTabla"; 
 
@@ -191,9 +191,11 @@ const CostosObra = () => {
             );
             if (!empleadoEncontrado) return;
             const esServicio = item.servicio && item.servicio !== "";
-            const divisor = esServicio ? 5.5 : 44;
-            const precioSemanal = valorSemanalVigente(empleadoEncontrado.semanal, item.fecha || remito.fecha);
-            const valorUnitario = precioSemanal > 0 ? precioSemanal / divisor : 0;
+            const fechaRef = item.fecha || remito.fecha;
+            // Servicio = un jornal (un día); máquina = por hora.
+            const valorUnitario = esServicio
+              ? valorJornalVigente(empleadoEncontrado.semanal, fechaRef)
+              : valorHoraVigente(empleadoEncontrado.semanal, fechaRef);
             const cantidad = esServicio ? 1 : Number(item.cantidad || 0);
             totalPersonalCalculado += cantidad * valorUnitario;
           }

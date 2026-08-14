@@ -7,7 +7,7 @@ import { obtenerGastoSemanalPorSemana, guardarGastoSemanal } from "../../../../.
 import { obtenerCuentaCorrienteProveedor } from "../../../../../helpers/queriesCuentaCorrienteProveedor.js";
 import { crearPagoEfectivoProveedor, borrarPagoProveedor } from "../../../../../helpers/queriesPagosProveedores.js";
 import { difMinDia, minsAHHMM, colorDif } from "../../../../../helpers/jornadaUtils.js";
-import { semanalVigente } from "../../../../../helpers/semanalUtils.js";
+import { semanalVigente, valorHoraDe } from "../../../../../helpers/semanalUtils.js";
 import { ordenarPersonal } from "../../../../../helpers/ordenPersonal.js";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
 import XLSXStyle from "xlsx-js-style";
@@ -63,12 +63,9 @@ const netoExtras = (extras) =>
   normalizarExtras(extras).reduce((s, e) => s + (e.descuentaAumenta === "aumenta" ? 1 : -1) * (Number(e.monto) || 0), 0);
 
 // Valor de la hora: jornal (semanal / cantJornales) dividido 8 (la hora de
-// almuerzo de la jornada de 9 hs no se paga).
-const valorHora = (r) => {
-  const cant = Number(r.cantJornales) || 0;
-  if (cant <= 0) return 0;
-  return (Number(r.semanal) || 0) / cant / 8;
-};
+// almuerzo de la jornada de 9 hs no se paga). La fórmula vive en semanalUtils,
+// que es de donde la toman también remitos, gastos y el alta de personal.
+const valorHora = (r) => valorHoraDe(r.semanal, r.cantJornales);
 
 // Monto por diferencia horaria de la semana. difMin negativo (trabajó de más)
 // suma; positivo (trabajó de menos) resta.

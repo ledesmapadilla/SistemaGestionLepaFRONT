@@ -8,6 +8,7 @@ import {
   editarRemito,
 } from "../../../../../helpers/queriesRemitos";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
+import { valorHoraVigente } from "../../../../../helpers/semanalUtils.js";
 import AsyncButton from "../../../../shared/AsyncButton";
 
 const filaVacia = {
@@ -102,43 +103,16 @@ const personalParaFila = (personalDisponible, fecha, seleccionado) => {
   return [{ _id: `guardado-${seleccionado}`, nombre: seleccionado }, ...lista];
 };
 
+// Costo hora del maquinista a la fecha de la fila: sale del sueldo semanal
+// vigente en esa fecha repartido en sus jornales (semanal / cantJornales / 8).
+// `semanalVigente` ya resuelve los casos borde: si el remito es anterior a
+// todos los sueldos cargados usa el más antiguo, y las entradas viejas con
+// fecha "-" cuentan desde el inicio.
 const buscarCostoHoraVigente = (personalDisponible, nombrePersonal, fechaRef) => {
   if (!nombrePersonal || !fechaRef) return 0;
   const persona = personalDisponible.find((p) => p.nombre === nombrePersonal);
-  if (!persona || !persona.semanal || persona.semanal.length === 0) return 0;
-
-  const semanal = persona.semanal;
-  const fechaRefDate = new Date(fechaRef + "T12:00:00");
-
-  // Filtrar entradas con fecha válida y <= fechaRef
-  const vigentes = semanal
-    .filter((s) => {
-      if (!s.fecha || s.fecha === "-") return false;
-      const sFecha = new Date(s.fecha.slice(0, 10) + "T12:00:00");
-      return !isNaN(sFecha.getTime()) && sFecha <= fechaRefDate;
-    })
-    .sort((a, b) => new Date(b.fecha.slice(0, 10)) - new Date(a.fecha.slice(0, 10)));
-
-  if (vigentes.length > 0) {
-    return Math.round((vigentes[0].valor / 44) * 100) / 100;
-  }
-
-  // Fallback: si no hay entrada vigente a esa fecha, usar la más antigua (el sueldo fue asignado después de registrarse el remito)
-  const conFecha = [...semanal]
-    .filter((s) => s.fecha && s.fecha !== "-" && !isNaN(new Date(s.fecha.slice(0, 10)).getTime()))
-    .sort((a, b) => new Date(a.fecha.slice(0, 10)) - new Date(b.fecha.slice(0, 10)));
-
-  if (conFecha.length > 0) {
-    return Math.round((conFecha[0].valor / 44) * 100) / 100;
-  }
-
-  // Último fallback: entradas sin fecha válida (datos migrados)
-  const sinFecha = semanal.filter((s) => !s.fecha || s.fecha === "-");
-  if (sinFecha.length > 0) {
-    return Math.round((sinFecha[sinFecha.length - 1].valor / 44) * 100) / 100;
-  }
-
-  return 0;
+  if (!persona) return 0;
+  return valorHoraVigente(persona.semanal, fechaRef);
 };
 
 const RemitosModal = ({
@@ -209,7 +183,13 @@ const RemitosModal = ({
         const respuesta = await listarPersonal();
         if (!cancelado && respuesta?.ok) {
           const data = await respuesta.json();
-          setPersonalDisponible(data);
+          // El backend los devuelve en orden de carga; el select de maquinista se
+          // ordena alfabético. localeCompare en "es" para acentos y ñ.
+          setPersonalDisponible(
+            [...data].sort((a, b) =>
+              (a?.nombre || "").localeCompare(b?.nombre || "", "es", { sensitivity: "base" })
+            )
+          );
         }
       } catch (error) {
         console.error("Error al cargar personal:", error);

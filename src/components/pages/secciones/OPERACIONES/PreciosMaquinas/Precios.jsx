@@ -9,6 +9,7 @@ import {
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
 import { listarVariables } from "../../../../../helpers/queriesVariables.js";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
+import { valorHoraVigente } from "../../../../../helpers/semanalUtils.js";
 import {
   obtenerConsumoGasoil,
   guardarConsumoGasoil as guardarConsumoGasoilAPI,
@@ -165,12 +166,7 @@ const Precios = () => {
   const comp3Comun = useMemo(() => {
     let promedio = 0;
     if (personal.length > 0) {
-      const suma = personal.reduce((acc, p) => {
-        const semanal = Array.isArray(p.semanal) && p.semanal.length
-          ? Number(p.semanal[p.semanal.length - 1].valor) || 0
-          : 0;
-        return acc + semanal / 44;
-      }, 0);
+      const suma = personal.reduce((acc, p) => acc + valorHoraVigente(p.semanal), 0);
       promedio = suma / personal.length;
     }
     const porcIndirectos = Number(porcentajeIndirectos) || 0;
@@ -223,13 +219,7 @@ const Precios = () => {
 
     let promedioHora = 0;
     if (personal.length > 0) {
-      const suma = personal.reduce((acc, p) => {
-        const semanal =
-          Array.isArray(p.semanal) && p.semanal.length
-            ? Number(p.semanal[p.semanal.length - 1].valor) || 0
-            : 0;
-        return acc + semanal / 44;
-      }, 0);
+      const suma = personal.reduce((acc, p) => acc + valorHoraVigente(p.semanal), 0);
       promedioHora = suma / personal.length;
     }
 

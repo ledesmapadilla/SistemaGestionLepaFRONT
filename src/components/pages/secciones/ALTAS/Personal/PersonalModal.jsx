@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, Table, Spinner } from "react-bootstrap";
 import Swal from "sweetalert2";
+import { valorHoraDe } from "../../../../../helpers/semanalUtils.js";
 
 const formatoMiles = (valor) => {
   if (
@@ -165,7 +166,7 @@ const PersonalModal = ({
                   </tr>
                   <tr>
                     <td>Hora</td>
-                    <td>{formatoMiles(ultimoValor / 44)}</td>
+                    <td>{formatoMiles(valorHoraDe(ultimoValor, ultimoCantJornales))}</td>
                   </tr>
                   <tr>
                     <td>Jornal</td>

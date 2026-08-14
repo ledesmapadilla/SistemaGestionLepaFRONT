@@ -6,7 +6,7 @@ import {
 } from "../../../../../helpers/queriesGastos.js";
 import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos.js";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
-import { valorSemanalVigente } from "../../../../../helpers/semanalUtils.js";
+import { valorHoraVigente, valorJornalVigente } from "../../../../../helpers/semanalUtils.js";
 import { Table, Button, Modal, Spinner } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -170,9 +170,11 @@ const GastoTabla = () => {
               const emp = personalDB.find(
                 (p) => p.nombre.trim().toLowerCase() === item.personal.trim().toLowerCase()
               );
-              const precioSemanal = valorSemanalVigente(emp?.semanal, item.fecha || remito.fecha);
-              const divisor = esServicio ? 5.5 : 44;
-              const valorUnitario = precioSemanal > 0 ? precioSemanal / divisor : 0;
+              const fechaRef = item.fecha || remito.fecha;
+              // Servicio = un jornal (un día); máquina = por hora.
+              const valorUnitario = esServicio
+                ? valorJornalVigente(emp?.semanal, fechaRef)
+                : valorHoraVigente(emp?.semanal, fechaRef);
               agrupado[key].fallbackTotal += (esServicio ? 1 : Number(item.cantidad || 0)) * valorUnitario;
             }
 
