@@ -229,7 +229,7 @@ const CuentaCorrienteProveedor = () => {
                 <div className="text-muted" style={{ fontSize: "0.75rem" }}>Pagado</div>
                 <div className="fw-bold" style={{ fontSize: "0.95rem" }}>{formatoMoneda(totPagado)}</div>
               </div>
-              <div className="border rounded px-3 py-1 text-center" style={{ minWidth: "150px", borderColor: "#ffc107" }}>
+              <div className="border border-warning rounded px-3 py-1 text-center" style={{ minWidth: "150px" }}>
                 <div className="text-muted" style={{ fontSize: "0.75rem" }}>Saldo</div>
                 <div className={`fw-bold ${totSaldo > 0 ? "text-primary" : totSaldo < 0 ? "text-success" : ""}`} style={{ fontSize: "0.95rem" }}>
                   {formatoMoneda(totSaldo)}
