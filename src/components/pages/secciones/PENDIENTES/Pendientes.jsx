@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
@@ -7,13 +7,6 @@ import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/q
 import { obtenerTodasReparaciones, guardarReparaciones } from "../../../../helpers/queriesReparaciones";
 import { listarMaquinas } from "../../../../helpers/queriesMaquinas";
 import { usePendientesModal } from "../../../../context/PendientesModalContext";
-import { hoverPestana, TRANSICION_PESTANA } from "../../../shared/pestanaLateral";
-
-// Pestaña lateral "Comenzar": celeste, a diferencia de las dos grises.
-const COMENZAR_FONDO = "#0dcaf0";
-const COMENZAR_FONDO_HOVER = "#0aa2c0";
-const COMENZAR_SOMBRA = "3px 4px 12px rgba(0,0,0,0.2)";
-const COMENZAR_SOMBRA_HOVER = "5px 6px 16px rgba(0,0,0,0.32)";
 
 // Mismos responsables que el select de repuestos.
 const RESPONSABLES = [
@@ -92,9 +85,6 @@ const filaVacia = () => ({
 
 export default function Pendientes() {
   const navigate = useNavigate();
-  // El logo de Inicio navega con este flag; la tarjeta "Iniciar" solo sale por esa vía
-  // (no al entrar por el menú ni al abrirse como modal desde los botones flotantes).
-  const desdeInicio = useLocation().state?.desdeInicio === true;
   const pendientesModal = usePendientesModal();
   const [modalResp, setModalResp] = useState(null);   // responsable abierto
   const [tareasPorResp, setTareasPorResp] = useState({});
@@ -607,46 +597,6 @@ export default function Pendientes() {
           );
         })}
       </Row>
-
-      {/* Pestaña lateral izquierda a media altura: acceso a Obras.
-          Solo cuando se entra desde el logo de Inicio (mismo patrón que BotonFoco). */}
-      {desdeInicio && (
-        <button
-          type="button"
-          title="Comenzar"
-          aria-label="Comenzar"
-          onClick={() => navigate("/obras")}
-          {...hoverPestana({
-            lado: "izquierda",
-            fondo: COMENZAR_FONDO,
-            fondoHover: COMENZAR_FONDO_HOVER,
-            sombra: COMENZAR_SOMBRA,
-            sombraHover: COMENZAR_SOMBRA_HOVER,
-          })}
-          style={{
-            position: "fixed",
-            top: "50%",
-            transform: "translateY(-50%)",
-            left: 0,
-            height: "64px",
-            padding: "0 18px 0 14px",
-            borderRadius: "0 16px 16px 0",
-            backgroundColor: COMENZAR_FONDO,
-            border: "1px solid #0aa2c0",
-            borderLeft: "none",
-            boxShadow: COMENZAR_SOMBRA,
-            transition: TRANSICION_PESTANA,
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            cursor: "pointer",
-            zIndex: 1040,
-          }}
-        >
-          <i className="bi bi-play-fill" style={{ fontSize: "1.4rem", color: "#111111" }} />
-          <span className="fw-bold" style={{ color: "#111111" }}>Comenzar</span>
-        </button>
-      )}
 
       {/* ── Modal de tareas del responsable ── */}
       <Modal show={!!modalResp} onHide={cerrar} centered size="xl" scrollable>
