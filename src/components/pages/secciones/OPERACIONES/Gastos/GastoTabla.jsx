@@ -631,7 +631,7 @@ const GastoTabla = () => {
                   ))
                 )}
               </tbody>
-              <tfoot className="table-dark fw-bold">
+              <tfoot className="table-dark">
                 <tr>
                   <td colSpan={2}>TOTAL</td>
                   <td>{infoGasoil.cantidad}</td>
@@ -659,23 +659,23 @@ const GastoTabla = () => {
           <Table bordered size="sm" className="align-middle mb-0">
             <tbody>
               <tr>
-                <td className="fw-bold">Tipo</td>
+                <td>Tipo</td>
                 <td>{maquinistaVer?.tipo === "servicio" ? "Servicio" : "Máquina"}</td>
               </tr>
               <tr>
-                <td className="fw-bold">Cantidad</td>
+                <td>Cantidad</td>
                 <td>{maquinistaVer?.cantidad} {maquinistaVer?.tipo === "servicio" ? "días" : "hs"}</td>
               </tr>
               <tr>
-                <td className="fw-bold">Precio unitario</td>
+                <td>Precio unitario</td>
                 <td>{maquinistaVer?.precioVarios ? "Varios" : formatoMiles(maquinistaVer?.precio || 0)}</td>
               </tr>
               <tr>
-                <td className="fw-bold">Total</td>
+                <td>Total</td>
                 <td>{formatoMiles(maquinistaVer?.total || 0)}</td>
               </tr>
               <tr>
-                <td className="fw-bold">Origen</td>
+                <td>Origen</td>
                 <td>{maquinistaVer?.tipo === "servicio" ? "Servicios acumulados" : "Horas acumuladas"}</td>
               </tr>
             </tbody>
@@ -697,31 +697,31 @@ const GastoTabla = () => {
           <Table bordered size="sm" className="align-middle mb-0">
             <tbody>
               <tr>
-                <td className="fw-bold">Remito</td>
+                <td>Remito</td>
                 <td>{gastoVer?.remito || "-"}</td>
               </tr>
               <tr>
-                <td className="fw-bold">Cantidad</td>
+                <td>Cantidad</td>
                 <td>{Number(gastoVer?.cantidad) || 0}</td>
               </tr>
               <tr>
-                <td className="fw-bold">Unidad</td>
+                <td>Unidad</td>
                 <td>{gastoVer?.unidad || "-"}</td>
               </tr>
               <tr>
-                <td className="fw-bold">Costo Unitario</td>
+                <td>Costo Unitario</td>
                 <td>{formatoMiles(Number(gastoVer?.costoUnitario) || 0)}</td>
               </tr>
               <tr>
-                <td className="fw-bold">Costo Total</td>
+                <td>Costo Total</td>
                 <td>{formatoMiles((Number(gastoVer?.cantidad) || 0) * (Number(gastoVer?.costoUnitario) || 0))}</td>
               </tr>
               <tr>
-                <td className="fw-bold">Observaciones</td>
+                <td>Observaciones</td>
                 <td>{gastoVer?.observaciones || "-"}</td>
               </tr>
               <tr>
-                <td className="fw-bold">Fecha de carga</td>
+                <td>Fecha de carga</td>
                 <td>{gastoVer?.createdAt ? gastoVer.createdAt.toString().slice(0, 10).split("-").reverse().join("-") : "-"}</td>
               </tr>
             </tbody>
@@ -743,23 +743,23 @@ const GastoTabla = () => {
           <Table bordered size="sm" className="align-middle mb-0">
             <tbody>
               <tr>
-                <td className="fw-bold">Fecha de pago</td>
+                <td>Fecha de pago</td>
                 <td>{pagoProvVer?.fecha ? pagoProvVer.fecha.substring(0, 10).split("-").reverse().join("-") : "-"}</td>
               </tr>
               <tr>
-                <td className="fw-bold">Tipo de factura</td>
+                <td>Tipo de factura</td>
                 <td>{pagoProvVer?.factura?.tipoFactura || "-"}</td>
               </tr>
               <tr>
-                <td className="fw-bold">N° Factura</td>
+                <td>N° Factura</td>
                 <td>{pagoProvVer?.factura?.numeroFactura || "-"}</td>
               </tr>
               <tr>
-                <td className="fw-bold">Concepto</td>
+                <td>Concepto</td>
                 <td>{pagoProvVer?.factura?.concepto || "-"}</td>
               </tr>
               <tr>
-                <td className="fw-bold">Monto pagado</td>
+                <td>Monto pagado</td>
                 <td>{formatoMiles(pagoProvVer?.montoPagado || 0)}</td>
               </tr>
             </tbody>
