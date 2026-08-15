@@ -13,6 +13,11 @@ import Swal from "sweetalert2";
 
 import GastoModal from "./GastoModal";
 import { listarPagosProveedoresPorObra } from "../../../../../helpers/queriesPagosProveedores";
+import { listarCargasGasoil } from "../../../../../helpers/queriesCargaGasoil.js";
+import {
+  obtenerHistorialGasoil,
+  cargasDeObraValorizadas,
+} from "../../../../../helpers/precioGasoil.js";
 
 const buscarPrecioVigente = (precios, clasificacion, trabajo, fechaRef) => {
   const candidatos = precios.filter(
@@ -78,11 +83,20 @@ const GastoTabla = () => {
 
     setLoading(true);
     try {
-      const [remitos, respuestaPersonal, respuestaGastos, todosPagos] = await Promise.all([
+      const [
+        remitos,
+        respuestaPersonal,
+        respuestaGastos,
+        todosPagos,
+        respuestaCargasGasoil,
+        historialGasoil,
+      ] = await Promise.all([
         listarRemitosPorObra(obraId),
         listarPersonal(),
         listarGastosPorObra(obraId),
         listarPagosProveedoresPorObra(obraNombre).catch(() => []),
+        listarCargasGasoil({ obra: obraNombre }),
+        obtenerHistorialGasoil(),
       ]);
 
       let personalDB = [];
@@ -108,18 +122,17 @@ const GastoTabla = () => {
       setPagosProveedoresObra(pagosObra);
 
       // --- CÁLCULO GASOIL POR FECHA ---
-      let cantidadGasoil = 0;
-      let totalGasoil = 0;
+      // Dos orígenes: los remitos viejos, que traían los litros en el ítem, y el
+      // módulo Gasoil, que es por donde se carga hoy. Los remitos nuevos ya no
+      // llevan gasoil, así que sumar los dos no duplica nada.
       const detalleCargasGasoil = [];
 
       remitos.forEach((remito) => {
         (remito.items || []).forEach((item) => {
           const litros = Number(item.gasoil || 0);
           if (litros <= 0) return;
-          cantidadGasoil += litros;
           const precioObj = buscarPrecioVigente(preciosObra, "Gasoil", null, item.fecha);
           const precioGasoilItem = precioObj ? parseFloat(precioObj.precio) : 0;
-          totalGasoil += litros * precioGasoilItem;
 
           detalleCargasGasoil.push({
             fecha: item.fecha,
@@ -127,11 +140,30 @@ const GastoTabla = () => {
             precio: precioGasoilItem,
             total: litros * precioGasoilItem,
             maquina: item.maquina || "-",
+            origen: "Remito",
           });
         });
       });
 
-      setCargasGasoil(detalleCargasGasoil);
+      let cargasModulo = [];
+      if (respuestaCargasGasoil?.ok) {
+        const cargasObra = await respuestaCargasGasoil.json();
+        cargasModulo = cargasDeObraValorizadas(
+          cargasObra,
+          historialGasoil,
+          obraNombre,
+          razonsocial
+        ).map((c) => ({ ...c, origen: "Carga" }));
+      }
+
+      const detalleGasoil = [...detalleCargasGasoil, ...cargasModulo].sort((a, b) =>
+        (a.fecha || "").localeCompare(b.fecha || "")
+      );
+
+      const cantidadGasoil = detalleGasoil.reduce((acc, c) => acc + c.litros, 0);
+      const totalGasoil = detalleGasoil.reduce((acc, c) => acc + c.total, 0);
+
+      setCargasGasoil(detalleGasoil);
 
       setInfoGasoil({
         cantidad: cantidadGasoil,
@@ -294,7 +326,7 @@ const GastoTabla = () => {
 
     const filas = [
       // Gasoil automático
-      ["Gasoil", infoGasoil.cantidad, "lts", infoGasoil.precio, infoGasoil.total, "Total de remitos (precio prom.)"],
+      ["Gasoil", infoGasoil.cantidad, "lts", infoGasoil.precio, infoGasoil.total, "Cargas de gasoil y remitos (precio prom.)"],
       // Maquinistas
       ...listaMaquinistas.map((maq) => [
         maq.nombre,
@@ -432,7 +464,7 @@ const GastoTabla = () => {
               <td>lts</td>
               <td className="text-nowrap">{formatoMiles(infoGasoil.precio)}</td>
               <td className="text-nowrap">{formatoMiles(infoGasoil.total)}</td>
-              <td>Total de remitos (precio prom.)</td>
+              <td>Cargas de gasoil y remitos (precio prom.)</td>
               <td>
                 <Button
                   size="sm"
@@ -576,18 +608,28 @@ const GastoTabla = () => {
                   <th>Litros</th>
                   <th>$ Unit.</th>
                   <th>$ Total</th>
+                  <th>Origen</th>
                 </tr>
               </thead>
               <tbody>
-                {cargasGasoil.map((c, i) => (
-                  <tr key={i}>
-                    <td>{c.fecha ? c.fecha.toString().slice(0, 10).split("-").reverse().join("-") : "-"}</td>
-                    <td>{c.maquina}</td>
-                    <td>{c.litros}</td>
-                    <td className="text-nowrap">{formatoMiles(c.precio)}</td>
-                    <td className="text-nowrap">{formatoMiles(c.total)}</td>
+                {cargasGasoil.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-3 text-muted">
+                      No hay cargas de gasoil para esta obra.
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  cargasGasoil.map((c, i) => (
+                    <tr key={i}>
+                      <td>{c.fecha ? c.fecha.toString().slice(0, 10).split("-").reverse().join("-") : "-"}</td>
+                      <td>{c.maquina}</td>
+                      <td>{c.litros}</td>
+                      <td className="text-nowrap">{formatoMiles(c.precio)}</td>
+                      <td className="text-nowrap">{formatoMiles(c.total)}</td>
+                      <td className="text-muted">{c.origen}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
               <tfoot className="table-dark fw-bold">
                 <tr>
@@ -595,6 +637,7 @@ const GastoTabla = () => {
                   <td>{infoGasoil.cantidad}</td>
                   <td></td>
                   <td className="text-nowrap">{formatoMiles(infoGasoil.total)}</td>
+                  <td></td>
                 </tr>
               </tfoot>
             </Table>

@@ -10,6 +10,11 @@ import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { listarAceites } from "../../../../../helpers/queriesAceites.js";
 import { listarPagosProveedoresPorObra } from "../../../../../helpers/queriesPagosProveedores";
 import { valorHoraVigente, valorJornalVigente } from "../../../../../helpers/semanalUtils.js";
+import { listarCargasGasoil } from "../../../../../helpers/queriesCargaGasoil.js";
+import {
+  obtenerHistorialGasoil,
+  cargasDeObraValorizadas,
+} from "../../../../../helpers/precioGasoil.js";
 import "../../../../../styles/verRemitos.css";
 import CostoObraTabla from "./CostoObraTabla"; 
 
@@ -125,12 +130,22 @@ const CostosObra = () => {
     setDatosAnalisis(null);
 
     try {
-      const [remitosData, gastosData, personalRes, aceitesRes, pagosRes] = await Promise.all([
+      const [
+        remitosData,
+        gastosData,
+        personalRes,
+        aceitesRes,
+        pagosRes,
+        cargasGasoilRes,
+        historialGasoil,
+      ] = await Promise.all([
         listarRemitosPorObra(obra._id),
         listarGastosPorObra(obra._id),
         listarPersonal(),
         listarAceites(),
-        listarPagosProveedoresPorObra(obra.nombreobra).catch(() => [])
+        listarPagosProveedoresPorObra(obra.nombreobra).catch(() => []),
+        listarCargasGasoil({ obra: obra.nombreobra }),
+        obtenerHistorialGasoil(),
       ]);
 
       const remitos = Array.isArray(remitosData) ? remitosData : [];
@@ -163,7 +178,10 @@ const CostosObra = () => {
           return acc + subtotal;
         }, 0);
       }
-      const totalGasoil = remitos.reduce((total, remito) => {
+      // Gasoil de los remitos viejos (hoy ya no se carga por ahí) más las cargas
+      // del módulo Gasoil, valorizadas al precio vigente a la fecha de cada una.
+      // Mismo criterio que la tabla de Gastos de la obra.
+      const gasoilRemitos = remitos.reduce((total, remito) => {
         return total + (remito.items || []).reduce((acc, item) => {
           const litros = parseFloat(item.gasoil || 0);
           if (litros <= 0) return acc;
@@ -172,6 +190,19 @@ const CostosObra = () => {
           return acc + litros * precioGasoil;
         }, 0);
       }, 0);
+
+      let gasoilCargas = 0;
+      if (cargasGasoilRes?.ok) {
+        const cargasObra = await cargasGasoilRes.json();
+        gasoilCargas = cargasDeObraValorizadas(
+          cargasObra,
+          historialGasoil,
+          obra.nombreobra,
+          obra.razonsocial
+        ).reduce((acc, c) => acc + c.total, 0);
+      }
+
+      const totalGasoil = gasoilRemitos + gasoilCargas;
 
       // Costo de personal por ítem, usando costoHoraPersonal de remitos
       // o el semanal vigente a la fecha del remito como fallback.
