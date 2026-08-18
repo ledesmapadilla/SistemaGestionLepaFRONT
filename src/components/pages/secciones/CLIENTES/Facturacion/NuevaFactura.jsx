@@ -130,6 +130,17 @@ const NuevaFactura = () => {
     const remito = todosRemitos.find((r) => r._id === remitoElegido);
     if (!remito) return;
     const totalRem = calcularTotalRemito(remito.items);
+    // Remito sin precio cargado: si se factura queda sellado en $0 y ya no toma
+    // el precio de la obra. Hay que definir el precio antes de facturarlo.
+    if (!esNotaCredito && totalRem <= 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Remito sin precio",
+        html: `El remito <b>N° ${remito.remito}</b> tiene total <b>$0</b> porque la obra <b>${remito.obra?.nombreobra ?? ""}</b> todavía no tiene el precio cargado.<br><br>Cargá el precio en la obra y volvé a facturar.`,
+      });
+      setRemitoElegido("");
+      return;
+    }
     const saldo = esNotaCredito
       ? totalRem
       : totalRem - (remito.montoFacturado || 0);
@@ -331,11 +342,13 @@ const NuevaFactura = () => {
                     : "Primero elegí un cliente"}
                 </option>
                 {remitosDisponibles.map((r) => {
-                  const saldo = calcularTotalRemito(r.items) - (r.montoFacturado || 0);
+                  const totalRem = calcularTotalRemito(r.items);
+                  const saldo = totalRem - (r.montoFacturado || 0);
                   return (
                     <option key={r._id} value={r._id}>
                       Remito #{r.remito} — {r.obra?.nombreobra} ({formatearFecha(r.fecha)})
                       {r.montoFacturado > 0 ? ` · Saldo: ${formatoMoneda(saldo)}` : ""}
+                      {totalRem <= 0 ? " · ⚠ sin precio cargado" : ""}
                     </option>
                   );
                 })}

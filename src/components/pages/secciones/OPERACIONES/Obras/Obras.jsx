@@ -274,6 +274,17 @@ const Obras = () => {
               estado: "Sin facturar",
               items: itemsRemito,
             });
+
+            // Se permite crear la obra sin el precio definido, pero hay que
+            // avisar: el remito automático queda en $0 y no se puede facturar
+            // hasta que se cargue el precio en la obra.
+            if (!esNumerico) {
+              await Swal.fire({
+                icon: "info",
+                title: "Precio de la obra sin definir",
+                html: `Se creó el remito automático <b>N° ${nextNum}</b> con importe <b>$0</b>.<br><br>Cuando cargues el precio cerrado en la obra, el remito lo toma solo. Hasta entonces no se puede facturar.`,
+              });
+            }
           }
         } catch (err) {
           console.error("Error al crear remito automático:", err);
