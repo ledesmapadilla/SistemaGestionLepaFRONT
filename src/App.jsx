@@ -44,6 +44,7 @@ const CostosObra = lazy(() => import("./components/pages/secciones/OPERACIONES/I
 const Gasoil = lazy(() => import("./components/pages/secciones/OPERACIONES/Gasoil/Gasoil.jsx"));
 const CargaGasoil = lazy(() => import("./components/pages/secciones/OPERACIONES/Gasoil/CargaGasoil.jsx"));
 const NuevaCargaGasoil = lazy(() => import("./components/pages/secciones/OPERACIONES/Gasoil/NuevaCargaGasoil.jsx"));
+const CargasDelMes = lazy(() => import("./components/pages/secciones/OPERACIONES/Gasoil/CargasDelMes.jsx"));
 const AceiteTabla = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/aceites/AceiteTabla.jsx"));
 const AceiteTablaCompra = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/aceites/AceiteTablaCompra.jsx"));
 const AceiteCrud = lazy(() => import("./components/pages/secciones/ALTAS/Aceites/AceiteCrud.jsx"));
@@ -102,7 +103,8 @@ function App() {
 
           {/* Carga de gasoil: se usa desde el celular como acceso directo, por
               eso va sin login y sin Menu ni Footer. Solo puede dar de alta una
-              carga; el listado y la edición siguen protegidos en /gasoil. */}
+              carga y ver qué máquinas se cargaron cada día; el listado completo y la
+              edición siguen protegidos en /gasoil. */}
           <Route
             path="/gasoil/carga"
             element={
@@ -119,6 +121,16 @@ function App() {
               <ChunkErrorBoundary>
                 <Suspense fallback={<PageSpinner />}>
                   <NuevaCargaGasoil />
+                </Suspense>
+              </ChunkErrorBoundary>
+            }
+          />
+          <Route
+            path="/gasoil/carga/mes"
+            element={
+              <ChunkErrorBoundary>
+                <Suspense fallback={<PageSpinner />}>
+                  <CargasDelMes />
                 </Suspense>
               </ChunkErrorBoundary>
             }

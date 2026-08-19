@@ -29,3 +29,14 @@ export const crearCargaGasoilPublica = async (carga) => {
     return null;
   }
 };
+
+// Devuelve [{ fecha, maquina }] con las cargas del mes: solo eso, sin litros ni
+// obra. Lo usa la vista mensual de /gasoil/carga/mes.
+export const listarCargasGasoilDelMes = async (anio, mes) => {
+  try {
+    return await fetch(`${URL}/mes?anio=${anio}&mes=${mes}`, { headers: JSON_HEADERS });
+  } catch (error) {
+    console.error("Error al listar las cargas de gasoil del mes:", error);
+    return null;
+  }
+};
