@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Card, Col, Form, Row, Spinner } from "react-bootstrap";
+import { Button, Card, Col, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { listarCargasGasoilDelMes } from "../../../../../helpers/queriesPublicoGasoil.js";
 import "../../../../../styles/gasoilMobile.css";
@@ -27,9 +27,13 @@ const DIAS_SEMANA = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
 const diasDelMes = (anio, mes) => new Date(anio, mes, 0).getDate();
 
+const formatoLitros = (litros) =>
+  Number(litros).toLocaleString("es-AR", { maximumFractionDigits: 2 });
+
 // Vista de consulta del celular: una tarjeta por día del mes con las máquinas a
-// las que se les cargó gasoil ese día. Solo el nombre de la máquina, sin litros
-// ni ningún otro dato. Va sin login, igual que el resto de /gasoil/carga.
+// las que se les cargó gasoil ese día. La tarjeta muestra solo el nombre de la
+// máquina; al tocar el día se abre el detalle con los litros de cada una.
+// Va sin login, igual que el resto de /gasoil/carga.
 const CargasDelMes = () => {
   const navigate = useNavigate();
 
@@ -40,6 +44,8 @@ const CargasDelMes = () => {
   const [cargas, setCargas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  // Día abierto en el modal de detalle, o null si está cerrado.
+  const [diaAbierto, setDiaAbierto] = useState(null);
 
   const anios = useMemo(() => {
     const hasta = Math.max(hoy.getFullYear(), ANIO_MINIMO);
@@ -55,6 +61,8 @@ const CargasDelMes = () => {
     const traer = async () => {
       setCargando(true);
       setError("");
+      // El detalle abierto es de un día del mes anterior: ya no corresponde.
+      setDiaAbierto(null);
 
       const respuesta = await listarCargasGasoilDelMes(anio, mes);
       if (!vigente) return;
@@ -79,19 +87,21 @@ const CargasDelMes = () => {
     };
   }, [anio, mes]);
 
-  // { "YYYY-MM-DD": ["Máquina A", "Máquina B"] } sin repetir: si una máquina se
-  // cargó dos veces el mismo día, en la tarjeta va una sola vez.
+  // { "YYYY-MM-DD": [{ maquina, litros }] } con una fila por máquina: si la
+  // misma máquina se cargó dos veces en el día, los litros se suman.
   const maquinasPorFecha = useMemo(() => {
     const mapa = {};
-    cargas.forEach(({ fecha, maquina }) => {
+    cargas.forEach(({ fecha, maquina, litros }) => {
       if (!fecha || !maquina) return;
-      if (!mapa[fecha]) mapa[fecha] = new Set();
-      mapa[fecha].add(maquina);
+      if (!mapa[fecha]) mapa[fecha] = {};
+      mapa[fecha][maquina] = (mapa[fecha][maquina] || 0) + Number(litros || 0);
     });
     return Object.fromEntries(
-      Object.entries(mapa).map(([fecha, set]) => [
+      Object.entries(mapa).map(([fecha, porMaquina]) => [
         fecha,
-        [...set].sort((a, b) => a.localeCompare(b)),
+        Object.entries(porMaquina)
+          .map(([maquina, litros]) => ({ maquina, litros }))
+          .sort((a, b) => a.maquina.localeCompare(b.maquina)),
       ])
     );
   }, [cargas]);
@@ -159,12 +169,18 @@ const CargasDelMes = () => {
         </div>
       ) : (
         <Row className="g-2">
-          {dias.map(({ dia, diaSemana, maquinas }) => {
+          {dias.map((datosDia) => {
+            const { dia, diaSemana, maquinas } = datosDia;
             const hubo = maquinas.length > 0;
 
             return (
               <Col xs={6} key={dia}>
+                {/* Los días sin cargas no se pueden tocar: no hay detalle que
+                    mostrar. */}
                 <Card
+                  role={hubo ? "button" : undefined}
+                  onClick={hubo ? () => setDiaAbierto(datosDia) : undefined}
+                  style={hubo ? { cursor: "pointer" } : undefined}
                   className={`h-100 ${hubo ? "bg-success-subtle border-success-subtle" : "bg-body-tertiary border-secondary-subtle"}`}
                 >
                   <Card.Body className="px-2 py-2" style={{ minHeight: "78px" }}>
@@ -175,7 +191,7 @@ const CargasDelMes = () => {
                       {diaSemana} {dia}
                     </div>
                     {hubo ? (
-                      maquinas.map((maquina) => (
+                      maquinas.map(({ maquina }) => (
                         <div
                           key={maquina}
                           className="fw-semibold"
@@ -203,6 +219,50 @@ const CargasDelMes = () => {
           })}
         </Row>
       )}
+
+      <Modal show={diaAbierto !== null} onHide={() => setDiaAbierto(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title style={{ fontSize: "1.1rem" }}>
+            {diaAbierto
+              ? `${diaAbierto.diaSemana} ${diaAbierto.dia} de ${MESES[mes - 1]}`
+              : ""}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Table striped bordered hover responsive className="mb-0 align-middle">
+            <thead className="table-dark">
+              <tr>
+                <th>Máquina</th>
+                <th className="text-end">Litros</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(diaAbierto?.maquinas || []).map(({ maquina, litros }) => (
+                <tr key={maquina}>
+                  <td>{maquina}</td>
+                  <td className="text-end">{formatoLitros(litros)}</td>
+                </tr>
+              ))}
+            </tbody>
+            {/* El total del día es lo primero que se mira: va abajo y en negrita. */}
+            <tfoot>
+              <tr className="fw-bold">
+                <td>Total</td>
+                <td className="text-end">
+                  {formatoLitros(
+                    (diaAbierto?.maquinas || []).reduce((suma, m) => suma + m.litros, 0)
+                  )}
+                </td>
+              </tr>
+            </tfoot>
+          </Table>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setDiaAbierto(null)}>
+            Cerrar
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
