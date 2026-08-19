@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Button, Container, Form, Row, Col, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -56,6 +56,7 @@ const NuevaFacturaProveedor = () => {
 
   const tipoFactura = watch("tipoFactura");
   const totalRaw = watch("total");
+  const razonSeleccionada = watch("razonsocial");
   const obraSeleccionada = watch("obra");
   const ivaRate = (tipoFactura === "Factura X" || tipoFactura === "Factura B") ? 0 : 0.21;
   const totalConIvaNum = totalRaw ? parseFloat(String(totalRaw).replace(",", ".")) : 0;
@@ -99,12 +100,29 @@ const NuevaFacturaProveedor = () => {
     }
   }, [tipoFactura, todasFacturas]);
 
-  // Cada obra ya guarda su razon social, asi que al imputar se completa sola.
-  // Queda editable por si la factura corresponde a otra razon social.
+  // Las razones sociales salen de las obras en curso: no tiene sentido ofrecer
+  // una razon social sin obras abiertas para imputar.
+  const razonesSociales = useMemo(
+    () =>
+      [...new Set(obras.map((o) => o.razonsocial).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b)
+      ),
+    [obras]
+  );
+
+  // Solo las obras en curso de esa razon social: imputar a una obra de otra
+  // razon social seria un error de carga.
+  const obrasDeRazonSocial = useMemo(
+    () => obras.filter((o) => o.razonsocial === razonSeleccionada),
+    [obras, razonSeleccionada]
+  );
+
+  // Al cambiar de razon social, la obra elegida antes deja de corresponder.
   useEffect(() => {
-    const obra = obras.find((o) => o.nombreobra === obraSeleccionada);
-    setValue("razonsocial", obra?.razonsocial || "");
-  }, [obraSeleccionada, obras]);
+    if (obraSeleccionada && !obrasDeRazonSocial.some((o) => o.nombreobra === obraSeleccionada)) {
+      setValue("obra", "");
+    }
+  }, [obrasDeRazonSocial, obraSeleccionada]);
 
   const onSubmit = async (data) => {
     const payload = {
@@ -216,7 +234,7 @@ const NuevaFacturaProveedor = () => {
         </Row>
 
         <Row className="mb-3">
-          <Col md={3}>
+          <Col md={2}>
             <Form.Group>
               <Form.Label>Concepto</Form.Label>
               <Form.Control
@@ -228,23 +246,26 @@ const NuevaFacturaProveedor = () => {
           </Col>
           <Col md={3}>
             <Form.Group>
-              <Form.Label>Obra a imputar</Form.Label>
-              <Form.Select {...register("obra")}>
+              <Form.Label>Razón social</Form.Label>
+              <Form.Select {...register("razonsocial")}>
                 <option value="">Sin imputar</option>
-                {obras.map((o) => (
-                  <option key={o._id} value={o.nombreobra}>{o.nombreobra}</option>
+                {razonesSociales.map((rs) => (
+                  <option key={rs} value={rs}>{rs}</option>
                 ))}
               </Form.Select>
             </Form.Group>
           </Col>
-          <Col md={2}>
+          <Col md={3}>
             <Form.Group>
-              <Form.Label>Razón social</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Razón social"
-                {...register("razonsocial")}
-              />
+              <Form.Label>Obra a imputar</Form.Label>
+              <Form.Select {...register("obra")} disabled={!razonSeleccionada}>
+                <option value="">
+                  {razonSeleccionada ? "Sin imputar" : "Elegí una razón social"}
+                </option>
+                {obrasDeRazonSocial.map((o) => (
+                  <option key={o._id} value={o.nombreobra}>{o.nombreobra}</option>
+                ))}
+              </Form.Select>
             </Form.Group>
           </Col>
           <Col md={2}>
