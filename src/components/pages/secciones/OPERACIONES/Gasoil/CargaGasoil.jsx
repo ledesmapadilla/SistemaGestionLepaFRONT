@@ -16,10 +16,10 @@ const CargaGasoil = () => {
       {/* El ancho lo fija esta columna y no la tarjeta, así "Ver" queda alineado
           con el borde derecho de la tarjeta. */}
       <div className="w-100" style={{ maxWidth: "240px" }}>
-        <div className="d-flex justify-content-end mb-2">
+        <div className="d-flex justify-content-end mb-4">
           <Button
             size="sm"
-            variant="outline-success"
+            variant="outline-warning"
             onClick={() => navigate("/gasoil/carga/mes")}
           >
             Ver
