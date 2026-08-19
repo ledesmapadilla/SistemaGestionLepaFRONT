@@ -56,6 +56,7 @@ const NuevaFacturaProveedor = () => {
 
   const tipoFactura = watch("tipoFactura");
   const totalRaw = watch("total");
+  const obraSeleccionada = watch("obra");
   const ivaRate = (tipoFactura === "Factura X" || tipoFactura === "Factura B") ? 0 : 0.21;
   const totalConIvaNum = totalRaw ? parseFloat(String(totalRaw).replace(",", ".")) : 0;
   const totalSinIva = totalConIvaNum / (1 + ivaRate);
@@ -98,6 +99,13 @@ const NuevaFacturaProveedor = () => {
     }
   }, [tipoFactura, todasFacturas]);
 
+  // Cada obra ya guarda su razon social, asi que al imputar se completa sola.
+  // Queda editable por si la factura corresponde a otra razon social.
+  useEffect(() => {
+    const obra = obras.find((o) => o.nombreobra === obraSeleccionada);
+    setValue("razonsocial", obra?.razonsocial || "");
+  }, [obraSeleccionada, obras]);
+
   const onSubmit = async (data) => {
     const payload = {
       fecha: data.fecha,
@@ -107,6 +115,7 @@ const NuevaFacturaProveedor = () => {
       concepto: data.concepto || "",
       observaciones: data.observaciones || "",
       obra: data.obra || "",
+      razonsocial: data.razonsocial || "",
       total: totalConIvaNum / (1 + ivaRate),
     };
 
@@ -207,7 +216,7 @@ const NuevaFacturaProveedor = () => {
         </Row>
 
         <Row className="mb-3">
-          <Col md={4}>
+          <Col md={3}>
             <Form.Group>
               <Form.Label>Concepto</Form.Label>
               <Form.Control
@@ -217,7 +226,7 @@ const NuevaFacturaProveedor = () => {
               />
             </Form.Group>
           </Col>
-          <Col md={4}>
+          <Col md={3}>
             <Form.Group>
               <Form.Label>Obra a imputar</Form.Label>
               <Form.Select {...register("obra")}>
@@ -226,6 +235,16 @@ const NuevaFacturaProveedor = () => {
                   <option key={o._id} value={o.nombreobra}>{o.nombreobra}</option>
                 ))}
               </Form.Select>
+            </Form.Group>
+          </Col>
+          <Col md={2}>
+            <Form.Group>
+              <Form.Label>Razón social</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Razón social"
+                {...register("razonsocial")}
+              />
             </Form.Group>
           </Col>
           <Col md={2}>
