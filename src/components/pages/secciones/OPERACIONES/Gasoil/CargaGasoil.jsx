@@ -19,7 +19,9 @@ const CargaGasoil = () => {
         <div className="d-flex justify-content-end mb-4">
           <Button
             size="sm"
-            variant="outline-warning"
+            variant="success"
+            className="border-success rounded-4"
+            style={{ backgroundColor: "rgba(25, 135, 84, 0.15)" }}
             onClick={() => navigate("/gasoil/carga/mes")}
           >
             Ver
