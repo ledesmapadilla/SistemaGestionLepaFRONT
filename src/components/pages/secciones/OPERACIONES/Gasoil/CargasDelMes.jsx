@@ -247,8 +247,8 @@ const CargasDelMes = () => {
             {/* El total del día es lo primero que se mira: va abajo y en negrita. */}
             <tfoot>
               <tr className="fw-bold">
-                <td>Total</td>
-                <td className="text-end">
+                <td className="text-end">Total</td>
+                <td className="text-center">
                   {formatoLitros(
                     (diaAbierto?.maquinas || []).reduce((suma, m) => suma + m.litros, 0)
                   )}
