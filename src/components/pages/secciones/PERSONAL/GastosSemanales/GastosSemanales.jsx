@@ -107,8 +107,8 @@ const pesos = (n) => {
 
 // El mismo punto de la primera columna, para que se lea que el número sale de
 // las filas marcadas.
-const PuntoVerde = () => (
-  <span style={{ color: "#198754", fontSize: 14, lineHeight: 1 }}>●</span>
+const PuntoSuma = () => (
+  <span style={{ color: "#dc3545", fontSize: 14, lineHeight: 1 }}>●</span>
 );
 
 const formVacio = () => ({
@@ -615,7 +615,7 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
                         <td className="text-center">
                           <span
                             onClick={() => toggleSel(idx)}
-                            style={{ cursor: "pointer", fontSize: 18, color: f.seleccionado ? "#198754" : "#495057", userSelect: "none", lineHeight: 1 }}
+                            style={{ cursor: "pointer", fontSize: 18, color: f.seleccionado ? "#dc3545" : "#495057", userSelect: "none", lineHeight: 1 }}
                           >●</span>
                         </td>
                         <td className="text-start">
@@ -1061,7 +1061,7 @@ const GastosSemanales = () => {
   const totalPagado = registros.reduce((s, r) => s + (Number(r.pagado) || 0), 0);
   const totalProveedores = proveedoresGuardados.reduce((s, p) => s + (Number(p.pago) || 0), 0);
   const totalGeneral = totalPagar + totalProveedores;
-  // Suma de las filas marcadas con el punto verde de la primera columna.
+  // Suma de las filas marcadas con el punto rojo de la primera columna.
   const sumaSeleccion = registros
     .filter((r) => r.seleccionado)
     .reduce((s, r) => s + calcularPagar(r), 0);
@@ -1177,12 +1177,12 @@ const GastosSemanales = () => {
                 alignContent: "center",
               }}
             >
-              <span className="text-muted" style={{ fontSize: "0.85rem", justifySelf: "end" }}>Suma (<PuntoVerde />):</span>
+              <span className="text-muted" style={{ fontSize: "0.85rem", justifySelf: "end" }}>Suma (<PuntoSuma />):</span>
               <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", textAlign: "center", fontSize: "0.95rem" }}>
                 {pesos(sumaSeleccion)}
               </div>
               {/* Lo que queda por pagar una vez descontadas las filas marcadas. */}
-              <span className="text-muted" style={{ fontSize: "0.85rem", justifySelf: "end" }}>Total gral. − (<PuntoVerde />):</span>
+              <span className="text-muted" style={{ fontSize: "0.85rem", justifySelf: "end" }}>Total gral. − (<PuntoSuma />):</span>
               <div style={{ minWidth: 130, padding: "4px 12px", border: "1px solid #495057", borderRadius: 4, background: "#2b3035", color: "#ffc107", textAlign: "center", fontSize: "0.95rem" }}>
                 {pesos(totalGeneral - sumaSeleccion)}
               </div>
@@ -1209,7 +1209,7 @@ const GastosSemanales = () => {
                     <td className="text-center">
                       <span
                         onClick={() => actualizarYGuardar(idx, "seleccionado", !r.seleccionado)}
-                        style={{ cursor: "pointer", fontSize: 18, color: r.seleccionado ? "#198754" : "#495057", userSelect: "none", lineHeight: 1 }}
+                        style={{ cursor: "pointer", fontSize: 18, color: r.seleccionado ? "#dc3545" : "#495057", userSelect: "none", lineHeight: 1 }}
                       >●</span>
                     </td>
                     <td className="text-start fw-semibold">
