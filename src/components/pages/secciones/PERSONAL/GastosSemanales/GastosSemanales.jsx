@@ -88,9 +88,11 @@ const construirExtraDif = (r, fecha) => {
     auto: AUTO_DIF,
   };
 };
-// Reemplaza la fila auto de diferencia por una recalculada (o la quita si es 0)
+// Reemplaza la fila auto de diferencia por una recalculada (o la quita si es 0).
+// Si la fila fue borrada a mano (difOmitida), no se vuelve a generar.
 const conExtraDif = (r, fecha) => {
   const base = sinExtraDif(r.extras);
+  if (r.difOmitida) return base;
   const auto = construirExtraDif(r, fecha);
   return auto ? [...base, auto] : base;
 };
@@ -159,13 +161,16 @@ const CeldaMoneda = ({ value, onChange, textStyle = {}, defaultValue, disabled =
   );
 };
 
-const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tarifaHora = 0, onGuardar }) => {
+const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tarifaHora = 0, extraDif = null, difOmitida = false, onGuardar }) => {
   const [extras, setExtras] = useState([]);
   const [editandoIdx, setEditandoIdx] = useState(null);
   const [form, setForm] = useState(formVacio());
   // Calculadora rápida de horas: $/hs (precargado con la tarifa del personal) x horas
   const [precioHora, setPrecioHora] = useState(0);
   const [horasCalc, setHorasCalc] = useState("");
+  // La fila automática de diferencia horaria se puede borrar; queda marcada para
+  // que no se vuelva a generar al recargar la semana.
+  const [omitirDif, setOmitirDif] = useState(false);
 
   useEffect(() => {
     if (show) {
@@ -173,6 +178,7 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
       setEditandoIdx(null);
       setPrecioHora(Math.round(tarifaHora) || 0);
       setHorasCalc("");
+      setOmitirDif(!!difOmitida);
     }
   }, [show]);
 
@@ -215,8 +221,10 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
   };
 
   const borrar = async (idx) => {
+    const esAuto = extras[idx]?.auto === AUTO_DIF;
     const res = await Swal.fire({
-      title: "¿Borrar extra?",
+      title: esAuto ? "¿Borrar las hs extras automáticas?" : "¿Borrar extra?",
+      text: esAuto ? "Se sacan de la liquidación de esta semana. Se pueden restaurar desde el mismo modal." : undefined,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#dc3545",
@@ -225,11 +233,18 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
       cancelButtonText: "Cancelar",
     });
     if (!res.isConfirmed) return;
+    if (esAuto) setOmitirDif(true);
     setExtras((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const restaurarDif = () => {
+    if (!extraDif) return;
+    setOmitirDif(false);
+    setExtras((prev) => [...sinExtraDif(prev), extraDif]);
+  };
+
   const handleGuardar = async () => {
-    await onGuardar(extras);
+    await onGuardar(extras, omitirDif);
     onHide();
   };
 
@@ -312,14 +327,14 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
                     <td>{pesos(e.monto)}</td>
                     <td>{e.detalle || "-"}</td>
                     <td>
-                      {e.auto ? (
-                        <span className="text-muted" style={{ fontSize: "0.78rem", fontStyle: "italic" }}>Automático</span>
-                      ) : (
-                        <div className="d-flex gap-1 justify-content-center align-items-center">
+                      <div className="d-flex gap-1 justify-content-center align-items-center">
+                        {e.auto ? (
+                          <span className="text-muted" style={{ fontSize: "0.78rem", fontStyle: "italic" }}>Automático</span>
+                        ) : (
                           <Button size="sm" variant="outline-warning" onClick={() => iniciarEditar(idx)} disabled={editandoIdx !== null}>Editar</Button>
-                          <Button size="sm" variant="outline-danger" onClick={() => borrar(idx)} disabled={editandoIdx !== null}>Borrar</Button>
-                        </div>
-                      )}
+                        )}
+                        <Button size="sm" variant="outline-danger" onClick={() => borrar(idx)} disabled={editandoIdx !== null}>Borrar</Button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -329,9 +344,16 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
           </Table>
         </div>
         <div className="d-flex justify-content-between align-items-center mt-3">
-          <Button variant="outline-primary" size="sm" onClick={iniciarAgregar} disabled={editandoIdx !== null}>
-            + Agregar
-          </Button>
+          <div className="d-flex gap-2 align-items-center">
+            <Button variant="outline-primary" size="sm" onClick={iniciarAgregar} disabled={editandoIdx !== null}>
+              + Agregar
+            </Button>
+            {omitirDif && extraDif && (
+              <Button variant="outline-info" size="sm" onClick={restaurarDif} disabled={editandoIdx !== null}>
+                Restaurar {extraDif.detalle}
+              </Button>
+            )}
+          </div>
           <span>
             Neto extras:{" "}
             <strong style={{ color: neto >= 0 ? "#198754" : "#dc3545" }}>{pesos(neto)}</strong>
@@ -705,6 +727,11 @@ const GastosSemanales = () => {
   const autoSaveTimer = useRef(null);
 
   const semanaKey = toKey(lunes);
+  // Fecha con la que se sella la fila automática de diferencia horaria (la misma
+  // que usa cargarSemana al generarla).
+  const sabadoSemana = new Date(lunes);
+  sabadoSemana.setDate(sabadoSemana.getDate() + 5);
+  const sabadoSemanaKey = toKey(sabadoSemana);
   const domingo = new Date(lunes);
   domingo.setDate(domingo.getDate() + 6);
   const labelSemana = `${formatFecha(lunes)} al ${formatFecha(domingo)}/${domingo.getFullYear()}`;
@@ -1286,8 +1313,10 @@ const GastosSemanales = () => {
         personalNombre={verExtras?.nombre}
         extras={verExtras !== null ? (registros[verExtras.idx]?.extras || []) : []}
         tarifaHora={verExtras !== null ? valorHora(registros[verExtras.idx] || {}) : 0}
-        onGuardar={(nuevosExtras) => {
-          const nuevos = registros.map((r, i) => (i === verExtras.idx ? { ...r, extras: nuevosExtras } : r));
+        extraDif={verExtras !== null ? construirExtraDif(registros[verExtras.idx] || {}, sabadoSemanaKey) : null}
+        difOmitida={verExtras !== null ? !!registros[verExtras.idx]?.difOmitida : false}
+        onGuardar={(nuevosExtras, difOmitida) => {
+          const nuevos = registros.map((r, i) => (i === verExtras.idx ? { ...r, extras: nuevosExtras, difOmitida } : r));
           setRegistros(nuevos);
           return guardarGastoSemanal(semanaKey, nuevos);
         }}
