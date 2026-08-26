@@ -136,6 +136,10 @@ const RemitosXClientesFinal = () => {
         return total + subtotalRemito;
       }, 0);
 
+  // En el modal de O.C. solo se ofrecen los remitos que todavía no tienen
+  // una O.C. asignada (los ya asignados no se vuelven a listar).
+  const remitosSinOC = remitos.filter((r) => !String(r.oc || "").trim());
+
   const handleSaveOC = async () => {
     if (!ocInput.trim() || selectedRemitoIds.length === 0) return;
     try {
@@ -360,10 +364,10 @@ const RemitosXClientesFinal = () => {
                 </Dropdown.Toggle>
 
                 <Dropdown.Menu className="w-100" style={{ maxHeight: "250px", overflowY: "auto" }}>
-                  {remitos.length === 0 ? (
-                    <Dropdown.Item disabled>No hay remitos disponibles</Dropdown.Item>
+                  {remitosSinOC.length === 0 ? (
+                    <Dropdown.Item disabled>No hay remitos sin O.C. asignada</Dropdown.Item>
                   ) : (
-                    remitos.map((r) => {
+                    remitosSinOC.map((r) => {
                       const isChecked = selectedRemitoIds.includes(r._id);
                       const totalRemito = r.items.reduce((sum, item) => sum + item.cantidad * item.precioUnitario, 0);
                       return (
