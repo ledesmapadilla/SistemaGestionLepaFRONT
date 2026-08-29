@@ -1228,7 +1228,7 @@ const GastosSemanales = () => {
                       )}
                     </td>
                     <td><CeldaMoneda value={r.semanal} onChange={(v) => actualizar(idx, "semanal", v)} textStyle={{ fontSize: "0.62rem", color: "#9ca3af" }} /></td>
-                    <td><CeldaMoneda value={r.ausentismo} onChange={(v) => actualizar(idx, "ausentismo", v)} /></td>
+                    <td><CeldaMoneda value={r.ausentismo} onChange={(v) => actualizar(idx, "ausentismo", v)} textStyle={{ fontSize: "0.62rem", color: "#9ca3af" }} /></td>
                     <td>
                       {r.extras?.length > 0 ? (
                         <span
