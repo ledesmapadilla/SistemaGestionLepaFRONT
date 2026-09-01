@@ -246,7 +246,7 @@ const NuevaFacturaProveedor = () => {
           </Col>
           <Col md={3}>
             <Form.Group>
-              <Form.Label>Razón social</Form.Label>
+              <Form.Label>Razón social (a imputar)</Form.Label>
               <Form.Select {...register("razonsocial")}>
                 <option value="">Sin imputar</option>
                 {razonesSociales.map((rs) => (
