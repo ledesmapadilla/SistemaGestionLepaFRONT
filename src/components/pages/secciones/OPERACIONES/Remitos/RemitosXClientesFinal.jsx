@@ -24,6 +24,7 @@ const RemitosXClientesFinal = () => {
 
   const [remitos, setRemitos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filtroRemito, setFiltroRemito] = useState("");
   const headerRef = useRef(null);
 
   useEffect(() => {
@@ -135,6 +136,12 @@ const RemitosXClientesFinal = () => {
         }, 0);
         return total + subtotalRemito;
       }, 0);
+
+  // El filtro es por coincidencia parcial del número, igual que en Remitos:
+  // tipeando "90" aparecen el 90, el 900 y el 1902.
+  const remitosFiltrados = filtroRemito.trim()
+    ? remitos.filter((r) => String(r.remito).includes(filtroRemito.trim()))
+    : remitos;
 
   // En el modal de O.C. solo se ofrecen los remitos que todavía no tienen
   // una O.C. asignada (los ya asignados no se vuelven a listar).
@@ -293,6 +300,17 @@ const RemitosXClientesFinal = () => {
           </div>
         </div>
 
+        <div className="mb-2">
+          <Form.Control
+            size="sm"
+            type="search"
+            placeholder="N° Remito..."
+            value={filtroRemito}
+            onChange={(e) => setFiltroRemito(e.target.value)}
+            style={{ width: "170px" }}
+          />
+        </div>
+
         <div className="table-responsive shadow-sm" style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
           <Table striped bordered hover className="align-middle text-center tabla-remitos">
             <thead className="table-dark">
@@ -310,8 +328,8 @@ const RemitosXClientesFinal = () => {
               </tr>
             </thead>
             <tbody>
-              {remitos.length > 0 ? (
-                remitos.map((remito) =>
+              {remitosFiltrados.length > 0 ? (
+                remitosFiltrados.map((remito) =>
                   remito.items.map((item, index) => (
                     <tr key={`${remito._id}-${item._id}`}>
                       <td>{remito.remito}</td>
@@ -330,7 +348,9 @@ const RemitosXClientesFinal = () => {
               ) : (
                 <tr>
                   <td colSpan="10" className="py-4 text-muted">
-                    No hay remitos pendientes de facturación para esta obra.
+                    {filtroRemito.trim()
+                      ? `No hay remitos sin facturar con el N° ${filtroRemito.trim()}.`
+                      : "No hay remitos pendientes de facturación para esta obra."}
                   </td>
                 </tr>
               )}
