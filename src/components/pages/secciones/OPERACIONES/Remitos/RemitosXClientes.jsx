@@ -130,7 +130,7 @@ const RemitosXClientes = () => {
 
   return (
     <div className="w-75 mx-auto my-2">
-      <h6 className="text-center mb-3">Remitos sin facturar</h6>
+      <h6 className="text-center mb-3">Remitos sin facturar <small className="text-muted">(sin iva)</small></h6>
       <div className="d-flex justify-content-end gap-2 mb-3">
         <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
         <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>

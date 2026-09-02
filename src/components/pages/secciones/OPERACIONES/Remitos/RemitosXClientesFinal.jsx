@@ -268,7 +268,7 @@ const RemitosXClientesFinal = () => {
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0 }}>
       <div className="container" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
         <div ref={headerRef} className="pt-2 pb-1">
-          <h6 className="text-center mb-2">Remitos sin facturar</h6>
+          <h6 className="text-center mb-2">Remitos sin facturar <small className="text-muted">(sin iva)</small></h6>
           <div className="row align-items-center mb-2">
             <div className="col-4">
               <h6 className="mb-1">Razón social: <span className="titulosLetras">{razonsocial}</span></h6>
