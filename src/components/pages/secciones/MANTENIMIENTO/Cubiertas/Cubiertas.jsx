@@ -18,6 +18,11 @@ const hoy = () => new Date().toLocaleDateString("en-CA");
 const VACIO_ALTA  = { nombreCubierta: "", fecha: hoy() };
 const VACIO_NUEVA = { cubierta: "", maquina: "", fecha: hoy(), observaciones: "" };
 
+// Color de las advertencias de cantidad: rojo si faltan cubiertas, azul si sobran.
+const COLOR_FALTA = "#dc3545";
+const COLOR_SOBRA = "#6ea8fe";
+const colorAlerta = (txt) => (/sobra/i.test(txt || "") ? COLOR_SOBRA : COLOR_FALTA);
+
 export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas camiones y carretones" }) {
   const navigate = useNavigate();
   const [registros, setRegistros] = useState([]);
@@ -171,7 +176,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
         cerrarNueva();
         const advertencia = alertaCantidadMaquina(nuevos, data.registro?.maquina?.maquina);
         if (advertencia) {
-          Swal.fire({ icon: "warning", title: "Cubierta registrada", html: `Registro guardado.<br><span style="color:#dc3545;font-weight:600;">⚠️ ${advertencia}</span>` });
+          Swal.fire({ icon: "warning", title: "Cubierta registrada", html: `Registro guardado.<br><span style="color:${colorAlerta(advertencia)};font-weight:600;">⚠️ ${advertencia}</span>` });
         } else {
           Swal.fire({ icon: "success", title: "Cubierta registrada", timer: 1500, showConfirmButton: false });
         }
@@ -227,7 +232,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
           if (advOrigen) advertencias.push(advOrigen);
         }
         if (advertencias.length > 0) {
-          Swal.fire({ icon: "warning", title: "Registro actualizado", html: `Cambio guardado.<br><span style="color:#dc3545;font-weight:600;">⚠️ ${advertencias.join("<br>⚠️ ")}</span>` });
+          Swal.fire({ icon: "warning", title: "Registro actualizado", html: `Cambio guardado.<br>${advertencias.map((a) => `<span style="color:${colorAlerta(a)};font-weight:600;">⚠️ ${a}</span>`).join("<br>")}` });
         } else {
           Swal.fire({ icon: "success", title: "Registro actualizado", timer: 1500, showConfirmButton: false });
         }
@@ -632,7 +637,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
                       <td>{g.maquina}</td>
                       <td>{g.cantidad}</td>
                       <td>{g.fecha ? new Date(g.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
-                      <td className={g.alerta ? "text-danger fw-semibold" : ""}>{g.alerta || "-"}</td>
+                      <td className={g.alerta ? "fw-semibold" : ""} style={g.alerta ? { color: colorAlerta(g.alerta) } : undefined}>{g.alerta || "-"}</td>
                       <td>
                         <Button size="sm" variant="outline-success" onClick={() => setDetalleResumen(g)} disabled={g.cantidad === 0}>Ver</Button>
                       </td>
