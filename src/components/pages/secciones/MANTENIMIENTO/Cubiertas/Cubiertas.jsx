@@ -18,10 +18,23 @@ const hoy = () => new Date().toLocaleDateString("en-CA");
 const VACIO_ALTA  = { nombreCubierta: "", fecha: hoy() };
 const VACIO_NUEVA = { cubierta: "", maquina: "", fecha: hoy(), observaciones: "" };
 
-// Color de las advertencias de cantidad: rojo si faltan cubiertas, azul si sobran.
+// Advertencias de cantidad: el texto va en rojo y solo la palabra "sobra/sobran"
+// se pinta de azul, para diferenciar a simple vista sobrantes de faltantes.
 const COLOR_FALTA = "#dc3545";
 const COLOR_SOBRA = "#6ea8fe";
-const colorAlerta = (txt) => (/sobra/i.test(txt || "") ? COLOR_SOBRA : COLOR_FALTA);
+const RE_SOBRA = /(sobran?)/i;
+// Version HTML (SweetAlert).
+const alertaHtml = (txt) =>
+  `<span style="color:${COLOR_FALTA};font-weight:600;">⚠️ ${(txt || "").replace(
+    /(sobran?)/gi,
+    `<span style="color:${COLOR_SOBRA};">$1</span>`
+  )}</span>`;
+// Version JSX (tabla del resumen). split con grupo de captura: los indices
+// impares son las coincidencias de "sobra/sobran".
+const alertaJsx = (txt) =>
+  (txt || "").split(RE_SOBRA).map((parte, i) =>
+    i % 2 === 1 ? <span key={i} style={{ color: COLOR_SOBRA }}>{parte}</span> : parte
+  );
 
 export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas camiones y carretones" }) {
   const navigate = useNavigate();
@@ -176,7 +189,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
         cerrarNueva();
         const advertencia = alertaCantidadMaquina(nuevos, data.registro?.maquina?.maquina);
         if (advertencia) {
-          Swal.fire({ icon: "warning", title: "Cubierta registrada", html: `Registro guardado.<br><span style="color:${colorAlerta(advertencia)};font-weight:600;">⚠️ ${advertencia}</span>` });
+          Swal.fire({ icon: "warning", title: "Cubierta registrada", html: `Registro guardado.<br>${alertaHtml(advertencia)}` });
         } else {
           Swal.fire({ icon: "success", title: "Cubierta registrada", timer: 1500, showConfirmButton: false });
         }
@@ -232,7 +245,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
           if (advOrigen) advertencias.push(advOrigen);
         }
         if (advertencias.length > 0) {
-          Swal.fire({ icon: "warning", title: "Registro actualizado", html: `Cambio guardado.<br>${advertencias.map((a) => `<span style="color:${colorAlerta(a)};font-weight:600;">⚠️ ${a}</span>`).join("<br>")}` });
+          Swal.fire({ icon: "warning", title: "Registro actualizado", html: `Cambio guardado.<br>${advertencias.map(alertaHtml).join("<br>")}` });
         } else {
           Swal.fire({ icon: "success", title: "Registro actualizado", timer: 1500, showConfirmButton: false });
         }
@@ -637,7 +650,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
                       <td>{g.maquina}</td>
                       <td>{g.cantidad}</td>
                       <td>{g.fecha ? new Date(g.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
-                      <td className={g.alerta ? "fw-semibold" : ""} style={g.alerta ? { color: colorAlerta(g.alerta) } : undefined}>{g.alerta || "-"}</td>
+                      <td className={g.alerta ? "fw-semibold" : ""} style={g.alerta ? { color: COLOR_FALTA } : undefined}>{g.alerta ? alertaJsx(g.alerta) : "-"}</td>
                       <td>
                         <Button size="sm" variant="outline-success" onClick={() => setDetalleResumen(g)} disabled={g.cantidad === 0}>Ver</Button>
                       </td>
