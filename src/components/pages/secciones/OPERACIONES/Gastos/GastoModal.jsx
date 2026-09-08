@@ -7,6 +7,8 @@ import {
 } from "../../../../../helpers/queriesGastos";
 import Swal from "sweetalert2";
 
+const hoy = () => new Date().toLocaleDateString("en-CA");
+
 const GastoModal = ({
   show,
   handleClose,
@@ -16,6 +18,7 @@ const GastoModal = ({
   preciosObra,
 }) => {
   const initialState = {
+    fecha: hoy(),
     item: "",
     cantidad: "",
     unidad: "",
@@ -33,6 +36,12 @@ const GastoModal = ({
     if (show) {
       if (gastoEditar) {
         setFormData({
+          // Gastos viejos sin fecha propia: se toma la de carga.
+          fecha:
+            gastoEditar.fecha ||
+            (gastoEditar.createdAt
+              ? gastoEditar.createdAt.toString().slice(0, 10)
+              : hoy()),
           item: gastoEditar.item || "",
           cantidad: gastoEditar.cantidad || "",
           unidad: gastoEditar.unidad || "",
@@ -72,6 +81,7 @@ const GastoModal = ({
 
   const validarFormulario = () => {
     const nuevosErrores = {};
+    if (!formData.fecha) nuevosErrores.fecha = "Requerido";
     if (!formData.item.trim()) nuevosErrores.item = "Requerido";
     if (!formData.cantidad || Number(formData.cantidad) <= 0)
       nuevosErrores.cantidad = "> 0";
@@ -94,6 +104,7 @@ const GastoModal = ({
     setSubmitting(true);
 
     const datosGasto = {
+      fecha: formData.fecha,
       item: formData.item,
       cantidad: Number(formData.cantidad),
       unidad: formData.unidad,
@@ -140,6 +151,20 @@ const GastoModal = ({
       </Modal.Header>
       <Form onSubmit={handleSubmit}>
         <Modal.Body>
+          <Form.Group className="mb-3">
+            <Form.Label>Fecha *</Form.Label>
+            <Form.Control
+              type="date"
+              name="fecha"
+              value={formData.fecha}
+              onChange={handleChange}
+              isInvalid={!!errors.fecha}
+            />
+            <Form.Control.Feedback type="invalid">
+              {errors.fecha}
+            </Form.Control.Feedback>
+          </Form.Group>
+
           <Form.Group className="mb-3">
             <Form.Label>Item *</Form.Label>
 

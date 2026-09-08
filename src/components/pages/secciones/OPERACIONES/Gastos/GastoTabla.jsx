@@ -34,6 +34,14 @@ const buscarPrecioVigente = (precios, clasificacion, trabajo, fechaRef) => {
   return vigentes.length > 0 ? vigentes[0] : candidatos[0];
 };
 
+// Los gastos cargados antes de que existiera el campo `fecha` no lo tienen:
+// para esos se usa la fecha de carga.
+const fechaGasto = (gasto) =>
+  gasto?.fecha || (gasto?.createdAt ? gasto.createdAt.toString().slice(0, 10) : "");
+
+const formatoFecha = (fecha) =>
+  fecha ? fecha.toString().slice(0, 10).split("-").reverse().join("-") : "-";
+
 const GastoTabla = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -262,12 +270,14 @@ const GastoTabla = () => {
     }
   };
 
-  const gastosFiltrados = gastos.filter((gasto) => {
-    const texto = busqueda.trim().toLowerCase();
-    const item = gasto.item?.toLowerCase() || "";
-    const remito = gasto.remito?.toLowerCase() || "";
-    return item.includes(texto) || remito.includes(texto);
-  });
+  const gastosFiltrados = gastos
+    .filter((gasto) => {
+      const texto = busqueda.trim().toLowerCase();
+      const item = gasto.item?.toLowerCase() || "";
+      const remito = gasto.remito?.toLowerCase() || "";
+      return item.includes(texto) || remito.includes(texto);
+    })
+    .sort((a, b) => fechaGasto(b).localeCompare(fechaGasto(a)));
 
   const eliminarGasto = async (id) => {
     Swal.fire({
@@ -318,17 +328,18 @@ const GastoTabla = () => {
   };
 
   const exportarExcel = () => {
-    const headers = ["Item", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Observaciones"];
-    const cols = ["A", "B", "C", "D", "E", "F"];
+    const headers = ["Fecha", "Item", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Observaciones"];
+    const cols = ["A", "B", "C", "D", "E", "F", "G"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
 
     const filas = [
       // Gasoil automático
-      ["Gasoil", infoGasoil.cantidad, "lts", infoGasoil.precio, infoGasoil.total, "Cargas de gasoil y remitos (precio prom.)"],
+      ["Varias", "Gasoil", infoGasoil.cantidad, "lts", infoGasoil.precio, infoGasoil.total, "Cargas de gasoil y remitos (precio prom.)"],
       // Maquinistas
       ...listaMaquinistas.map((maq) => [
+        "Varias",
         maq.nombre,
         maq.cantidad,
         maq.tipo === "servicio" ? "Día" : "Hs",
@@ -338,6 +349,7 @@ const GastoTabla = () => {
       ]),
       // Pagos a proveedores
       ...pagosProveedoresObra.map((p) => [
+        formatoFecha(p.fecha),
         `Pago a ${p.proveedor}`,
         1,
         "pago",
@@ -346,14 +358,17 @@ const GastoTabla = () => {
         `Fact. ${p.factura?.tipoFactura} N°${p.factura?.numeroFactura}${p.factura?.concepto ? ` — ${p.factura.concepto}` : ""}`,
       ]),
       // Gastos manuales
-      ...gastos.map((g) => [
-        g.item,
-        Number(g.cantidad) || 0,
-        g.unidad,
-        Number(g.costoUnitario) || 0,
-        (Number(g.cantidad) || 0) * (Number(g.costoUnitario) || 0),
-        g.observaciones || "-",
-      ]),
+      ...[...gastos]
+        .sort((a, b) => fechaGasto(b).localeCompare(fechaGasto(a)))
+        .map((g) => [
+          formatoFecha(fechaGasto(g)),
+          g.item,
+          Number(g.cantidad) || 0,
+          g.unidad,
+          Number(g.costoUnitario) || 0,
+          (Number(g.cantidad) || 0) * (Number(g.costoUnitario) || 0),
+          g.observaciones || "-",
+        ]),
     ];
 
     const ws = {};
@@ -367,7 +382,7 @@ const GastoTabla = () => {
       ws[`${cols[i]}6`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
     });
 
-    const currencyCols = new Set([3, 4]); // $ Unitario y $ Total
+    const currencyCols = new Set([4, 5]); // $ Unitario y $ Total
     filas.forEach((fila, rowIdx) => {
       fila.forEach((val, colIdx) => {
         const isCurrency = currencyCols.has(colIdx) && typeof val === "number";
@@ -380,8 +395,8 @@ const GastoTabla = () => {
       });
     });
 
-    ws["!ref"] = `A1:F${filas.length + 6}`;
-    ws["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 30 }];
+    ws["!ref"] = `A1:G${filas.length + 6}`;
+    ws["!cols"] = [{ wch: 12 }, { wch: 22 }, { wch: 10 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 30 }];
 
     const libro = XLSXStyle.utils.book_new();
     XLSXStyle.utils.book_append_sheet(libro, ws, "Gastos");
@@ -447,6 +462,7 @@ const GastoTabla = () => {
         <Table striped bordered hover className="text-center align-middle">
           <thead className="table-dark">
             <tr>
+              <th>Fecha</th>
               <th>Item</th>
               <th>Cant.</th>
               <th>Unidad</th>
@@ -459,6 +475,7 @@ const GastoTabla = () => {
           <tbody>
             {/* 1. FILA AUTOMÁTICA DE GASOIL */}
             <tr>
+              <td className="text-muted">Varias</td>
               <td className="text-primary">Gasoil</td>
               <td>{infoGasoil.cantidad}</td>
               <td>lts</td>
@@ -480,6 +497,7 @@ const GastoTabla = () => {
             {/* 2. MAQUINISTAS DESGLOSADOS */}
             {listaMaquinistas.map((maq, index) => (
               <tr key={`maq-${index}`}>
+                <td className="text-muted">Varias</td>
                 <td className="text-success">{maq.nombre}</td>
                 
                 <td>{maq.cantidad}</td>
@@ -508,6 +526,7 @@ const GastoTabla = () => {
             {/* 3. PAGOS A PROVEEDORES */}
             {pagosProveedoresObra.map((p) => (
               <tr key={p._id}>
+                <td>{formatoFecha(p.fecha)}</td>
                 <td style={{ color: "#f0a500" }}>Pago a {p.proveedor}</td>
                 <td>1</td>
                 <td>pago</td>
@@ -526,7 +545,7 @@ const GastoTabla = () => {
             {/* 4. GASTOS MANUALES */}
             {gastosFiltrados.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-4">
+                <td colSpan={8} className="py-4">
                   No hay gastos manuales registrados.
                 </td>
               </tr>
@@ -538,6 +557,7 @@ const GastoTabla = () => {
 
                 return (
                   <tr key={g._id || i}>
+                    <td className="text-nowrap">{formatoFecha(fechaGasto(g))}</td>
                     <td>{g.item}</td>
                     <td>{cantidad}</td>
                     <td>{g.unidad}</td>
@@ -697,6 +717,10 @@ const GastoTabla = () => {
           <Table bordered size="sm" className="align-middle mb-0">
             <tbody>
               <tr>
+                <td>Fecha</td>
+                <td>{formatoFecha(fechaGasto(gastoVer))}</td>
+              </tr>
+              <tr>
                 <td>Remito</td>
                 <td>{gastoVer?.remito || "-"}</td>
               </tr>
@@ -722,7 +746,7 @@ const GastoTabla = () => {
               </tr>
               <tr>
                 <td>Fecha de carga</td>
-                <td>{gastoVer?.createdAt ? gastoVer.createdAt.toString().slice(0, 10).split("-").reverse().join("-") : "-"}</td>
+                <td>{formatoFecha(gastoVer?.createdAt)}</td>
               </tr>
             </tbody>
           </Table>
