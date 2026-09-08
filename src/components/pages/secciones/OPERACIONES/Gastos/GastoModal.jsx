@@ -9,6 +9,15 @@ import Swal from "sweetalert2";
 
 const hoy = () => new Date().toLocaleDateString("en-CA");
 
+// Mismo criterio que en el modal de Personal: mientras se edita se ve el número
+// pelado y al salir del campo se muestra con formato de moneda.
+const formatoMonedaInput = (valor) => {
+  if (valor === undefined || valor === null || valor === "") return "";
+  const numero = Number(valor);
+  if (isNaN(numero)) return valor;
+  return `$ ${new Intl.NumberFormat("es-AR").format(numero)}`;
+};
+
 const GastoModal = ({
   show,
   handleClose,
@@ -28,6 +37,7 @@ const GastoModal = ({
 
   const [formData, setFormData] = useState(initialState);
   const [errors, setErrors] = useState({});
+  const [editandoCosto, setEditandoCosto] = useState(false);
 
   const listaPreciosObra = preciosObra || [];
 
@@ -52,6 +62,7 @@ const GastoModal = ({
         setFormData(initialState);
       }
       setErrors({});
+      setEditandoCosto(false);
     }
   }, [show, gastoEditar]);
 
@@ -236,10 +247,27 @@ const GastoModal = ({
           <Form.Group className="mb-3">
             <Form.Label>Costo Unitario *</Form.Label>
             <Form.Control
-              type="number"
+              type="text"
+              inputMode="decimal"
               name="costoUnitario"
-              value={formData.costoUnitario}
-              onChange={handleChange}
+              placeholder="$ 0"
+              value={
+                editandoCosto
+                  ? formData.costoUnitario
+                  : formatoMonedaInput(formData.costoUnitario)
+              }
+              onFocus={(e) => {
+                setEditandoCosto(true);
+                const el = e.target;
+                setTimeout(() => el.select(), 0);
+              }}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  costoUnitario: e.target.value.replace(/[^\d.]/g, ""),
+                }))
+              }
+              onBlur={() => setEditandoCosto(false)}
               isInvalid={!!errors.costoUnitario}
             />
           </Form.Group>
