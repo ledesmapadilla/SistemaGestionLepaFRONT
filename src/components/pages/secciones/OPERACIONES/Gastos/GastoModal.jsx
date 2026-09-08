@@ -9,13 +9,26 @@ import Swal from "sweetalert2";
 
 const hoy = () => new Date().toLocaleDateString("en-CA");
 
-// Mismo criterio que en el modal de Personal: mientras se edita se ve el número
-// pelado y al salir del campo se muestra con formato de moneda.
+// El monto se muestra siempre con formato de moneda, también mientras se
+// escribe. En el estado se guarda el número pelado ("1500.5") y acá se arma el
+// texto que se ve ("$ 1.500,5").
 const formatoMonedaInput = (valor) => {
   if (valor === undefined || valor === null || valor === "") return "";
-  const numero = Number(valor);
-  if (isNaN(numero)) return valor;
-  return `$ ${new Intl.NumberFormat("es-AR").format(numero)}`;
+  const [entera, decimal] = String(valor).split(".");
+  const digitos = entera.replace(/\D/g, "");
+  const enteraFmt = digitos
+    ? new Intl.NumberFormat("es-AR").format(Number(digitos))
+    : "";
+  return `$ ${enteraFmt}${decimal !== undefined ? `,${decimal}` : ""}`;
+};
+
+// Vuelve del texto que se ve al número pelado. El punto es el separador de miles
+// que agrega el propio formato, así que se descarta; los centavos se escriben
+// con coma, como en es-AR.
+const limpiarMonto = (texto) => {
+  const crudo = String(texto).replace(/[^\d,]/g, "");
+  const [entera, ...resto] = crudo.split(",");
+  return resto.length ? `${entera}.${resto.join("").slice(0, 2)}` : entera;
 };
 
 const GastoModal = ({
@@ -37,7 +50,6 @@ const GastoModal = ({
 
   const [formData, setFormData] = useState(initialState);
   const [errors, setErrors] = useState({});
-  const [editandoCosto, setEditandoCosto] = useState(false);
 
   const listaPreciosObra = preciosObra || [];
 
@@ -62,7 +74,6 @@ const GastoModal = ({
         setFormData(initialState);
       }
       setErrors({});
-      setEditandoCosto(false);
     }
   }, [show, gastoEditar]);
 
@@ -251,23 +262,17 @@ const GastoModal = ({
               inputMode="decimal"
               name="costoUnitario"
               placeholder="$ 0"
-              value={
-                editandoCosto
-                  ? formData.costoUnitario
-                  : formatoMonedaInput(formData.costoUnitario)
-              }
+              value={formatoMonedaInput(formData.costoUnitario)}
               onFocus={(e) => {
-                setEditandoCosto(true);
                 const el = e.target;
                 setTimeout(() => el.select(), 0);
               }}
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-                  costoUnitario: e.target.value.replace(/[^\d.]/g, ""),
+                  costoUnitario: limpiarMonto(e.target.value),
                 }))
               }
-              onBlur={() => setEditandoCosto(false)}
               isInvalid={!!errors.costoUnitario}
             />
           </Form.Group>
