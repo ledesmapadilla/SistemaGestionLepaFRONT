@@ -222,7 +222,10 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
                     >
                       Utilizar
                     </Dropdown.Toggle>
-                    <Dropdown.Menu>
+                    {/* strategy "fixed": el menu sale del flujo y no le suma
+                        ancho al contenedor con overflow, que si no dispara
+                        el scroll horizontal de la tabla */}
+                    <Dropdown.Menu align="end" popperConfig={{ strategy: "fixed" }}>
                       {USOS.map((uso) => (
                         <Dropdown.Item key={uso} eventKey={uso}>
                           {uso}
