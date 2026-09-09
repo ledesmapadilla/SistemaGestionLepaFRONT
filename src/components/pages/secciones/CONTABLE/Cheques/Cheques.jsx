@@ -3,6 +3,19 @@ import { listarCobros, actualizarEstadoCheque } from "../../../../../helpers/que
 import { listarProveedores } from "../../../../../helpers/queriesProveedores.js";
 import { Spinner, Modal, Button, Form, InputGroup } from "react-bootstrap";
 import ChequesTabla from "./ChequesTabla.jsx";
+import Swal from "sweetalert2";
+
+const avisoDestino = (destino) =>
+  Swal.fire({
+    icon: "success",
+    title: "Destino asignado",
+    text: `El cheque quedó en "${destino}".`,
+    timer: 1500,
+    showConfirmButton: false,
+  });
+
+const avisoError = () =>
+  Swal.fire("Error", "No se pudo asignar el destino del cheque.", "error");
 
 const Cheques = () => {
   const [loading, setLoading] = useState(true);
@@ -96,30 +109,24 @@ const Cheques = () => {
       setObsCambio("");
       return;
     }
-    if (uso === "En cartera") {
-      await actualizarEstadoCheque(fila.cobroId, fila.medioIndex, "En cartera", "", "", { tasaInteres: null, gastosPorc: null, montoDescontado: null, fechaCambio: "" });
-      setCheques((prev) =>
-        prev.map((c) =>
-          c._id === fila._id ? { ...c, estado: "En cartera", proveedor: "", tasaInteres: null, gastosPorc: null, montoDescontado: null, fechaCambio: "", observaciones: "" } : c
-        )
-      );
-      return;
-    }
-    await actualizarEstadoCheque(fila.cobroId, fila.medioIndex, uso, "", "", { tasaInteres: null, gastosPorc: null, montoDescontado: null, fechaCambio: "" });
+    const resp = await actualizarEstadoCheque(fila.cobroId, fila.medioIndex, uso, "", "", { tasaInteres: null, gastosPorc: null, montoDescontado: null, fechaCambio: "" });
+    if (!resp?.ok) return avisoError();
     setCheques((prev) =>
       prev.map((c) =>
         c._id === fila._id ? { ...c, estado: uso, proveedor: "", tasaInteres: null, gastosPorc: null, montoDescontado: null, fechaCambio: "", observaciones: "" } : c
       )
     );
+    avisoDestino(uso);
   };
 
   const confirmarPagoProveedor = async () => {
-    if (!proveedor.trim()) return;
-    await actualizarEstadoCheque(
+    if (!proveedor.trim()) return Swal.fire("Atención", "El proveedor es obligatorio.", "warning");
+    const resp = await actualizarEstadoCheque(
       modalPago.cobroId, modalPago.medioIndex,
       "Pago proveedores", observaciones.trim(), proveedor.trim(),
       { tasaInteres: null, gastosPorc: null, montoDescontado: null }
     );
+    if (!resp?.ok) return avisoError();
     setCheques((prev) =>
       prev.map((c) =>
         c._id === modalPago._id
@@ -128,6 +135,7 @@ const Cheques = () => {
       )
     );
     setModalPago(null);
+    avisoDestino("Pago proveedores");
   };
 
   const parsearNumero = (val) => {
@@ -168,10 +176,11 @@ const Cheques = () => {
       montoDescontado: parsearNumero(montoDescontado),
       fechaCambio: fechaCambio.trim(),
     };
-    await actualizarEstadoCheque(
+    const resp = await actualizarEstadoCheque(
       modalCambio.cobroId, modalCambio.medioIndex,
       "Cambio", obsCambio.trim(), empresaCambio.trim(), extras
     );
+    if (!resp?.ok) return avisoError();
     setCheques((prev) =>
       prev.map((c) =>
         c._id === modalCambio._id
@@ -180,6 +189,7 @@ const Cheques = () => {
       )
     );
     setModalCambio(null);
+    avisoDestino("Cambio");
   };
 
   const formatoMoneda = (valor) =>
