@@ -308,7 +308,18 @@ export default function Baterias() {
       .filter((m) => !MAQUINAS_SIN_BATERIA.includes((m.maquina || "").toLowerCase().trim()))
       .forEach((m) => agregar(m.maquina));
 
+    // Los nombres de batería son numéricos: se ordenan como número cuando se
+    // puede, y alfabéticamente si alguno no lo fuera.
+    const ordenarPorNombre = (a, b) => {
+      const na = parseInt(a.nombreBateria, 10);
+      const nb = parseInt(b.nombreBateria, 10);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return String(a.nombreBateria).localeCompare(String(b.nombreBateria));
+    };
+
     return [...grupos.values()].map((g) => {
+      g.items.sort(ordenarPorNombre);
+      const numeros = g.items.map((it) => it.nombreBateria).join(", ");
       const esperada = BATERIAS_ESPERADAS[g.maquina.toLowerCase().trim()];
       let alerta = "";
       if (esperada !== undefined) {
@@ -320,7 +331,7 @@ export default function Baterias() {
           alerta = diff === 1 ? "Sobra una batería" : `Sobran ${diff} baterías`;
         }
       }
-      return { ...g, alerta };
+      return { ...g, numeros, alerta };
     }).sort((a, b) => {
       // Máquinas con cantidad esperada primero
       const pa = BATERIAS_ESPERADAS[a.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
@@ -460,6 +471,7 @@ export default function Baterias() {
                   <tr>
                     <th>Máquina</th>
                     <th>Cantidad de baterías</th>
+                    <th>N° de baterías</th>
                     <th>Fecha</th>
                     <th>Observaciones</th>
                     <th>Acciones</th>
@@ -470,6 +482,7 @@ export default function Baterias() {
                     <tr key={g.maquina}>
                       <td>{g.maquina}</td>
                       <td>{g.cantidad}</td>
+                      <td>{g.numeros || "-"}</td>
                       <td>{g.fecha ? new Date(g.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
                       <td className={g.alerta ? "fw-semibold" : ""} style={g.alerta ? { color: COLOR_FALTA } : undefined}>{g.alerta ? alertaJsx(g.alerta) : "-"}</td>
                       <td>
