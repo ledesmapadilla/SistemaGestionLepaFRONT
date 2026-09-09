@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Table, Dropdown, Button, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import XLSXStyle from "xlsx-js-style";
@@ -222,16 +223,20 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
                     >
                       Utilizar
                     </Dropdown.Toggle>
-                    {/* strategy "fixed": el menu sale del flujo y no le suma
-                        ancho al contenedor con overflow, que si no dispara
-                        el scroll horizontal de la tabla */}
-                    <Dropdown.Menu align="end" popperConfig={{ strategy: "fixed" }}>
-                      {USOS.map((uso) => (
-                        <Dropdown.Item key={uso} eventKey={uso}>
-                          {uso}
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown.Menu>
+                    {/* El menu va por portal al body: dentro de la tabla queda
+                        atrapado en el div con overflow, que lo recorta y le
+                        agrega scroll. El contexto de Dropdown viaja igual por
+                        el arbol de React, asi que onSelect sigue funcionando. */}
+                    {createPortal(
+                      <Dropdown.Menu align="end" popperConfig={{ strategy: "fixed" }}>
+                        {USOS.map((uso) => (
+                          <Dropdown.Item key={uso} eventKey={uso}>
+                            {uso}
+                          </Dropdown.Item>
+                        ))}
+                      </Dropdown.Menu>,
+                      document.body
+                    )}
                   </Dropdown>
                 </td>
               </tr>
