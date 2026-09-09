@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Table, Dropdown, Button, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import XLSXStyle from "xlsx-js-style";
+import { useAuth } from "../../../../../context/AuthContext";
 
 const hoy = new Date().toLocaleDateString("en-CA");
 
@@ -35,6 +36,11 @@ const esVencido = (fecha, estado) => !!fecha && fecha <= hoy && estado === "En c
 
 const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
   const navigate = useNavigate();
+  const { usuario } = useAuth();
+  // Nacho puede reasignar el uso de un cheque en cualquier estado, no solo "En cartera"
+  const puedeUtilizarSiempre = `${usuario?.usuario || ""} ${usuario?.nombre || ""}`
+    .toLowerCase()
+    .includes("nacho");
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroNumero, setFiltroNumero] = useState("");
   const [filtroValor, setFiltroValor] = useState("");
@@ -210,7 +216,11 @@ const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
                     Ver
                   </Button>
                   <Dropdown onSelect={(uso) => onUtilizar(c, uso)}>
-                    <Dropdown.Toggle size="sm" variant="outline-primary" disabled={c.estado !== "En cartera"}>
+                    <Dropdown.Toggle
+                      size="sm"
+                      variant="outline-primary"
+                      disabled={!puedeUtilizarSiempre && c.estado !== "En cartera"}
+                    >
                       Utilizar
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
