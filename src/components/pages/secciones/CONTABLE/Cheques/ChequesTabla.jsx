@@ -37,10 +37,9 @@ const esVencido = (fecha, estado) => !!fecha && fecha <= hoy && estado === "En c
 const ChequesTabla = ({ cheques, onUtilizar, onVer }) => {
   const navigate = useNavigate();
   const { usuario } = useAuth();
-  // Nacho puede reasignar el uso de un cheque en cualquier estado, no solo "En cartera"
-  const puedeUtilizarSiempre = `${usuario?.usuario || ""} ${usuario?.nombre || ""}`
-    .toLowerCase()
-    .includes("nacho");
+  // El superadministrador puede reasignar el uso de un cheque en cualquier
+  // estado, no solo cuando esta "En cartera"
+  const puedeUtilizarSiempre = usuario?.rol === "superadministrador";
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroNumero, setFiltroNumero] = useState("");
   const [filtroValor, setFiltroValor] = useState("");
