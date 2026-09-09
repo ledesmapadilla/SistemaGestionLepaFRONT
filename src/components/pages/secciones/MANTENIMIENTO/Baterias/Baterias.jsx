@@ -18,6 +18,24 @@ const hoy = () => new Date().toLocaleDateString("en-CA");
 const VACIO_ALTA  = { nombreBateria: "", marca: "", fecha: hoy() };
 const VACIO_NUEVA = { bateria: "", maquina: "", fecha: hoy(), observaciones: "" };
 
+// Máquinas que no llevan batería propia (mismo criterio que el select de "Nueva batería").
+const MAQUINAS_SIN_BATERIA = ["batea 1", "batea 2", "carreton grande", "carretón grande", "carreton chico", "carretón chico"];
+
+// Cantidad de baterías esperada por máquina (nombre en minúsculas) para el
+// resumen. Si una máquina no figura acá, no se calcula alerta de cantidad.
+const BATERIAS_ESPERADAS = {};
+
+// Advertencias de cantidad: el texto va en rojo y solo la palabra "sobra/sobran"
+// se pinta de azul, para diferenciar a simple vista sobrantes de faltantes.
+const COLOR_FALTA = "#dc3545";
+const COLOR_SOBRA = "#6ea8fe";
+const RE_SOBRA = /(sobran?)/i;
+// split con grupo de captura: los índices impares son las coincidencias de "sobra/sobran".
+const alertaJsx = (txt) =>
+  (txt || "").split(RE_SOBRA).map((parte, i) =>
+    i % 2 === 1 ? <span key={i} style={{ color: COLOR_SOBRA }}>{parte}</span> : parte
+  );
+
 export default function Baterias() {
   const navigate = useNavigate();
   const [registros, setRegistros] = useState([]);
@@ -32,6 +50,10 @@ export default function Baterias() {
 
   // Modal Listado
   const [showListado, setShowListado] = useState(false);
+
+  // Modal Resumen
+  const [showResumen, setShowResumen] = useState(false);
+  const [detalleResumen, setDetalleResumen] = useState(null);
 
   // Modal Ver
   const [showVer, setShowVer]         = useState(false);
@@ -259,6 +281,54 @@ export default function Baterias() {
     [registros, filtroBateria, filtroMaquina, mostrarVendidas]
   );
 
+  // Resumen por máquina: cantidad de baterías asignadas actualmente, última
+  // fecha y alerta si una máquina no tiene la cantidad esperada de baterías.
+  const resumen = useMemo(() => {
+    const grupos = new Map();
+    const agregar = (label) => {
+      if (!grupos.has(label)) grupos.set(label, { maquina: label, cantidad: 0, fecha: "", items: [] });
+      return grupos.get(label);
+    };
+
+    registros.forEach((r) => {
+      const label = r.maquinaLabel || r.maquina?.maquina || "Sin asignar";
+      const g = agregar(label);
+      g.cantidad += 1;
+      if (r.fecha && r.fecha > g.fecha) g.fecha = r.fecha; // última (YYYY-MM-DD compara bien)
+      g.items.push({
+        nombreBateria: r.bateria?.nombreBateria || "-",
+        marca:         r.bateria?.marca || "-",
+        fecha:         r.fecha || "",
+        observaciones: r.observaciones || "",
+      });
+    });
+
+    // Asegurar una fila por cada máquina que lleva batería, aunque tenga 0.
+    maquinas
+      .filter((m) => !MAQUINAS_SIN_BATERIA.includes((m.maquina || "").toLowerCase().trim()))
+      .forEach((m) => agregar(m.maquina));
+
+    return [...grupos.values()].map((g) => {
+      const esperada = BATERIAS_ESPERADAS[g.maquina.toLowerCase().trim()];
+      let alerta = "";
+      if (esperada !== undefined) {
+        const diff = g.cantidad - esperada;
+        if (diff < 0) {
+          const n = Math.abs(diff);
+          alerta = n === 1 ? "Falta una batería" : `Faltan ${n} baterías`;
+        } else if (diff > 0) {
+          alerta = diff === 1 ? "Sobra una batería" : `Sobran ${diff} baterías`;
+        }
+      }
+      return { ...g, alerta };
+    }).sort((a, b) => {
+      // Máquinas con cantidad esperada primero
+      const pa = BATERIAS_ESPERADAS[a.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
+      const pb = BATERIAS_ESPERADAS[b.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
+      return pa - pb || a.maquina.localeCompare(b.maquina);
+    });
+  }, [registros, maquinas]);
+
   const exportarExcel = () => {
     const headers = ["Nombre batería", "Marca", "Máquina", "Observaciones"];
     const cols = "ABCD";
@@ -306,6 +376,7 @@ export default function Baterias() {
         <div className="d-flex gap-2">
           <Button size="sm" variant="outline-success" onClick={abrirAlta}>+ Alta de batería</Button>
           <Button size="sm" variant="outline-secondary" onClick={() => setShowListado(true)}>Listado baterías</Button>
+          <Button size="sm" variant="outline-info" onClick={() => setShowResumen(true)}>Resumen</Button>
         </div>
         <div className="d-flex gap-2">
           <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
@@ -373,6 +444,86 @@ export default function Baterias() {
           </tbody>
         </Table>
       </div>
+
+      {/* ── Modal Resumen ── */}
+      <Modal show={showResumen} onHide={() => setShowResumen(false)} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Resumen - Baterías</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {resumen.length === 0 ? (
+            <p className="text-muted text-center">Sin baterías registradas.</p>
+          ) : (
+            <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
+              <Table striped bordered hover className="text-center align-middle mb-0" size="sm">
+                <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
+                  <tr>
+                    <th>Máquina</th>
+                    <th>Cantidad de baterías</th>
+                    <th>Fecha</th>
+                    <th>Observaciones</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resumen.map((g) => (
+                    <tr key={g.maquina}>
+                      <td>{g.maquina}</td>
+                      <td>{g.cantidad}</td>
+                      <td>{g.fecha ? new Date(g.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
+                      <td className={g.alerta ? "fw-semibold" : ""} style={g.alerta ? { color: COLOR_FALTA } : undefined}>{g.alerta ? alertaJsx(g.alerta) : "-"}</td>
+                      <td>
+                        <Button size="sm" variant="outline-success" onClick={() => setDetalleResumen(g)} disabled={g.cantidad === 0}>Ver</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setShowResumen(false)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ── Modal Detalle del resumen (baterías de una máquina) ── */}
+      <Modal show={!!detalleResumen} onHide={() => setDetalleResumen(null)} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Baterías de {detalleResumen?.maquina || ""}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {!detalleResumen || detalleResumen.items.length === 0 ? (
+            <p className="text-muted text-center">Sin baterías asignadas.</p>
+          ) : (
+            <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
+              <Table striped bordered hover className="text-center align-middle mb-0" size="sm">
+                <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
+                  <tr>
+                    <th>Nombre batería</th>
+                    <th>Marca</th>
+                    <th>Fecha</th>
+                    <th>Observaciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detalleResumen.items.map((it, i) => (
+                    <tr key={i}>
+                      <td>{it.nombreBateria}</td>
+                      <td>{it.marca}</td>
+                      <td>{it.fecha ? new Date(it.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
+                      <td>{it.observaciones || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setDetalleResumen(null)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* ── Modal Ver ── */}
       <Modal show={showVer} onHide={() => setShowVer(false)} centered>
