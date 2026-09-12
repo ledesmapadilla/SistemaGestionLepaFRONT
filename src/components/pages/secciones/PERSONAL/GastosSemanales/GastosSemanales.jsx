@@ -981,11 +981,15 @@ const GastosSemanales = () => {
       const existentes = gastoDoc.registros.map((r) => {
         const semanalActual = semanalActualMap[normNombre(r.personal)];
         const k = normNombre(r.personal);
+        // Fila agregada a mano ("+ Agregar personal") de alguien que no está en
+        // el legajo: no hay jornal para calcular el ausentismo, se respeta el
+        // que se cargó a mano.
+        const manualSinLegajo = r.nuevo && !nombresTodoPersonal.has(k);
         const fila = {
           ...r,
           extras: normalizarExtras(r.extras),
           semanal: semanalActual !== null && semanalActual !== undefined ? semanalActual : r.semanal,
-          ausentismo: calcAusentismo(r.personal),
+          ausentismo: manualSinLegajo ? Number(r.ausentismo) || 0 : calcAusentismo(r.personal),
           difMin: difMinsMap[k] || 0,
           cantJornales: cantJornalesMap[k] || 0,
           fechaAlta: fechaAltaMap[k] || "",
@@ -995,6 +999,9 @@ const GastosSemanales = () => {
       });
 
       const existentesFiltrados = existentes.filter((r) => {
+        // Lo agregado a mano con "+ Agregar personal" se conserva siempre: no
+        // tiene asistencia, y si se filtrara el autoguardado lo borraría.
+        if (r.nuevo && normNombre(r.personal)) return true;
         // Al que no le toca la semana solo se lo conserva si tiene algo cargado
         // a mano, para no borrar de la base lo que alguien ya escribió.
         if (fueraDeLaSemana(r.personal)) return tieneDatosCargados(r);
@@ -1053,6 +1060,19 @@ const GastosSemanales = () => {
     }, 2000);
     return () => clearTimeout(autoSaveTimer.current);
   }, [registros, loading, semanaKey]);
+
+  // Guardado manual: no espera los 2 s del autoguardado (que se cancela para no
+  // escribir dos veces).
+  const guardarAhora = async () => {
+    clearTimeout(autoSaveTimer.current);
+    const resp = await guardarGastoSemanal(semanaKey, registros);
+    if (!resp?.ok) {
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudieron guardar los cambios" });
+      return;
+    }
+    modificado.current = false;
+    Swal.fire({ position: "center", icon: "success", title: "Cambios guardados", showConfirmButton: false, timer: 1500, timerProgressBar: true });
+  };
 
   const totalSemanal = registros.reduce((s, r) => s + (Number(r.semanal) || 0), 0);
   const totalAusentismo = registros.reduce((s, r) => s + (Number(r.ausentismo) || 0), 0);
@@ -1126,6 +1146,7 @@ const GastosSemanales = () => {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2>Gastos Semanales <small className="text-muted" style={{ fontSize: "1rem", fontWeight: 400 }}>{labelSemana}</small></h2>
         <div className="d-flex gap-2">
+          <AsyncButton variant="outline-success" onClick={guardarAhora} disabled={loading}>Guardar</AsyncButton>
           <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
           <Button variant="outline-primary" onClick={() => navigate("/personal/asistencia")}>Asistencia</Button>
         </div>
