@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Table, Button, Modal, Form, Dropdown } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import { listarRemitosPorObra, editarRemito } from "../../../../../helpers/queriesRemitos";
@@ -17,6 +17,23 @@ const fechaRemito = (r) => {
   return (r.fecha || "").toString().slice(0, 10);
 };
 
+// Fecha de cada fila (item) de la tabla, con la del remito como respaldo.
+const fechaItemDe = (item, remito) =>
+  (item.fecha || remito.fecha || "").toString().slice(0, 10);
+
+const estiloX = {
+  position: "absolute",
+  right: "34px",
+  top: "50%",
+  transform: "translateY(-50%)",
+  cursor: "pointer",
+  color: "#fff",
+  fontSize: "14px",
+  fontWeight: "900",
+  zIndex: 5,
+  userSelect: "none",
+};
+
 const RemitosXClientesFinal = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,6 +42,8 @@ const RemitosXClientesFinal = () => {
   const [remitos, setRemitos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroRemito, setFiltroRemito] = useState("");
+  const [fechaDesde, setFechaDesde] = useState("");
+  const [fechaHasta, setFechaHasta] = useState("");
   const headerRef = useRef(null);
 
   useEffect(() => {
@@ -137,11 +156,41 @@ const RemitosXClientesFinal = () => {
         return total + subtotalRemito;
       }, 0);
 
-  // El filtro es por coincidencia parcial del número, igual que en Remitos:
+  // El filtro de N° es por coincidencia parcial, igual que en Remitos:
   // tipeando "90" aparecen el 90, el 900 y el 1902.
-  const remitosFiltrados = filtroRemito.trim()
-    ? remitos.filter((r) => String(r.remito).includes(filtroRemito.trim()))
-    : remitos;
+  // El rango de fechas filtra por la fecha de cada item (cada fila de la tabla);
+  // un remito sin items dentro del rango no se muestra.
+  const remitosFiltrados = useMemo(() => {
+    const nro = filtroRemito.trim();
+    const enRango = (f) =>
+      (!fechaDesde || (f && f >= fechaDesde)) && (!fechaHasta || (f && f <= fechaHasta));
+    return remitos
+      .filter((r) => !nro || String(r.remito).includes(nro))
+      .map((r) =>
+        fechaDesde || fechaHasta
+          ? { ...r, items: (r.items || []).filter((i) => enRango(fechaItemDe(i, r))) }
+          : r,
+      )
+      .filter((r) => (r.items || []).length > 0);
+  }, [remitos, filtroRemito, fechaDesde, fechaHasta]);
+
+  const hayFiltros = !!(filtroRemito.trim() || fechaDesde || fechaHasta);
+
+  // Totales de lo que está a la vista: $ total y cantidad agrupada por unidad
+  const totalesFiltro = useMemo(() => {
+    let importe = 0;
+    const porUnidad = {};
+    remitosFiltrados.forEach((r) => {
+      (r.items || []).forEach((i) => {
+        const cant = Number(i.cantidad || 0);
+        importe += cant * Number(i.precioUnitario || 0);
+        const unidad = i.unidad || "-";
+        porUnidad[unidad] = (porUnidad[unidad] || 0) + cant;
+      });
+    });
+    const unidades = Object.entries(porUnidad).filter(([, cant]) => cant);
+    return { importe, unidades };
+  }, [remitosFiltrados]);
 
   // En el modal de O.C. solo se ofrecen los remitos que todavía no tienen
   // una O.C. asignada (los ya asignados no se vuelven a listar).
@@ -300,7 +349,7 @@ const RemitosXClientesFinal = () => {
           </div>
         </div>
 
-        <div className="mb-2">
+        <div className="d-flex flex-wrap gap-2 mb-2 align-items-center">
           <Form.Control
             size="sm"
             type="search"
@@ -309,6 +358,32 @@ const RemitosXClientesFinal = () => {
             onChange={(e) => setFiltroRemito(e.target.value)}
             style={{ width: "170px" }}
           />
+          <span className="small text-muted ms-2">Desde</span>
+          <div style={{ position: "relative", width: "170px" }}>
+            <Form.Control
+              size="sm"
+              type="date"
+              value={fechaDesde}
+              max={fechaHasta || undefined}
+              onChange={(e) => setFechaDesde(e.target.value)}
+            />
+            {fechaDesde && (
+              <span onClick={() => setFechaDesde("")} style={estiloX}>✕</span>
+            )}
+          </div>
+          <span className="small text-muted">Hasta</span>
+          <div style={{ position: "relative", width: "170px" }}>
+            <Form.Control
+              size="sm"
+              type="date"
+              value={fechaHasta}
+              min={fechaDesde || undefined}
+              onChange={(e) => setFechaHasta(e.target.value)}
+            />
+            {fechaHasta && (
+              <span onClick={() => setFechaHasta("")} style={estiloX}>✕</span>
+            )}
+          </div>
         </div>
 
         <div className="table-responsive shadow-sm" style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
@@ -348,13 +423,39 @@ const RemitosXClientesFinal = () => {
               ) : (
                 <tr>
                   <td colSpan="10" className="py-4 text-muted">
-                    {filtroRemito.trim()
-                      ? `No hay remitos sin facturar con el N° ${filtroRemito.trim()}.`
+                    {hayFiltros
+                      ? "No hay remitos sin facturar con esos filtros."
                       : "No hay remitos pendientes de facturación para esta obra."}
                   </td>
                 </tr>
               )}
             </tbody>
+            {remitosFiltrados.length > 0 && (
+              <tfoot className="table-dark">
+                <tr>
+                  <td colSpan={5} className="text-end fw-bold">
+                    Total ({remitosFiltrados.length} remito{remitosFiltrados.length === 1 ? "" : "s"}):
+                  </td>
+                  {totalesFiltro.unidades.length > 1 ? (
+                    <td colSpan={2} className="fw-bold">
+                      {totalesFiltro.unidades
+                        .map(([unidad, cant]) => `${formatoMiles(cant)} ${unidad}`)
+                        .join(" / ")}
+                    </td>
+                  ) : (
+                    <>
+                      <td className="fw-bold">
+                        {totalesFiltro.unidades.length ? formatoMiles(totalesFiltro.unidades[0][1]) : "-"}
+                      </td>
+                      <td className="fw-bold">{totalesFiltro.unidades[0]?.[0] || "-"}</td>
+                    </>
+                  )}
+                  <td></td>
+                  <td className="fw-bold">${formatoMiles(totalesFiltro.importe)}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            )}
           </Table>
         </div>
 
