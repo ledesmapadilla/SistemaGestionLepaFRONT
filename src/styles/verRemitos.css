@@ -38,3 +38,11 @@
   top: 0;
   z-index: 5;
 }
+
+/* Fila de totales fija abajo al hacer scroll vertical */
+.tabla-remitos tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  border-top: 2px solid #ffc107;
+}

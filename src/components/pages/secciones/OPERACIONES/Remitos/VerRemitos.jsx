@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Table, Button, Modal, Spinner, Form } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -12,6 +12,22 @@ import { obtenerObra } from "../../../../../helpers/queriesObras";
 
 import "../../../../../styles/verRemitos.css";
 
+const estiloX = {
+  position: "absolute",
+  right: "34px",
+  top: "50%",
+  transform: "translateY(-50%)",
+  cursor: "pointer",
+  color: "#fff",
+  fontSize: "14px",
+  fontWeight: "900",
+  zIndex: 5,
+  userSelect: "none",
+};
+
+const fechaRemito = (r) => r.items?.[0]?.fecha || r.fecha || "";
+const fechaKey = (r) => fechaRemito(r).toString().slice(0, 10);
+
 const VerRemitos = () => {
   const [itemEditando, setItemEditando] = useState(null);
   const [remitoEditando, setRemitoEditando] = useState(null);
@@ -23,6 +39,8 @@ const VerRemitos = () => {
   const [loading, setLoading] = useState(true);
   const [remitos, setRemitos] = useState([]);
   const [filtroRemito, setFiltroRemito] = useState("");
+  const [fechaDesde, setFechaDesde] = useState("");
+  const [fechaHasta, setFechaHasta] = useState("");
   const [precios, setPrecios] = useState(location.state?.precios || []);
   const [modalidadState, setModalidadState] = useState(location.state?.modalidad || "");
   const [showModalRemito, setShowModalRemito] = useState(false);
@@ -82,6 +100,36 @@ const VerRemitos = () => {
       }
     };
   }, []);
+
+  const remitosFiltrados = useMemo(
+    () =>
+      remitos
+        .filter((r) => {
+          if (filtroRemito && !String(r.remito).includes(filtroRemito)) return false;
+          const f = fechaKey(r);
+          if (fechaDesde && (!f || f < fechaDesde)) return false;
+          if (fechaHasta && (!f || f > fechaHasta)) return false;
+          return true;
+        })
+        .sort((a, b) => new Date(fechaRemito(b)) - new Date(fechaRemito(a))),
+    [remitos, filtroRemito, fechaDesde, fechaHasta],
+  );
+
+  // Totales de lo que está a la vista: $ total y cantidad agrupada por unidad
+  const totalesFiltro = useMemo(() => {
+    let importe = 0;
+    const porUnidad = {};
+    remitosFiltrados.forEach((r) => {
+      (r.items || []).forEach((i) => {
+        const cant = Number(i.cantidad || 0);
+        importe += cant * Number(i.precioUnitario || 0);
+        const unidad = i.unidad || "-";
+        porUnidad[unidad] = (porUnidad[unidad] || 0) + cant;
+      });
+    });
+    const unidades = Object.entries(porUnidad).filter(([, cant]) => cant);
+    return { importe, unidades };
+  }, [remitosFiltrados]);
 
   const handleEditarItem = (remito, item) => {
     setItemEditando({
@@ -165,11 +213,6 @@ const VerRemitos = () => {
         return Math.max(0, precioCerrado - totalFacturado);
       })()
     : calcularTotalNoFacturado();
-
-  const fechaRemito = (r) => r.items?.[0]?.fecha || r.fecha || "";
-  const remitosFiltrados = (filtroRemito ? remitos.filter((r) => String(r.remito).includes(filtroRemito)) : remitos)
-    .slice()
-    .sort((a, b) => new Date(fechaRemito(b)) - new Date(fechaRemito(a)));
 
   const exportarExcel = () => {
     const headers = ["N° Remito", "Fecha", "Maquinista", "Máquina", "Servicio", "Cantidad", "Unidad", "$ Unitario", "$ Total", "Estado", "Observaciones"];
@@ -262,7 +305,7 @@ const VerRemitos = () => {
           </div>
         </div>
       </div>
-      <div className="mb-2">
+      <div className="d-flex flex-wrap gap-2 mb-2 align-items-center">
         <Form.Control
           size="sm"
           type="search"
@@ -271,6 +314,32 @@ const VerRemitos = () => {
           onChange={(e) => setFiltroRemito(e.target.value)}
           style={{ width: "170px" }}
         />
+        <span className="small text-muted ms-2">Desde</span>
+        <div style={{ position: "relative", width: "170px" }}>
+          <Form.Control
+            size="sm"
+            type="date"
+            value={fechaDesde}
+            max={fechaHasta || undefined}
+            onChange={(e) => setFechaDesde(e.target.value)}
+          />
+          {fechaDesde && (
+            <span onClick={() => setFechaDesde("")} style={estiloX}>✕</span>
+          )}
+        </div>
+        <span className="small text-muted">Hasta</span>
+        <div style={{ position: "relative", width: "170px" }}>
+          <Form.Control
+            size="sm"
+            type="date"
+            value={fechaHasta}
+            min={fechaDesde || undefined}
+            onChange={(e) => setFechaHasta(e.target.value)}
+          />
+          {fechaHasta && (
+            <span onClick={() => setFechaHasta("")} style={estiloX}>✕</span>
+          )}
+        </div>
       </div>
 
       <div ref={tableContainerRef} style={{ flex: 1, overflowY: "auto", minHeight: 0 }} className="table-responsive">
@@ -395,6 +464,32 @@ const VerRemitos = () => {
               </tr>
             )}
           </tbody>
+          {remitosFiltrados.length > 0 && (
+            <tfoot className="table-dark">
+              <tr>
+                <td colSpan={5} className="text-end fw-bold">
+                  Total ({remitosFiltrados.length} remito{remitosFiltrados.length === 1 ? "" : "s"}):
+                </td>
+                {totalesFiltro.unidades.length > 1 ? (
+                  <td colSpan={2} className="fw-bold">
+                    {totalesFiltro.unidades
+                      .map(([unidad, cant]) => `${formatoMiles(cant)} ${unidad}`)
+                      .join(" / ")}
+                  </td>
+                ) : (
+                  <>
+                    <td className="fw-bold">
+                      {totalesFiltro.unidades.length ? formatoMiles(totalesFiltro.unidades[0][1]) : "-"}
+                    </td>
+                    <td className="fw-bold">{totalesFiltro.unidades[0]?.[0] || "-"}</td>
+                  </>
+                )}
+                <td></td>
+                <td className="fw-bold">${formatoMiles(totalesFiltro.importe)}</td>
+                <td colSpan={3}></td>
+              </tr>
+            </tfoot>
+          )}
         </Table>
       </div>
 
