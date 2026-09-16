@@ -1,0 +1,9 @@
+/* Placeholders suaves: el texto de ayuda no tiene que competir con el valor
+   cargado. El modal va aparte porque se renderiza fuera del Container. */
+.filtros-page input::placeholder,
+.filtros-modal input::placeholder,
+.filtros-modal textarea::placeholder {
+  color: #6c757d;
+  opacity: 1; /* Firefox baja la opacidad del placeholder por defecto */
+  font-weight: 400;
+}

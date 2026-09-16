@@ -10,6 +10,7 @@ import {
   guardarFiltroMaquina,
   borrarFiltroMaquina,
 } from "../../../../../helpers/queriesFiltrosMaquina";
+import "../../../../../styles/filtros.css";
 
 // Los cuatro tipos de filtro son las columnas de la tabla y las opciones del modal.
 const TIPOS = [
@@ -238,7 +239,7 @@ export default function Filtros() {
   };
 
   return (
-    <Container className="py-4">
+    <Container className="py-4 filtros-page">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2 className="mb-0 fw-bold">Filtros</h2>
         <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
@@ -329,7 +330,7 @@ export default function Filtros() {
       )}
 
       {/* ── Modal agregar / editar filtros ── */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered className="filtros-modal">
         <Modal.Header closeButton>
           <Modal.Title>Agregar filtros</Modal.Title>
         </Modal.Header>
