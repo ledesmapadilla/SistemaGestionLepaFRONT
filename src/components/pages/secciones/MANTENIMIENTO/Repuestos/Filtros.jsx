@@ -49,7 +49,7 @@ export default function Filtros() {
   // Modal agregar / editar
   const [showModal, setShowModal]         = useState(false);
   const [maquinaSel, setMaquinaSel]       = useState("");
-  const [tipoSel, setTipoSel]             = useState(TIPOS[0].campo);
+  const [tipoSel, setTipoSel]             = useState("");
   const [marcas, setMarcas]               = useState(marcasVacias());
   const [observaciones, setObservaciones] = useState("");
 
@@ -109,7 +109,7 @@ export default function Filtros() {
 
   const abrirNuevo = () => {
     setMaquinaSel("");
-    setTipoSel(TIPOS[0].campo);
+    setTipoSel("");
     setMarcas(marcasVacias());
     setObservaciones("");
     setShowModal(true);
@@ -150,6 +150,7 @@ export default function Filtros() {
 
   const guardar = async () => {
     if (!maquinaSel) return Swal.fire("Atención", "Seleccioná una máquina.", "warning");
+    if (!tipoSel)    return Swal.fire("Atención", "Seleccioná un tipo de filtro.", "warning");
 
     const cargadas = marcas.filter((f) => f.marca.trim() || f.codigo.trim());
     if (!cargadas.length) return Swal.fire("Atención", "Cargá al menos una marca con su código.", "warning");
@@ -338,7 +339,11 @@ export default function Filtros() {
           <Form>
             <Form.Group className="mb-3">
               <Form.Label>Máquina <span className="text-danger">*</span></Form.Label>
-              <Form.Select value={maquinaSel} onChange={(e) => cambiarMaquina(e.target.value)}>
+              <Form.Select
+                className={maquinaSel ? "" : "select-vacio"}
+                value={maquinaSel}
+                onChange={(e) => cambiarMaquina(e.target.value)}
+              >
                 <option value="">Seleccioná una máquina</option>
                 {maquinasOrdenadas.map((m) => (
                   <option key={m._id} value={m._id}>{m.maquina}</option>
@@ -348,7 +353,12 @@ export default function Filtros() {
 
             <Form.Group className="mb-3">
               <Form.Label>Tipo de filtro <span className="text-danger">*</span></Form.Label>
-              <Form.Select value={tipoSel} onChange={(e) => cambiarTipo(e.target.value)}>
+              <Form.Select
+                className={tipoSel ? "" : "select-vacio"}
+                value={tipoSel}
+                onChange={(e) => cambiarTipo(e.target.value)}
+              >
+                <option value="">Seleccioná un tipo de filtro</option>
                 {TIPOS.map((t) => <option key={t.campo} value={t.campo}>{t.label}</option>)}
               </Form.Select>
             </Form.Group>

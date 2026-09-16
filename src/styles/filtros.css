@@ -8,9 +8,12 @@
   font-weight: 400;
 }
 
-/* Los selects de máquina y tipo de filtro van en letra clara, incluida la
-   opción vacía "Seleccioná una máquina", que hace de placeholder. */
-.filtros-modal .form-select,
-.filtros-modal .form-select option {
+/* Mientras no eligieron nada, los selects de máquina y tipo de filtro muestran
+   su leyenda en el mismo gris que los placeholder de marca y código. Con un
+   valor elegido vuelven al color normal del tema. */
+.filtros-modal .select-vacio {
+  color: #6c757d;
+}
+.filtros-modal .select-vacio option {
   color: #dee2e6;
 }
