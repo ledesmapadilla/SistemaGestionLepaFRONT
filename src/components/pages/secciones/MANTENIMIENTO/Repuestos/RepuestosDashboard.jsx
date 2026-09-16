@@ -4,7 +4,6 @@ import { Button, Card, Col, Container, Row } from "react-bootstrap";
 const tarjetas = [
   {
     titulo: "Filtros",
-    descripcion: "Filtros por máquina, marcas y códigos",
     icono: "bi-funnel-fill",
     ruta: "/mantenimiento/repuestos/filtros",
     color: "#0d6efd",
@@ -16,11 +15,10 @@ export default function RepuestosDashboard() {
 
   return (
     <Container className="py-4">
-      <div className="d-flex justify-content-between align-items-center mb-1">
+      <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0 fw-bold">Repuestos</h2>
         <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
       </div>
-      <p className="text-muted mb-4">Seleccioná una sección para continuar</p>
       <Row xs={1} sm={2} md={3} lg={4} className="g-4">
         {tarjetas.map((t) => (
           <Col key={t.ruta}>
@@ -44,8 +42,7 @@ export default function RepuestosDashboard() {
                 >
                   <i className={`bi ${t.icono} fs-2`} style={{ color: t.color }} />
                 </div>
-                <Card.Title className="fw-semibold mb-1">{t.titulo}</Card.Title>
-                <Card.Text className="text-muted small">{t.descripcion}</Card.Text>
+                <Card.Title className="fw-semibold mb-0">{t.titulo}</Card.Title>
               </Card.Body>
               <div style={{ height: 4, backgroundColor: t.color, borderRadius: "0 0 .375rem .375rem" }} />
             </Card>

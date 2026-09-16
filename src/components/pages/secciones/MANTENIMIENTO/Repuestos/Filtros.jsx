@@ -65,10 +65,17 @@ export default function Filtros() {
     const mapa = {};
     filtros.forEach((f) => {
       const id = f.maquina?._id || f.maquina;
-      if (id) mapa[id] = f;
+      if (id) mapa[String(id)] = f;
     });
     return mapa;
   }, [filtros]);
+
+  // El botón Editar abre en el primer tipo que tenga algo cargado, para que no
+  // se vea el modal vacío cuando la máquina solo tiene, por ejemplo, hidráulico.
+  const primerTipoCargado = (idMaquina) => {
+    const filtro = filtrosPorMaquina[String(idMaquina)];
+    return TIPOS.find((t) => (filtro?.[t.campo] || []).length > 0)?.campo || TIPOS[0].campo;
+  };
 
   // Una fila por máquina: así se ve de una lo que todavía falta cargar.
   const filas = useMemo(() => {
@@ -77,7 +84,7 @@ export default function Filtros() {
       .filter((m) => !texto || (m.maquina || "").toLowerCase().includes(texto))
       .slice()
       .sort((a, b) => (a.maquina || "").localeCompare(b.maquina || ""))
-      .map((m) => ({ maquina: m, filtro: filtrosPorMaquina[m._id] || null }));
+      .map((m) => ({ maquina: m, filtro: filtrosPorMaquina[String(m._id)] || null }));
   }, [maquinas, filtrosPorMaquina, busqueda]);
 
   const maquinasOrdenadas = useMemo(
@@ -95,7 +102,7 @@ export default function Filtros() {
 
   // Al editar se precarga lo que esa máquina ya tiene en ese tipo de filtro.
   const precargar = (idMaquina, tipo) => {
-    const filtro = filtrosPorMaquina[idMaquina];
+    const filtro = filtrosPorMaquina[String(idMaquina)];
     const items = filtro?.[tipo] || [];
     const nuevas = marcasVacias();
     items.slice(0, FILAS_MARCAS).forEach((item, i) => {
@@ -218,11 +225,10 @@ export default function Filtros() {
 
   return (
     <Container className="py-4">
-      <div className="d-flex justify-content-between align-items-center mb-1">
+      <div className="d-flex justify-content-between align-items-center mb-3">
         <h2 className="mb-0 fw-bold">Filtros</h2>
         <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
       </div>
-      <p className="text-muted mb-3">Filtros de cada máquina, con las marcas y el código de cada una</p>
 
       <div className="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
         <Form.Control
@@ -285,7 +291,7 @@ export default function Filtros() {
                     <td>{filtro?.observaciones || "-"}</td>
                     <td>
                       <div className="d-flex gap-1 justify-content-center">
-                        <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(maquina._id, TIPOS[0].campo)}>
+                        <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(maquina._id, primerTipoCargado(maquina._id))}>
                           Editar
                         </Button>
                         <AsyncButton
@@ -330,9 +336,6 @@ export default function Filtros() {
               </Form.Select>
             </Form.Group>
 
-            <p className="mb-2 small" style={{ color: "#adb5bd" }}>
-              Tres marcas distintas, con el código que corresponde a cada una.
-            </p>
             <Table borderless size="sm" className="align-middle mb-3">
               <thead>
                 <tr>
