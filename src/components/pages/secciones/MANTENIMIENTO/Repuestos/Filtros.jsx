@@ -295,10 +295,9 @@ export default function Filtros() {
                             <span className="text-muted">-</span>
                           ) : (
                             items.map((i, idx) => (
-                              <div key={idx} className="small">
-                                <span style={{ color: COLOR_MARCA }}>{i.marca}</span>
-                                {": "}
-                                <span className="fw-semibold" style={{ color: COLOR_CODIGO }}>{i.codigo}</span>
+                              <div key={idx} className="small d-flex justify-content-between gap-3">
+                                <span className="text-start" style={{ color: COLOR_MARCA }}>{i.marca}</span>
+                                <span className="text-end fw-semibold" style={{ color: COLOR_CODIGO }}>{i.codigo}</span>
                               </div>
                             ))
                           )}
