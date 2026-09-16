@@ -25,6 +25,19 @@ const marcasVacias = () => Array.from({ length: FILAS_MARCAS }, () => ({ marca: 
 
 const TITULO = "Filtros por máquina";
 
+// La marca va en gris y el código en celeste: el código es el dato que se usa
+// para comprar, así que se lee primero de un vistazo.
+const COLOR_MARCA  = "#adb5bd";
+const COLOR_CODIGO = "#6ea8fe";
+
+// Acoplados (bateas y carretones) y camionetas: no llevan filtros propios, así
+// que no van ni en la tabla ni en el select del modal.
+const SIN_FILTROS = ["batea", "carreton", "carretón", "nissan", "nisan", "fiat", "ranger"];
+const llevaFiltros = (nombre = "") => {
+  const n = String(nombre).toLowerCase();
+  return !SIN_FILTROS.some((x) => n.includes(x));
+};
+
 export default function Filtros() {
   const navigate = useNavigate();
   const [maquinas, setMaquinas] = useState([]);
@@ -46,7 +59,8 @@ export default function Filtros() {
         listarMaquinas("?campos=maquina"),
         listarFiltrosMaquina(),
       ]);
-      setMaquinas(resMaquinas?.ok ? await resMaquinas.json() : []);
+      const lista = resMaquinas?.ok ? await resMaquinas.json() : [];
+      setMaquinas(lista.filter((m) => llevaFiltros(m.maquina)));
       setFiltros(listaFiltros || []);
     } catch (error) {
       console.error(error);
@@ -281,7 +295,9 @@ export default function Filtros() {
                           ) : (
                             items.map((i, idx) => (
                               <div key={idx} className="small">
-                                <span className="fw-semibold">{i.marca}</span>: {i.codigo}
+                                <span style={{ color: COLOR_MARCA }}>{i.marca}</span>
+                                {": "}
+                                <span className="fw-semibold" style={{ color: COLOR_CODIGO }}>{i.codigo}</span>
                               </div>
                             ))
                           )}
