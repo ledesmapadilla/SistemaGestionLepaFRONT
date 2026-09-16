@@ -7,3 +7,9 @@
   opacity: 1; /* Firefox baja la opacidad del placeholder por defecto */
   font-weight: 400;
 }
+
+/* Los inputs de marca llevan el placeholder en claro: es lo primero que se
+   completa y conviene que se lea de entrada. */
+.filtros-modal .placeholder-claro::placeholder {
+  color: #dee2e6;
+}
