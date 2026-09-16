@@ -366,7 +366,6 @@ export default function Filtros() {
                     <td>
                       <Form.Control
                         size="sm"
-                        className="placeholder-claro"
                         placeholder={`Marca ${i + 1}`}
                         value={fila.marca}
                         onChange={(e) => cambiarMarca(i, "marca", e.target.value)}
