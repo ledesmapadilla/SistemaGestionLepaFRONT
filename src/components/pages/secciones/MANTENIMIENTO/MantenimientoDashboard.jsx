@@ -65,10 +65,10 @@ const tarjetas = [
     color: "#dc3545",
   },
   {
-    titulo: "Otra",
-    descripcion: "Otros registros de mantenimiento",
-    icono: "bi-three-dots-vertical",
-    ruta: "/mantenimiento/otra",
+    titulo: "Repuestos",
+    descripcion: "Filtros y repuestos por máquina",
+    icono: "bi-gear-wide-connected",
+    ruta: "/mantenimiento/repuestos",
     color: "#6c757d",
   },
 ];

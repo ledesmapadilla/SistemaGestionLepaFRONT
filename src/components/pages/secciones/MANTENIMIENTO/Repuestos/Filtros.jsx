@@ -1,0 +1,385 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button, Container, Form, Modal, Spinner, Table } from "react-bootstrap";
+import Swal from "sweetalert2";
+import XLSXStyle from "xlsx-js-style";
+import AsyncButton from "../../../../shared/AsyncButton";
+import { listarMaquinas } from "../../../../../helpers/queriesMaquinas";
+import {
+  listarFiltrosMaquina,
+  guardarFiltroMaquina,
+  borrarFiltroMaquina,
+} from "../../../../../helpers/queriesFiltrosMaquina";
+
+// Los cuatro tipos de filtro son las columnas de la tabla y las opciones del modal.
+const TIPOS = [
+  { campo: "aceite",      label: "Filtro de aceite" },
+  { campo: "combustible", label: "Combustible" },
+  { campo: "trampaAgua",  label: "Trampa de agua" },
+  { campo: "hidraulico",  label: "Hidráulico" },
+];
+
+// El modal siempre pide tres marcas distintas con el código de cada una.
+const FILAS_MARCAS = 3;
+const marcasVacias = () => Array.from({ length: FILAS_MARCAS }, () => ({ marca: "", codigo: "" }));
+
+const TITULO = "Filtros por máquina";
+
+export default function Filtros() {
+  const navigate = useNavigate();
+  const [maquinas, setMaquinas] = useState([]);
+  const [filtros, setFiltros]   = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [busqueda, setBusqueda] = useState("");
+
+  // Modal agregar / editar
+  const [showModal, setShowModal]         = useState(false);
+  const [maquinaSel, setMaquinaSel]       = useState("");
+  const [tipoSel, setTipoSel]             = useState(TIPOS[0].campo);
+  const [marcas, setMarcas]               = useState(marcasVacias());
+  const [observaciones, setObservaciones] = useState("");
+
+  const cargar = async () => {
+    setCargando(true);
+    try {
+      const [resMaquinas, listaFiltros] = await Promise.all([
+        listarMaquinas("?campos=maquina"),
+        listarFiltrosMaquina(),
+      ]);
+      setMaquinas(resMaquinas?.ok ? await resMaquinas.json() : []);
+      setFiltros(listaFiltros || []);
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Error", "No se pudieron cargar los filtros.", "error");
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargar();
+  }, []);
+
+  // Índice por id de máquina para no recorrer el array en cada celda.
+  const filtrosPorMaquina = useMemo(() => {
+    const mapa = {};
+    filtros.forEach((f) => {
+      const id = f.maquina?._id || f.maquina;
+      if (id) mapa[id] = f;
+    });
+    return mapa;
+  }, [filtros]);
+
+  // Una fila por máquina: así se ve de una lo que todavía falta cargar.
+  const filas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+    return maquinas
+      .filter((m) => !texto || (m.maquina || "").toLowerCase().includes(texto))
+      .slice()
+      .sort((a, b) => (a.maquina || "").localeCompare(b.maquina || ""))
+      .map((m) => ({ maquina: m, filtro: filtrosPorMaquina[m._id] || null }));
+  }, [maquinas, filtrosPorMaquina, busqueda]);
+
+  const maquinasOrdenadas = useMemo(
+    () => maquinas.slice().sort((a, b) => (a.maquina || "").localeCompare(b.maquina || "")),
+    [maquinas]
+  );
+
+  const abrirNuevo = () => {
+    setMaquinaSel("");
+    setTipoSel(TIPOS[0].campo);
+    setMarcas(marcasVacias());
+    setObservaciones("");
+    setShowModal(true);
+  };
+
+  // Al editar se precarga lo que esa máquina ya tiene en ese tipo de filtro.
+  const precargar = (idMaquina, tipo) => {
+    const filtro = filtrosPorMaquina[idMaquina];
+    const items = filtro?.[tipo] || [];
+    const nuevas = marcasVacias();
+    items.slice(0, FILAS_MARCAS).forEach((item, i) => {
+      nuevas[i] = { marca: item.marca || "", codigo: item.codigo || "" };
+    });
+    setMarcas(nuevas);
+    setObservaciones(filtro?.observaciones || "");
+  };
+
+  const abrirEditar = (idMaquina, tipo) => {
+    setMaquinaSel(idMaquina);
+    setTipoSel(tipo);
+    precargar(idMaquina, tipo);
+    setShowModal(true);
+  };
+
+  const cambiarMaquina = (id) => {
+    setMaquinaSel(id);
+    if (id) precargar(id, tipoSel);
+  };
+
+  const cambiarTipo = (tipo) => {
+    setTipoSel(tipo);
+    if (maquinaSel) precargar(maquinaSel, tipo);
+  };
+
+  const cambiarMarca = (i, campo, valor) => {
+    setMarcas((prev) => prev.map((f, idx) => (idx === i ? { ...f, [campo]: valor } : f)));
+  };
+
+  const guardar = async () => {
+    if (!maquinaSel) return Swal.fire("Atención", "Seleccioná una máquina.", "warning");
+
+    const cargadas = marcas.filter((f) => f.marca.trim() || f.codigo.trim());
+    if (!cargadas.length) return Swal.fire("Atención", "Cargá al menos una marca con su código.", "warning");
+
+    if (cargadas.some((f) => !f.marca.trim() || !f.codigo.trim())) {
+      return Swal.fire("Atención", "Cada marca tiene que tener su código.", "warning");
+    }
+
+    const nombres = cargadas.map((f) => f.marca.trim().toLowerCase());
+    if (new Set(nombres).size !== nombres.length) {
+      return Swal.fire("Atención", "Las marcas tienen que ser distintas entre sí.", "warning");
+    }
+
+    const res = await guardarFiltroMaquina({
+      maquina: maquinaSel,
+      tipo: tipoSel,
+      items: cargadas.map((f) => ({ marca: f.marca.trim(), codigo: f.codigo.trim() })),
+      observaciones,
+    });
+
+    if (res?.ok) {
+      setShowModal(false);
+      await cargar();
+      Swal.fire({ icon: "success", title: "Filtros guardados", timer: 1500, showConfirmButton: false });
+    } else {
+      const err = await res?.json().catch(() => ({}));
+      Swal.fire("Error", err?.msg || "No se pudieron guardar los filtros.", "error");
+    }
+  };
+
+  const eliminar = async (filtro) => {
+    const { isConfirmed } = await Swal.fire({
+      icon: "warning",
+      title: "¿Borrar los filtros de esta máquina?",
+      text: filtro.maquina?.maquina || "",
+      showCancelButton: true,
+      confirmButtonText: "Sí, borrar",
+      cancelButtonText: "Cancelar",
+    });
+    if (!isConfirmed) return;
+
+    const res = await borrarFiltroMaquina(filtro._id);
+    if (res?.ok) {
+      await cargar();
+      Swal.fire({ icon: "success", title: "Filtros eliminados", timer: 1500, showConfirmButton: false });
+    } else {
+      Swal.fire("Error", "No se pudieron eliminar los filtros.", "error");
+    }
+  };
+
+  // Texto plano de una celda, para el Excel.
+  const textoItems = (items) => (items || []).map((i) => `${i.marca}: ${i.codigo}`).join("\n");
+
+  const exportarExcel = () => {
+    const headers = ["Máquina", ...TIPOS.map((t) => t.label), "Observaciones"];
+    const cols = "ABCDEF";
+    const estCentro = { alignment: { horizontal: "center", vertical: "center", wrapText: true } };
+    const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
+    const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
+
+    const wb = XLSXStyle.utils.book_new();
+    const ws = {};
+
+    const hoy = new Date();
+    const fechaSerial = Math.round((Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
+
+    ws["A1"] = { v: TITULO, t: "s", s: estTitulo };
+    ws["A2"] = { v: fechaSerial, t: "n", s: { ...estTitulo, numFmt: "DD/MM/YYYY" } };
+    ws["A3"] = { v: "", t: "s" };
+    headers.forEach((h, i) => { ws[`${cols[i]}4`] = { v: h, t: "s", s: estHeader }; });
+
+    filas.forEach((fila, idx) => {
+      const row = idx + 5;
+      ws[`A${row}`] = { v: fila.maquina.maquina || "-", t: "s", s: estCentro };
+      TIPOS.forEach((t, i) => {
+        ws[`${cols[i + 1]}${row}`] = { v: textoItems(fila.filtro?.[t.campo]) || "-", t: "s", s: estCentro };
+      });
+      ws[`F${row}`] = { v: fila.filtro?.observaciones || "-", t: "s", s: estCentro };
+    });
+
+    const lastRow = Math.max(filas.length + 4, 4);
+    ws["!ref"] = `A1:F${lastRow}`;
+    ws["!cols"] = [{ wch: 24 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 28 }];
+
+    XLSXStyle.utils.book_append_sheet(wb, ws, TITULO.substring(0, 31));
+    XLSXStyle.writeFile(wb, `${TITULO}.xlsx`);
+  };
+
+  return (
+    <Container className="py-4">
+      <div className="d-flex justify-content-between align-items-center mb-1">
+        <h2 className="mb-0 fw-bold">Filtros</h2>
+        <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
+      </div>
+      <p className="text-muted mb-3">Filtros de cada máquina, con las marcas y el código de cada una</p>
+
+      <div className="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
+        <Form.Control
+          size="sm"
+          type="search"
+          placeholder="Máquina..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          style={{ width: "220px" }}
+        />
+        <div className="d-flex gap-2">
+          <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
+          <Button size="sm" variant="outline-primary" onClick={abrirNuevo}>+ Agregar filtros</Button>
+        </div>
+      </div>
+
+      {cargando ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" variant="primary" />
+        </div>
+      ) : (
+        <div style={{ maxHeight: "65vh", overflowY: "auto" }}>
+          <Table striped bordered hover className="text-center align-middle mb-0">
+            <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
+              <tr>
+                <th>Máquina</th>
+                {TIPOS.map((t) => <th key={t.campo}>{t.label}</th>)}
+                <th>Observaciones</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filas.length === 0 ? (
+                <tr><td colSpan={TIPOS.length + 3} className="text-muted py-3">Sin máquinas para mostrar</td></tr>
+              ) : (
+                filas.map(({ maquina, filtro }) => (
+                  <tr key={maquina._id}>
+                    <td className="fw-semibold">{maquina.maquina || "-"}</td>
+                    {TIPOS.map((t) => {
+                      const items = filtro?.[t.campo] || [];
+                      return (
+                        <td
+                          key={t.campo}
+                          style={{ cursor: "pointer" }}
+                          title="Click para cargar o editar"
+                          onClick={() => abrirEditar(maquina._id, t.campo)}
+                        >
+                          {items.length === 0 ? (
+                            <span className="text-muted">-</span>
+                          ) : (
+                            items.map((i, idx) => (
+                              <div key={idx} className="small">
+                                <span className="fw-semibold">{i.marca}</span>: {i.codigo}
+                              </div>
+                            ))
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td>{filtro?.observaciones || "-"}</td>
+                    <td>
+                      <div className="d-flex gap-1 justify-content-center">
+                        <Button size="sm" variant="outline-warning" onClick={() => abrirEditar(maquina._id, TIPOS[0].campo)}>
+                          Editar
+                        </Button>
+                        <AsyncButton
+                          size="sm"
+                          variant="outline-danger"
+                          disabled={!filtro}
+                          onClick={async () => { await eliminar(filtro); }}
+                        >
+                          Borrar
+                        </AsyncButton>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </div>
+      )}
+
+      {/* ── Modal agregar / editar filtros ── */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Agregar filtros</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Máquina <span className="text-danger">*</span></Form.Label>
+              <Form.Select value={maquinaSel} onChange={(e) => cambiarMaquina(e.target.value)}>
+                <option value="">Seleccioná una máquina</option>
+                {maquinasOrdenadas.map((m) => (
+                  <option key={m._id} value={m._id}>{m.maquina}</option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Tipo de filtro <span className="text-danger">*</span></Form.Label>
+              <Form.Select value={tipoSel} onChange={(e) => cambiarTipo(e.target.value)}>
+                {TIPOS.map((t) => <option key={t.campo} value={t.campo}>{t.label}</option>)}
+              </Form.Select>
+            </Form.Group>
+
+            <p className="mb-2 small" style={{ color: "#adb5bd" }}>
+              Tres marcas distintas, con el código que corresponde a cada una.
+            </p>
+            <Table borderless size="sm" className="align-middle mb-3">
+              <thead>
+                <tr>
+                  <th style={{ width: "50%", color: "#adb5bd" }}>Marca</th>
+                  <th style={{ width: "50%", color: "#adb5bd" }}>Código</th>
+                </tr>
+              </thead>
+              <tbody>
+                {marcas.map((fila, i) => (
+                  <tr key={i}>
+                    <td>
+                      <Form.Control
+                        size="sm"
+                        placeholder={`Marca ${i + 1}`}
+                        value={fila.marca}
+                        onChange={(e) => cambiarMarca(i, "marca", e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <Form.Control
+                        size="sm"
+                        placeholder="Código"
+                        value={fila.codigo}
+                        onChange={(e) => cambiarMarca(i, "codigo", e.target.value)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+
+            <Form.Group>
+              <Form.Label>Observaciones</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                value={observaciones}
+                onChange={(e) => setObservaciones(e.target.value)}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
+          <AsyncButton variant="outline-success" onClick={guardar}>Guardar</AsyncButton>
+        </Modal.Footer>
+      </Modal>
+    </Container>
+  );
+}

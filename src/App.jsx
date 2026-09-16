@@ -80,7 +80,8 @@ const CubiertasDashboard = lazy(() => import("./components/pages/secciones/MANTE
 const Cubiertas = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Cubiertas/Cubiertas.jsx"));
 const MantenimientoPreventivo = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Preventivo/MantenimientoPreventivo.jsx"));
 const Reparaciones = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Reparaciones/Reparaciones.jsx"));
-const Otra = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Otra/Otra.jsx"));
+const RepuestosDashboard = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Repuestos/RepuestosDashboard.jsx"));
+const FiltrosRepuestos = lazy(() => import("./components/pages/secciones/MANTENIMIENTO/Repuestos/Filtros.jsx"));
 const FacturacionProveedor = lazy(() => import("./components/pages/secciones/PROVEEDORES/Facturacion/FacturacionProveedor.jsx"));
 const NuevaFacturaProveedor = lazy(() => import("./components/pages/secciones/PROVEEDORES/Facturacion/NuevaFacturaProveedor.jsx"));
 const PagosProveedoresTabla = lazy(() => import("./components/pages/secciones/PROVEEDORES/Pagos/PagosProveedoresTabla.jsx"));
@@ -195,7 +196,8 @@ function App() {
                       <Route path="/mantenimiento/cubiertas/motoniveladora" element={<Cubiertas categoria="motoniveladora" titulo="Cubiertas motoniveladora - 14.00 x 24" />} />
                       <Route path="/mantenimiento/preventivo" element={<MantenimientoPreventivo />} />
                       <Route path="/mantenimiento/reparaciones" element={<Reparaciones />} />
-                      <Route path="/mantenimiento/otra" element={<Otra />} />
+                      <Route path="/mantenimiento/repuestos" element={<RepuestosDashboard />} />
+                      <Route path="/mantenimiento/repuestos/filtros" element={<FiltrosRepuestos />} />
                       <Route path="/usuarios" element={<UsuariosCrud />} />
                       <Route path="/variables" element={<Variables />} />
                       <Route path="/precios" element={<Precios />} />
