@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Container, Form, Modal, Spinner, Table } from "react-bootstrap";
+import { Button, Col, Container, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
 import AsyncButton from "../../../../shared/AsyncButton";
@@ -53,7 +53,6 @@ export default function Filtros() {
   const [tipoSel, setTipoSel]             = useState("");
   const [marcas, setMarcas]               = useState(marcasVacias());
   const [observaciones, setObservaciones] = useState("");
-  const [busquedaModal, setBusquedaModal] = useState("");
 
   const cargar = async () => {
     setCargando(true);
@@ -109,22 +108,11 @@ export default function Filtros() {
     [maquinas]
   );
 
-  // Lista del modal: el buscador nunca esconde una máquina ya tildada, para que
-  // no parezca que se perdió de la selección.
-  const maquinasModal = useMemo(() => {
-    const texto = busquedaModal.trim().toLowerCase();
-    if (!texto) return maquinasOrdenadas;
-    return maquinasOrdenadas.filter(
-      (m) => (m.maquina || "").toLowerCase().includes(texto) || maquinasSel.includes(m._id)
-    );
-  }, [maquinasOrdenadas, busquedaModal, maquinasSel]);
-
   const abrirNuevo = () => {
     setMaquinasSel([]);
     setTipoSel("");
     setMarcas(marcasVacias());
     setObservaciones("");
-    setBusquedaModal("");
     setShowModal(true);
   };
 
@@ -149,7 +137,6 @@ export default function Filtros() {
     setMaquinasSel([idMaquina]);
     setTipoSel(tipo);
     precargar(idMaquina, tipo);
-    setBusquedaModal("");
     setShowModal(true);
   };
 
@@ -365,7 +352,7 @@ export default function Filtros() {
       )}
 
       {/* ── Modal agregar / editar filtros ── */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered className="filtros-modal">
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg" className="filtros-modal">
         <Modal.Header closeButton>
           <Modal.Title>Agregar filtros</Modal.Title>
         </Modal.Header>
@@ -392,19 +379,11 @@ export default function Filtros() {
                   )}
                 </span>
               </div>
-              <Form.Control
-                size="sm"
-                type="search"
-                placeholder="Buscar máquina..."
-                value={busquedaModal}
-                onChange={(e) => setBusquedaModal(e.target.value)}
-                className="mb-2"
-              />
               <div className="lista-maquinas">
-                {maquinasModal.length === 0 ? (
+                {maquinasOrdenadas.length === 0 ? (
                   <div className="text-muted small p-2">Sin máquinas para mostrar</div>
                 ) : (
-                  maquinasModal.map((m) => (
+                  maquinasOrdenadas.map((m) => (
                     <Form.Check
                       key={m._id}
                       type="checkbox"
@@ -418,19 +397,38 @@ export default function Filtros() {
               </div>
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Tipo de filtro <span className="text-danger">*</span></Form.Label>
-              <Form.Select
-                className={tipoSel ? "" : "select-vacio"}
-                value={tipoSel}
-                onChange={(e) => cambiarTipo(e.target.value)}
-              >
-                <option value="">Seleccioná un tipo de filtro</option>
-                {TIPOS.map((t) => <option key={t.campo} value={t.campo}>{t.label}</option>)}
-              </Form.Select>
-            </Form.Group>
+            {/* Tipo y observaciones van a la par para que el modal entre de una
+                sola pantalla, sin scroll. */}
+            <Row className="mb-2">
+              <Col md={5}>
+                <Form.Group>
+                  <Form.Label>Tipo de filtro <span className="text-danger">*</span></Form.Label>
+                  <Form.Select
+                    size="sm"
+                    className={tipoSel ? "" : "select-vacio"}
+                    value={tipoSel}
+                    onChange={(e) => cambiarTipo(e.target.value)}
+                  >
+                    <option value="">Seleccioná un tipo de filtro</option>
+                    {TIPOS.map((t) => <option key={t.campo} value={t.campo}>{t.label}</option>)}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={7}>
+                <Form.Group>
+                  <Form.Label>Observaciones</Form.Label>
+                  <Form.Control
+                    size="sm"
+                    as="textarea"
+                    rows={1}
+                    value={observaciones}
+                    onChange={(e) => setObservaciones(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
-            <Table borderless size="sm" className="align-middle mb-3">
+            <Table borderless size="sm" className="align-middle mb-0">
               <thead>
                 <tr>
                   <th style={{ width: "50%", color: "#adb5bd" }}>Marca</th>
@@ -460,16 +458,6 @@ export default function Filtros() {
                 ))}
               </tbody>
             </Table>
-
-            <Form.Group>
-              <Form.Label>Observaciones</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={2}
-                value={observaciones}
-                onChange={(e) => setObservaciones(e.target.value)}
-              />
-            </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer className="justify-content-center">

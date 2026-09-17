@@ -18,21 +18,26 @@
   color: #dee2e6;
 }
 
-/* Lista de máquinas del modal: selección múltiple en dos columnas, con scroll
-   propio para que el modal no crezca a lo largo de todo el parque de máquinas. */
+/* Lista de máquinas del modal: entran todas a la vista, en columnas, sin scroll
+   propio — el punto es ver el parque completo y tildar varias de una. */
 .filtros-modal .lista-maquinas {
-  max-height: 180px;
-  overflow-y: auto;
   border: 1px solid #495057;
   border-radius: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  columns: 2;
+  padding: 0.4rem 0.6rem;
+  columns: 4;
+  column-gap: 0.75rem;
 }
 .filtros-modal .lista-maquinas .form-check {
   break-inside: avoid;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0;
+  min-height: 1.4rem;
 }
 .filtros-modal .lista-maquinas .form-check-label {
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   cursor: pointer;
+}
+
+/* En pantallas chicas cuatro columnas cortan los nombres. */
+@media (max-width: 767px) {
+  .filtros-modal .lista-maquinas { columns: 2; }
 }
