@@ -17,3 +17,22 @@
 .filtros-modal .select-vacio option {
   color: #dee2e6;
 }
+
+/* Lista de máquinas del modal: selección múltiple en dos columnas, con scroll
+   propio para que el modal no crezca a lo largo de todo el parque de máquinas. */
+.filtros-modal .lista-maquinas {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid #495057;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  columns: 2;
+}
+.filtros-modal .lista-maquinas .form-check {
+  break-inside: avoid;
+  margin-bottom: 0.15rem;
+}
+.filtros-modal .lista-maquinas .form-check-label {
+  font-size: 0.875rem;
+  cursor: pointer;
+}

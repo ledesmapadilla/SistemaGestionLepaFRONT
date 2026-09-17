@@ -46,12 +46,14 @@ export default function Filtros() {
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState("");
 
-  // Modal agregar / editar
+  // Modal agregar / editar. La máquina es una selección múltiple: el mismo
+  // filtro sirve para varias máquinas y se carga una sola vez para todas.
   const [showModal, setShowModal]         = useState(false);
-  const [maquinaSel, setMaquinaSel]       = useState("");
+  const [maquinasSel, setMaquinasSel]     = useState([]);
   const [tipoSel, setTipoSel]             = useState("");
   const [marcas, setMarcas]               = useState(marcasVacias());
   const [observaciones, setObservaciones] = useState("");
+  const [busquedaModal, setBusquedaModal] = useState("");
 
   const cargar = async () => {
     setCargando(true);
@@ -107,12 +109,28 @@ export default function Filtros() {
     [maquinas]
   );
 
+  // Lista del modal: el buscador nunca esconde una máquina ya tildada, para que
+  // no parezca que se perdió de la selección.
+  const maquinasModal = useMemo(() => {
+    const texto = busquedaModal.trim().toLowerCase();
+    if (!texto) return maquinasOrdenadas;
+    return maquinasOrdenadas.filter(
+      (m) => (m.maquina || "").toLowerCase().includes(texto) || maquinasSel.includes(m._id)
+    );
+  }, [maquinasOrdenadas, busquedaModal, maquinasSel]);
+
   const abrirNuevo = () => {
-    setMaquinaSel("");
+    setMaquinasSel([]);
     setTipoSel("");
     setMarcas(marcasVacias());
     setObservaciones("");
+    setBusquedaModal("");
     setShowModal(true);
+  };
+
+  const limpiarCampos = () => {
+    setMarcas(marcasVacias());
+    setObservaciones("");
   };
 
   // Al editar se precarga lo que esa máquina ya tiene en ese tipo de filtro.
@@ -128,20 +146,29 @@ export default function Filtros() {
   };
 
   const abrirEditar = (idMaquina, tipo) => {
-    setMaquinaSel(idMaquina);
+    setMaquinasSel([idMaquina]);
     setTipoSel(tipo);
     precargar(idMaquina, tipo);
+    setBusquedaModal("");
     setShowModal(true);
   };
 
-  const cambiarMaquina = (id) => {
-    setMaquinaSel(id);
-    if (id) precargar(id, tipoSel);
+  // Con una sola máquina elegida se precarga lo que ya tiene; con varias no hay
+  // un valor único que mostrar, así que las filas quedan en blanco para cargarlas
+  // una vez y que se guarden en todas.
+  const toggleMaquina = (id) => {
+    const seleccion = maquinasSel.includes(id)
+      ? maquinasSel.filter((x) => x !== id)
+      : [...maquinasSel, id];
+    setMaquinasSel(seleccion);
+    if (seleccion.length === 1) precargar(seleccion[0], tipoSel);
+    else limpiarCampos();
   };
 
   const cambiarTipo = (tipo) => {
     setTipoSel(tipo);
-    if (maquinaSel) precargar(maquinaSel, tipo);
+    if (maquinasSel.length === 1) precargar(maquinasSel[0], tipo);
+    else if (maquinasSel.length > 1) limpiarCampos();
   };
 
   const cambiarMarca = (i, campo, valor) => {
@@ -149,8 +176,8 @@ export default function Filtros() {
   };
 
   const guardar = async () => {
-    if (!maquinaSel) return Swal.fire("Atención", "Seleccioná una máquina.", "warning");
-    if (!tipoSel)    return Swal.fire("Atención", "Seleccioná un tipo de filtro.", "warning");
+    if (!maquinasSel.length) return Swal.fire("Atención", "Seleccioná al menos una máquina.", "warning");
+    if (!tipoSel)            return Swal.fire("Atención", "Seleccioná un tipo de filtro.", "warning");
 
     const cargadas = marcas.filter((f) => f.marca.trim() || f.codigo.trim());
     if (!cargadas.length) return Swal.fire("Atención", "Cargá al menos una marca con su código.", "warning");
@@ -165,7 +192,7 @@ export default function Filtros() {
     }
 
     const res = await guardarFiltroMaquina({
-      maquina: maquinaSel,
+      maquinas: maquinasSel,
       tipo: tipoSel,
       items: cargadas.map((f) => ({ marca: f.marca.trim(), codigo: f.codigo.trim() })),
       observaciones,
@@ -174,7 +201,14 @@ export default function Filtros() {
     if (res?.ok) {
       setShowModal(false);
       await cargar();
-      Swal.fire({ icon: "success", title: "Filtros guardados", timer: 1500, showConfirmButton: false });
+      Swal.fire({
+        icon: "success",
+        title: maquinasSel.length > 1
+          ? `Filtros guardados en ${maquinasSel.length} máquinas`
+          : "Filtros guardados",
+        timer: 1500,
+        showConfirmButton: false,
+      });
     } else {
       const err = await res?.json().catch(() => ({}));
       Swal.fire("Error", err?.msg || "No se pudieron guardar los filtros.", "error");
@@ -338,17 +372,50 @@ export default function Filtros() {
         <Modal.Body>
           <Form>
             <Form.Group className="mb-3">
-              <Form.Label>Máquina <span className="text-danger">*</span></Form.Label>
-              <Form.Select
-                className={maquinaSel ? "" : "select-vacio"}
-                value={maquinaSel}
-                onChange={(e) => cambiarMaquina(e.target.value)}
-              >
-                <option value="">Seleccioná una máquina</option>
-                {maquinasOrdenadas.map((m) => (
-                  <option key={m._id} value={m._id}>{m.maquina}</option>
-                ))}
-              </Form.Select>
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <Form.Label className="mb-0">
+                  Máquinas <span className="text-danger">*</span>
+                </Form.Label>
+                <span className="small text-muted">
+                  {maquinasSel.length === 0
+                    ? "Ninguna seleccionada"
+                    : `${maquinasSel.length} seleccionada${maquinasSel.length > 1 ? "s" : ""}`}
+                  {maquinasSel.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="link"
+                      className="p-0 ms-2 align-baseline"
+                      onClick={() => { setMaquinasSel([]); limpiarCampos(); }}
+                    >
+                      Limpiar
+                    </Button>
+                  )}
+                </span>
+              </div>
+              <Form.Control
+                size="sm"
+                type="search"
+                placeholder="Buscar máquina..."
+                value={busquedaModal}
+                onChange={(e) => setBusquedaModal(e.target.value)}
+                className="mb-2"
+              />
+              <div className="lista-maquinas">
+                {maquinasModal.length === 0 ? (
+                  <div className="text-muted small p-2">Sin máquinas para mostrar</div>
+                ) : (
+                  maquinasModal.map((m) => (
+                    <Form.Check
+                      key={m._id}
+                      type="checkbox"
+                      id={`maq-${m._id}`}
+                      label={m.maquina}
+                      checked={maquinasSel.includes(m._id)}
+                      onChange={() => toggleMaquina(m._id)}
+                    />
+                  ))
+                )}
+              </div>
             </Form.Group>
 
             <Form.Group className="mb-3">
