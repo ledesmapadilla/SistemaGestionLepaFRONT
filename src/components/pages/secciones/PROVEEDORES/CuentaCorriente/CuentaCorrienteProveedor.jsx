@@ -29,6 +29,7 @@ const CuentaCorrienteProveedor = () => {
   const [todosProveedor, setTodosProveedor] = useState([]);
   const [loadingProveedor, setLoadingProveedor] = useState(false);
   const [filtroProveedor, setFiltroProveedor] = useState("");
+  const [busqueda, setBusqueda] = useState("");
   const [soloConDeuda, setSoloConDeuda] = useState(true);
 
   useEffect(() => {
@@ -78,12 +79,19 @@ const CuentaCorrienteProveedor = () => {
     });
   }, [todos, proveedores]);
 
+  const cambiarBusqueda = (valor) => {
+    setBusqueda(valor);
+    const exacto = proveedores.find((p) => p.toLowerCase() === valor.trim().toLowerCase());
+    setFiltroProveedor(exacto || "");
+  };
+
   const resumenFiltrado = useMemo(() => {
-    if (soloConDeuda) {
-      return resumenPorProveedor.filter((r) => r.saldo > 0.01 || r.saldo < -0.01);
-    }
-    return resumenPorProveedor;
-  }, [resumenPorProveedor, soloConDeuda]);
+    const texto = busqueda.trim().toLowerCase();
+    let lista = resumenPorProveedor;
+    if (texto) lista = lista.filter((r) => r.proveedor.toLowerCase().includes(texto));
+    if (soloConDeuda) lista = lista.filter((r) => r.saldo > 0.01 || r.saldo < -0.01);
+    return lista;
+  }, [resumenPorProveedor, soloConDeuda, busqueda]);
 
   const movFiltrados = useMemo(() => {
     return todosProveedor;
@@ -181,18 +189,21 @@ const CuentaCorrienteProveedor = () => {
         <div className="d-flex align-items-center gap-2">
           <Form.Label className="mb-0 text-nowrap" style={{ width: "75px" }}>Proveedor</Form.Label>
           <div style={{ position: "relative", width: "280px" }}>
-            <Form.Select
-              value={filtroProveedor}
-              onChange={(e) => setFiltroProveedor(e.target.value)}
-              style={filtroProveedor ? { backgroundImage: "none", height: "34px" } : { height: "34px" }}
-            >
-              <option value="">Todos los proveedores</option>
+            <Form.Control
+              type="text"
+              list="lista-proveedores-cc"
+              placeholder="Buscar proveedor..."
+              value={busqueda}
+              onChange={(e) => cambiarBusqueda(e.target.value)}
+              style={{ height: "34px", paddingRight: "28px" }}
+            />
+            <datalist id="lista-proveedores-cc">
               {proveedores.map((p) => (
-                <option key={p} value={p}>{p}</option>
+                <option key={p} value={p} />
               ))}
-            </Form.Select>
-            {filtroProveedor && (
-              <span onClick={() => setFiltroProveedor("")} style={estiloX}>✕</span>
+            </datalist>
+            {busqueda && (
+              <span onClick={() => cambiarBusqueda("")} style={estiloX}>✕</span>
             )}
           </div>
           {!filtroProveedor && (
@@ -271,7 +282,7 @@ const CuentaCorrienteProveedor = () => {
                       {formatoMoneda(r.saldo)}
                     </td>
                     <td>
-                      <Button size="sm" variant="outline-success" onClick={() => setFiltroProveedor(r.proveedor)}>Ver</Button>
+                      <Button size="sm" variant="outline-success" onClick={() => cambiarBusqueda(r.proveedor)}>Ver</Button>
                     </td>
                   </tr>
                 ))}
