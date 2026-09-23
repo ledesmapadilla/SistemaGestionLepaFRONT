@@ -325,7 +325,7 @@ const Gasoil = () => {
     let ultimaFila = cargasFiltradas.length + 3;
     if (hayFiltro) {
       ultimaFila += 1;
-      const estiloTotal = { font: { bold: true }, alignment: centerAlign };
+      const estiloTotal = { alignment: centerAlign };
       ws[`D${ultimaFila}`] = {
         v: `Total (${cargasFiltradas.length} cargas)`,
         t: "s",
@@ -576,7 +576,7 @@ const Gasoil = () => {
           </tbody>
           {hayFiltro && cargasFiltradas.length > 0 && (
             <tfoot style={{ position: "sticky", bottom: 0, zIndex: 1 }}>
-              <tr className="table-dark fw-bold">
+              <tr className="table-dark">
                 <td colSpan="4" className="text-end">
                   Total ({cargasFiltradas.length}{" "}
                   {cargasFiltradas.length === 1 ? "carga" : "cargas"})
