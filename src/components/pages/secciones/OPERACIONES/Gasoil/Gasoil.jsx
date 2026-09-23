@@ -258,6 +258,17 @@ const Gasoil = () => {
     [cargasVisibles, filtroFecha, filtroCliente, filtroObra, filtroMaquina, filtroQuienCarga]
   );
 
+  // El total solo se muestra con algún filtro puesto: sin filtros sumaría todo
+  // el listado mezclando obras y máquinas.
+  const hayFiltro = Boolean(
+    filtroFecha || filtroCliente || filtroObra || filtroMaquina || filtroQuienCarga
+  );
+
+  const totalLitros = useMemo(
+    () => cargasFiltradas.reduce((acc, c) => acc + (Number(c.litros) || 0), 0),
+    [cargasFiltradas]
+  );
+
   const exportarExcel = () => {
     if (cargasFiltradas.length === 0) {
       Swal.fire({
@@ -311,7 +322,19 @@ const Gasoil = () => {
       });
     });
 
-    ws["!ref"] = `A1:F${cargasFiltradas.length + 3}`;
+    let ultimaFila = cargasFiltradas.length + 3;
+    if (hayFiltro) {
+      ultimaFila += 1;
+      const estiloTotal = { font: { bold: true }, alignment: centerAlign };
+      ws[`D${ultimaFila}`] = {
+        v: `Total (${cargasFiltradas.length} cargas)`,
+        t: "s",
+        s: estiloTotal,
+      };
+      ws[`E${ultimaFila}`] = { v: totalLitros, t: "n", s: estiloTotal };
+    }
+
+    ws["!ref"] = `A1:F${ultimaFila}`;
     ws["!cols"] = [
       { wch: 12 },
       { wch: 26 },
@@ -551,6 +574,18 @@ const Gasoil = () => {
               </tr>
             )}
           </tbody>
+          {hayFiltro && cargasFiltradas.length > 0 && (
+            <tfoot style={{ position: "sticky", bottom: 0, zIndex: 1 }}>
+              <tr className="table-dark fw-bold">
+                <td colSpan="4" className="text-end">
+                  Total ({cargasFiltradas.length}{" "}
+                  {cargasFiltradas.length === 1 ? "carga" : "cargas"})
+                </td>
+                <td className="text-nowrap">{formatoLitros(totalLitros)} L</td>
+                <td colSpan="2"></td>
+              </tr>
+            </tfoot>
+          )}
         </Table>
       </div>
 
