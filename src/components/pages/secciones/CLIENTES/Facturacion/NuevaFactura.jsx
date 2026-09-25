@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import AsyncButton from "../../../../shared/AsyncButton";
 import { crearFactura, listarFacturas } from "../../../../../helpers/queriesFacturas";
-import { listarRemitos, listarRemitosDisponibles } from "../../../../../helpers/queriesRemitos";
+import { listarRemitosConFacturado, listarRemitosDisponibles } from "../../../../../helpers/queriesRemitos";
 
 const hoy = new Date().toLocaleDateString("en-CA");
 
@@ -61,7 +61,7 @@ const NuevaFactura = () => {
       setLoadingDatos(true);
       try {
         const [remitosRaw, facturas] = await Promise.all([
-          esNotaCredito ? listarRemitos("Facturado") : listarRemitosDisponibles(),
+          esNotaCredito ? listarRemitosConFacturado() : listarRemitosDisponibles(),
           listarFacturas(),
         ]);
         setTodosRemitos(remitosRaw);
@@ -141,8 +141,9 @@ const NuevaFactura = () => {
       setRemitoElegido("");
       return;
     }
+    // En la NC se propone lo facturado del remito (puede ser una parte del total).
     const saldo = esNotaCredito
-      ? totalRem
+      ? remito.montoFacturado || totalRem
       : totalRem - (remito.montoFacturado || 0);
     setRemitosSeleccionados((prev) => [...prev, remito]);
     setMontosAFacturar((prev) => ({ ...prev, [remito._id]: saldo }));

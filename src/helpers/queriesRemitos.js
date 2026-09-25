@@ -30,7 +30,13 @@ export const listarRemitosDisponibles = async () => {
   return res.json();
 };
 
-export const listarRemitosPorObra = async (idObra) => {
+export const listarRemitosConFacturado = async () => {
+  const res = await authFetch(`${remitosBackend}?conFacturado=true`);
+  if (!res?.ok) throw new Error("Error al listar remitos facturados");
+  return res.json();
+};
+
+export const listarRemitosPorObra =async (idObra) => {
   try {
     const res = await authFetch(`${remitosBackend}?obra=${idObra}`);
     if (!res?.ok) throw new Error("Error al listar remitos por obra");
