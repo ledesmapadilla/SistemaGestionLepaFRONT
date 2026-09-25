@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
+import Select from "react-select";
 import { Button, Container, Form, Row, Col, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -38,6 +39,28 @@ const formatoMonedaInput = (clean) => {
   return s.includes(",") ? `$ ${entFmt},${(decimal ?? "").slice(0, 2)}` : `$ ${entFmt}`;
 };
 
+const estilosSelect = {
+  control: (base, state) => ({
+    ...base,
+    backgroundColor: "#212529",
+    color: "#fff",
+    borderColor: state.isFocused ? "#86b7fe" : "#495057",
+    boxShadow: state.isFocused ? "0 0 0 0.25rem rgba(13, 110, 253, 0.25)" : "none",
+  }),
+  input: (base) => ({ ...base, color: "#fff" }),
+  singleValue: (base) => ({ ...base, color: "#fff" }),
+  menu: (base) => ({ ...base, backgroundColor: "#212529" }),
+  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isFocused ? "#b6d3ffff" : "#212529",
+    color: state.isFocused ? "#353c43ff" : "#fff",
+  }),
+};
+
+const filtrarProveedor = (opcion, texto) =>
+  opcion.label.toLowerCase().includes(texto.toLowerCase());
+
 const NuevaFacturaProveedor = () => {
   const navigate = useNavigate();
   const {
@@ -54,6 +77,7 @@ const NuevaFacturaProveedor = () => {
   const [numerosExistentes, setNumerosExistentes] = useState([]);
   const [loadingDatos, setLoadingDatos] = useState(true);
 
+  const proveedorSeleccionado = watch("proveedor");
   const tipoFactura = watch("tipoFactura");
   const totalRaw = watch("total");
   const razonSeleccionada = watch("razonsocial");
@@ -183,15 +207,24 @@ const NuevaFacturaProveedor = () => {
           <Col md={4}>
             <Form.Group>
               <Form.Label>Proveedor</Form.Label>
-              <Form.Select
-                {...register("proveedor", { required: "El proveedor es obligatorio" })}
-                isInvalid={!!errors.proveedor}
-              >
-                <option value="">Seleccionar...</option>
-                {proveedores.map((p) => (
-                  <option key={p._id} value={p.razonsocial}>{p.razonsocial}</option>
-                ))}
-              </Form.Select>
+              <Select
+                menuPortalTarget={document.body}
+                options={proveedores.map((p) => ({ value: p.razonsocial, label: p.razonsocial }))}
+                placeholder="Buscar proveedor..."
+                noOptionsMessage={() => "Sin coincidencias"}
+                isClearable
+                filterOption={filtrarProveedor}
+                value={proveedorSeleccionado ? { value: proveedorSeleccionado, label: proveedorSeleccionado } : null}
+                onChange={(opcion) => setValue("proveedor", opcion ? opcion.value : "", { shouldValidate: true })}
+                styles={{
+                  ...estilosSelect,
+                  control: (base, state) => ({
+                    ...estilosSelect.control(base, state),
+                    ...(errors.proveedor ? { borderColor: "#dc3545" } : {}),
+                  }),
+                }}
+              />
+              <input type="hidden" {...register("proveedor", { required: "El proveedor es obligatorio" })} />
               <Form.Text className="text-danger">{errors.proveedor?.message}</Form.Text>
             </Form.Group>
           </Col>
