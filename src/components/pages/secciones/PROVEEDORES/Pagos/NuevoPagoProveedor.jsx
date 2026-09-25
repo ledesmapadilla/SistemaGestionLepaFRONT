@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import Select from "react-select";
 import { Button, Table, Container, Form, Spinner, Modal } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -26,12 +27,27 @@ const formatearFechaBarra = (fecha) => {
 const formatoMoneda = (valor) =>
   Number(valor).toLocaleString("es-AR", { style: "currency", currency: "ARS" });
 
-const estiloX = {
-  position: "absolute", right: "10px", top: "50%",
-  transform: "translateY(-50%)", cursor: "pointer",
-  color: "#fff", fontSize: "14px", fontWeight: "900",
-  zIndex: 5, userSelect: "none",
+const estilosSelect = {
+  control: (base, state) => ({
+    ...base,
+    backgroundColor: "#212529",
+    color: "#fff",
+    borderColor: state.isFocused ? "#86b7fe" : "#495057",
+    boxShadow: state.isFocused ? "0 0 0 0.25rem rgba(13, 110, 253, 0.25)" : "none",
+  }),
+  input: (base) => ({ ...base, color: "#fff" }),
+  singleValue: (base) => ({ ...base, color: "#fff" }),
+  menu: (base) => ({ ...base, backgroundColor: "#212529" }),
+  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isFocused ? "#b6d3ffff" : "#212529",
+    color: state.isFocused ? "#353c43ff" : "#fff",
+  }),
 };
+
+const filtrarProveedor = (opcion, texto) =>
+  opcion.label.toLowerCase().includes(texto.toLowerCase());
 
 const totalFactura = (f) =>
   f.tipoFactura === "Factura X" || f.tipoFactura === "Factura B" ? f.total : f.total * 1.21;
@@ -53,7 +69,6 @@ const NuevoPagoProveedor = () => {
   const [chequesPropioCargados, setChequesPropioCargados] = useState([]);
 
   const proveedorSeleccionado = watch("proveedor");
-  const { onChange: onChangeProveedor, ...proveedorReg } = register("proveedor", { required: "El proveedor es obligatorio" });
 
   const parseMonto = (val) => {
     if (val === undefined || val === null) return 0;
@@ -489,24 +504,29 @@ const NuevoPagoProveedor = () => {
           <div className="d-flex align-items-center gap-3">
             <div className="d-flex align-items-center gap-2">
               <Form.Label className="mb-0 text-nowrap" style={{ width: "80px" }}>Proveedor</Form.Label>
-              <div style={{ position: "relative", width: "260px" }}>
-                <Form.Select
-                  {...proveedorReg}
-                  onChange={(e) => { onChangeProveedor(e); setFacturasSeleccionadas([]); setMediosPago([]); }}
-                  isInvalid={!!errors.proveedor}
-                  style={proveedorSeleccionado ? { backgroundImage: "none" } : undefined}
-                >
-                  <option value="">Seleccionar...</option>
-                  {proveedoresConFacturas.map((nombre) => (
-                    <option key={nombre} value={nombre}>{nombre}</option>
-                  ))}
-                </Form.Select>
-                {proveedorSeleccionado && (
-                  <span
-                    onClick={() => { setValue("proveedor", ""); setFacturasSeleccionadas([]); setMediosPago([]); }}
-                    style={estiloX}
-                  >✕</span>
-                )}
+              <div style={{ width: "260px" }}>
+                <Select
+                  menuPortalTarget={document.body}
+                  options={proveedoresConFacturas.map((nombre) => ({ value: nombre, label: nombre }))}
+                  placeholder="Buscar proveedor..."
+                  noOptionsMessage={() => "Sin coincidencias"}
+                  isClearable
+                  filterOption={filtrarProveedor}
+                  value={proveedorSeleccionado ? { value: proveedorSeleccionado, label: proveedorSeleccionado } : null}
+                  onChange={(opcion) => {
+                    setValue("proveedor", opcion ? opcion.value : "", { shouldValidate: true });
+                    setFacturasSeleccionadas([]);
+                    setMediosPago([]);
+                  }}
+                  styles={{
+                    ...estilosSelect,
+                    control: (base, state) => ({
+                      ...estilosSelect.control(base, state),
+                      ...(errors.proveedor ? { borderColor: "#dc3545" } : {}),
+                    }),
+                  }}
+                />
+                <input type="hidden" {...register("proveedor", { required: "El proveedor es obligatorio" })} />
               </div>
             </div>
             <div className="d-flex align-items-center gap-2 flex-grow-1">
