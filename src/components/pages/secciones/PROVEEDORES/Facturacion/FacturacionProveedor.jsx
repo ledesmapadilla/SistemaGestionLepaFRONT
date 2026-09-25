@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button, Table, Container, Spinner, Modal, Form, Row, Col } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
+import Select from "react-select";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -31,6 +32,28 @@ const formatearFecha = (fecha) => {
 };
 
 const labelEstado = (e) => (e === "Pendiente" ? "Impaga" : e ?? "-");
+
+const estilosSelect = {
+  control: (base, state) => ({
+    ...base,
+    backgroundColor: "#212529",
+    color: "#fff",
+    borderColor: state.isFocused ? "#86b7fe" : "#495057",
+    boxShadow: state.isFocused ? "0 0 0 0.25rem rgba(13, 110, 253, 0.25)" : "none",
+  }),
+  input: (base) => ({ ...base, color: "#fff" }),
+  singleValue: (base) => ({ ...base, color: "#fff" }),
+  menu: (base) => ({ ...base, backgroundColor: "#212529" }),
+  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isFocused ? "#b6d3ffff" : "#212529",
+    color: state.isFocused ? "#353c43ff" : "#fff",
+  }),
+};
+
+const filtrarProveedor = (opcion, texto) =>
+  opcion.label.toLowerCase().includes(texto.toLowerCase());
 
 const FacturacionProveedor = () => {
   const navigate = useNavigate();
@@ -188,9 +211,13 @@ const FacturacionProveedor = () => {
   };
   const selectActivo = { backgroundImage: "none" };
 
+  const opcionesProveedores = [...new Set(facturas.map((f) => f.proveedor).filter(Boolean))]
+    .sort()
+    .map((nombre) => ({ value: nombre, label: nombre }));
+
   const facturasFiltradas = facturas.filter((f) => {
     const coincideNumero = filtroNumero === "" || f.numeroFactura?.toString().includes(filtroNumero);
-    const coincideProveedor = filtroProveedor === "" || f.proveedor?.toLowerCase().includes(filtroProveedor.toLowerCase());
+    const coincideProveedor = filtroProveedor === "" || f.proveedor === filtroProveedor;
     const coincideEstado = filtroEstado === "" || f.estadoPago === filtroEstado;
     return coincideNumero && coincideProveedor && coincideEstado;
   });
@@ -215,14 +242,19 @@ const FacturacionProveedor = () => {
           onChange={(e) => setFiltroNumero(e.target.value)}
           style={{ maxWidth: "180px" }}
         />
-        <Form.Control
-          size="sm"
-          type="search"
-          placeholder="Proveedor..."
-          value={filtroProveedor}
-          onChange={(e) => setFiltroProveedor(e.target.value)}
-          style={{ maxWidth: "250px" }}
-        />
+        <div style={{ width: "250px" }}>
+          <Select
+            menuPortalTarget={document.body}
+            options={opcionesProveedores}
+            placeholder="Proveedor..."
+            noOptionsMessage={() => "Sin coincidencias"}
+            isClearable
+            filterOption={filtrarProveedor}
+            value={filtroProveedor ? { value: filtroProveedor, label: filtroProveedor } : null}
+            onChange={(opcion) => setFiltroProveedor(opcion ? opcion.value : "")}
+            styles={estilosSelect}
+          />
+        </div>
         <div style={{ position: "relative", width: "180px" }}>
           <Form.Select
             value={filtroEstado}
