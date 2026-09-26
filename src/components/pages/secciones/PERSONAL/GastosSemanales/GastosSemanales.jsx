@@ -1213,9 +1213,9 @@ const GastosSemanales = () => {
             <Table striped bordered hover size="sm" className="text-center align-middle mb-0">
               <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
                 <tr>
+                  <th style={{ minWidth: 110 }}>Semanal Teórico</th>
                   <th style={{ width: 32 }}></th>
                   <th style={{ minWidth: 160 }}>Personal</th>
-                  <th style={{ minWidth: 110 }}>Semanal Teórico</th>
                   <th style={{ minWidth: 110 }}>Ausentismo</th>
                   <th style={{ minWidth: 140 }}>Extras</th>
                   <th style={{ minWidth: 110 }}>Pagar</th>
@@ -1227,6 +1227,7 @@ const GastosSemanales = () => {
               <tbody>
                 {registros.map((r, idx) => (
                   <tr key={idx}>
+                    <td><CeldaMoneda value={r.semanal} onChange={(v) => actualizar(idx, "semanal", v)} textStyle={{ fontSize: "0.62rem", color: "#9ca3af" }} /></td>
                     <td className="text-center">
                       <span
                         onClick={() => actualizarYGuardar(idx, "seleccionado", !r.seleccionado)}
@@ -1248,7 +1249,6 @@ const GastosSemanales = () => {
                         </span>
                       )}
                     </td>
-                    <td><CeldaMoneda value={r.semanal} onChange={(v) => actualizar(idx, "semanal", v)} textStyle={{ fontSize: "0.62rem", color: "#9ca3af" }} /></td>
                     <td><CeldaMoneda value={r.ausentismo} onChange={(v) => actualizar(idx, "ausentismo", v)} textStyle={{ fontSize: "0.62rem", color: "#9ca3af" }} /></td>
                     <td>
                       {r.extras?.length > 0 ? (
@@ -1312,9 +1312,9 @@ const GastosSemanales = () => {
               </tbody>
               <tfoot>
                 <tr className="table-dark" style={{ borderTop: "2px solid #ffc107" }}>
+                  <td className="text-center">{pesos(totalSemanal)}</td>
                   <td />
                   <td className="text-start">Total</td>
-                  <td className="text-center">{pesos(totalSemanal)}</td>
                   <td className="text-center">{pesos(totalAusentismo)}</td>
                   <td className="text-center" style={{ color: totalExtrasNeto >= 0 ? "#198754" : "#dc3545" }}>{pesos(totalExtrasNeto)}</td>
                   <td style={{ color: totalPagar < 0 ? "#dc3545" : "#ffc107" }}>{pesos(totalPagar)}</td>
