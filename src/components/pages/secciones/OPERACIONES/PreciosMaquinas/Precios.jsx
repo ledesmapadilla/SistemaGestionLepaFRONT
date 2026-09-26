@@ -31,6 +31,12 @@ const GRUPOS = {
 };
 
 const EXCLUIR = ["XCMG"];
+// Bateas y carretones no van en la lista de consumos por día; los que se
+// usan en los precios ya están agrupados como "x km" en GRUPOS.
+const esBateaOCarreton = (nombre = "") => {
+  const n = nombre.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  return n.includes("batea") || n.includes("carreton");
+};
 
 const buildConsumosFromMaquinas = (maquinas, consumosGuardados) => {
   const unicas = [];
@@ -55,6 +61,7 @@ const buildConsumosFromMaquinas = (maquinas, consumosGuardados) => {
         });
       }
     } else {
+      if (esBateaOCarreton(m.maquina)) return;
       const guardado = consumosGuardados.find((c) => c.maquina === m.maquina);
       unicas.push({
         maquinaId: m._id,
