@@ -12,11 +12,6 @@ const RemitosXClientes = () => {
 
   const cargarDatos = async () => {
     try {
-      // Corrige automáticamente los remitos que quedaron "Sin facturar" con saldo
-      // < $1 (diferencias de centavos) antes de armar la lista. Silencioso: si
-      // falla no bloquea la carga.
-      try { await recalcularEstadosRemitos(); } catch { /* no bloquear la carga */ }
-
       const remitos = await listarRemitosSinFacturar();
 
       const agrupado = remitos.reduce((acc, remito) => {
@@ -92,6 +87,12 @@ const RemitosXClientes = () => {
 
   useEffect(() => {
     cargarDatos();
+    // Corrige los remitos que quedaron "Sin facturar" con saldo < $1 (centavos)
+    // o "Facturado" con saldo real. Corre en paralelo para no demorar la lista:
+    // casi nunca corrige nada, y si corrige algo se vuelve a cargar.
+    recalcularEstadosRemitos()
+      .then((r) => { if (r?.corregidos > 0) cargarDatos(); })
+      .catch(() => { /* no bloquear la carga */ });
   }, []);
 
   const formatoMiles = (n) => new Intl.NumberFormat("es-AR").format(n);

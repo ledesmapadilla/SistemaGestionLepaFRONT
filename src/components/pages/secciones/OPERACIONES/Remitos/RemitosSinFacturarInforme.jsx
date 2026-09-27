@@ -39,8 +39,6 @@ const RemitosSinFacturarInforme = () => {
   useEffect(() => {
     const cargar = async () => {
       try {
-        // Igual que en "Remitos sin facturar": corrige los estados antes de listar.
-        try { await recalcularEstadosRemitos(); } catch { /* no bloquear la carga */ }
         setRemitos(await listarRemitosSinFacturar());
       } catch (error) {
         console.error("Error al cargar informe de remitos sin facturar:", error);
@@ -49,6 +47,11 @@ const RemitosSinFacturarInforme = () => {
       }
     };
     cargar();
+    // Igual que en "Remitos sin facturar": corrige los estados en paralelo y
+    // solo recarga si hubo correcciones.
+    recalcularEstadosRemitos()
+      .then((r) => { if (r?.corregidos > 0) cargar(); })
+      .catch(() => { /* no bloquear la carga */ });
   }, []);
 
   // [{ razonSocial, monto, cantidadRemitos, ultimaFecha, obras: [{ nombreObra, monto, cantidadRemitos, ultimaFecha }] }]
