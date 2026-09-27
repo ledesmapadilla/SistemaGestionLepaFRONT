@@ -13,7 +13,7 @@ const SOMBRA_HOVER = "5px 6px 16px rgba(0,0,0,0.32)";
 
 // `ruta` navega a una página; `responsable` abre su planilla en Tareas
 // Pendientes (arranca filtrada en las activas: pendientes y en proceso);
-// `enPreparacion` muestra la tarjeta deshabilitada.
+// `enPreparacion` muestra la tarjeta deshabilitada; `color` cambia el fondo.
 const ACCESOS = [
   { titulo: "Remitos sin facturar", icono: "bi-receipt", ruta: "/remitos-sinfacturar-informe" },
   { titulo: "Mantenimiento", icono: "bi-tools", ruta: "/tablero-control" },
@@ -23,7 +23,7 @@ const ACCESOS = [
   { titulo: "Cuenta corriente proveedores", icono: "bi-truck", ruta: "/cuenta-corriente-proveedores" },
   { titulo: "Tareas Zamorano", icono: "bi-person-gear", responsable: "Zamorano" },
   { titulo: "Pendientes Nelson", icono: "bi-person-check", responsable: "Nelson" },
-  { titulo: "Pendientes", icono: "bi-list-check", ruta: "/reunion/pendientes" },
+  { titulo: "Pendientes", icono: "bi-list-check", ruta: "/reunion/pendientes", color: "#b8621b" },
   { titulo: "Impuestos", icono: "bi-bank", enPreparacion: true },
 ];
 
@@ -118,6 +118,7 @@ export default function BotonReunion() {
                 onKeyDown={(e) => { if (e.key === "Enter") ir(a); }}
                 style={{
                   ...ESTILO_TARJETA,
+                  ...(a.color ? { backgroundColor: a.color } : {}),
                   cursor: a.enPreparacion ? "not-allowed" : "pointer",
                   opacity: a.enPreparacion ? 0.5 : 1,
                 }}
