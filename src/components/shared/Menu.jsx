@@ -60,7 +60,7 @@ function Menu() {
                   Remitos sin facturar
                 </NavDropdown.Item>
                 <NavDropdown.Item as={Link} to="/remitos-sinfacturar-informe">
-                  Remitos sin facturar informe
+                  Remitos sin facturar - informe
                 </NavDropdown.Item>
                 <NavDropdown.Item as={Link} to="/remitos-todos">
                   Listado de remitos

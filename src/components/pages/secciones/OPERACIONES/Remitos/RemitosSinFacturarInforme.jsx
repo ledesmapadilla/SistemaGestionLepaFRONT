@@ -25,6 +25,12 @@ const porFechaDesc = (a, b) => (b.ultimaFecha || "").localeCompare(a.ultimaFecha
 
 const formatoMiles = (n) => new Intl.NumberFormat("es-AR").format(n);
 
+// Separador entre clientes y color de las filas "Total <cliente>". El color va
+// en cada celda: la tabla striped de Bootstrap pisa el color puesto en el <tr>.
+const LINEA_CLIENTE = { borderTop: "3px solid #adb5bd" };
+const ESTILO_TOTAL = { color: "#6ea8fe" };
+const COLOR_TOTAL_EXCEL = "0D6EFD";
+
 const RemitosSinFacturarInforme = () => {
   const navigate = useNavigate();
   const [remitos, setRemitos] = useState([]);
@@ -118,23 +124,32 @@ const RemitosSinFacturarInforme = () => {
       ws[`${cols[i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
     });
 
+    // Línea gruesa arriba de cada cliente (y del total general) para separarlos.
+    const lineaCliente = { top: { style: "medium", color: { rgb: "000000" } } };
+
     let fila = 4;
-    const escribir = (razonSocial, obra, cant, monto, bold = false) => {
-      const font = bold ? { bold: true } : undefined;
-      ws[`A${fila}`] = { v: razonSocial, t: "s", s: { font, alignment: leftAlign } };
-      ws[`B${fila}`] = { v: obra, t: "s", s: { font, alignment: leftAlign } };
-      ws[`C${fila}`] = { v: cant, t: "n", s: { font, alignment: centerAlign } };
-      ws[`D${fila}`] = { v: monto, t: "n", z: currencyFmt, s: { font, alignment: centerAlign, numFmt: currencyFmt } };
+    const escribir = (razonSocial, obra, cant, monto, { esTotal = false, separar = false } = {}) => {
+      const font = esTotal ? { bold: true, color: { rgb: COLOR_TOTAL_EXCEL } } : undefined;
+      const border = separar ? lineaCliente : undefined;
+      ws[`A${fila}`] = { v: razonSocial, t: "s", s: { font, border, alignment: leftAlign } };
+      ws[`B${fila}`] = { v: obra, t: "s", s: { font, border, alignment: leftAlign } };
+      ws[`C${fila}`] = { v: cant, t: "n", s: { font, border, alignment: centerAlign } };
+      ws[`D${fila}`] = { v: monto, t: "n", z: currencyFmt, s: { font, border, alignment: centerAlign, numFmt: currencyFmt } };
       fila++;
     };
 
-    clientes.forEach((c) => {
+    clientes.forEach((c, ci) => {
       c.obras.forEach((o, i) =>
-        escribir(i === 0 ? c.razonSocial : "", o.nombreObra, o.cantidadRemitos, o.monto)
+        escribir(i === 0 ? c.razonSocial : "", o.nombreObra, o.cantidadRemitos, o.monto, {
+          separar: i === 0 && ci > 0,
+        })
       );
-      escribir("", `Total ${c.razonSocial}`, c.cantidadRemitos, c.monto, true);
+      escribir("", `Total ${c.razonSocial}`, c.cantidadRemitos, c.monto, { esTotal: true });
     });
-    escribir("TOTAL GENERAL", "", totalGeneral.cantidadRemitos, totalGeneral.monto, true);
+    escribir("TOTAL GENERAL", "", totalGeneral.cantidadRemitos, totalGeneral.monto, {
+      esTotal: true,
+      separar: true,
+    });
 
     ws["!ref"] = `A1:D${fila - 1}`;
     ws["!cols"] = [{ wch: 35 }, { wch: 40 }, { wch: 14 }, { wch: 20 }];
@@ -175,30 +190,39 @@ const RemitosSinFacturarInforme = () => {
                 </td>
               </tr>
             ) : (
-              clientes.map((c) => [
-                ...c.obras.map((o, i) => (
-                  <tr key={`${c.razonSocial}-${o.nombreObra}`}>
-                    {i === 0 && (
-                      <td rowSpan={c.obras.length + 1} className="fw-semibold">
-                        {c.razonSocial}
-                      </td>
-                    )}
-                    <td className="text-start">{o.nombreObra}</td>
-                    <td>{o.cantidadRemitos}</td>
-                    <td className={o.monto > 0 ? "" : "text-success"}>${formatoMiles(o.monto)}</td>
-                  </tr>
-                )),
-                <tr key={`${c.razonSocial}-total`} className="fw-bold">
-                  <td className="text-end">Total cliente</td>
-                  <td>{c.cantidadRemitos}</td>
-                  <td>${formatoMiles(c.monto)}</td>
-                </tr>,
-              ])
+              clientes.map((c, ci) => {
+                // Línea gruesa arriba de cada cliente, salvo el primero.
+                const separar = ci > 0 ? LINEA_CLIENTE : undefined;
+                return [
+                  ...c.obras.map((o, i) => {
+                    const borde = i === 0 ? separar : undefined;
+                    return (
+                      <tr key={`${c.razonSocial}-${o.nombreObra}`}>
+                        {i === 0 && (
+                          <td rowSpan={c.obras.length + 1} style={borde}>
+                            {c.razonSocial}
+                          </td>
+                        )}
+                        <td className="text-start" style={borde}>{o.nombreObra}</td>
+                        <td style={borde}>{o.cantidadRemitos}</td>
+                        <td className={o.monto > 0 ? "" : "text-success"} style={borde}>
+                          ${formatoMiles(o.monto)}
+                        </td>
+                      </tr>
+                    );
+                  }),
+                  <tr key={`${c.razonSocial}-total`}>
+                    <td className="text-end" style={ESTILO_TOTAL}>Total {c.razonSocial}</td>
+                    <td style={ESTILO_TOTAL}>{c.cantidadRemitos}</td>
+                    <td style={ESTILO_TOTAL}>${formatoMiles(c.monto)}</td>
+                  </tr>,
+                ];
+              })
             )}
           </tbody>
           {clientes.length > 0 && (
             <tfoot>
-              <tr className="fw-bold table-dark">
+              <tr className="table-dark">
                 <td colSpan="2" className="text-end">TOTAL GENERAL</td>
                 <td>{totalGeneral.cantidadRemitos}</td>
                 <td>${formatoMiles(totalGeneral.monto)}</td>
