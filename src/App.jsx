@@ -22,6 +22,7 @@ import Footer from "./components/shared/Footer";
 import Menu from "./components/shared/Menu";
 import BotonAnteojos from "./components/shared/BotonAnteojos";
 import BotonFoco from "./components/shared/BotonFoco";
+import BotonReunion from "./components/shared/BotonReunion";
 import PendientesModalHost from "./components/shared/PendientesModalHost";
 import ResumenModal from "./components/shared/ResumenModal";
 import { PendientesModalProvider } from "./context/PendientesModalContext";
@@ -35,6 +36,7 @@ const Obras = lazy(() => import("./components/pages/secciones/OPERACIONES/Obras/
 const VerRemitos = lazy(() => import("./components/pages/secciones/OPERACIONES/Remitos/VerRemitos.jsx"));
 const PersonalCrud = lazy(() => import("./components/pages/secciones/ALTAS/Personal/PersonalCrud.jsx"));
 const RemitosXClientes = lazy(() => import("./components/pages/secciones/OPERACIONES/Remitos/RemitosXClientes.jsx"));
+const RemitosSinFacturarInforme = lazy(() => import("./components/pages/secciones/OPERACIONES/Remitos/RemitosSinFacturarInforme.jsx"));
 const RemitosXClientesObras = lazy(() => import("./components/pages/secciones/OPERACIONES/Remitos/RemitoXClientesObras.jsx"));
 const RemitosXClientesFinal = lazy(() => import("./components/pages/secciones/OPERACIONES/Remitos/RemitosXClientesFinal"));
 const MaquinaTabla = lazy(() => import("./components/pages/secciones/ALTAS/Maquinas/MaquinaTabla.jsx"));
@@ -168,6 +170,7 @@ function App() {
                       <Route path="/obras" element={<Obras />} />
                       <Route path="/remitos" element={<VerRemitos />} />
                       <Route path="/remitos-sinfacturar" element={<RemitosXClientes />} />
+                      <Route path="/remitos-sinfacturar-informe" element={<RemitosSinFacturarInforme />} />
                       <Route path="/remitos-todos" element={<TodosLosRemitos />} />
                       <Route
                         path="/remitos-cliente-obras"
@@ -235,6 +238,7 @@ function App() {
                   <Footer />
                   <BotonAnteojos />
                   <BotonFoco />
+                  <BotonReunion />
                   <PendientesModalHost />
                   <ResumenModal />
                 </PendientesModalProvider>

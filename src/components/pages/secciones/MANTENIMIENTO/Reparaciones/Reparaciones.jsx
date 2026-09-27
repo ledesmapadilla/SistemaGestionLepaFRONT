@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { Container, Spinner } from "react-bootstrap";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Container, Spinner, Button } from "react-bootstrap";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas";
 import { obtenerTodasReparaciones } from "../../../../../helpers/queriesReparaciones";
 import { obtenerTodosPendientes } from "../../../../../helpers/queriesPendientes";
@@ -53,6 +53,7 @@ const categoriaOrden = (m) => {
 
 function Reparaciones() {
   const location = useLocation();
+  const navigate = useNavigate();
   const navState = location.state;
   const [maquinas, setMaquinas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -148,8 +149,16 @@ function Reparaciones() {
 
   return (
     <Container className="py-4">
-      <div className="text-center" style={{ marginTop: "2rem", marginBottom: "3rem" }}>
+      <div className="text-center position-relative" style={{ marginTop: "2rem", marginBottom: "3rem" }}>
         <h2 className="mb-0 fw-bold">Reparaciones</h2>
+        <Button
+          size="sm"
+          variant="outline-success"
+          className="position-absolute top-50 end-0 translate-middle-y"
+          onClick={() => navigate(-1)}
+        >
+          Volver
+        </Button>
       </div>
 
       <div

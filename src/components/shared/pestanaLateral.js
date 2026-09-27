@@ -1,4 +1,4 @@
-// Hover compartido de las pestañas laterales fijas (anteojos, foco, comenzar).
+// Hover compartido de las pestañas laterales fijas (anteojos, foco, reunión).
 // Al pasar el mouse se despegan un poco del borde, oscurecen el fondo y
 // levantan la sombra. Van con estilos inline, así que el hover no se puede
 // hacer por CSS: se resuelve con handlers.

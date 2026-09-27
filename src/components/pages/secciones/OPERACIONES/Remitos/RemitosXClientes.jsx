@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Table, Spinner, Button } from "react-bootstrap";
-import { listarRemitos, recalcularEstadosRemitos } from "../../../../../helpers/queriesRemitos";
+import { listarRemitosSinFacturar, recalcularEstadosRemitos } from "../../../../../helpers/queriesRemitos";
 import { useNavigate } from "react-router-dom";
 import XLSXStyle from "xlsx-js-style";
 import "../../../../../styles/remitosxCliente.css";
@@ -17,7 +17,7 @@ const RemitosXClientes = () => {
       // falla no bloquea la carga.
       try { await recalcularEstadosRemitos(); } catch { /* no bloquear la carga */ }
 
-      const remitos = await listarRemitos();
+      const remitos = await listarRemitosSinFacturar();
 
       const agrupado = remitos.reduce((acc, remito) => {
         // 1. Validaciones básicas

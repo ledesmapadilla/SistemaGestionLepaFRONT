@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Table, Spinner, Button } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
-import { listarRemitos } from "../../../../../helpers/queriesRemitos";
+import { listarRemitosSinFacturar } from "../../../../../helpers/queriesRemitos";
 
 const RemitosXClientesObras = () => {
   const [datosAgrupados, setDatosAgrupados] = useState([]);
@@ -16,7 +16,7 @@ const RemitosXClientesObras = () => {
     if (!razonSocial) return;
 
     try {
-      const remitos = await listarRemitos();
+      const remitos = await listarRemitosSinFacturar();
 
       const agrupado = remitos.reduce((acc, remito) => {
         // 1. Verificamos coincidencia de cliente

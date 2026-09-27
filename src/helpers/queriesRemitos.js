@@ -10,6 +10,16 @@ export const listarRemitos = async (estado = "") => {
   return res.json();
 };
 
+// Solo los "Sin facturar", con la obra reducida a lo que usan los listados por
+// cliente (sin el array de precios). Mucho más liviano que listarRemitos().
+export const listarRemitosSinFacturar = async () => {
+  const res = await authFetch(
+    `${remitosBackend}?estado=${encodeURIComponent("Sin facturar")}&obraCampos=razonsocial,nombreobra`
+  );
+  if (!res?.ok) throw new Error("Error al listar remitos sin facturar");
+  return res.json();
+};
+
 export const existeRemito = async (numero) => {
   const res = await authFetch(`${remitosBackend}/existe/${Number(numero)}`);
   if (!res?.ok) throw new Error("Error al verificar remito");
