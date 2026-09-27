@@ -3,9 +3,14 @@ import { API } from "./api";
 
 const remitosBackend = API.remitos;
 
-export const listarRemitos = async (estado = "") => {
-  const estadoQuery = estado ? `?estado=${encodeURIComponent(estado)}` : "";
-  const res = await authFetch(`${remitosBackend}${estadoQuery}`);
+// `obraCampos` ("razonsocial,nombreobra") trae de la obra solo esos campos: el
+// array de precios de cada obra duplica el peso del listado.
+export const listarRemitos = async (estado = "", obraCampos = "") => {
+  const params = new URLSearchParams();
+  if (estado) params.set("estado", estado);
+  if (obraCampos) params.set("obraCampos", obraCampos);
+  const query = params.toString() ? `?${params}` : "";
+  const res = await authFetch(`${remitosBackend}${query}`);
   if (!res?.ok) throw new Error("Error al listar remitos");
   return res.json();
 };

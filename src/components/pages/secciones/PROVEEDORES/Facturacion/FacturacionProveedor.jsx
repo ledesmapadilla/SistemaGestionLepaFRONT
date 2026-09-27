@@ -80,7 +80,7 @@ const FacturacionProveedor = () => {
     try {
       const [data, resObras] = await Promise.all([
         listarFacturasProveedores(),
-        listarObras(),
+        listarObras("?campos=nombreobra,estado"),
       ]);
       setFacturas(data);
       const dataObras = resObras?.ok ? await resObras.json() : [];

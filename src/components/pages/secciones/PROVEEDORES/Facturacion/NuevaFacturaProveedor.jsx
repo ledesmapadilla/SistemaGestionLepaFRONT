@@ -93,7 +93,7 @@ const NuevaFacturaProveedor = () => {
       try {
         const [resProveedores, resObras, facturas] = await Promise.all([
           listarProveedores(),
-          listarObras("?estado=En curso"),
+          listarObras("?estado=En curso&campos=razonsocial,nombreobra,estado"),
           listarFacturasProveedores(),
         ]);
         const dataProveedores = resProveedores?.ok ? await resProveedores.json() : [];

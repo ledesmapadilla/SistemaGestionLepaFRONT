@@ -37,7 +37,7 @@ const AceiteTabla = () => {
       const [respAceites, respMaquinas, respObras] = await Promise.all([
         listarAceites(),
         listarMaquinas(),
-        listarObras()
+        listarObras("?campos=nombreobra,razonsocial")
       ]);
       if (respAceites?.ok) setAceites(await respAceites.json());
       if (respMaquinas?.ok) setMaquinas(await respMaquinas.json());

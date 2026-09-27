@@ -13,6 +13,17 @@ export const listarAsistencia = async (anio, mes) => {
   }
 };
 
+// Solo las lecturas de horómetro de toda la historia (fecha + máquina +
+// horómetro), con la misma forma que listarAsistencia pero mucho más liviano.
+export const listarHorometrosAsistencia = async () => {
+  try {
+    return await authFetch(`${URL}?soloHorometros=true`);
+  } catch (error) {
+    console.error("Error al listar horómetros de asistencia:", error);
+    return null;
+  }
+};
+
 // Todo lo que necesita la pantalla de Asistencia (personal, máquinas, obras,
 // services y el mes) en un solo pedido, para no pagar varios arranques en frío.
 export const listarDatosAsistencia = async (anio, mes) => {

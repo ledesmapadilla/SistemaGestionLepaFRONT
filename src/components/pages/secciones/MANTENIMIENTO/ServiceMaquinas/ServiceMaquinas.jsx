@@ -11,7 +11,7 @@ import {
   borrarService,
 } from "../../../../../helpers/queriesServiceMaquinas.js";
 import { listarMaquinas } from "../../../../../helpers/queriesMaquinas.js";
-import { listarAsistencia } from "../../../../../helpers/queriesAsistencia.js";
+import { listarHorometrosAsistencia } from "../../../../../helpers/queriesAsistencia.js";
 import { confirmarSaltoHorometro, saltoDe } from "../../../../../helpers/horometroAvisos.js";
 import ServiceMaquinaModal from "./ServiceMaquinaModal.jsx";
 import HorasModal from "./HorasModal.jsx";
@@ -86,7 +86,7 @@ const ServiceMaquinas = () => {
       const [resServices, resMaquinas, resAsistencia] = await Promise.all([
         listarServices(),
         listarMaquinas(),
-        listarAsistencia(),
+        listarHorometrosAsistencia(),
       ]);
       if (resServices?.ok) setServices(await resServices.json());
       if (resAsistencia?.ok) setAsistencia(await resAsistencia.json());

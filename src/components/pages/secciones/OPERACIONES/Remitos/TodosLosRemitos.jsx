@@ -15,6 +15,7 @@ import {
   eliminarRemito,
   eliminarItemRemito,
 } from "../../../../../helpers/queriesRemitos.js";
+import { obtenerObra } from "../../../../../helpers/queriesObras";
 
 import "../../../../../styles/verRemitos.css";
 
@@ -54,7 +55,8 @@ const TodosLosRemitos = () => {
 
   const cargarRemitos = async () => {
     try {
-      const data = await listarRemitos();
+      // La obra viene resumida; la completa (con precios) se pide al editar.
+      const data = await listarRemitos("", "razonsocial,nombreobra");
       if (data) {
         const ordenados = data.sort(
           (a, b) => new Date(b.fecha) - new Date(a.fecha)
@@ -75,8 +77,11 @@ const TodosLosRemitos = () => {
     cargarRemitos();
   }, []);
 
-  const handleEditarItem = (remito, item) => {
-    if (!remito.obra) {
+  const handleEditarItem = async (remito, item) => {
+    // El listado trae la obra resumida: el modal necesita la completa
+    // (precios y modalidad), así que se pide recién acá.
+    const obra = remito.obra?._id ? await obtenerObra(remito.obra._id) : null;
+    if (!obra) {
       Swal.fire(
         "Error",
         "Este remito no tiene datos de obra vinculados",
@@ -85,7 +90,7 @@ const TodosLosRemitos = () => {
       return;
     }
 
-    setObraParaModal(remito.obra);
+    setObraParaModal(obra);
     setItemEditando({
       ...item,
       fecha: item.fecha || remito.fecha,
