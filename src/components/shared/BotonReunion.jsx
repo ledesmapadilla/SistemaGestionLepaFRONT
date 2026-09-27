@@ -23,7 +23,7 @@ const ACCESOS = [
   { titulo: "Cuenta corriente proveedores", icono: "bi-truck", ruta: "/cuenta-corriente-proveedores" },
   { titulo: "Tareas Zamorano", icono: "bi-person-gear", responsable: "Zamorano" },
   { titulo: "Pendientes Nelson", icono: "bi-person-check", responsable: "Nelson" },
-  { titulo: "Pendientes", icono: "bi-list-check", ruta: "/reunion/pendientes", color: "#b8621b" },
+  { titulo: "Pendientes", icono: "bi-list-check", ruta: "/reunion/pendientes", color: "#2e7d4f" },
   { titulo: "Impuestos", icono: "bi-bank", enPreparacion: true },
 ];
 
@@ -93,7 +93,7 @@ export default function BotonReunion() {
         <i className="bi bi-people-fill" style={{ fontSize: "1.6rem", color: "#212529" }} />
       </button>
 
-      <Modal show={show} onHide={() => setShow(false)} centered size="lg">
+      <Modal show={show} onHide={() => setShow(false)} centered size="lg" contentClassName="border border-white">
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-people-fill me-2" />
