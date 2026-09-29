@@ -4,6 +4,7 @@ import XLSXStyle from "xlsx-js-style";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { listarCobros, borrarCobro } from "../../../../../helpers/queriesCobros";
+import { MEDIOS_PAGO, SALDO_A_FAVOR, movimientoSaldoAFavor, recibidoCobro } from "../../../../../helpers/cobrosUtils";
 
 const formatoMoneda = (valor) => {
   if (valor === undefined || valor === null) return "-";
@@ -21,6 +22,20 @@ const totalConIva = (f) =>
 
 const totalCobro = (cobro) =>
   (cobro?.pagos || []).reduce((sum, p) => sum + (p.montoCobrado || 0), 0);
+
+const facturasDelCobro = (cobro) =>
+  (cobro?.pagos || []).length
+    ? cobro.pagos.map((p) => `N°${p.factura?.numeroFactura}`).join(", ")
+    : "Anticipo";
+
+const mediosDelCobro = (cobro) =>
+  cobro?.mediosPago?.length > 0
+    ? cobro.mediosPago.map((m) => m.medioPago).join(", ")
+    : cobro?.medioPago || "-";
+
+// "+$X" si el cobro deja saldo a favor, "−$X" si lo usa.
+const textoSaldoAFavor = (mov) =>
+  Math.abs(mov) < 0.01 ? "-" : `${mov > 0 ? "+" : "−"}${formatoMoneda(Math.abs(mov))}`;
 
 const obrasDelCobro = (cobro) => {
   const nombres = [...new Set(
@@ -75,13 +90,16 @@ const CobrosTabla = () => {
       if (respuesta?.ok) {
         setCobros(cobros.filter((c) => c._id !== id));
         Swal.fire({ icon: "success", title: "Cobro eliminado", timer: 2000, showConfirmButton: false });
+      } else {
+        const err = await respuesta?.json().catch(() => ({}));
+        Swal.fire({ icon: "error", title: "No se pudo borrar", text: err?.msg || "No se pudo borrar el cobro" });
       }
     }
   };
 
   const exportarExcel = () => {
-    const headers = ["Fecha", "Cliente", "Obra", "Facturas", "Total cobrado", "Medio de pago"];
-    const cols = ["A", "B", "C", "D", "E", "F"];
+    const headers = ["Fecha", "Cliente", "Obra", "Facturas", "Total cobrado", "Saldo a favor", "Medio de pago"];
+    const cols = ["A", "B", "C", "D", "E", "F", "G"];
     const currencyFmt = '"$"#,##0.00';
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
@@ -90,11 +108,10 @@ const CobrosTabla = () => {
       formatearFecha(c.fecha),
       c.cliente,
       obrasDelCobro(c),
-      (c.pagos || []).map((p) => `N°${p.factura?.numeroFactura}`).join(", "),
+      facturasDelCobro(c),
       totalCobro(c),
-      c.medioPago ||
-        [...new Set((c.pagos || []).map((p) => p.medioPago).filter(Boolean))].join(", ") ||
-        "-",
+      movimientoSaldoAFavor(c),
+      mediosDelCobro(c),
     ]);
 
     const ws = {};
@@ -107,7 +124,7 @@ const CobrosTabla = () => {
 
     filas.forEach((fila, rowIdx) => {
       fila.forEach((val, colIdx) => {
-        const isCurrency = colIdx === 4 && typeof val === "number";
+        const isCurrency = (colIdx === 4 || colIdx === 5) && typeof val === "number";
         ws[`${cols[colIdx]}${rowIdx + 4}`] = {
           v: val ?? "-",
           t: isCurrency ? "n" : "s",
@@ -117,8 +134,8 @@ const CobrosTabla = () => {
       });
     });
 
-    ws["!ref"] = `A1:F${filas.length + 3}`;
-    ws["!cols"] = [{ wch: 12 }, { wch: 28 }, { wch: 24 }, { wch: 24 }, { wch: 16 }, { wch: 16 }];
+    ws["!ref"] = `A1:G${filas.length + 3}`;
+    ws["!cols"] = [{ wch: 12 }, { wch: 28 }, { wch: 24 }, { wch: 24 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
 
     const libro = XLSXStyle.utils.book_new();
     XLSXStyle.utils.book_append_sheet(libro, ws, "Cobros");
@@ -164,7 +181,8 @@ const CobrosTabla = () => {
         (c.mediosPago || []).some((m) => m.medioPago === filtroMedio);
       const coincideFactura =
         filtroFactura === "" ||
-        (c.pagos || []).some((p) => String(p.factura?.numeroFactura || "").includes(filtroFactura));
+        (c.pagos || []).some((p) => String(p.factura?.numeroFactura || "").includes(filtroFactura)) ||
+        (!(c.pagos || []).length && "anticipo".includes(filtroFactura.toLowerCase()));
       const fecha = c.fecha?.split("T")[0] ?? "";
       const coincideDesde = filtroDesde === "" || fecha >= filtroDesde;
       const coincideHasta = filtroHasta === "" || fecha <= filtroHasta;
@@ -212,11 +230,7 @@ const CobrosTabla = () => {
         <div style={{ position: "relative", width: "190px" }}>
           <Form.Select value={filtroMedio} onChange={(e) => setFiltroMedio(e.target.value)} style={filtroMedio ? selectActivo : {}}>
             <option value="">Medio de pago</option>
-            <option>Efectivo</option>
-            <option>Cheque</option>
-            <option>E-Cheq</option>
-            <option>Retenciones</option>
-            <option>Transferencia</option>
+            {[...MEDIOS_PAGO, SALDO_A_FAVOR].map((mp) => <option key={mp}>{mp}</option>)}
           </Form.Select>
           {filtroMedio && (
             <span onClick={() => setFiltroMedio("")} style={estiloX}>✕</span>
@@ -258,6 +272,7 @@ const CobrosTabla = () => {
               <th>Obra</th>
               <th>Facturas</th>
               <th>Total cobrado</th>
+              <th title="+ deja saldo a favor del cliente / − usa saldo a favor">Saldo a favor</th>
               <th>Medio de pago</th>
               <th>Observaciones</th>
               <th>Acciones</th>
@@ -266,7 +281,7 @@ const CobrosTabla = () => {
           <tbody>
             {cobrosFiltrados.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-muted py-3">Sin cobros registrados</td>
+                <td colSpan={9} className="text-muted py-3">Sin cobros registrados</td>
               </tr>
             ) : (
               cobrosFiltrados.map((c) => (
@@ -274,15 +289,14 @@ const CobrosTabla = () => {
                   <td style={{ whiteSpace: "nowrap" }}>{formatearFecha(c.fecha)}</td>
                   <td>{c.cliente}</td>
                   <td className="text-muted">{obrasDelCobro(c)}</td>
-                  <td className="text-muted">
-                    {(c.pagos || []).map((p) => `N°${p.factura?.numeroFactura}`).join(", ")}
+                  <td className={(c.pagos || []).length ? "text-muted" : "text-success fw-semibold"}>
+                    {facturasDelCobro(c)}
                   </td>
                   <td>{formatoMoneda(totalCobro(c))}</td>
-                  <td>
-                    {(c.mediosPago?.length > 0)
-                      ? c.mediosPago.map((m) => m.medioPago).join(", ")
-                      : c.medioPago || "-"}
+                  <td className={movimientoSaldoAFavor(c) > 0.01 ? "text-success fw-semibold" : "text-muted"}>
+                    {textoSaldoAFavor(movimientoSaldoAFavor(c))}
                   </td>
+                  <td>{mediosDelCobro(c)}</td>
                   <td>
                     {(() => {
                       const obs = (c.pagos || []).map((p) => p.observaciones).filter(Boolean).join("\n");
@@ -340,6 +354,11 @@ const CobrosTabla = () => {
               <span><strong>Forma de pago:</strong> {cobroVer.medioPago}</span>
             )}
           </div>
+          {!(cobroVer?.pagos || []).length && (
+            <p className="text-success fw-semibold">
+              Anticipo: no se imputó a facturas, todo lo recibido queda a favor del cliente.
+            </p>
+          )}
           <Table striped bordered hover className="text-center align-middle">
             <thead className="table-dark">
               <tr>
@@ -380,6 +399,17 @@ const CobrosTabla = () => {
                 <td colSpan={4} className="text-end fw-bold">Total cobrado:</td>
                 <td colSpan={4} className="fw-bold">{formatoMoneda(totalCobro(cobroVer))}</td>
               </tr>
+              {cobroVer && Math.abs(movimientoSaldoAFavor(cobroVer)) > 0.01 && (
+                <tr>
+                  <td colSpan={4} className="text-end">
+                    Recibido {formatoMoneda(recibidoCobro(cobroVer))} ·{" "}
+                    {movimientoSaldoAFavor(cobroVer) > 0 ? "Queda a favor del cliente:" : "Saldo a favor usado:"}
+                  </td>
+                  <td colSpan={4} className={movimientoSaldoAFavor(cobroVer) > 0 ? "text-success fw-bold" : "fw-bold"}>
+                    {formatoMoneda(Math.abs(movimientoSaldoAFavor(cobroVer)))}
+                  </td>
+                </tr>
+              )}
             </tfoot>
           </Table>
         </Modal.Body>

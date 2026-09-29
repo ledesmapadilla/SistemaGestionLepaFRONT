@@ -4,8 +4,18 @@ import { Button, Table, Container, Form, Spinner, Modal } from "react-bootstrap"
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import AsyncButton from "../../../../shared/AsyncButton";
+import ResumenCobro from "./ResumenCobro";
 import { editarCobro, listarCobros } from "../../../../../helpers/queriesCobros";
 import { listarFacturas } from "../../../../../helpers/queriesFacturas";
+import { listarClientes } from "../../../../../helpers/queriesClientes";
+import {
+  SALDO_A_FAVOR,
+  MEDIOS_PAGO,
+  esCheque,
+  saldosAFavorPorCliente,
+  usadoSaldoAFavor,
+  validarMediosPago,
+} from "../../../../../helpers/cobrosUtils";
 
 const hoy = new Date().toLocaleDateString("en-CA");
 
@@ -35,9 +45,15 @@ const EditarCobro = () => {
   const [showModalPago, setShowModalPago] = useState(false);
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [editandoMontoId, setEditandoMontoId] = useState(null);
+  const [chequesExistentes, setChequesExistentes] = useState(new Set());
+  const [saldosAFavor, setSaldosAFavor] = useState({});
+  const [clientesAlta, setClientesAlta] = useState([]);
 
   const clienteSeleccionado = watch("cliente");
   const { onChange: onChangeCliente, ...clienteReg } = register("cliente", { required: "El cliente es obligatorio" });
+
+  // Saldo a favor sin contar este cobro.
+  const saldoDisponible = saldosAFavor[clienteSeleccionado] || 0;
 
   const saldoFactura = (f) =>
     Math.max(0, totalConIva(f) - (cobradoPorFactura[f._id] || 0));
@@ -45,9 +61,10 @@ const EditarCobro = () => {
   useEffect(() => {
     const cargar = async () => {
       try {
-        const [facturasResult, cobrosResult] = await Promise.allSettled([
+        const [facturasResult, cobrosResult, clientesResult] = await Promise.allSettled([
           listarFacturas(),
           listarCobros(),
+          listarClientes(),
         ]);
 
         let cobro = null;
@@ -55,13 +72,19 @@ const EditarCobro = () => {
 
         if (cobrosResult.status === "fulfilled") {
           cobro = cobrosResult.value.find((c) => c._id === id);
+          const cheques = new Set();
           cobrosResult.value.forEach((c) => {
             if (c._id === id) return;
             (c.pagos || []).forEach((pago) => {
               const fid = pago.factura?._id ?? pago.factura;
               if (fid) mapa[fid] = (mapa[fid] || 0) + (pago.montoCobrado || 0);
             });
+            (c.mediosPago || []).forEach((m) => {
+              if (esCheque(m.medioPago) && m.numeroCheque) cheques.add(m.numeroCheque);
+            });
           });
+          setChequesExistentes(cheques);
+          setSaldosAFavor(saldosAFavorPorCliente(cobrosResult.value, id));
         }
         setCobradoPorFactura(mapa);
 
@@ -79,6 +102,11 @@ const EditarCobro = () => {
           );
         }
 
+        if (clientesResult.status === "fulfilled" && clientesResult.value?.ok) {
+          const lista = await clientesResult.value.json();
+          setClientesAlta((Array.isArray(lista) ? lista : []).map((c) => c.razonsocial).filter(Boolean));
+        }
+
         if (cobro) {
           reset({
             fecha: cobro.fecha?.split("T")[0] ?? "",
@@ -88,6 +116,7 @@ const EditarCobro = () => {
             (cobro.pagos || []).map((p) => ({
               ...(p.factura || {}),
               montoCobrado: (p.montoCobrado ?? 0).toFixed(2),
+              observaciones: p.observaciones || "",
             }))
           );
           setMediosPago(
@@ -109,8 +138,8 @@ const EditarCobro = () => {
     cargar();
   }, [id]);
 
-  const clientesConFacturas = [
-    ...new Set(todasFacturas.map((f) => f.cliente).filter(Boolean)),
+  const clientesOpciones = [
+    ...new Set([...todasFacturas.map((f) => f.cliente), ...clientesAlta, clienteSeleccionado].filter(Boolean)),
   ].sort();
 
   useEffect(() => {
@@ -127,35 +156,52 @@ const EditarCobro = () => {
     setFacturaElegida("");
   }, [clienteSeleccionado, todasFacturas, facturasSeleccionadas]);
 
-  useEffect(() => {
-    if (mediosPago.length !== 1) return;
-    const newTotal = facturasSeleccionadas.reduce(
-      (sum, f) => sum + (parseFloat(f.montoCobrado) || 0), 0
-    );
-    setMediosPago((prev) => [{ ...prev[0], monto: newTotal.toFixed(2) }]);
-  }, [facturasSeleccionadas]);
+  // Con una sola forma de pago, su monto sigue a lo imputado cuando el usuario
+  // cambia facturas. No se hace al cargar: pisaría el excedente guardado.
+  const cambiarFacturas = (nuevas) => {
+    setFacturasSeleccionadas(nuevas);
+    if (mediosPago.length !== 1 || nuevas.length === 0) return;
+    const total = nuevas.reduce((sum, f) => sum + (parseFloat(f.montoCobrado) || 0), 0);
+    const monto = mediosPago[0].medioPago === SALDO_A_FAVOR ? Math.min(total, saldoDisponible) : total;
+    setMediosPago([{ ...mediosPago[0], monto: monto.toFixed(2) }]);
+  };
 
   const agregarFactura = () => {
     if (!facturaElegida) return;
     const factura = todasFacturas.find((f) => f._id === facturaElegida);
     if (!factura) return;
-    setFacturasSeleccionadas((prev) => [
-      ...prev,
+    cambiarFacturas([
+      ...facturasSeleccionadas,
       { ...factura, montoCobrado: saldoFactura(factura).toFixed(2) },
     ]);
     setFacturaElegida("");
   };
 
   const quitarFactura = (fid) => {
-    setFacturasSeleccionadas(facturasSeleccionadas.filter((f) => f._id !== fid));
+    cambiarFacturas(facturasSeleccionadas.filter((f) => f._id !== fid));
   };
 
-  const esCheque = (tipo) => tipo === "Cheque" || tipo === "E-Cheq";
+  const totalSeleccionado = facturasSeleccionadas.reduce(
+    (sum, f) => sum + saldoFactura(f),
+    0
+  );
+
+  // Lo que se imputa a facturas.
+  const totalCobrado = facturasSeleccionadas.reduce(
+    (sum, f) => sum + (parseFloat(f.montoCobrado) || 0),
+    0
+  );
+
+  const totalMediosPago = mediosPago.reduce((sum, m) => sum + (parseFloat(m.monto) || 0), 0);
+  const usadoSaldo = usadoSaldoAFavor(mediosPago);
+  const excedente = Math.round((totalMediosPago - totalCobrado) * 100) / 100;
+  const esAnticipo = facturasSeleccionadas.length === 0;
 
   const agregarMedioPago = () => {
+    const restante = totalCobrado - totalMediosPago;
     setMediosPago((prev) => [
       ...prev,
-      { id: Date.now(), medioPago: "", monto: totalCobrado.toFixed(2), numeroCheque: "", fechaCobro: "" },
+      { id: Date.now(), medioPago: "", monto: restante > 0.01 ? restante.toFixed(2) : "", numeroCheque: "", fechaCobro: "" },
     ]);
   };
 
@@ -163,35 +209,19 @@ const EditarCobro = () => {
     setMediosPago((prev) => prev.filter((m) => m.id !== mid));
   };
 
+  const errorMediosPago = () =>
+    validarMediosPago(mediosPago, {
+      imputado: totalCobrado,
+      hayFacturas: !esAnticipo,
+      saldoDisponible,
+      chequesExistentes,
+    });
+
   const cerrarModalPago = () => {
     if (mediosPago.length === 0) { setShowModalPago(false); return; }
-    for (const m of mediosPago) {
-      if (!m.medioPago) {
-        Swal.fire({ icon: "warning", title: "Forma de pago incompleta", text: "Seleccioná el tipo en cada forma de pago" });
-        return;
-      }
-      if (isNaN(parseFloat(m.monto)) || parseFloat(m.monto) <= 0) {
-        Swal.fire({ icon: "warning", title: "Monto inválido", text: "Ingresá un monto válido en cada forma de pago" });
-        return;
-      }
-      if (esCheque(m.medioPago) && !m.numeroCheque) {
-        const esE = m.medioPago === "E-Cheq";
-        Swal.fire({ icon: "warning", title: `Número de ${esE ? "e-cheq" : "cheque"} faltante`, text: `Ingresá el número de ${esE ? "e-cheq" : "cheque"}` });
-        return;
-      }
-      if (esCheque(m.medioPago) && !m.fechaCobro) {
-        const esE = m.medioPago === "E-Cheq";
-        Swal.fire({ icon: "warning", title: "Fecha de cobro faltante", text: `Ingresá la fecha de cobro del ${esE ? "e-cheq" : "cheque"}` });
-        return;
-      }
-    }
-    const totalMediosPago = mediosPago.reduce((sum, m) => sum + (parseFloat(m.monto) || 0), 0);
-    if (Math.abs(totalMediosPago - totalCobrado) > 0.01) {
-      Swal.fire({
-        icon: "warning",
-        title: "Los montos no coinciden",
-        text: `La suma de las formas de pago (${formatoMoneda(totalMediosPago)}) debe ser igual al total cobrado (${formatoMoneda(totalCobrado)})`,
-      });
+    const error = errorMediosPago();
+    if (error) {
+      Swal.fire({ icon: "warning", ...error });
       return;
     }
     setShowModalPago(false);
@@ -206,74 +236,40 @@ const EditarCobro = () => {
   const actualizarCampo = (fid, campo, valor) => {
     if (campo === "montoCobrado") {
       const factura = facturasSeleccionadas.find((f) => f._id === fid);
-      if (factura && parseFloat(valor) > saldoFactura(factura)) {
+      if (factura && parseFloat(valor) > saldoFactura(factura) + 0.01) {
         Swal.fire({
           icon: "warning",
           title: "Cobro mayor al saldo",
-          text: "El monto ingresado supera el saldo pendiente de la factura",
-          timer: 2500,
+          text: "A la factura se le imputa como máximo su saldo. Lo que pague de más cargalo en las formas de pago y queda a favor del cliente.",
+          timer: 3500,
           showConfirmButton: false,
         });
       }
     }
-    setFacturasSeleccionadas((prev) =>
-      prev.map((f) => (f._id === fid ? { ...f, [campo]: valor } : f))
+    cambiarFacturas(
+      facturasSeleccionadas.map((f) => (f._id === fid ? { ...f, [campo]: valor } : f))
     );
   };
 
-  const totalSeleccionado = facturasSeleccionadas.reduce(
-    (sum, f) => sum + saldoFactura(f),
-    0
-  );
-
-  const totalCobrado = facturasSeleccionadas.reduce(
-    (sum, f) => sum + (parseFloat(f.montoCobrado) || 0),
-    0
-  );
-
   const onSubmit = async (data) => {
-    if (facturasSeleccionadas.length === 0) {
-      Swal.fire({ icon: "warning", title: "Sin facturas", text: "Agregá al menos una factura al cobro" });
-      return;
-    }
     for (const f of facturasSeleccionadas) {
       const monto = parseFloat(f.montoCobrado);
       if (isNaN(monto) || monto <= 0) {
         Swal.fire({ icon: "warning", title: "Monto inválido", text: `Ingresá un monto válido para la factura N° ${f.numeroFactura}` });
         return;
       }
-    }
-    if (mediosPago.length === 0) {
-      Swal.fire({ icon: "warning", title: "Sin forma de pago", text: "Agregá al menos una forma de pago" });
-      return;
-    }
-    for (const m of mediosPago) {
-      if (!m.medioPago) {
-        Swal.fire({ icon: "warning", title: "Forma de pago incompleta", text: "Seleccioná el tipo en cada forma de pago" });
-        return;
-      }
-      if (isNaN(parseFloat(m.monto)) || parseFloat(m.monto) <= 0) {
-        Swal.fire({ icon: "warning", title: "Monto inválido", text: "Ingresá un monto válido en cada forma de pago" });
-        return;
-      }
-      if (esCheque(m.medioPago) && !m.numeroCheque) {
-        const esE = m.medioPago === "E-Cheq";
-        Swal.fire({ icon: "warning", title: `Número de ${esE ? "e-cheq" : "cheque"} faltante`, text: `Ingresá el número de ${esE ? "e-cheq" : "cheque"}` });
-        return;
-      }
-      if (esCheque(m.medioPago) && !m.fechaCobro) {
-        const esE = m.medioPago === "E-Cheq";
-        Swal.fire({ icon: "warning", title: "Fecha de cobro faltante", text: `Ingresá la fecha de cobro del ${esE ? "e-cheq" : "cheque"}` });
+      if (monto > saldoFactura(f) + 0.01) {
+        Swal.fire({
+          icon: "warning",
+          title: "Cobro mayor al saldo",
+          text: `A la factura N° ${f.numeroFactura} se le puede imputar hasta ${formatoMoneda(saldoFactura(f))}. Lo que sobre queda a favor del cliente.`,
+        });
         return;
       }
     }
-    const totalMediosPago = mediosPago.reduce((sum, m) => sum + (parseFloat(m.monto) || 0), 0);
-    if (Math.abs(totalMediosPago - totalCobrado) > 0.01) {
-      Swal.fire({
-        icon: "warning",
-        title: "Los montos no coinciden",
-        text: `La suma de las formas de pago (${formatoMoneda(totalMediosPago)}) debe ser igual al total cobrado (${formatoMoneda(totalCobrado)})`,
-      });
+    const error = errorMediosPago();
+    if (error) {
+      Swal.fire({ icon: "warning", ...error });
       return;
     }
 
@@ -289,6 +285,7 @@ const EditarCobro = () => {
       pagos: facturasSeleccionadas.map((f) => ({
         factura: f._id,
         montoCobrado: parseFloat(f.montoCobrado),
+        observaciones: f.observaciones || "",
       })),
     };
 
@@ -317,7 +314,7 @@ const EditarCobro = () => {
   return (
     <Container className="py-4 w-75">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h6 className="mb-0">Editar Cobro</h6>
+        <h6 className="mb-0">{esAnticipo ? "Editar Anticipo" : "Editar Cobro"}</h6>
         <Button variant="outline-success" onClick={() => navigate("/cobro-factura")}>Volver</Button>
       </div>
 
@@ -343,11 +340,16 @@ const EditarCobro = () => {
                 isInvalid={!!errors.cliente}
               >
                 <option value="">Seleccionar...</option>
-                {clientesConFacturas.map((nombre) => (
+                {clientesOpciones.map((nombre) => (
                   <option key={nombre} value={nombre}>{nombre}</option>
                 ))}
               </Form.Select>
             </div>
+            {saldoDisponible > 0.01 && (
+              <span className="border border-success rounded px-2 py-1 text-success fw-semibold" style={{ fontSize: "0.85rem" }}>
+                Saldo a favor disponible: {formatoMoneda(saldoDisponible)}
+              </span>
+            )}
           </div>
           <div className="d-flex align-items-center gap-3">
             <div className="d-flex align-items-center gap-2">
@@ -372,7 +374,7 @@ const EditarCobro = () => {
                 ))}
               </Form.Select>
             </div>
-            {facturasSeleccionadas.length > 0 && (
+            {clienteSeleccionado && (
               <Button type="button" variant="outline-primary" size="sm" onClick={() => {
                 if (mediosPago.length === 0) agregarMedioPago();
                 setShowModalPago(true);
@@ -388,6 +390,12 @@ const EditarCobro = () => {
           <Button type="button" variant="outline-primary" onClick={agregarFactura} disabled={!facturaElegida}>+ Agregar Factura</Button>
           <AsyncButton type="submit" variant="outline-success" loading={isSubmitting}>Guardar Cambios</AsyncButton>
         </div>
+
+        {clienteSeleccionado && esAnticipo && (
+          <p className="text-muted small text-end mb-3">
+            Sin facturas, el cobro se guarda como <strong>anticipo</strong>: todo lo recibido queda a favor del cliente.
+          </p>
+        )}
 
         {facturasSeleccionadas.length > 0 && (
           <Table striped bordered hover className="text-center align-middle mb-4">
@@ -438,6 +446,15 @@ const EditarCobro = () => {
             </tfoot>
           </Table>
         )}
+
+        {mediosPago.length > 0 && (
+          <ResumenCobro
+            recibido={totalMediosPago - usadoSaldo}
+            usadoSaldo={usadoSaldo}
+            imputado={totalCobrado}
+            excedente={excedente}
+          />
+        )}
       </Form>
 
       <Modal show={showModalPago} onHide={cerrarModalPago} size="lg" centered>
@@ -445,7 +462,10 @@ const EditarCobro = () => {
           <Modal.Title>Formas de pago</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <div className="d-flex justify-content-end mb-2">
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <span className="text-muted small">
+              {saldoDisponible > 0.01 && `Saldo a favor disponible: ${formatoMoneda(saldoDisponible)}`}
+            </span>
             <Button variant="outline-primary" size="sm" onClick={agregarMedioPago}>+ Agregar</Button>
           </div>
           <Table bordered hover className="text-center align-middle">
@@ -464,12 +484,10 @@ const EditarCobro = () => {
                   <td style={{ minWidth: "160px" }}>
                     <Form.Select size="sm" value={m.medioPago} onChange={(e) => actualizarMedioPago(m.id, "medioPago", e.target.value)}>
                       <option value="">Seleccionar...</option>
-                      <option>Efectivo</option>
-                      <option>Cheque</option>
-                      <option>E-Cheq</option>
-                      <option>Retenciones</option>
-                      <option>Transferencia</option>
-                      <option>Canje</option>
+                      {MEDIOS_PAGO.map((mp) => <option key={mp}>{mp}</option>)}
+                      {((saldoDisponible > 0.01 && !esAnticipo) || m.medioPago === SALDO_A_FAVOR) && (
+                        <option>{SALDO_A_FAVOR}</option>
+                      )}
                     </Form.Select>
                   </td>
                   <td style={{ minWidth: "120px" }}>
@@ -502,11 +520,17 @@ const EditarCobro = () => {
             <tfoot style={{ borderTop: "2px solid #ffc107" }}>
               <tr>
                 <td className="text-end fw-semibold">Total:</td>
-                <td className="fw-bold">{formatoMoneda(mediosPago.reduce((sum, m) => sum + (parseFloat(m.monto) || 0), 0))}</td>
+                <td className="fw-bold">{formatoMoneda(totalMediosPago)}</td>
                 <td colSpan={3}></td>
               </tr>
             </tfoot>
           </Table>
+          <ResumenCobro
+            recibido={totalMediosPago - usadoSaldo}
+            usadoSaldo={usadoSaldo}
+            imputado={totalCobrado}
+            excedente={excedente}
+          />
         </Modal.Body>
         <Modal.Footer>
           <Button variant="outline-primary" onClick={cerrarModalPago}>OK</Button>
