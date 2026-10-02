@@ -525,7 +525,7 @@ export default function Pendientes() {
 
   return (
     <Container className="py-4">
-      <h2 className="mb-5 fw-bold text-center">Pendientes</h2>
+      <h2 className="mb-4 fw-bold text-center">Pendientes</h2>
 
       <Row xs={1} sm={2} md={3} lg={3} className="g-3 mx-auto justify-content-center" style={{ maxWidth: 900 }}>
         {RESPONSABLES.map((r) => {
@@ -598,15 +598,15 @@ export default function Pendientes() {
         })}
       </Row>
 
-      {/* ── Tareas para la semana: tarjeta aparte, de ancho completo y con otro estilo.
+      {/* ── Tareas para la semana: tarjeta aparte, de media grilla y con otro estilo.
           Todavía no tiene página propia: la ruta cae en el 404. ── */}
-      <div className="mx-auto mt-4" style={{ maxWidth: 900 }}>
+      <div className="mx-auto mt-3" style={{ maxWidth: 450 }}>
         <Card
           className="shadow-sm"
           style={{
             cursor: "pointer",
-            border: "1px dashed rgba(255, 193, 7, 0.6)",
-            background: "linear-gradient(135deg, rgba(255,193,7,0.10), rgba(253,126,20,0.06))",
+            border: "1px dashed rgba(32, 201, 151, 0.6)",
+            background: "linear-gradient(135deg, rgba(32,201,151,0.12), rgba(32,201,151,0.04))",
             transition: "transform 0.15s, box-shadow 0.15s",
           }}
           onClick={() => {
@@ -622,18 +622,18 @@ export default function Pendientes() {
             e.currentTarget.style.boxShadow = "";
           }}
         >
-          <Card.Body className="d-flex align-items-center justify-content-center gap-3 py-3">
+          <Card.Body className="d-flex align-items-center justify-content-center gap-3 py-2">
             <div
               className="rounded-circle d-flex align-items-center justify-content-center"
-              style={{ width: 44, height: 44, backgroundColor: "rgba(255,193,7,0.15)" }}
+              style={{ width: 44, height: 44, backgroundColor: "rgba(32,201,151,0.15)" }}
             >
-              <i className="bi bi-calendar-week fs-5" style={{ color: "#ffc107" }} />
+              <i className="bi bi-calendar-week fs-5" style={{ color: "#20c997" }} />
             </div>
             <div className="text-start">
               <div className="fw-semibold" style={{ fontSize: "1.05rem" }}>Tareas para la semana</div>
               <div className="small" style={{ color: "#adb5bd" }}>Planificación semanal del equipo</div>
             </div>
-            <i className="bi bi-chevron-right ms-2" style={{ color: "#ffc107" }} />
+            <i className="bi bi-chevron-right ms-2" style={{ color: "#20c997" }} />
           </Card.Body>
         </Card>
       </div>
