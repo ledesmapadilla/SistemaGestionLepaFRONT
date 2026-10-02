@@ -20,7 +20,7 @@ const RESPONSABLES = [
 
 // Tareas que se listan en cada tarjeta antes de cortar con la leyenda "+ N tareas más".
 // El tope existe para que el panel entre en una pantalla sin scroll.
-const TAREAS_VISIBLES = 4;
+const TAREAS_VISIBLES = 3;
 
 // Línea vertical a los costados de la tarjeta: la mitad del alto, centrada.
 const ESTILO_LINEA_LATERAL = {
