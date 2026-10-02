@@ -598,6 +598,46 @@ export default function Pendientes() {
         })}
       </Row>
 
+      {/* ── Tareas para la semana: tarjeta aparte, de ancho completo y con otro estilo.
+          Todavía no tiene página propia: la ruta cae en el 404. ── */}
+      <div className="mx-auto mt-4" style={{ maxWidth: 900 }}>
+        <Card
+          className="shadow-sm"
+          style={{
+            cursor: "pointer",
+            border: "1px dashed rgba(255, 193, 7, 0.6)",
+            background: "linear-gradient(135deg, rgba(255,193,7,0.10), rgba(253,126,20,0.06))",
+            transition: "transform 0.15s, box-shadow 0.15s",
+          }}
+          onClick={() => {
+            pendientesModal?.cerrar();
+            navigate("/pendientes/semana");
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-4px)";
+            e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.15)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "";
+          }}
+        >
+          <Card.Body className="d-flex align-items-center justify-content-center gap-3 py-3">
+            <div
+              className="rounded-circle d-flex align-items-center justify-content-center"
+              style={{ width: 44, height: 44, backgroundColor: "rgba(255,193,7,0.15)" }}
+            >
+              <i className="bi bi-calendar-week fs-5" style={{ color: "#ffc107" }} />
+            </div>
+            <div className="text-start">
+              <div className="fw-semibold" style={{ fontSize: "1.05rem" }}>Tareas para la semana</div>
+              <div className="small" style={{ color: "#adb5bd" }}>Planificación semanal del equipo</div>
+            </div>
+            <i className="bi bi-chevron-right ms-2" style={{ color: "#ffc107" }} />
+          </Card.Body>
+        </Card>
+      </div>
+
       {/* ── Modal de tareas del responsable ── */}
       <Modal show={!!modalResp} onHide={cerrar} centered size="xl" scrollable>
         <Modal.Header closeButton>
