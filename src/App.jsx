@@ -29,6 +29,7 @@ import { PendientesModalProvider } from "./context/PendientesModalContext";
 
 const Inicio = lazy(() => import("./components/pages/Inicio"));
 const Pendientes = lazy(() => import("./components/pages/secciones/PENDIENTES/Pendientes.jsx"));
+const TareasSemana = lazy(() => import("./components/pages/secciones/PENDIENTES/TareasSemana.jsx"));
 const PendientesReunion = lazy(() => import("./components/pages/secciones/REUNION/PendientesReunion.jsx"));
 const Error404 = lazy(() => import("./components/pages/Error404"));
 const Clientes = lazy(() => import("./components/pages/secciones/ALTAS/Clientes/Clientes.jsx"));
@@ -166,6 +167,7 @@ function App() {
                     <Suspense fallback={<PageSpinner />}>
                     <Routes>
                       <Route path="/pendientes" element={<Pendientes />} />
+                      <Route path="/pendientes/semana" element={<TareasSemana />} />
                       <Route path="/reunion/pendientes" element={<PendientesReunion />} />
                       <Route path="/clientes" element={<Clientes />} />
                       <Route path="/proveedores" element={<Proveedores />} />

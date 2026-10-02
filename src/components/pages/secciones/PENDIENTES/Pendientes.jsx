@@ -7,16 +7,10 @@ import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/q
 import { obtenerTodasReparaciones, guardarReparaciones } from "../../../../helpers/queriesReparaciones";
 import { listarMaquinas } from "../../../../helpers/queriesMaquinas";
 import { usePendientesModal } from "../../../../context/PendientesModalContext";
-
-// Mismos responsables que el select de repuestos.
-const RESPONSABLES = [
-  { nombre: "Zamorano", color: "#0d6efd" },
-  { nombre: "Mauricio", color: "#198754" },
-  { nombre: "Nelson", color: "#dc3545" },
-  { nombre: "Juan José", color: "#6f42c1" },
-  { nombre: "Nacho", color: "#fd7e14" },
-  { nombre: "Agustín", color: "#0dcaf0" },
-];
+import { agregarTareaSemana } from "../../../../helpers/queriesTareasSemana";
+import {
+  RESPONSABLES, ESTADOS, ESTADOS_REPUESTO, COLOR_ESTADO, hoy, diasPendiente, semanaActual,
+} from "./pendientesUtils";
 
 // Tareas que se listan en cada tarjeta antes de cortar con la leyenda "+ N tareas más".
 // El tope existe para que el panel entre en una pantalla sin scroll.
@@ -31,47 +25,12 @@ const ESTILO_LINEA_LATERAL = {
   backgroundColor: "rgba(255, 255, 255, 0.2)",
 };
 
-const ESTADOS = ["Pendiente", "En proceso", "Terminado"];
-const ESTADOS_REPUESTO = ["Pedido", "Pendiente", "En taller", "Colocado"];
-
 // Estilo estándar del proyecto para el botón ✕ que limpia un select de filtro.
 const estiloX = {
   position: "absolute", right: "10px", top: "50%",
   transform: "translateY(-50%)", cursor: "pointer",
   color: "#fff", fontSize: "14px", fontWeight: "900",
   zIndex: 5, userSelect: "none",
-};
-const COLOR_ESTADO = {
-  Pendiente: "#6c757d",
-  "En proceso": "#ffc107",
-  Terminado: "#198754",
-  // Estados de repuestos
-  Pedido: "#0dcaf0",
-  "En taller": "#fd7e14",
-  Colocado: "#198754",
-};
-
-const hoy = () => new Date().toLocaleDateString("en-CA");
-
-const parseFechaLocal = (f) => {
-  const [y, m, d] = f.split("-").map(Number);
-  return new Date(y, m - 1, d);
-};
-
-// Días desde que se generó la tarea (fecha). Suma hasta hoy mientras no esté
-// terminada; si tiene fechaTerminado, el conteo se congela en esa fecha.
-const diasPendiente = (fecha, fechaTerminado) => {
-  if (!fecha) return "-";
-  const inicio = parseFechaLocal(fecha);
-  let fin;
-  if (fechaTerminado) {
-    fin = parseFechaLocal(fechaTerminado);
-  } else {
-    const a = new Date();
-    fin = new Date(a.getFullYear(), a.getMonth(), a.getDate());
-  }
-  const diff = Math.floor((fin - inicio) / 86400000);
-  return diff < 0 ? 0 : diff;
 };
 
 const filaVacia = () => ({
@@ -343,6 +302,61 @@ export default function Pendientes() {
     });
   };
 
+  // Copia la fila a "Tareas para la semana" del responsable abierto. Pide la
+  // semana (desde/hasta, obligatorias) sugiriendo la de lunes a sábado actual.
+  const aSemanal = async (t) => {
+    const sugerida = semanaActual();
+    const escapar = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+    const titulo = escapar(t.maquina ? `${t.maquina} - ${t.tarea || ""}` : t.tarea || "");
+    const { value: semana } = await Swal.fire({
+      title: "Tarea para la semana",
+      html: `
+        <div class="text-start mb-2">${titulo}</div>
+        <div class="d-flex gap-2 justify-content-center">
+          <label class="text-start">Desde<input id="sem-desde" type="date" class="form-control" value="${sugerida.desde}"></label>
+          <label class="text-start">Hasta<input id="sem-hasta" type="date" class="form-control" value="${sugerida.hasta}"></label>
+        </div>`,
+      showCancelButton: true,
+      confirmButtonText: "Agregar",
+      cancelButtonText: "Cancelar",
+      preConfirm: () => {
+        const desde = document.getElementById("sem-desde").value;
+        const hasta = document.getElementById("sem-hasta").value;
+        if (!desde || !hasta) {
+          Swal.showValidationMessage("Las fechas desde y hasta son obligatorias");
+          return false;
+        }
+        if (hasta < desde) {
+          Swal.showValidationMessage("La fecha hasta no puede ser anterior a desde");
+          return false;
+        }
+        return { desde, hasta };
+      },
+    });
+    if (!semana) return;
+
+    const res = await agregarTareaSemana(modalResp.nombre, {
+      id: crypto.randomUUID(),
+      origenId: t.id,
+      tipo: t.tipo || "",
+      desde: semana.desde,
+      hasta: semana.hasta,
+      fecha: t.fecha || "",
+      maquina: t.maquina || "",
+      tarea: t.tarea || "",
+      estado: t.estado || "Pendiente",
+      fechaTerminado: t.fechaTerminado || "",
+      observaciones: t.observaciones || "",
+    });
+    if (res?.ok) {
+      Swal.fire({ position: "center", icon: "success", title: "Agregada a la semana", showConfirmButton: false, timer: 1200, timerProgressBar: true });
+    } else if (res?.status === 409) {
+      Swal.fire({ icon: "info", title: "Ya está cargada", text: "Esta tarea ya está en esa semana." });
+    } else {
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudo agregar la tarea a la semana" });
+    }
+  };
+
   const verObservacion = (texto) =>
     Swal.fire({ title: "Observaciones", text: texto, confirmButtonText: "Cerrar", confirmButtonColor: "#6c757d" });
 
@@ -599,7 +613,7 @@ export default function Pendientes() {
       </Row>
 
       {/* ── Tareas para la semana: tarjeta aparte, de media grilla y con otro estilo.
-          Todavía no tiene página propia: la ruta cae en el 404. ── */}
+          Lleva a la página TareasSemana. ── */}
       <div className="mx-auto mt-3" style={{ maxWidth: 450 }}>
         <Card
           className="shadow-sm"
@@ -718,7 +732,7 @@ export default function Pendientes() {
                   <th style={{ width: 85 }}>Días pendiente</th>
                   <th style={{ width: 110 }}>Estado</th>
                   <th style={{ width: 80 }}>Obs.</th>
-                  <th style={{ width: 230 }}>Acciones</th>
+                  <th style={{ width: 320 }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -784,6 +798,7 @@ export default function Pendientes() {
                         >
                           {t.tipo === "repuesto" ? "Repuestos" : "Reparación"}
                         </Button>
+                        <Button size="sm" variant="outline-light" disabled={enEdicion} onClick={() => aSemanal(t)}>A semanal</Button>
                       </div>
                     </td>
                   </tr>
@@ -850,6 +865,7 @@ export default function Pendientes() {
                               <Button size="sm" variant="outline-warning" onClick={() => setEditandoId(t.id)}>Editar</Button>
                             )}
                             <Button size="sm" variant="outline-danger" onClick={() => borrar(t.id)}>Borrar</Button>
+                            <Button size="sm" variant="outline-light" disabled={editando} onClick={() => aSemanal(t)}>A semanal</Button>
                           </div>
                         </td>
                       </tr>

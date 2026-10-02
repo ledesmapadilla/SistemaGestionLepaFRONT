@@ -33,6 +33,7 @@ export const API = {
   datoImpuesto: `${BASE}/api/dato-impuesto`,
   pendientesResponsable: `${BASE}/api/pendientes-responsable`,
   pendientesReunion: `${BASE}/api/pendientes-reunion`,
+  tareasSemana: `${BASE}/api/tareas-semana`,
   entregaEPP: `${BASE}/api/entrega-epp`,
   cargasGasoil: `${BASE}/api/cargas-gasoil`,
   filtrosMaquina: `${BASE}/api/filtros-maquina`,
