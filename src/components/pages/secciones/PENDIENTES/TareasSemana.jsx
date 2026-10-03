@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
+import { Button, Container, Form, Modal, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
+import XLSXStyle from "xlsx-js-style";
 import { obtenerTareasSemana, guardarTareasSemana } from "../../../../helpers/queriesTareasSemana";
 import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/queriesPendientes";
 import { obtenerTodasReparaciones, guardarReparaciones } from "../../../../helpers/queriesReparaciones";
@@ -13,6 +14,69 @@ import {
 
 // Estados que cuentan como cerrados: no suman al contador de la tarjeta.
 const CERRADOS = ["Terminado", "Colocado"];
+
+// Tarjeta igual a las de Mantenimiento > Reparaciones, en el azul de su tarjeta "Pendientes".
+const ESTILO_TARJETA = {
+  backgroundColor: "#3a5a78",
+  color: "#fff",
+  borderRadius: "10px",
+  padding: "0.8rem",
+  cursor: "pointer",
+  boxShadow: "3px 3px 8px rgba(0,0,0,0.25)",
+  userSelect: "none",
+  transition: "transform 0.15s ease, box-shadow 0.15s ease",
+  width: "160px",
+  height: "100px",
+  textAlign: "center",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  overflow: "hidden",
+  position: "relative",
+};
+
+// Excel con una hoja por semana. Formato estándar del proyecto: título en A1,
+// fecha de emisión en A2, encabezados en la fila 3 y datos desde la 4.
+const exportarExcel = (nombre, semanas) => {
+  const headers = ["Fecha", "Máquina", "Tarea", "Días pendiente", "Estado", "Observaciones"];
+  const cols = ["A", "B", "C", "D", "E", "F"];
+  const centro = { horizontal: "center", vertical: "center" };
+  const izquierda = { horizontal: "left", vertical: "center" };
+  const libro = XLSXStyle.utils.book_new();
+
+  semanas.forEach((s) => {
+    const ws = {};
+    ws.A1 = {
+      v: `TAREAS PARA LA SEMANA DEL ${fechaAR(s.desde)} HASTA ${fechaAR(s.hasta)} - ${nombre.toUpperCase()}`,
+      t: "s",
+      s: { font: { bold: true, sz: 14 }, alignment: izquierda },
+    };
+    ws.A2 = { v: `Fecha: ${new Date().toLocaleDateString("es-AR")}`, t: "s", s: { alignment: izquierda } };
+    headers.forEach((h, i) => {
+      ws[`${cols[i]}3`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centro } };
+    });
+    s.tareas.forEach((t, idx) => {
+      const vals = [
+        fechaAR(t.fecha),
+        t.maquina || "-",
+        t.tarea || "-",
+        diasPendiente(t.fecha, t.fechaTerminado),
+        t.estado || "-",
+        t.observaciones || "-",
+      ];
+      vals.forEach((v, i) => {
+        ws[`${cols[i]}${idx + 4}`] = { v, t: typeof v === "number" ? "n" : "s", s: { alignment: centro } };
+      });
+    });
+    ws["!ref"] = `A1:F${s.tareas.length + 3}`;
+    ws["!cols"] = [{ wch: 12 }, { wch: 16 }, { wch: 34 }, { wch: 14 }, { wch: 14 }, { wch: 30 }];
+    // Nombre de hoja: sin "/" (no se permite) y dentro del límite de 31 caracteres.
+    const hoja = `${s.desde.split("-").reverse().join("-")} al ${s.hasta.split("-").reverse().join("-")}`;
+    XLSXStyle.utils.book_append_sheet(libro, ws, hoja);
+  });
+
+  XLSXStyle.writeFile(libro, `Tareas_semana_${nombre}.xlsx`);
+};
 
 // Agrupa las tareas por semana (desde/hasta), de la más reciente a la más vieja.
 const agruparPorSemana = (tareas) => {
@@ -233,50 +297,43 @@ export default function TareasSemana() {
       {cargando ? (
         <Spinner animation="border" className="d-block mx-auto my-4" />
       ) : (
-        <Row xs={1} sm={2} md={3} className="g-3 mx-auto justify-content-center" style={{ maxWidth: 900 }}>
+        // Mismo estilo de tarjeta que Mantenimiento > Reparaciones, centradas en la página.
+        <div
+          className="d-flex flex-wrap justify-content-center align-content-center"
+          style={{ gap: "1.2rem", minHeight: "60vh" }}
+        >
           {RESPONSABLES.map((r) => {
             const activas = (semanaPorResp[r.nombre] || [])
               .map(enVivo)
               .filter((t) => !CERRADOS.includes(t.estado)).length;
             return (
-              <Col key={r.nombre}>
-                <Card
-                  className="h-100 shadow-sm border-0"
-                  style={{ cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
-                  onClick={() => abrir(r)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-4px)";
-                    e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.15)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "";
-                  }}
-                >
-                  <Card.Body className="d-flex align-items-center justify-content-center gap-2 py-3">
-                    <div
-                      className="rounded-circle d-flex align-items-center justify-content-center"
-                      style={{ width: 36, height: 36, backgroundColor: r.color + "1a" }}
-                    >
-                      <i className="bi bi-person-fill" style={{ color: r.color }} />
-                    </div>
-                    <span className="fw-semibold">{r.nombre}</span>
-                    {activas > 0 && (
-                      <span
-                        className="badge rounded-pill text-white fw-bold"
-                        title="Tareas de la semana sin terminar"
-                        style={{ backgroundColor: r.color, fontSize: "0.7rem" }}
-                      >
-                        {activas}
-                      </span>
-                    )}
-                  </Card.Body>
-                  <div style={{ height: 4, backgroundColor: r.color, borderRadius: "0 0 .375rem .375rem" }} />
-                </Card>
-              </Col>
+              <div
+                key={r.nombre}
+                onClick={() => abrir(r)}
+                style={ESTILO_TARJETA}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.06)";
+                  e.currentTarget.style.boxShadow = "5px 5px 14px rgba(0,0,0,0.35)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = ESTILO_TARJETA.boxShadow;
+                }}
+              >
+                {activas > 0 && (
+                  <span
+                    className="badge rounded-pill bg-light text-dark"
+                    title="Tareas de la semana sin terminar"
+                    style={{ position: "absolute", top: 6, right: 8, fontSize: "0.75rem" }}
+                  >
+                    {activas}
+                  </span>
+                )}
+                <div style={{ fontSize: "1.2rem", lineHeight: 1.1 }}>{r.nombre}</div>
+              </div>
             );
           })}
-        </Row>
+        </div>
       )}
 
       {/* ── Modal con las semanas del responsable ── */}
@@ -285,6 +342,16 @@ export default function TareasSemana() {
           <Modal.Title>Tareas para la semana - {modalResp?.nombre}</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ maxHeight: "70vh" }}>
+          <div className="d-flex justify-content-end mb-3">
+            <Button
+              size="sm"
+              variant="outline-light"
+              disabled={semanas.length === 0}
+              onClick={() => exportarExcel(modalResp.nombre, semanas)}
+            >
+              Excel
+            </Button>
+          </div>
           {semanas.length === 0 && (
             <p className="text-muted text-center py-3 mb-0">
               Sin tareas. Se agregan desde Pendientes con el botón "A semanal".
@@ -292,7 +359,7 @@ export default function TareasSemana() {
           )}
           {semanas.map((s) => (
             <div key={`${s.desde}|${s.hasta}`} className="mb-4">
-              <h5 className="fw-semibold mb-2">
+              <h5 className="fw-normal mb-2">
                 Tareas para la semana del {fechaAR(s.desde)} hasta {fechaAR(s.hasta)}
               </h5>
               <Table striped bordered hover size="sm" className="text-center align-middle mb-0">

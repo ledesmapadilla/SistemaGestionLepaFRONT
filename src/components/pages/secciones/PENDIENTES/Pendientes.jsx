@@ -9,7 +9,7 @@ import { listarMaquinas } from "../../../../helpers/queriesMaquinas";
 import { usePendientesModal } from "../../../../context/PendientesModalContext";
 import { agregarTareaSemana } from "../../../../helpers/queriesTareasSemana";
 import {
-  RESPONSABLES, ESTADOS, ESTADOS_REPUESTO, COLOR_ESTADO, hoy, diasPendiente, semanaActual,
+  RESPONSABLES, ESTADOS, ESTADOS_REPUESTO, COLOR_ESTADO, hoy, diasPendiente, lunesSiguiente, sabadoDeSemana,
   derivarFilasReparaciones, aplicarEdicionDerivada, aplicarTareaAReparaciones,
   aplicarReparacionATareas, docDeMaquina,
 } from "./pendientesUtils";
@@ -228,35 +228,26 @@ export default function Pendientes() {
     });
   };
 
-  // Copia la fila a "Tareas para la semana" del responsable abierto. Pide la
-  // semana (desde/hasta, obligatorias) sugiriendo la de lunes a sábado actual.
+  // Vincula la fila a "Tareas para la semana" del responsable abierto. Pide solo
+  // el desde (obligatorio, sugiere el lunes que viene); el hasta es el sábado de esa semana.
   const aSemanal = async (t) => {
-    const sugerida = semanaActual();
     const escapar = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
     const titulo = escapar(t.maquina ? `${t.maquina} - ${t.tarea || ""}` : t.tarea || "");
     const { value: semana } = await Swal.fire({
       title: "Tarea para la semana",
       html: `
         <div class="text-start mb-2">${titulo}</div>
-        <div class="d-flex gap-2 justify-content-center">
-          <label class="text-start">Desde<input id="sem-desde" type="date" class="form-control" value="${sugerida.desde}"></label>
-          <label class="text-start">Hasta<input id="sem-hasta" type="date" class="form-control" value="${sugerida.hasta}"></label>
-        </div>`,
+        <label class="text-start">Desde<input id="sem-desde" type="date" class="form-control" value="${lunesSiguiente()}"></label>`,
       showCancelButton: true,
       confirmButtonText: "Agregar",
       cancelButtonText: "Cancelar",
       preConfirm: () => {
         const desde = document.getElementById("sem-desde").value;
-        const hasta = document.getElementById("sem-hasta").value;
-        if (!desde || !hasta) {
-          Swal.showValidationMessage("Las fechas desde y hasta son obligatorias");
+        if (!desde) {
+          Swal.showValidationMessage("La fecha desde es obligatoria");
           return false;
         }
-        if (hasta < desde) {
-          Swal.showValidationMessage("La fecha hasta no puede ser anterior a desde");
-          return false;
-        }
-        return { desde, hasta };
+        return { desde, hasta: sabadoDeSemana(desde) };
       },
     });
     if (!semana) return;
@@ -483,7 +474,7 @@ export default function Pendientes() {
                     <i className="bi bi-person-fill fs-5" style={{ color: r.color }} />
                   </div>
                   <Card.Title
-                    className="fw-semibold mb-2 d-flex align-items-center justify-content-center gap-2"
+                    className="fw-normal mb-2 d-flex align-items-center justify-content-center gap-2"
                     style={{ fontSize: "1rem" }}
                   >
                     {r.nombre}
@@ -555,7 +546,7 @@ export default function Pendientes() {
               <i className="bi bi-calendar-week fs-5" style={{ color: "#20c997" }} />
             </div>
             <div className="text-start">
-              <div className="fw-semibold" style={{ fontSize: "1.05rem" }}>Tareas para la semana</div>
+              <div className="fw-normal" style={{ fontSize: "1.05rem" }}>Tareas para la semana</div>
               <div className="small" style={{ color: "#adb5bd" }}>Planificación semanal del equipo</div>
             </div>
             <i className="bi bi-chevron-right ms-2" style={{ color: "#20c997" }} />

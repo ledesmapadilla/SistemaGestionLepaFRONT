@@ -49,13 +49,20 @@ export const diasPendiente = (fecha, fechaTerminado) => {
   return diff < 0 ? 0 : diff;
 };
 
-// Semana en curso, de lunes a sábado, como { desde, hasta } en "YYYY-MM-DD".
-// Es el valor sugerido al mandar una tarea "A semanal".
-export const semanaActual = () => {
+// Lunes de la semana que viene ("YYYY-MM-DD"). Es el desde sugerido al mandar una
+// tarea "A semanal"; si hoy es lunes, también sugiere el de la semana próxima.
+export const lunesSiguiente = () => {
   const a = new Date();
-  const lunes = new Date(a.getFullYear(), a.getMonth(), a.getDate() - ((a.getDay() + 6) % 7));
-  const sabado = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 5);
-  return { desde: lunes.toLocaleDateString("en-CA"), hasta: sabado.toLocaleDateString("en-CA") };
+  const dias = (8 - a.getDay()) % 7 || 7;
+  return new Date(a.getFullYear(), a.getMonth(), a.getDate() + dias).toLocaleDateString("en-CA");
+};
+
+// Sábado de la semana de `desde` (el mismo día si `desde` ya es sábado; si es
+// domingo, el sábado siguiente). Es el hasta de la semana.
+export const sabadoDeSemana = (desde) => {
+  const d = parseFechaLocal(desde);
+  const dias = (6 - d.getDay() + 7) % 7;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + dias).toLocaleDateString("en-CA");
 };
 
 // ── Lógica compartida entre Pendientes y Tareas para la semana ──
