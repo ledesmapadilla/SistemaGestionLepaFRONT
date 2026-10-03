@@ -10,6 +10,8 @@ import { usePendientesModal } from "../../../../context/PendientesModalContext";
 import { agregarTareaSemana } from "../../../../helpers/queriesTareasSemana";
 import {
   RESPONSABLES, ESTADOS, ESTADOS_REPUESTO, COLOR_ESTADO, hoy, diasPendiente, semanaActual,
+  derivarFilasReparaciones, aplicarEdicionDerivada, aplicarTareaAReparaciones,
+  aplicarReparacionATareas, docDeMaquina,
 } from "./pendientesUtils";
 
 // Tareas que se listan en cada tarjeta antes de cortar con la leyenda "+ N tareas más".
@@ -120,50 +122,8 @@ export default function Pendientes() {
 
   const tareas = modalResp ? tareasPorResp[modalResp.nombre] || [] : [];
 
-  // Filas derivadas de reparaciones: las reparaciones se asignan solo a Zamorano;
-  // los repuestos se asignan a su responsable (Zamorano, Nelson, etc.).
-  const derivadas = useMemo(() => {
-    const rows = [];
-    docsReparaciones.forEach((doc) => {
-      const nombreMaq = doc.maquina?.maquina || "Máquina";
-      const maquinaId = doc.maquina?._id || null;
-      (doc.reparaciones || []).forEach((r, ri) => {
-        rows.push({
-          id: `rep-${maquinaId || nombreMaq}-${r.id || ri}`,
-          tipo: "reparacion",
-          responsable: "Zamorano",
-          maquinaId,
-          reparacionId: r.id,
-          reparacionIndex: ri,
-          fecha: r.fecha,
-          maquina: nombreMaq,
-          tarea: r.reparacion,
-          estado: r.estado,
-          observaciones: r.observaciones || "",
-        });
-        // Repuestos: van a la tarjeta de su responsable (cualquier estado; el filtro controla la vista).
-        (r.repuestos || []).forEach((rep, pi) => {
-          if (rep.responsable) {
-            rows.push({
-              id: `repu-${maquinaId || nombreMaq}-${r.id || ri}-${rep.id || pi}`,
-              tipo: "repuesto",
-              responsable: rep.responsable,
-              maquinaId,
-              reparacionId: r.id,
-              reparacionIndex: ri,
-              repuestoIndex: pi,
-              fecha: r.fecha,
-              maquina: nombreMaq,
-              tarea: rep.repuesto,
-              estado: rep.estado,
-              observaciones: rep.observaciones || "",
-            });
-          }
-        });
-      });
-    });
-    return rows;
-  }, [docsReparaciones]);
+  // Filas derivadas de reparaciones y repuestos (ver derivarFilasReparaciones).
+  const derivadas = useMemo(() => derivarFilasReparaciones(docsReparaciones), [docsReparaciones]);
 
   // Filas de reparaciones/repuestos del responsable abierto (tolerante a espacios).
   const filasDerivadas = modalResp
@@ -221,54 +181,20 @@ export default function Pendientes() {
   // comunes a esa reparación y guarda su máquina (sincronización interna).
   const sincronizarReparacionDesdeTarea = async (tarea) => {
     if (!tarea) return;
-    const nombreMaq = (tarea.maquina || "").trim().toLowerCase();
-    const nombreTarea = (tarea.tarea || "").trim().toLowerCase();
-    const maquinasAfectadas = new Set();
-    const nuevosDocs = docsReparaciones.map((doc) => {
-      const maq = (doc.maquina?.maquina || "").trim().toLowerCase();
-      const reparaciones = (doc.reparaciones || []).map((r) => {
-        const porVinculo = tarea.reparacionId && r.id === tarea.reparacionId;
-        const porNombre = maq === nombreMaq && (r.reparacion || "").trim().toLowerCase() === nombreTarea;
-        if (porVinculo || porNombre) {
-          maquinasAfectadas.add(String(doc.maquina?._id));
-          return { ...r, fecha: tarea.fecha, reparacion: tarea.tarea, estado: tarea.estado, observaciones: tarea.observaciones };
-        }
-        return r;
-      });
-      return { ...doc, reparaciones };
-    });
-    if (maquinasAfectadas.size === 0) return;
-    setDocsReparaciones(nuevosDocs);
-    await Promise.all(
-      [...maquinasAfectadas].map((mid) => {
-        const doc = nuevosDocs.find((d) => String(d.maquina?._id) === String(mid));
-        return guardarReparaciones(mid, doc?.reparaciones || []);
-      })
-    );
+    const { docs, maquinas } = aplicarTareaAReparaciones(docsReparaciones, tarea);
+    if (maquinas.length === 0) return;
+    setDocsReparaciones(docs);
+    await Promise.all(maquinas.map((mid) => guardarReparaciones(mid, docDeMaquina(docs, mid)?.reparaciones || [])));
   };
 
   // Inverso: sincroniza la(s) tarea(s) vinculadas a esta reparación (por vínculo
   // o por máquina + nombre).
   const sincronizarTareaDesdeReparacion = async (rep, maquinaNombre) => {
     if (!rep) return;
-    const nombreMaq = (maquinaNombre || "").trim().toLowerCase();
-    const nombreRep = (rep.reparacion || "").trim().toLowerCase();
-    const afectados = new Set();
-    const nuevoMapa = {};
-    Object.entries(tareasPorResp).forEach(([resp, ts]) => {
-      nuevoMapa[resp] = (ts || []).map((task) => {
-        const porVinculo = rep.pendResp && rep.pendTaskId && resp === rep.pendResp && task.id === rep.pendTaskId;
-        const porNombre = (task.maquina || "").trim().toLowerCase() === nombreMaq && (task.tarea || "").trim().toLowerCase() === nombreRep;
-        if (porVinculo || porNombre) {
-          afectados.add(resp);
-          return { ...task, fecha: rep.fecha, tarea: rep.reparacion, estado: rep.estado, observaciones: rep.observaciones };
-        }
-        return task;
-      });
-    });
-    if (afectados.size === 0) return;
-    setTareasPorResp(nuevoMapa);
-    await Promise.all([...afectados].map((resp) => guardarPendientes(resp, nuevoMapa[resp])));
+    const { mapa, responsables } = aplicarReparacionATareas(tareasPorResp, rep, maquinaNombre);
+    if (responsables.length === 0) return;
+    setTareasPorResp(mapa);
+    await Promise.all(responsables.map((resp) => guardarPendientes(resp, mapa[resp])));
   };
 
   // Si la fila en edición es nueva y sin guardar, la descarta (evita que quede
@@ -418,24 +344,9 @@ export default function Pendientes() {
 
   // Guarda todos los campos editados en la reparación o repuesto de origen.
   const guardarDerivado = async (t) => {
-    const nuevosDocs = docsReparaciones.map((doc) => {
-      if (String(doc.maquina?._id) !== String(t.maquinaId)) return doc;
-      const reparaciones = (doc.reparaciones || []).map((r, ri) => {
-        if (ri !== t.reparacionIndex) return r;
-        if (t.tipo === "reparacion") {
-          // Reparación: fecha, nombre (tarea), estado y observaciones.
-          return { ...r, fecha: derivadoEdit.fecha, reparacion: derivadoEdit.tarea, estado: derivadoEdit.estado, observaciones: derivadoEdit.observaciones };
-        }
-        // Repuesto: nombre (tarea), estado y observaciones (la fecha es la de la reparación).
-        const repuestos = (r.repuestos || []).map((rep, pi) =>
-          pi === t.repuestoIndex ? { ...rep, repuesto: derivadoEdit.tarea, estado: derivadoEdit.estado, observaciones: derivadoEdit.observaciones } : rep
-        );
-        return { ...r, repuestos };
-      });
-      return { ...doc, reparaciones };
-    });
+    const nuevosDocs = aplicarEdicionDerivada(docsReparaciones, t, derivadoEdit);
     setEditandoId(null);
-    const docAf = nuevosDocs.find((d) => String(d.maquina?._id) === String(t.maquinaId));
+    const docAf = docDeMaquina(nuevosDocs, t.maquinaId);
     // Guardado y sincronización (si la reparación está vinculada a una tarea) en paralelo.
     await Promise.all([
       persistirDocsReparaciones(nuevosDocs, t.maquinaId, "Guardado"),

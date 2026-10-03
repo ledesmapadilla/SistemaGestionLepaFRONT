@@ -1,13 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, Col, Container, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { obtenerTareasSemana, guardarTareasSemana } from "../../../../helpers/queriesTareasSemana";
+import { obtenerTodosPendientes, guardarPendientes } from "../../../../helpers/queriesPendientes";
+import { obtenerTodasReparaciones, guardarReparaciones } from "../../../../helpers/queriesReparaciones";
 import {
   RESPONSABLES, ESTADOS, ESTADOS_REPUESTO, COLOR_ESTADO, hoy, fechaAR, diasPendiente,
+  derivarFilasReparaciones, aplicarEdicionDerivada, aplicarTareaAReparaciones,
+  aplicarReparacionATareas, docDeMaquina,
 } from "./pendientesUtils";
 
-// Estados que cuentan como cerrados: congelan los días y no suman al contador de la tarjeta.
+// Estados que cuentan como cerrados: no suman al contador de la tarjeta.
 const CERRADOS = ["Terminado", "Colocado"];
 
 // Agrupa las tareas por semana (desde/hasta), de la más reciente a la más vieja.
@@ -23,9 +27,21 @@ const agruparPorSemana = (tareas) => {
     .map((g) => ({ ...g, tareas: g.tareas.sort((a, b) => (b.fecha || "").localeCompare(a.fecha || "")) }));
 };
 
+const avisoGuardado = (titulo) =>
+  Swal.fire({ position: "center", icon: "success", title: titulo, showConfirmButton: false, timer: 1200, timerProgressBar: true });
+const avisoError = () =>
+  Swal.fire({ icon: "error", title: "Error", text: "No se pudieron guardar los cambios" });
+
+// Las tareas de la semana están sincronizadas con Pendientes: cada una guarda el
+// id de su fila de origen (`origenId`) y se muestra con los datos actuales de esa
+// fila (tarea manual, reparación o repuesto). Editar acá guarda en el origen, así
+// que el cambio se ve también en Pendientes y en Reparaciones. Lo guardado en la
+// colección de la semana solo se usa si la tarea de origen ya no existe.
 export default function TareasSemana() {
   const navigate = useNavigate();
-  const [tareasPorResp, setTareasPorResp] = useState({});
+  const [semanaPorResp, setSemanaPorResp] = useState({});
+  const [tareasPorResp, setTareasPorResp] = useState({}); // tareas manuales de Pendientes
+  const [docsReparaciones, setDocsReparaciones] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [modalResp, setModalResp] = useState(null);
   const [editandoId, setEditandoId] = useState(null);
@@ -34,12 +50,26 @@ export default function TareasSemana() {
   useEffect(() => {
     const cargar = async () => {
       try {
-        const res = await obtenerTareasSemana();
-        if (res?.ok) {
-          const data = await res.json();
+        const [resSem, resPend, resReps] = await Promise.all([
+          obtenerTareasSemana(),
+          obtenerTodosPendientes(),
+          obtenerTodasReparaciones(),
+        ]);
+        if (resSem?.ok) {
+          const data = await resSem.json();
+          const mapa = {};
+          (Array.isArray(data) ? data : []).forEach((doc) => { mapa[doc.responsable] = doc.tareas || []; });
+          setSemanaPorResp(mapa);
+        }
+        if (resPend?.ok) {
+          const data = await resPend.json();
           const mapa = {};
           (Array.isArray(data) ? data : []).forEach((doc) => { mapa[doc.responsable] = doc.tareas || []; });
           setTareasPorResp(mapa);
+        }
+        if (resReps?.ok) {
+          const docs = await resReps.json();
+          setDocsReparaciones(Array.isArray(docs) ? docs : []);
         }
       } catch (error) {
         console.error("Error al cargar tareas de la semana:", error);
@@ -50,46 +80,115 @@ export default function TareasSemana() {
     cargar();
   }, []);
 
-  const tareas = modalResp ? tareasPorResp[modalResp.nombre] || [] : [];
-  const semanas = agruparPorSemana(tareas);
+  // Todas las filas de Pendientes por id (manuales + reparaciones + repuestos).
+  const origenes = useMemo(() => {
+    const mapa = new Map();
+    Object.entries(tareasPorResp).forEach(([resp, ts]) =>
+      (ts || []).forEach((t) => mapa.set(t.id, { ...t, tipo: "", responsable: resp }))
+    );
+    derivarFilasReparaciones(docsReparaciones).forEach((d) => mapa.set(d.id, d));
+    return mapa;
+  }, [tareasPorResp, docsReparaciones]);
+
+  // Tarea de la semana con los datos actuales de su origen.
+  const enVivo = (item) => {
+    const o = origenes.get(item.origenId);
+    if (!o) return { ...item, origen: null };
+    return {
+      ...item,
+      fecha: o.fecha,
+      maquina: o.maquina,
+      tarea: o.tarea,
+      estado: o.estado,
+      observaciones: o.observaciones || "",
+      fechaTerminado: o.fechaTerminado || "",
+      origen: o,
+    };
+  };
+
+  const items = modalResp ? semanaPorResp[modalResp.nombre] || [] : [];
+  const semanas = agruparPorSemana(items.map(enVivo));
 
   const abrir = (r) => { setModalResp(r); setEditandoId(null); };
   const cerrar = () => { setModalResp(null); setEditandoId(null); };
-
-  // Guarda todas las tareas semanales del responsable abierto.
-  const persistir = async (nuevas, titulo) => {
-    const previas = tareas;
-    setTareasPorResp((prev) => ({ ...prev, [modalResp.nombre]: nuevas }));
-    const res = await guardarTareasSemana(modalResp.nombre, nuevas);
-    if (res?.ok) {
-      Swal.fire({ position: "center", icon: "success", title: titulo, showConfirmButton: false, timer: 1200, timerProgressBar: true });
-    } else {
-      setTareasPorResp((prev) => ({ ...prev, [modalResp.nombre]: previas }));
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudieron guardar los cambios" });
-    }
-  };
 
   const editar = (t) => {
     setEditandoId(t.id);
     setBorrador({ estado: t.estado, observaciones: t.observaciones || "" });
   };
 
-  const guardar = async (t) => {
-    const nuevas = tareas.map((x) => {
+  // Tarea manual: guarda en Pendientes y, si está vinculada a una reparación, también ahí.
+  const guardarEnTareaManual = async (o) => {
+    const actualizada = {
+      ...tareasPorResp[o.responsable].find((x) => x.id === o.id),
+      estado: borrador.estado,
+      observaciones: borrador.observaciones,
+    };
+    // Mismo criterio que Pendientes: "Terminado" congela los días; reabrirla los vuelve a sumar.
+    actualizada.fechaTerminado = borrador.estado === "Terminado" ? actualizada.fechaTerminado || hoy() : "";
+    const nuevas = tareasPorResp[o.responsable].map((x) => (x.id === o.id ? actualizada : x));
+    setTareasPorResp((prev) => ({ ...prev, [o.responsable]: nuevas }));
+
+    const { docs, maquinas } = aplicarTareaAReparaciones(docsReparaciones, actualizada);
+    if (maquinas.length) setDocsReparaciones(docs);
+    const [res] = await Promise.all([
+      guardarPendientes(o.responsable, nuevas),
+      ...maquinas.map((mid) => guardarReparaciones(mid, docDeMaquina(docs, mid)?.reparaciones || [])),
+    ]);
+    return res;
+  };
+
+  // Reparación o repuesto: guarda en Reparaciones y, si es una reparación vinculada
+  // a una tarea manual, también en Pendientes.
+  const guardarEnReparacion = async (o) => {
+    const docs = aplicarEdicionDerivada(docsReparaciones, o, {
+      fecha: o.fecha,
+      tarea: o.tarea,
+      estado: borrador.estado,
+      observaciones: borrador.observaciones,
+    });
+    setDocsReparaciones(docs);
+    const reparaciones = docDeMaquina(docs, o.maquinaId)?.reparaciones || [];
+
+    let sincronizacion = Promise.resolve();
+    if (o.tipo === "reparacion") {
+      const { mapa, responsables } = aplicarReparacionATareas(tareasPorResp, reparaciones[o.reparacionIndex], o.maquina);
+      if (responsables.length) {
+        setTareasPorResp(mapa);
+        sincronizacion = Promise.all(responsables.map((resp) => guardarPendientes(resp, mapa[resp])));
+      }
+    }
+    const [res] = await Promise.all([guardarReparaciones(o.maquinaId, reparaciones), sincronizacion]);
+    return res;
+  };
+
+  // La tarea de origen ya no existe: se edita lo guardado en la semana.
+  const guardarEnSemana = async (t) => {
+    const nuevas = items.map((x) => {
       if (x.id !== t.id) return x;
       const cerrada = CERRADOS.includes(borrador.estado);
       return {
         ...x,
         estado: borrador.estado,
         observaciones: borrador.observaciones,
-        // Al cerrarla se congela el conteo de días; si se reabre, vuelve a sumar.
         fechaTerminado: cerrada ? x.fechaTerminado || hoy() : "",
       };
     });
-    setEditandoId(null);
-    await persistir(nuevas, "Guardado");
+    setSemanaPorResp((prev) => ({ ...prev, [modalResp.nombre]: nuevas }));
+    return guardarTareasSemana(modalResp.nombre, nuevas);
   };
 
+  const guardar = async (t) => {
+    setEditandoId(null);
+    let res;
+    if (!t.origen) res = await guardarEnSemana(t);
+    else if (t.origen.tipo) res = await guardarEnReparacion(t.origen);
+    else res = await guardarEnTareaManual(t.origen);
+    if (res?.ok) avisoGuardado("Guardado");
+    else avisoError();
+  };
+
+  // Solo la quita de la semana; la tarea sigue en Pendientes.
   const borrar = async (t) => {
     const { isConfirmed } = await Swal.fire({
       title: "¿Quitar la tarea de la semana?",
@@ -102,7 +201,16 @@ export default function TareasSemana() {
     });
     if (!isConfirmed) return;
     setEditandoId((prev) => (prev === t.id ? null : prev));
-    await persistir(tareas.filter((x) => x.id !== t.id), "Tarea quitada");
+    const previas = items;
+    const nuevas = items.filter((x) => x.id !== t.id);
+    setSemanaPorResp((prev) => ({ ...prev, [modalResp.nombre]: nuevas }));
+    const res = await guardarTareasSemana(modalResp.nombre, nuevas);
+    if (res?.ok) {
+      avisoGuardado("Tarea quitada");
+    } else {
+      setSemanaPorResp((prev) => ({ ...prev, [modalResp.nombre]: previas }));
+      avisoError();
+    }
   };
 
   const verObservacion = (texto) =>
@@ -127,7 +235,9 @@ export default function TareasSemana() {
       ) : (
         <Row xs={1} sm={2} md={3} className="g-3 mx-auto justify-content-center" style={{ maxWidth: 900 }}>
           {RESPONSABLES.map((r) => {
-            const activas = (tareasPorResp[r.nombre] || []).filter((t) => !CERRADOS.includes(t.estado)).length;
+            const activas = (semanaPorResp[r.nombre] || [])
+              .map(enVivo)
+              .filter((t) => !CERRADOS.includes(t.estado)).length;
             return (
               <Col key={r.nombre}>
                 <Card
@@ -204,7 +314,14 @@ export default function TareasSemana() {
                       <tr key={t.id}>
                         <td>{fechaAR(t.fecha)}</td>
                         <td>{t.maquina || "-"}</td>
-                        <td className="text-start">{t.tarea || "-"}</td>
+                        <td className="text-start">
+                          {t.tarea || "-"}
+                          {!t.origen && (
+                            <div className="small fst-italic" style={{ color: "#adb5bd" }}>
+                              Ya no está en Pendientes
+                            </div>
+                          )}
+                        </td>
                         <td>{diasPendiente(t.fecha, t.fechaTerminado)}</td>
                         <td>
                           {enEdicion ? (
