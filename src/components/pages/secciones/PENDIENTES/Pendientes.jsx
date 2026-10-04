@@ -9,7 +9,7 @@ import { listarMaquinas } from "../../../../helpers/queriesMaquinas";
 import { usePendientesModal } from "../../../../context/PendientesModalContext";
 import { agregarTareaSemana } from "../../../../helpers/queriesTareasSemana";
 import {
-  RESPONSABLES, ESTADOS, ESTADOS_REPUESTO, COLOR_ESTADO, hoy, diasPendiente, lunesSiguiente, sabadoDeSemana,
+  RESPONSABLES, ESTADOS, ESTADOS_REPUESTO, COLOR_ESTADO, hoy, diasPendiente, lunesSiguiente, sabadoDeSemana, parseFechaLocal,
   derivarFilasReparaciones, aplicarEdicionDerivada, aplicarTareaAReparaciones,
   aplicarReparacionATareas, docDeMaquina,
 } from "./pendientesUtils";
@@ -230,6 +230,8 @@ export default function Pendientes() {
 
   // Vincula la fila a "Tareas para la semana" del responsable abierto. Pide solo
   // el desde (obligatorio, sugiere el lunes que viene); el hasta es el sábado de esa semana.
+  // El desde tiene que ser lunes: min (un lunes) + step="7" hace que el almanaque
+  // solo habilite los lunes.
   const aSemanal = async (t) => {
     const escapar = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
     const titulo = escapar(t.maquina ? `${t.maquina} - ${t.tarea || ""}` : t.tarea || "");
@@ -237,7 +239,7 @@ export default function Pendientes() {
       title: "Tarea para la semana",
       html: `
         <div class="text-start mb-2">${titulo}</div>
-        <label class="text-start">Desde<input id="sem-desde" type="date" class="form-control" value="${lunesSiguiente()}"></label>`,
+        <label class="text-start">Desde<input id="sem-desde" type="date" class="form-control" min="2024-01-01" step="7" value="${lunesSiguiente()}"></label>`,
       showCancelButton: true,
       confirmButtonText: "Agregar",
       cancelButtonText: "Cancelar",
@@ -245,6 +247,10 @@ export default function Pendientes() {
         const desde = document.getElementById("sem-desde").value;
         if (!desde) {
           Swal.showValidationMessage("La fecha desde es obligatoria");
+          return false;
+        }
+        if (parseFechaLocal(desde).getDay() !== 1) {
+          Swal.showValidationMessage("La fecha desde tiene que ser un lunes");
           return false;
         }
         return { desde, hasta: sabadoDeSemana(desde) };
