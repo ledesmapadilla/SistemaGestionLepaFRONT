@@ -174,7 +174,8 @@ export default function TareasSemana() {
   const semanas = agruparPorSemana(items.map(enVivo));
 
   const abrir = (r) => { setModalResp(r); setEditandoId(null); };
-  const cerrar = () => { setModalResp(null); setEditandoId(null); };
+  // Al cerrar el modal se vuelve a Pendientes.
+  const cerrar = () => { setModalResp(null); setEditandoId(null); navigate("/pendientes"); };
 
   const editar = (t) => {
     setEditandoId(t.id);
