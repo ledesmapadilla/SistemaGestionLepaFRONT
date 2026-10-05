@@ -89,16 +89,8 @@ const FacturacionCliente = () => {
       setFacturaEditar(null);
       Swal.fire({ icon: "success", title: "Factura actualizada", timer: 2000, showConfirmButton: false });
     } else {
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar la factura" });
-    }
-  };
-
-  const toggleEstado = async (factura) => {
-    const nuevoEstado = factura.estadoPago === "Pagada" ? "Pendiente" : "Pagada";
-    const respuesta = await editarFactura(factura._id, { estadoPago: nuevoEstado });
-    if (respuesta?.ok) {
-      const data = await respuesta.json();
-      setFacturas(facturas.map((f) => (f._id === factura._id ? data.factura : f)));
+      const err = await respuesta?.json().catch(() => ({}));
+      Swal.fire({ icon: "error", title: "Error", text: err?.msg || "No se pudo actualizar la factura" });
     }
   };
 
