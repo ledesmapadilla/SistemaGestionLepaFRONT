@@ -192,9 +192,28 @@ const RemitosXClientesFinal = () => {
     return { importe, unidades };
   }, [remitosFiltrados]);
 
-  // En el modal de O.C. solo se ofrecen los remitos que todavía no tienen
-  // una O.C. asignada (los ya asignados no se vuelven a listar).
-  const remitosSinOC = remitos.filter((r) => !String(r.oc || "").trim());
+  // En el modal de O.C. se listan todos los remitos: primero los que no tienen
+  // O.C. y después los que ya tienen una (para poder corregirla o borrarla).
+  const remitosParaOC = useMemo(() => {
+    const tieneOC = (r) => !!String(r.oc || "").trim();
+    return [...remitos.filter((r) => !tieneOC(r)), ...remitos.filter(tieneOC)];
+  }, [remitos]);
+
+  const abrirModalOC = (remito = null) => {
+    setOcInput(remito?.oc || "");
+    setSelectedRemitoIds(remito ? [remito._id] : []);
+    setShowModalOC(true);
+  };
+
+  const toggleRemitoOC = (r) => {
+    if (selectedRemitoIds.includes(r._id)) {
+      setSelectedRemitoIds(selectedRemitoIds.filter((id) => id !== r._id));
+      return;
+    }
+    // Al elegir un remito que ya tiene O.C., se precarga para poder corregirla
+    if (!ocInput.trim() && r.oc) setOcInput(r.oc);
+    setSelectedRemitoIds([...selectedRemitoIds, r._id]);
+  };
 
   const handleSaveOC = async () => {
     if (!ocInput.trim() || selectedRemitoIds.length === 0) return;
@@ -339,11 +358,7 @@ const RemitosXClientesFinal = () => {
             </div>
             <div className="col-4 text-end d-flex gap-2 justify-content-end">
               <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
-              <Button size="sm" variant="outline-primary" onClick={() => {
-                setOcInput("");
-                setSelectedRemitoIds([]);
-                setShowModalOC(true);
-              }}>O.C.</Button>
+              <Button size="sm" variant="outline-primary" onClick={() => abrirModalOC()}>O.C.</Button>
               <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
             </div>
           </div>
@@ -416,7 +431,13 @@ const RemitosXClientesFinal = () => {
                       <td>{item.unidad}</td>
                       <td>${formatoMiles(item.precioUnitario)}</td>
                       <td>${formatoMiles(item.cantidad * item.precioUnitario)}</td>
-                      <td>{remito.oc || "-"}</td>
+                      <td
+                        onClick={() => abrirModalOC(remito)}
+                        style={{ cursor: "pointer" }}
+                        title="Click para editar la O.C."
+                      >
+                        {remito.oc || "-"}
+                      </td>
                     </tr>
                   ))
                 )
@@ -462,7 +483,7 @@ const RemitosXClientesFinal = () => {
         {/* Modal para O.C. */}
         <Modal show={showModalOC} onHide={() => setShowModalOC(false)} centered>
           <Modal.Header closeButton>
-            <Modal.Title>Asignar Orden de Compra (O.C.)</Modal.Title>
+            <Modal.Title>Asignar / editar Orden de Compra (O.C.)</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <Form.Group className="mb-3">
@@ -485,27 +506,23 @@ const RemitosXClientesFinal = () => {
                 </Dropdown.Toggle>
 
                 <Dropdown.Menu className="w-100" style={{ maxHeight: "250px", overflowY: "auto" }}>
-                  {remitosSinOC.length === 0 ? (
-                    <Dropdown.Item disabled>No hay remitos sin O.C. asignada</Dropdown.Item>
+                  {remitosParaOC.length === 0 ? (
+                    <Dropdown.Item disabled>No hay remitos</Dropdown.Item>
                   ) : (
-                    remitosSinOC.map((r) => {
+                    remitosParaOC.map((r) => {
                       const isChecked = selectedRemitoIds.includes(r._id);
                       const totalRemito = r.items.reduce((sum, item) => sum + item.cantidad * item.precioUnitario, 0);
                       return (
                         <div key={r._id} className="dropdown-item d-flex align-items-center gap-2" style={{ cursor: "pointer" }} onClick={(e) => {
                           e.stopPropagation();
-                          if (isChecked) {
-                            setSelectedRemitoIds(selectedRemitoIds.filter((id) => id !== r._id));
-                          } else {
-                            setSelectedRemitoIds([...selectedRemitoIds, r._id]);
-                          }
+                          toggleRemitoOC(r);
                         }}>
                           <Form.Check
                             type="checkbox"
                             id={`dd-remito-${r._id}`}
                             checked={isChecked}
                             onChange={() => {}}
-                            label={`Remito N° ${r.remito} (${mostrarFechaDMY(r.fecha)}) - $${formatoMiles(totalRemito)}`}
+                            label={`Remito N° ${r.remito} (${mostrarFechaDMY(r.fecha)}) - $${formatoMiles(totalRemito)}${r.oc ? ` · O.C. ${r.oc}` : ""}`}
                             onClick={(e) => e.stopPropagation()}
                           />
                         </div>
@@ -533,7 +550,7 @@ const RemitosXClientesFinal = () => {
                 onClick={handleSaveOC}
                 disabled={!ocInput.trim() || selectedRemitoIds.length === 0}
               >
-                Asignar O.C.
+                Guardar O.C.
               </Button>
             </div>
           </Modal.Footer>
