@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Modal } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { usePendientesModal } from "../../context/PendientesModalContext";
 import { hoverPestana, TRANSICION_PESTANA } from "./pestanaLateral";
 
 const FONDO = "#f1f3f5";
@@ -11,8 +10,8 @@ const FONDO_HOVER = "#dee2e6";
 const SOMBRA = "3px 4px 12px rgba(0,0,0,0.2)";
 const SOMBRA_HOVER = "5px 6px 16px rgba(0,0,0,0.32)";
 
-// `ruta` navega a una página; `responsable` abre su planilla en Tareas
-// Pendientes (arranca filtrada en las activas: pendientes y en proceso);
+// `ruta` navega a una página; `responsable` abre su tarjeta en Tareas para la
+// semana (/pendientes/semana con el modal de ese responsable ya abierto);
 // `enPreparacion` muestra la tarjeta deshabilitada; `color` cambia el fondo.
 const ACCESOS = [
   { titulo: "Remitos sin facturar", icono: "bi-receipt", ruta: "/remitos-sinfacturar-informe" },
@@ -22,7 +21,7 @@ const ACCESOS = [
   { titulo: "Cuenta corriente clientes", icono: "bi-people", ruta: "/cuenta-corriente" },
   { titulo: "Cuenta corriente proveedores", icono: "bi-truck", ruta: "/cuenta-corriente-proveedores" },
   { titulo: "Tareas Zamorano", icono: "bi-person-gear", responsable: "Zamorano" },
-  { titulo: "Pendientes Nelson", icono: "bi-person-check", responsable: "Nelson" },
+  { titulo: "Tareas Nelson", icono: "bi-person-check", responsable: "Nelson" },
   { titulo: "Pendientes", icono: "bi-list-check", ruta: "/reunion/pendientes", color: "#2e7d4f" },
   { titulo: "Impuestos", icono: "bi-bank", enPreparacion: true },
 ];
@@ -47,12 +46,11 @@ const ESTILO_TARJETA = {
 export default function BotonReunion() {
   const [show, setShow] = useState(false);
   const navigate = useNavigate();
-  const pendientesModal = usePendientesModal();
 
   const ir = (a) => {
     if (a.enPreparacion) return;
     setShow(false);
-    if (a.responsable) pendientesModal?.abrirResponsable(a.responsable);
+    if (a.responsable) navigate("/pendientes/semana", { state: { responsable: a.responsable } });
     else navigate(a.ruta);
   };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button, Container, Form, Modal, Spinner, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
@@ -103,13 +103,24 @@ const avisoError = () =>
 // colección de la semana solo se usa si la tarea de origen ya no existe.
 export default function TareasSemana() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [semanaPorResp, setSemanaPorResp] = useState({});
   const [tareasPorResp, setTareasPorResp] = useState({}); // tareas manuales de Pendientes
   const [docsReparaciones, setDocsReparaciones] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [modalResp, setModalResp] = useState(null);
   const [editandoId, setEditandoId] = useState(null);
   const [borrador, setBorrador] = useState({});
+  // Desde el botón Reunión se llega con `state.responsable`: abre su tarjeta.
+  // Se compara por `location.key` para que también funcione si ya estaba en
+  // esta página (no se vuelve a montar).
+  const respDeRuta = () => RESPONSABLES.find((r) => r.nombre === location.state?.responsable) || null;
+  const [modalResp, setModalResp] = useState(respDeRuta);
+  const [keyRuta, setKeyRuta] = useState(location.key);
+  if (keyRuta !== location.key) {
+    setKeyRuta(location.key);
+    const r = respDeRuta();
+    if (r) { setModalResp(r); setEditandoId(null); }
+  }
 
   useEffect(() => {
     const cargar = async () => {
