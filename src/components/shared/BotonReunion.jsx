@@ -12,6 +12,7 @@ const SOMBRA_HOVER = "5px 6px 16px rgba(0,0,0,0.32)";
 
 // `ruta` navega a una página; `responsable` abre su tarjeta en Tareas para la
 // semana (/pendientes/semana con el modal de ese responsable ya abierto);
+// `state` se pasa a la página al navegar (ej. filtro inicial);
 // `enPreparacion` muestra la tarjeta deshabilitada; `color` cambia el fondo.
 const ACCESOS = [
   { titulo: "Remitos sin facturar", icono: "bi-receipt", ruta: "/remitos-sinfacturar-informe" },
@@ -23,6 +24,7 @@ const ACCESOS = [
   { titulo: "Tareas Zamorano", icono: "bi-person-gear", responsable: "Zamorano" },
   { titulo: "Tareas Nelson", icono: "bi-person-check", responsable: "Nelson" },
   { titulo: "Pendientes", icono: "bi-list-check", ruta: "/reunion/pendientes", color: "#2e7d4f" },
+  { titulo: "Análisis de costos", icono: "bi-graph-up-arrow", ruta: "/costos-obra", state: { estado: "En curso" } },
   { titulo: "Impuestos", icono: "bi-bank", enPreparacion: true },
 ];
 
@@ -51,7 +53,7 @@ export default function BotonReunion() {
     if (a.enPreparacion) return;
     setShow(false);
     if (a.responsable) navigate("/pendientes/semana", { state: { responsable: a.responsable } });
-    else navigate(a.ruta);
+    else navigate(a.ruta, a.state ? { state: a.state } : undefined);
   };
 
   return (

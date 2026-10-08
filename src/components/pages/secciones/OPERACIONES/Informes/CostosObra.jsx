@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Table, Form, Spinner, Button } from "react-bootstrap";
 // Importamos useNavigate para poder redirigir
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 import { listarObras, editarObra } from "../../../../../helpers/queriesObras.js";
 import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos.js";
@@ -51,11 +51,14 @@ const CostosObra = () => {
   const [obras, setObras] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  // Desde el botón Reunión se entra con { estado: "En curso" } para prefiltrar.
+  const location = useLocation();
+  const estadoInicial = location.state?.estado ?? "Terminada, para análisis";
 
   const [busquedaCliente, setBusquedaCliente] = useState("");
-  const [filtroEstadoPaso1, setFiltroEstadoPaso1] = useState("Terminada, para análisis");
+  const [filtroEstadoPaso1, setFiltroEstadoPaso1] = useState(estadoInicial);
   const [razonSocialSeleccionada, setRazonSocialSeleccionada] = useState(null);
-  const [filtroEstado, setFiltroEstado] = useState("Terminada, para análisis");
+  const [filtroEstado, setFiltroEstado] = useState(estadoInicial);
   const [obraSeleccionada, setObraSeleccionada] = useState(null);
   const [datosAnalisis, setDatosAnalisis] = useState(null);
   const [loadingAnalisis, setLoadingAnalisis] = useState(false);
@@ -388,7 +391,7 @@ const CostosObra = () => {
 
   const handleVolverAClientes = () => {
     setRazonSocialSeleccionada(null);
-    setFiltroEstado("Terminada, para análisis");
+    setFiltroEstado(estadoInicial);
     // no reseteamos filtroEstadoPaso1 para mantener el estado elegido al volver
   };
 
