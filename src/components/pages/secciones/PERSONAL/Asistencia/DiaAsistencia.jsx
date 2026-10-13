@@ -300,7 +300,6 @@ const DiaAsistencia = () => {
           <thead className="table-dark" style={{ position: "sticky", top: 0, zIndex: 1 }}>
             <tr>
               <th style={{ width: 200 }}>Personal</th>
-              <th style={{ width: 80 }}>Media Falta</th>
               <th style={{ width: 60 }}>Ausente</th>
               <th style={{ width: 60 }}>Remito</th>
               <th style={{ width: 100 }}>Entra</th>
@@ -354,26 +353,6 @@ const DiaAsistencia = () => {
                       ))}
                     </Form.Select>
                   )}
-                </td>
-                <td>
-                  <div className="d-flex justify-content-center">
-                    <input
-                      type="radio"
-                      checked={!!fila.mediaFalta}
-                      onChange={() => {}}
-                      onClick={() => {
-                        if (esSabado) return;
-                        const nuevoValor = !fila.mediaFalta;
-                        setBorrador((prev) => prev.map((r) =>
-                          r.id === fila.id
-                            ? { ...r, mediaFalta: nuevoValor, ausente: nuevoValor ? false : r.ausente }
-                            : r
-                        ));
-                      }}
-                      disabled={esSabado}
-                      style={{ cursor: esSabado ? "not-allowed" : "pointer", accentColor: "#ffc107", width: 16, height: 16 }}
-                    />
-                  </div>
                 </td>
                 <td>
                   <div className="d-flex justify-content-center">
