@@ -87,6 +87,7 @@ const RemitosSinFacturarInforme = () => {
       });
       const obra = (cliente.obras[nombreObra] ||= {
         nombreObra,
+        obraId: remito.obra?._id,
         monto: 0,
         cantidadRemitos: 0,
         ultimaFecha: "",
@@ -183,12 +184,13 @@ const RemitosSinFacturarInforme = () => {
               <th>Obras</th>
               <th>Cant. remitos</th>
               <th>Monto No Facturado</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {clientes.length === 0 ? (
               <tr>
-                <td colSpan="4" className="py-4 text-muted">
+                <td colSpan="5" className="py-4 text-muted">
                   No hay remitos pendientes de facturación
                 </td>
               </tr>
@@ -211,6 +213,20 @@ const RemitosSinFacturarInforme = () => {
                         <td className={o.monto > 0 ? "" : "text-success"} style={borde}>
                           ${formatoMiles(o.monto)}
                         </td>
+                        <td style={borde}>
+                          <Button
+                            size="sm"
+                            variant="outline-success"
+                            disabled={!o.obraId}
+                            onClick={() =>
+                              navigate("/remito-cliente-final", {
+                                state: { obraId: o.obraId, obraNombre: o.nombreObra, razonsocial: c.razonSocial },
+                              })
+                            }
+                          >
+                            Ver
+                          </Button>
+                        </td>
                       </tr>
                     );
                   }),
@@ -218,6 +234,7 @@ const RemitosSinFacturarInforme = () => {
                     <td className="text-end" style={ESTILO_TOTAL}>Total {c.razonSocial}</td>
                     <td style={ESTILO_TOTAL}>{c.cantidadRemitos}</td>
                     <td style={ESTILO_TOTAL}>${formatoMiles(c.monto)}</td>
+                    <td></td>
                   </tr>,
                 ];
               })
@@ -229,6 +246,7 @@ const RemitosSinFacturarInforme = () => {
                 <td colSpan="2" className="text-end">TOTAL GENERAL</td>
                 <td>{totalGeneral.cantidadRemitos}</td>
                 <td>${formatoMiles(totalGeneral.monto)}</td>
+                <td></td>
               </tr>
             </tfoot>
           )}
