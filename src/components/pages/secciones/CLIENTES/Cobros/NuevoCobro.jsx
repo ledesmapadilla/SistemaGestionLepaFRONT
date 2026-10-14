@@ -16,6 +16,7 @@ import {
   usadoSaldoAFavor,
   validarMediosPago,
 } from "../../../../../helpers/cobrosUtils";
+import { mismoTexto } from "../../../../../helpers/normTexto.js";
 
 const hoy = new Date().toLocaleDateString("en-CA");
 
@@ -125,7 +126,7 @@ const NuevoCobro = () => {
     }
     const idsSeleccionados = facturasSeleccionadas.map((f) => f._id);
     const filtradas = todasFacturas.filter(
-      (f) => f.cliente === clienteSeleccionado && !idsSeleccionados.includes(f._id)
+      (f) => mismoTexto(f.cliente, clienteSeleccionado) && !idsSeleccionados.includes(f._id)
     );
     setFacturasDisponibles(filtradas);
     setFacturaElegida("");

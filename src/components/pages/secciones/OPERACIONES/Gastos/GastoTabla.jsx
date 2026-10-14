@@ -18,6 +18,7 @@ import {
   obtenerHistorialGasoil,
   cargasDeObraValorizadas,
 } from "../../../../../helpers/precioGasoil.js";
+import { mismoTexto } from "../../../../../helpers/normTexto.js";
 
 const buscarPrecioVigente = (precios, clasificacion, trabajo, fechaRef) => {
   const candidatos = precios.filter(
@@ -118,7 +119,7 @@ const GastoTabla = () => {
       }
 
       const pagosObra = (todosPagos || []).flatMap((pago) => {
-        const itemsObra = (pago.pagos || []).filter((item) => item.factura?.obra === obraNombre);
+        const itemsObra = (pago.pagos || []).filter((item) => mismoTexto(item.factura?.obra, obraNombre));
         return itemsObra.map((item) => ({
           _id: `${pago._id}-${item.factura?._id ?? item.factura}`,
           fecha: pago.fecha,

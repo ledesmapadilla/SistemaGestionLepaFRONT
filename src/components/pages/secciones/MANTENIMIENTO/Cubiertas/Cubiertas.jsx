@@ -13,6 +13,7 @@ import {
 import { API } from "../../../../../helpers/api";
 import authFetch from "../../../../../helpers/authFetch";
 import XLSXStyle from "xlsx-js-style";
+import { normTexto } from "../../../../../helpers/normTexto.js";
 
 const hoy = () => new Date().toLocaleDateString("en-CA");
 const VACIO_NUEVA = { cubierta: "", maquina: "", fecha: hoy(), observaciones: "" };
@@ -313,7 +314,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
   // cubiertas esperada (según la categoría), calculado sobre `registrosArr`.
   // "" si la máquina no tiene cantidad esperada definida o si está OK.
   const alertaCantidadMaquina = (registrosArr, maquinaNombre) => {
-    const norm = (maquinaNombre || "").toLowerCase().trim();
+    const norm = normTexto(maquinaNombre);
     if (!norm) return "";
     const esperada = esperadasCat[norm];
     if (esperada === undefined) return "";
@@ -383,7 +384,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
     });
 
     return [...grupos.values()].map((g) => {
-      const norm = g.maquina.toLowerCase().trim();
+      const norm = normTexto(g.maquina);
       const esperada = esperadasCat[norm];
       let alerta = "";
       if (esperada !== undefined) {

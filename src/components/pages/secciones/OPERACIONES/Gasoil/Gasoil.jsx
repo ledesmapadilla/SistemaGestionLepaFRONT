@@ -15,6 +15,7 @@ import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { OBRA_INTERNA } from "../../../../../helpers/gasoilInterno.js";
 import GasoilModal from "./GasoilModal.jsx";
 import PrecioGasoil from "./PrecioGasoil.jsx";
+import { normTexto, mismoTexto, unicosTexto } from "../../../../../helpers/normTexto.js";
 
 const selectActivo = { backgroundImage: "none" };
 
@@ -42,7 +43,7 @@ const formatoLitros = (valor) =>
 
 // Opciones únicas y ordenadas de una columna, para los selects de filtro.
 const opcionesDe = (filas, campo) =>
-  [...new Set(filas.map((f) => f[campo]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  unicosTexto(filas.map((f) => f[campo])).sort((a, b) => a.localeCompare(b));
 
 const Gasoil = () => {
   const navigate = useNavigate();
@@ -208,7 +209,7 @@ const Gasoil = () => {
 
   // `obras` ya viene filtrado por estado "En curso" desde el backend, así que
   // alcanza con mirar si el nombre de la obra está en esa lista.
-  const obrasEnCurso = useMemo(() => new Set(obras.map((o) => o.nombreobra)), [obras]);
+  const obrasEnCurso = useMemo(() => new Set(obras.map((o) => normTexto(o.nombreobra))), [obras]);
 
   // Base de toda la pantalla: filtros, tabla y Excel salen de acá. Mientras las
   // obras no hayan llegado no se filtra, para no mostrar la tabla vacía.
@@ -217,7 +218,7 @@ const Gasoil = () => {
   const cargasVisibles = useMemo(
     () =>
       soloEnCurso && opcionesListas
-        ? cargas.filter((c) => obrasEnCurso.has(c.obra) || c.obra === OBRA_INTERNA)
+        ? cargas.filter((c) => obrasEnCurso.has(normTexto(c.obra)) || c.obra === OBRA_INTERNA)
         : cargas,
     [cargas, soloEnCurso, opcionesListas, obrasEnCurso]
   );
@@ -226,14 +227,14 @@ const Gasoil = () => {
   // de otros clientes en la lista.
   const cargasDelCliente = useMemo(
     () =>
-      filtroCliente ? cargasVisibles.filter((c) => c.cliente === filtroCliente) : cargasVisibles,
+      filtroCliente ? cargasVisibles.filter((c) => mismoTexto(c.cliente, filtroCliente)) : cargasVisibles,
     [cargasVisibles, filtroCliente]
   );
 
   // Las máquinas dependen de la obra filtrada: solo las que efectivamente
   // cargaron gasoil en esa obra, no todo el parque.
   const cargasDeLaObra = useMemo(
-    () => (filtroObra ? cargasDelCliente.filter((c) => c.obra === filtroObra) : cargasDelCliente),
+    () => (filtroObra ? cargasDelCliente.filter((c) => mismoTexto(c.obra, filtroObra)) : cargasDelCliente),
     [cargasDelCliente, filtroObra]
   );
 
@@ -249,8 +250,8 @@ const Gasoil = () => {
     () =>
       cargasVisibles.filter((c) => {
         if (filtroFecha && c.fecha !== filtroFecha) return false;
-        if (filtroCliente && c.cliente !== filtroCliente) return false;
-        if (filtroObra && c.obra !== filtroObra) return false;
+        if (filtroCliente && !mismoTexto(c.cliente, filtroCliente)) return false;
+        if (filtroObra && !mismoTexto(c.obra, filtroObra)) return false;
         if (filtroMaquina && c.maquina !== filtroMaquina) return false;
         if (filtroQuienCarga && c.quienCarga !== filtroQuienCarga) return false;
         return true;

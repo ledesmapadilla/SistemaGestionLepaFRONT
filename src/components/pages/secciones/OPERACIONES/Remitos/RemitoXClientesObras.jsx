@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Table, Spinner, Button } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import { listarRemitosSinFacturar } from "../../../../../helpers/queriesRemitos";
+import { mismoTexto } from "../../../../../helpers/normTexto.js";
 
 const RemitosXClientesObras = () => {
   const [datosAgrupados, setDatosAgrupados] = useState([]);
@@ -20,7 +21,7 @@ const RemitosXClientesObras = () => {
 
       const agrupado = remitos.reduce((acc, remito) => {
         // 1. Verificamos coincidencia de cliente
-        if (remito.obra?.razonsocial === razonSocial) {
+        if (mismoTexto(remito.obra?.razonsocial, razonSocial)) {
           
           // 2. NORMALIZACIÓN DEL ESTADO
           const estado = remito.estado

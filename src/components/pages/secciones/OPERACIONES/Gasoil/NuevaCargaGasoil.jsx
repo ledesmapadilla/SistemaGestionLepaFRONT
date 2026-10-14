@@ -13,6 +13,7 @@ import useAltoVista from "../../../../../helpers/useAltoVista.js";
 import { conClienteInterno, obrasDeCliente } from "../../../../../helpers/gasoilInterno.js";
 import "react-datepicker/dist/react-datepicker.css";
 import "../../../../../styles/gasoilMobile.css";
+import { mismoTexto } from "../../../../../helpers/normTexto.js";
 
 registerLocale("es", es);
 
@@ -115,7 +116,7 @@ const NuevaCargaGasoil = () => {
       obrasDeCliente(
         valores.cliente,
         obras
-          .filter((o) => o.razonsocial === valores.cliente)
+          .filter((o) => mismoTexto(o.razonsocial, valores.cliente))
           .map((o) => o.nombreobra)
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b))

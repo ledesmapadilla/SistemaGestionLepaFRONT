@@ -30,13 +30,17 @@ export const precioGasoilVigente = (historial, fecha) => {
   return Number((vigente || ordenado[0]).valor) || 0;
 };
 
+// Los nombres se comparan sin espacios de más ni mayúsculas: hay razones
+// sociales guardadas con un espacio al final ("Nougues ") y las cargas no.
+const norm = (s) => (s || "").toString().trim().replace(/\s+/g, " ").toLowerCase();
+
 // Cargas del módulo Gasoil que corresponden a una obra, ya valorizadas.
 // `cliente` es opcional: filtra además por razón social cuando se la conoce,
 // por si dos clientes tuvieran una obra con el mismo nombre.
 export const cargasDeObraValorizadas = (cargas, historial, obraNombre, cliente) =>
   (cargas || [])
-    .filter((c) => c.obra === obraNombre)
-    .filter((c) => !cliente || cliente === "-" || c.cliente === cliente)
+    .filter((c) => norm(c.obra) === norm(obraNombre))
+    .filter((c) => !cliente || cliente === "-" || norm(c.cliente) === norm(cliente))
     .map((c) => {
       const litros = Number(c.litros) || 0;
       const precio = precioGasoilVigente(historial, c.fecha);

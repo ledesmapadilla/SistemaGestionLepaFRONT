@@ -3,6 +3,7 @@ import { Modal, Button, Form } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
 import { conClienteInterno, obrasDeCliente } from "../../../../../helpers/gasoilInterno.js";
+import { mismoTexto } from "../../../../../helpers/normTexto.js";
 
 const hoyLocal = () => new Date().toLocaleDateString("en-CA");
 
@@ -92,7 +93,7 @@ const GasoilModal = ({
         obrasDeCliente(
           clienteSel,
           obrasEnCurso
-            .filter((o) => !clienteSel || o.razonsocial === clienteSel)
+            .filter((o) => !clienteSel || mismoTexto(o.razonsocial, clienteSel))
             .map((o) => o.nombreobra)
             .filter(Boolean)
             .sort((a, b) => a.localeCompare(b))

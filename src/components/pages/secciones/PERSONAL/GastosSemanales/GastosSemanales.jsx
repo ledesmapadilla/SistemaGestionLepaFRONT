@@ -13,6 +13,7 @@ import AsyncButton from "../../../../shared/AsyncButton.jsx";
 import XLSXStyle from "xlsx-js-style";
 import Swal from "sweetalert2";
 import "../../../../../styles/clientes.css";
+import { mismoTexto as mismoNombre, unicosTexto } from "../../../../../helpers/normTexto.js";
 
 const getMonday = (date) => {
   const d = new Date(date);
@@ -389,10 +390,10 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
       try {
         const data = await obtenerCuentaCorrienteProveedor();
         const movs = Array.isArray(data) ? data : [];
-        const provs = [...new Set(movs.map((m) => m.proveedor).filter(Boolean))];
+        const provs = unicosTexto(movs.map((m) => m.proveedor));
         resumen = provs
           .map((prov) => {
-            const ms = movs.filter((m) => m.proveedor === prov);
+            const ms = movs.filter((m) => mismoNombre(m.proveedor, prov));
             const debito = ms.reduce((s, m) => s + (m.debito || 0), 0);
             const credito = ms.reduce((s, m) => s + (m.credito || 0), 0);
             return { proveedor: prov, deuda: debito - credito };

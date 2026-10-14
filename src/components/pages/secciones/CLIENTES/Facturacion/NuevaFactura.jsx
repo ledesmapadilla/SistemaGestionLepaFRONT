@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 import AsyncButton from "../../../../shared/AsyncButton";
 import { crearFactura, listarFacturas } from "../../../../../helpers/queriesFacturas";
 import { listarRemitosConFacturado, listarRemitosDisponibles } from "../../../../../helpers/queriesRemitos";
+import { mismoTexto } from "../../../../../helpers/normTexto.js";
 
 const hoy = new Date().toLocaleDateString("en-CA");
 
@@ -98,7 +99,7 @@ const NuevaFactura = () => {
   const obrasConRemitos = clienteSeleccionado
     ? [...new Set(
         todosRemitos
-          .filter((r) => r.obra?.razonsocial === clienteSeleccionado)
+          .filter((r) => mismoTexto(r.obra?.razonsocial, clienteSeleccionado))
           .map((r) => r.obra?.nombreobra)
           .filter(Boolean)
       )].sort()
@@ -117,8 +118,8 @@ const NuevaFactura = () => {
     const idsSeleccionados = remitosSeleccionados.map((r) => r._id);
     const filtrados = todosRemitos.filter(
       (r) =>
-        r.obra?.razonsocial === clienteSeleccionado &&
-        (!obraSeleccionada || r.obra?.nombreobra === obraSeleccionada) &&
+        mismoTexto(r.obra?.razonsocial, clienteSeleccionado) &&
+        (!obraSeleccionada || mismoTexto(r.obra?.nombreobra, obraSeleccionada)) &&
         !idsSeleccionados.includes(r._id)
     );
     setRemitosDisponibles(filtrados);
@@ -308,7 +309,7 @@ const NuevaFactura = () => {
                   {todasFacturas
                     .filter(
                       (f) =>
-                        f.cliente === clienteSeleccionado &&
+                        mismoTexto(f.cliente, clienteSeleccionado) &&
                         f.estadoPago === "Pendiente" &&
                         f.tipoFactura !== "Nota de Crédito"
                     )

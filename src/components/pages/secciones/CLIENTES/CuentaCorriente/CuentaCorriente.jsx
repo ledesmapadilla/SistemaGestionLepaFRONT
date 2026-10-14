@@ -3,6 +3,7 @@ import { Button, Table, Form, Spinner } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
 import { useNavigate } from "react-router-dom";
 import { obtenerCuentaCorriente } from "../../../../../helpers/queriesCuentaCorriente";
+import { mismoTexto, unicosTexto } from "../../../../../helpers/normTexto.js";
 
 const formatoMoneda = (valor) => {
   if (valor === undefined || valor === null) return "-";
@@ -62,19 +63,19 @@ const CuentaCorriente = () => {
   }, [filtroCliente]);
 
   const clientes = useMemo(() => {
-    return [...new Set(todos.map((m) => m.cliente).filter(Boolean))].sort();
+    return unicosTexto(todos.map((m) => m.cliente)).sort();
   }, [todos]);
 
   const obrasDisponibles = useMemo(() => {
     if (!filtroCliente) return [];
     const obras = todosCliente.flatMap((m) => m.obras || []).filter(Boolean);
-    return [...new Set(obras)].sort();
+    return unicosTexto(obras).sort();
   }, [todosCliente, filtroCliente]);
 
   // Resumen por cliente (vista sin filtro)
   const resumenPorCliente = useMemo(() => {
     return clientes.map((c) => {
-      const movs = todos.filter((m) => m.cliente === c);
+      const movs = todos.filter((m) => mismoTexto(m.cliente, c));
       const debito = movs.reduce((s, m) => s + (m.debito || 0), 0);
       const credito = movs.reduce((s, m) => s + (m.credito || 0), 0);
       const saldo = Math.round((debito - credito) * 100) / 100;

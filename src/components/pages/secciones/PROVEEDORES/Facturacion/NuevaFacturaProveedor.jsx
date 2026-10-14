@@ -8,6 +8,7 @@ import AsyncButton from "../../../../shared/AsyncButton";
 import { crearFacturaProveedor, listarFacturasProveedores } from "../../../../../helpers/queriesFacturasProveedores";
 import { listarProveedores } from "../../../../../helpers/queriesProveedores";
 import { listarObras } from "../../../../../helpers/queriesObras";
+import { mismoTexto } from "../../../../../helpers/normTexto.js";
 
 const hoy = new Date().toLocaleDateString("en-CA");
 
@@ -137,13 +138,13 @@ const NuevaFacturaProveedor = () => {
   // Solo las obras en curso de esa razon social: imputar a una obra de otra
   // razon social seria un error de carga.
   const obrasDeRazonSocial = useMemo(
-    () => obras.filter((o) => o.razonsocial === razonSeleccionada),
+    () => obras.filter((o) => mismoTexto(o.razonsocial, razonSeleccionada)),
     [obras, razonSeleccionada]
   );
 
   // Al cambiar de razon social, la obra elegida antes deja de corresponder.
   useEffect(() => {
-    if (obraSeleccionada && !obrasDeRazonSocial.some((o) => o.nombreobra === obraSeleccionada)) {
+    if (obraSeleccionada && !obrasDeRazonSocial.some((o) => mismoTexto(o.nombreobra, obraSeleccionada))) {
       setValue("obra", "");
     }
   }, [obrasDeRazonSocial, obraSeleccionada]);

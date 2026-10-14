@@ -9,6 +9,7 @@ import { listarObras } from "../../../../../helpers/queriesObras";
 
 import AceiteCompraModal from "./AceiteCompraModal";
 import AceiteConsumoModal from "./AceiteConsumoModal";
+import { mismoTexto } from "../../../../../helpers/normTexto.js";
 
 const AceiteTabla = () => {
   const navigate = useNavigate();
@@ -87,16 +88,16 @@ const AceiteTabla = () => {
   const maquinasUnicas = [...new Set(consumos.map((c) => c.maquina).filter(Boolean))];
   const obrasUnicas = [...new Set(consumos.map((c) => c.obra).filter(Boolean))];
   const rsUnicas = [...new Set(
-    consumos.map((c) => obras.find((o) => o.nombreobra === c.obra)?.razonsocial).filter(Boolean)
+    consumos.map((c) => obras.find((o) => mismoTexto(o.nombreobra, c.obra))?.razonsocial).filter(Boolean)
   )];
 
   // Filtrar consumos
   const consumosFiltrados = consumos.filter((c) => {
     if (filtroTipo && c.tipoAceite !== filtroTipo) return false;
     if (filtroMaquina && c.maquina !== filtroMaquina) return false;
-    if (filtroObra && c.obra !== filtroObra) return false;
+    if (filtroObra && !mismoTexto(c.obra, filtroObra)) return false;
     if (filtroRS) {
-      const rs = obras.find((o) => o.nombreobra === c.obra)?.razonsocial || "";
+      const rs = obras.find((o) => mismoTexto(o.nombreobra, c.obra))?.razonsocial || "";
       if (rs !== filtroRS) return false;
     }
     return true;
@@ -322,7 +323,7 @@ const AceiteTabla = () => {
                         <td>{c.litros}</td>
                         <td>{c.maquina || "-"}</td>
                         <td>{c.obra || "-"}</td>
-                        <td>{obras.find((o) => o.nombreobra === c.obra)?.razonsocial || "-"}</td>
+                        <td>{obras.find((o) => mismoTexto(o.nombreobra, c.obra))?.razonsocial || "-"}</td>
                         <td>-</td>
                         <td>
                           <div className="d-flex gap-1 justify-content-center">

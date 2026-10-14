@@ -9,6 +9,7 @@ import { crearPagoProveedor, listarPagosProveedores } from "../../../../../helpe
 import { listarFacturasProveedores } from "../../../../../helpers/queriesFacturasProveedores";
 import { listarChequesEnCartera, actualizarEstadoCheque } from "../../../../../helpers/queriesCobros";
 import { crearChequePropio, listarChequesPropio } from "../../../../../helpers/queriesChequesPropio";
+import { mismoTexto } from "../../../../../helpers/normTexto.js";
 
 const hoy = new Date().toLocaleDateString("en-CA");
 
@@ -169,7 +170,7 @@ const NuevoPagoProveedor = () => {
 
         const idsSeleccionados = facturasSeleccionadas.map((f) => f._id);
         const filtradas = todasFacturas.filter(
-          (f) => f.proveedor === proveedorSeleccionado && !idsSeleccionados.includes(f._id)
+          (f) => mismoTexto(f.proveedor, proveedorSeleccionado) && !idsSeleccionados.includes(f._id)
         );
         setFacturasDisponibles(filtradas);
         setFacturaElegida("");

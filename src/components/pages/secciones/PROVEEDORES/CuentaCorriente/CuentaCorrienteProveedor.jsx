@@ -3,6 +3,7 @@ import { Button, Table, Form, Spinner } from "react-bootstrap";
 import XLSXStyle from "xlsx-js-style";
 import { useNavigate } from "react-router-dom";
 import { obtenerCuentaCorrienteProveedor } from "../../../../../helpers/queriesCuentaCorrienteProveedor";
+import { mismoTexto, unicosTexto } from "../../../../../helpers/normTexto.js";
 
 const formatoMoneda = (valor) => {
   if (valor === undefined || valor === null) return "-";
@@ -67,12 +68,12 @@ const CuentaCorrienteProveedor = () => {
   }, [filtroProveedor]);
 
   const proveedores = useMemo(() => {
-    return [...new Set(todos.map((m) => m.proveedor).filter(Boolean))].sort();
+    return unicosTexto(todos.map((m) => m.proveedor)).sort();
   }, [todos]);
 
   const resumenPorProveedor = useMemo(() => {
     return proveedores.map((prov) => {
-      const movs = todos.filter((m) => m.proveedor === prov);
+      const movs = todos.filter((m) => mismoTexto(m.proveedor, prov));
       const debito = movs.reduce((s, m) => s + (m.debito || 0), 0);
       const credito = movs.reduce((s, m) => s + (m.credito || 0), 0);
       return { proveedor: prov, debito, credito, saldo: debito - credito };

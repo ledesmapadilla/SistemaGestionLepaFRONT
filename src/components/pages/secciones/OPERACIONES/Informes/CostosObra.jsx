@@ -17,6 +17,7 @@ import {
 } from "../../../../../helpers/precioGasoil.js";
 import "../../../../../styles/verRemitos.css";
 import CostoObraTabla from "./CostoObraTabla"; 
+import { mismoTexto } from "../../../../../helpers/normTexto.js";
 
 // Color del estado y texto/variante del botón según en qué punto del análisis está la obra
 const estiloEstado = (estado) => {
@@ -120,7 +121,7 @@ const CostosObra = () => {
 
   // Obras del cliente seleccionado
   const obrasFiltradas = obras.filter((obra) => {
-    if (!obra || obra.razonsocial !== razonSocialSeleccionada) return false;
+    if (!obra || !mismoTexto(obra.razonsocial, razonSocialSeleccionada)) return false;
     const coincideEstado =
       filtroEstado === "" ||
       (filtroEstado === "Terminada" ? obra.estado?.startsWith("Terminada") : obra.estado === filtroEstado);
@@ -256,7 +257,7 @@ const CostosObra = () => {
 
       // Sumar los pagos a proveedores que pertenecen a esta obra
       const pagosObra = (pagosRes || []).flatMap((pago) => {
-        const itemsObra = (pago.pagos || []).filter((item) => item.factura?.obra === obra.nombreobra);
+        const itemsObra = (pago.pagos || []).filter((item) => mismoTexto(item.factura?.obra, obra.nombreobra));
         return itemsObra.map((item) => ({
           montoPagado: item.montoPagado || 0,
         }));
@@ -274,7 +275,7 @@ const CostosObra = () => {
       aceitesDB.forEach((aceite) => {
         const movimientos = aceite.movimientos || [];
         const litrosObra = movimientos
-          .filter((m) => m.tipoMov === "SALIDA" && m.obra === obra.nombreobra)
+          .filter((m) => m.tipoMov === "SALIDA" && mismoTexto(m.obra, obra.nombreobra))
           .reduce((acc, m) => acc + Number(m.litros || 0), 0);
 
         if (litrosObra <= 0) return;
