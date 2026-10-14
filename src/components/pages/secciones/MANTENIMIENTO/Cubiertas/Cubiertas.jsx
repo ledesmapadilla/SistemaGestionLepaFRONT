@@ -15,7 +15,6 @@ import authFetch from "../../../../../helpers/authFetch";
 import XLSXStyle from "xlsx-js-style";
 
 const hoy = () => new Date().toLocaleDateString("en-CA");
-const VACIO_ALTA  = { nombreCubierta: "", fecha: hoy() };
 const VACIO_NUEVA = { cubierta: "", maquina: "", fecha: hoy(), observaciones: "" };
 
 // Advertencias de cantidad: el texto va en rojo y solo la palabra "sobra/sobran"
@@ -42,11 +41,6 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
   const [catalogo, setCatalogo]   = useState([]);
   const [maquinas, setMaquinas]   = useState([]);
   const [cargando, setCargando]   = useState(true);
-
-  // Modal Alta
-  const [showAlta, setShowAlta]           = useState(false);
-  const [formAlta, setFormAlta]           = useState(VACIO_ALTA);
-  const [guardandoAlta, setGuardandoAlta] = useState(false);
 
   // Modal Listado
   const [showListado, setShowListado] = useState(false);
@@ -101,41 +95,6 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
 
   useEffect(() => { cargar(); }, []);
 
-  // ── Alta de cubierta ─────────────────────────────────────────────
-  const abrirAlta = () => {
-    const numeros = catalogo.map((c) => parseInt(c.nombreCubierta, 10)).filter((n) => !isNaN(n));
-    const siguiente = numeros.length > 0 ? String(Math.max(...numeros) + 1) : "1";
-    setFormAlta({ ...VACIO_ALTA, nombreCubierta: siguiente });
-    setShowAlta(true);
-  };
-  const cerrarAlta = () => { setShowAlta(false); setFormAlta(VACIO_ALTA); };
-
-  const guardarAlta = async () => {
-    if (!formAlta.nombreCubierta.trim()) return Swal.fire("Atención", "El nombre es obligatorio.", "warning");
-    if (!formAlta.fecha)                 return Swal.fire("Atención", "La fecha es obligatoria.", "warning");
-
-    const yaExiste = catalogo.some(
-      (c) => c.nombreCubierta.toLowerCase().trim() === formAlta.nombreCubierta.toLowerCase().trim()
-    );
-    if (yaExiste) return Swal.fire("Atención", "Ya existe una cubierta con ese nombre.", "warning");
-
-    setGuardandoAlta(true);
-    try {
-      const res = await crearCubierta({ ...formAlta, categoria });
-      if (res?.ok) {
-        const data = await res.json();
-        setCatalogo((prev) => [data.cubierta, ...prev]);
-        cerrarAlta();
-        Swal.fire({ icon: "success", title: "Cubierta dada de alta", timer: 1500, showConfirmButton: false });
-      } else {
-        const err = await res.json().catch(() => ({}));
-        Swal.fire("Error", err.msg || "No se pudo dar de alta la cubierta.", "error");
-      }
-    } finally {
-      setGuardandoAlta(false);
-    }
-  };
-
   // ── Borrar del catálogo ─────────────────────────────────────────
   const eliminarDelCatalogo = async (id) => {
     const { isConfirmed } = await Swal.fire({
@@ -155,37 +114,60 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
     }
   };
 
-  // ── Nueva cubierta ──────────────────────────────────────────────
-  const abrirNueva  = () => { setFormNueva(VACIO_NUEVA); setShowNueva(true); };
+  // ── Nueva cubierta (alta en catálogo + registro en la tabla) ────
+  const abrirNueva = () => {
+    const numeros = catalogo.map((c) => parseInt(c.nombreCubierta, 10)).filter((n) => !isNaN(n));
+    const siguiente = numeros.length > 0 ? String(Math.max(...numeros) + 1) : "1";
+    setFormNueva({ ...VACIO_NUEVA, cubierta: siguiente });
+    setShowNueva(true);
+  };
   const cerrarNueva = () => { setShowNueva(false); setFormNueva(VACIO_NUEVA); };
 
   const guardarNueva = async () => {
-    if (!formNueva.cubierta) return Swal.fire("Atención", "Seleccioná una cubierta.", "warning");
-    if (!formNueva.maquina)  return Swal.fire("Atención", "Seleccioná una máquina.", "warning");
-    if (!formNueva.fecha)    return Swal.fire("Atención", "La fecha es obligatoria.", "warning");
+    const nombre = formNueva.cubierta.trim();
+    if (!nombre)            return Swal.fire("Atención", "El nombre de la cubierta es obligatorio.", "warning");
+    if (!formNueva.maquina) return Swal.fire("Atención", "Seleccioná una máquina.", "warning");
+    if (!formNueva.fecha)   return Swal.fire("Atención", "La fecha es obligatoria.", "warning");
 
-    const yaRegistrada = registros.some(
-      (r) => String(r.cubierta?._id || r.cubierta) === String(formNueva.cubierta)
+    // Si el nombre ya está en el catálogo (alta vieja sin registro) se reutiliza;
+    // si además ya tiene registro en la tabla, es un duplicado.
+    const existente = catalogo.find(
+      (c) => c.nombreCubierta.toLowerCase().trim() === nombre.toLowerCase()
     );
-    if (yaRegistrada) return Swal.fire("Atención", "Esta cubierta ya está registrada.", "warning");
+    if (existente && registros.some((r) => String(r.cubierta?._id || r.cubierta) === String(existente._id))) {
+      return Swal.fire("Atención", "Ya existe una cubierta con ese nombre.", "warning");
+    }
 
     setGuardandoNueva(true);
-    const ESPECIALES = ["Desechada", "Auxilio - Galpón", "Perdida"];
-    const esEspecial = ESPECIALES.includes(formNueva.maquina);
-    const payload = {
-      cubierta:     formNueva.cubierta,
-      categoria,
-      maquina:      esEspecial ? null : formNueva.maquina,
-      maquinaLabel: esEspecial ? formNueva.maquina : "",
-      fecha:        formNueva.fecha,
-      observaciones: formNueva.observaciones,
-    };
     try {
+      let cubiertaId = existente?._id;
+      let creadaAhora = null;
+      if (!cubiertaId) {
+        const resAlta = await crearCubierta({ nombreCubierta: nombre, fecha: formNueva.fecha, categoria });
+        if (!resAlta?.ok) {
+          const err = await resAlta?.json().catch(() => ({}));
+          return Swal.fire("Error", err?.msg || "No se pudo dar de alta la cubierta.", "error");
+        }
+        creadaAhora = (await resAlta.json()).cubierta;
+        cubiertaId = creadaAhora._id;
+      }
+
+      const ESPECIALES = ["Desechada", "Auxilio - Galpón", "Perdida"];
+      const esEspecial = ESPECIALES.includes(formNueva.maquina);
+      const payload = {
+        cubierta:     cubiertaId,
+        categoria,
+        maquina:      esEspecial ? null : formNueva.maquina,
+        maquinaLabel: esEspecial ? formNueva.maquina : "",
+        fecha:        formNueva.fecha,
+        observaciones: formNueva.observaciones,
+      };
       const res = await crearRegistroCubierta(payload);
       if (res?.ok) {
         const data = await res.json();
         const nuevos = [data.registro, ...registros];
         setRegistros(nuevos);
+        if (creadaAhora) setCatalogo((prev) => [creadaAhora, ...prev]);
         cerrarNueva();
         const advertencia = alertaCantidadMaquina(nuevos, data.registro?.maquina?.maquina);
         if (advertencia) {
@@ -194,8 +176,10 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
           Swal.fire({ icon: "success", title: "Cubierta registrada", timer: 1500, showConfirmButton: false });
         }
       } else {
-        const err = await res.json().catch(() => ({}));
-        Swal.fire("Error", err.msg || "No se pudo guardar el registro.", "error");
+        // Si la cubierta se dio de alta recién, se deshace para no dejarla huérfana en el catálogo.
+        if (creadaAhora) await borrarCubierta(creadaAhora._id).catch(() => {});
+        const err = await res?.json().catch(() => ({}));
+        Swal.fire("Error", err?.msg || "No se pudo guardar el registro.", "error");
       }
     } finally {
       setGuardandoNueva(false);
@@ -411,7 +395,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
           alerta = diff === 1 ? "Sobra una cubierta" : `Sobran ${diff} cubiertas`;
         }
       }
-      return { ...g, alerta };
+      return { ...g, alerta, esperada };
     }).sort((a, b) => {
       // Máquinas con cantidad esperada primero
       const pa = esperadasCat[a.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
@@ -464,7 +448,6 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
 
       <div className="d-flex justify-content-between mb-2">
         <div className="d-flex gap-2">
-          <Button size="sm" variant="outline-success" onClick={abrirAlta}>+ Alta de cubierta</Button>
           <Button size="sm" variant="outline-secondary" onClick={() => setShowListado(true)}>Listado cubiertas</Button>
           {hayResumen && (
             <Button size="sm" variant="outline-info" onClick={() => setShowResumen(true)}>Resumen</Button>
@@ -552,40 +535,6 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
         </Modal.Footer>
       </Modal>
 
-      {/* ── Modal Alta de cubierta ── */}
-      <Modal show={showAlta} onHide={cerrarAlta} centered size="sm">
-        <Modal.Header closeButton>
-          <Modal.Title>Alta de cubierta</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3 text-center">
-              <Form.Label>Nombre cubierta <span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                className="w-50 mx-auto text-center"
-                value={formAlta.nombreCubierta}
-                onChange={(e) => setFormAlta((p) => ({ ...p, nombreCubierta: e.target.value }))}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3 text-center">
-              <Form.Label>Fecha <span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                type="date"
-                className="w-50 mx-auto text-center"
-                value={formAlta.fecha}
-                onChange={(e) => setFormAlta((p) => ({ ...p, fecha: e.target.value }))}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer className="justify-content-center">
-          <Button variant="outline-secondary" onClick={cerrarAlta}>Cancelar</Button>
-          <Button variant="outline-success" onClick={guardarAlta} disabled={guardandoAlta}>
-            {guardandoAlta ? <Spinner size="sm" animation="border" /> : "Dar de alta"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
       {/* ── Modal Listado cubiertas ── */}
       <Modal show={showListado} onHide={() => setShowListado(false)} centered>
         <Modal.Header closeButton>
@@ -647,7 +596,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
                 <tbody>
                   {resumen.map((g) => (
                     <tr key={g.maquina}>
-                      <td>{g.maquina}</td>
+                      <td>{g.maquina}{g.esperada !== undefined && ` (${g.esperada})`}</td>
                       <td>{g.cantidad}</td>
                       <td>{g.fecha ? new Date(g.fecha + "T12:00:00").toLocaleDateString("es-AR") : "-"}</td>
                       <td className={g.alerta ? "fw-semibold" : ""} style={g.alerta ? { color: COLOR_FALTA } : undefined}>{g.alerta ? alertaJsx(g.alerta) : "-"}</td>
@@ -710,17 +659,12 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
         <Modal.Body>
           <Form>
             <Form.Group className="mb-3 text-center">
-              <Form.Label>Cubierta <span className="text-danger">*</span></Form.Label>
-              <Form.Select
-                className="w-50 mx-auto"
+              <Form.Label>Nombre cubierta <span className="text-danger">*</span></Form.Label>
+              <Form.Control
+                className="w-50 mx-auto text-center"
                 value={formNueva.cubierta}
                 onChange={(e) => setFormNueva((p) => ({ ...p, cubierta: e.target.value }))}
-              >
-                <option value="">Seleccionar...</option>
-                {catalogo.map((c) => (
-                  <option key={c._id} value={c._id}>{c.nombreCubierta}</option>
-                ))}
-              </Form.Select>
+              />
             </Form.Group>
             <Form.Group className="mb-3 text-center">
               <Form.Label>Máquina <span className="text-danger">*</span></Form.Label>
