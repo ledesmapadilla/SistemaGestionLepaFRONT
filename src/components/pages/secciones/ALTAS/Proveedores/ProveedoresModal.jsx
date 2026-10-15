@@ -86,12 +86,14 @@ const ProveedoresModal = ({
           </Form.Group>
 
           <Form.Group>
-            <Form.Label>Teléfono*</Form.Label>
+            <Form.Label>Teléfono</Form.Label>
             <Form.Control
               {...register("telefono", {
-                required: "El teléfono es obligatorio",
                 setValueAs: (v) => v?.trim(),
+                // Opcional (el personal dado de alta como proveedor no lo
+                // tiene), pero si se carga no puede repetirse.
                 validate: (value) =>
+                  !value ||
                   !proveedores.some(
                     (p) =>
                       p.telefono?.trim() === value?.trim() &&

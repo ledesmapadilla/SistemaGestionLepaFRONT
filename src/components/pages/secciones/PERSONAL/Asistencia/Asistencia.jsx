@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button, Modal, Form, Table, Spinner } from "react-bootstrap";
-import { listarAsistencia, listarDatosAsistencia } from "../../../../../helpers/queriesAsistencia.js";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button, Modal, Form, Table, Spinner, Tabs, Tab, Badge } from "react-bootstrap";
+import { listarAsistencia, listarDatosAsistencia, listarCompensadasAsistencia } from "../../../../../helpers/queriesAsistencia.js";
 import { difMinDia, minsAHHMM, colorDif } from "../../../../../helpers/jornadaUtils.js";
 import { ordenarPersonal } from "../../../../../helpers/ordenPersonal.js";
 import { semanalVigente } from "../../../../../helpers/semanalUtils.js";
@@ -33,10 +33,25 @@ const mapearRegistros = (docs) => {
   return mapa;
 };
 
+// Saldo de horas compensadas destacado como píldora (sin negrita): verde si
+// queda a favor, rojo si queda en contra, gris si está en cero.
+const SaldoBadge = ({ mins }) => (
+  <Badge
+    pill
+    bg={mins > 0 ? "success" : mins < 0 ? "danger" : "secondary"}
+    style={{ fontWeight: 400, fontSize: "0.9rem", minWidth: 64, padding: "0.35em 0.8em" }}
+  >
+    {minsAHHMM(mins)}
+  </Badge>
+);
+
 const Asistencia = () => {
   const hoy = new Date();
-  const [anio, setAnio] = useState(hoy.getFullYear());
-  const [mes, setMes] = useState(hoy.getMonth());
+  const location = useLocation();
+  // Al volver del día (o con el botón atrás) se abre en el mes que se estaba
+  // mirando, no en el actual.
+  const [anio, setAnio] = useState(location.state?.anio ?? hoy.getFullYear());
+  const [mes, setMes] = useState(location.state?.mes ?? hoy.getMonth());
 
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [loadingMes, setLoadingMes] = useState(true);
@@ -47,6 +62,10 @@ const Asistencia = () => {
 
   const [registros, setRegistros] = useState({});
   const [semanaResumen, setSemanaResumen] = useState(null);
+  const [tabResumen, setTabResumen] = useState("resumen");
+  // Registros con "Compensar" de toda la historia; null = todavía no se pidieron.
+  const [compensadas, setCompensadas] = useState(null);
+  const [historialDe, setHistorialDe] = useState(null);
 
   const navigate = useNavigate();
   const anios = Array.from({ length: 10 }, (_, i) => 2026 + i);
@@ -91,6 +110,14 @@ const Asistencia = () => {
     };
     cargarAsistencia();
   }, [anio, mes]);
+
+  // Además de cambiar el mes, lo guarda en el historial: así el botón atrás
+  // del navegador (por ejemplo al volver de Gastos Semanales) vuelve a este mes.
+  const cambiarMes = (nuevoAnio, nuevoMes) => {
+    setAnio(nuevoAnio);
+    setMes(nuevoMes);
+    navigate(location.pathname, { replace: true, state: { anio: nuevoAnio, mes: nuevoMes } });
+  };
 
   // Ordenado acá, que es de donde sale la lista que se le pasa al detalle del día.
   const personalVisible = ordenarPersonal(listaPersonal, (p) => p?.nombre);
@@ -214,7 +241,67 @@ const Asistencia = () => {
     const desde = diasSemana[0];
     const hasta = diasSemana[diasSemana.length - 1];
     setSemanaResumen({ filas, label: `${desde} al ${hasta} de ${MESES[mes].toLowerCase()} ${anio}` });
+    // Abre directo en "Horas compensadas"; se pide de nuevo cada vez para que
+    // refleje lo último cargado en los días.
+    setTabResumen("compensadas");
+    setHistorialDe(null);
+    setCompensadas(null);
+    listarCompensadasAsistencia().then(async (res) => {
+      setCompensadas(res?.ok ? await res.json() : []);
+    });
   };
+
+  const cerrarResumen = () => {
+    setSemanaResumen(null);
+    setHistorialDe(null);
+  };
+
+  // Horas compensadas por persona, de toda la historia. Solo cuentan los días
+  // con el círculo "Compensar" activado. Dif. negativa (trabajó de más) = a
+  // favor; positiva (trabajó de menos) = en contra. Se lista todo el personal
+  // activo, aunque todavía no tenga días compensados.
+  const calcularCompensadas = () => {
+    if (!compensadas) return [];
+    const nombrePorKey = {};
+    const mapa = {};
+    listaPersonal.filter((p) => p.activo !== false).forEach((p) => {
+      const k = normNombre(p.nombre);
+      nombrePorKey[k] = p.nombre;
+      mapa[k] = { nombre: p.nombre, aFavor: 0, enContra: 0, observaciones: [], historial: [] };
+    });
+    compensadas.forEach((doc) => {
+      const [yy, mm, dd] = doc.fecha.split("-").map(Number);
+      const esSabado = new Date(yy, mm - 1, dd).getDay() === 6;
+      (doc.registros || []).forEach((r) => {
+        const k = normNombre(r.personal);
+        if (!nombrePorKey[k]) return;
+        const dif = difMinDia(r.entra, r.sale, esSabado, r.personal);
+        if (dif == null) return;
+        const fila = mapa[k];
+        if (dif < 0) fila.aFavor += -dif;
+        else fila.enContra += dif;
+        if (r.observaciones) fila.observaciones.push(r.observaciones);
+        fila.historial.push({
+          fecha: doc.fecha,
+          entra: r.entra,
+          sale: r.sale,
+          aFavor: dif < 0 ? -dif : 0,
+          enContra: dif > 0 ? dif : 0,
+          saldo: fila.aFavor - fila.enContra,
+          observaciones: r.observaciones || "",
+        });
+      });
+    });
+    return ordenarPersonal(Object.values(mapa), (f) => f.nombre).map((f) => ({
+      ...f,
+      saldo: f.aFavor - f.enContra,
+      observaciones: f.observaciones.join(" / "),
+    }));
+  };
+
+  const filasCompensadas = tabResumen === "compensadas" ? calcularCompensadas() : [];
+  const filaHistorial = historialDe ? filasCompensadas.find((f) => f.nombre === historialDe) : null;
+  const fmtFecha = (f) => f.split("-").reverse().join("/");
 
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
@@ -231,7 +318,7 @@ const Asistencia = () => {
       <div className="d-flex align-items-center gap-3 mb-4">
         <Form.Select
           value={anio}
-          onChange={(e) => setAnio(Number(e.target.value))}
+          onChange={(e) => cambiarMes(Number(e.target.value), mes)}
           style={{ width: 100 }}
         >
           {anios.map((a) => (
@@ -240,7 +327,7 @@ const Asistencia = () => {
         </Form.Select>
         <Form.Select
           value={mes}
-          onChange={(e) => setMes(Number(e.target.value))}
+          onChange={(e) => cambiarMes(anio, Number(e.target.value))}
           style={{ width: 140 }}
         >
           {MESES.map((nombre, i) => (
@@ -374,11 +461,13 @@ const Asistencia = () => {
       </div>
 
       {/* Modal Resumen semanal */}
-      <Modal show={!!semanaResumen} onHide={() => setSemanaResumen(null)} centered size="lg">
+      <Modal show={!!semanaResumen} onHide={cerrarResumen} centered size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Resumen {semanaResumen?.label}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          <Tabs activeKey={tabResumen} onSelect={(k) => setTabResumen(k)} className="mb-3">
+            <Tab eventKey="resumen" title="Resumen">
           <Table striped bordered hover className="text-center align-middle mx-auto" style={{ width: "90%" }}>
             <thead className="table-dark">
               <tr>
@@ -403,9 +492,86 @@ const Asistencia = () => {
               ))}
             </tbody>
           </Table>
+            </Tab>
+            <Tab eventKey="compensadas" title="Horas compensadas">
+              {compensadas === null ? (
+                <Spinner animation="border" className="d-block mx-auto my-4" />
+              ) : filaHistorial ? (
+                <>
+                  <div className="d-flex align-items-center justify-content-between mb-2">
+                    <h5 className="mb-0">Historial de {filaHistorial.nombre}</h5>
+                    <Button size="sm" variant="outline-success" onClick={() => setHistorialDe(null)}>Volver</Button>
+                  </div>
+                  <div style={{ maxHeight: "55vh", overflowY: "auto" }}>
+                    <Table striped bordered hover className="text-center align-middle">
+                      <thead className="table-dark" style={{ position: "sticky", top: 0 }}>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Entra</th>
+                          <th>Sale</th>
+                          <th>A favor</th>
+                          <th>En contra</th>
+                          <th>Saldo</th>
+                          <th>Observaciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...filaHistorial.historial].reverse().map((h, i) => (
+                          <tr key={i}>
+                            <td>{fmtFecha(h.fecha)}</td>
+                            <td>{h.entra}</td>
+                            <td>{h.sale}</td>
+                            <td style={{ color: "#198754" }}>{h.aFavor ? minsAHHMM(h.aFavor) : "-"}</td>
+                            <td style={{ color: "#dc3545" }}>{h.enContra ? minsAHHMM(h.enContra) : "-"}</td>
+                            <td><SaldoBadge mins={h.saldo} /></td>
+                            <td className="text-start">{h.observaciones || "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </div>
+                </>
+              ) : filasCompensadas.length === 0 ? (
+                <p className="text-center text-muted my-4">No hay personal activo.</p>
+              ) : (
+                <Table striped bordered hover className="text-center align-middle">
+                  <thead className="table-dark">
+                    <tr>
+                      <th>Personal</th>
+                      <th>Hs a favor</th>
+                      <th>Hs en contra</th>
+                      <th>Saldo</th>
+                      <th>Observaciones</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filasCompensadas.map((f) => (
+                      <tr key={f.nombre}>
+                        <td>{f.nombre}</td>
+                        <td style={{ color: "#198754" }}>{f.aFavor ? minsAHHMM(f.aFavor) : "-"}</td>
+                        <td style={{ color: "#dc3545" }}>{f.enContra ? minsAHHMM(f.enContra) : "-"}</td>
+                        <td><SaldoBadge mins={f.saldo} /></td>
+                        <td
+                          className="text-start"
+                          title={f.observaciones}
+                          style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                        >
+                          {f.observaciones || "-"}
+                        </td>
+                        <td>
+                          <Button size="sm" variant="success" onClick={() => setHistorialDe(f.nombre)}>Ver</Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </Tab>
+          </Tabs>
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
-          <Button variant="outline-secondary" onClick={() => setSemanaResumen(null)}>Cerrar</Button>
+          <Button variant="outline-secondary" onClick={cerrarResumen}>Cerrar</Button>
         </Modal.Footer>
       </Modal>
 

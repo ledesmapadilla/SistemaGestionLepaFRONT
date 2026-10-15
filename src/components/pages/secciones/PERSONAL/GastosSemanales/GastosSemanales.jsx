@@ -883,6 +883,7 @@ const GastosSemanales = () => {
       const dKey = toKey(d);
       doc.registros.forEach((r) => {
         if (!r.personal || r.ausente || r.mediaFalta) return;
+        if (r.compensar) return; // va a Horas compensadas: no se paga ni se descuenta
         if (esSabado && noTrabajaSabado(r.personal)) return; // no trabaja sábados
         if (esAnteriorAlAlta(r.personal, dKey)) return; // aún no estaba dado de alta
         const dm = difMinDia(r.entra, r.sale, esSabado, r.personal);
@@ -1376,7 +1377,7 @@ const GastosSemanales = () => {
             const fechaAltaVer = regGasto?.fechaAlta || "";
             const previoAlAlta = (d) => !!fechaAltaVer && toKey(d) < fechaAltaVer;
             const totalDifMin = regsModal.reduce((s, reg, idx) => {
-              if (!reg || reg.ausente || reg.mediaFalta) return s;
+              if (!reg || reg.ausente || reg.mediaFalta || reg.compensar) return s;
               if (previoAlAlta(diasModal[idx])) return s;
               const dm = difMinDia(reg.entra, reg.sale, diasModal[idx].getDay() === 6, verPersonal);
               return dm == null ? s : s + dm;
@@ -1430,8 +1431,11 @@ const GastosSemanales = () => {
                         <td style={{ color: colorEstado, fontWeight: 600 }}>{estado}</td>
                         <td>{reg.entra || "-"}</td>
                         <td>{reg.sale || "-"}</td>
-                        <td style={difDia != null ? { color: colorDif(difDia), fontWeight: 600 } : {}}>
-                          {difDia != null ? minsAHHMM(difDia) : "-"}
+                        <td
+                          style={difDia != null ? { color: reg.compensar ? "#0d6efd" : colorDif(difDia), fontWeight: 600 } : {}}
+                          title={reg.compensar ? "Compensa: no se paga ni se descuenta" : undefined}
+                        >
+                          {difDia != null ? `${minsAHHMM(difDia)}${reg.compensar ? " (comp.)" : ""}` : "-"}
                         </td>
                         <td>{reg.maquina || "-"}</td>
                         <td>{reg.horometro || "-"}</td>

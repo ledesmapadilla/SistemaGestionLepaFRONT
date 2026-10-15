@@ -83,7 +83,7 @@ const DiaAsistencia = () => {
   const borradorInicial = useMemo(() => {
     const filaDePersonal = (p) => ({
       id: p._id, personal: p.nombre, maquina: "", obra: "", mediaFalta: false,
-      ausente: false, remito: true, horometro: "",
+      ausente: false, remito: true, compensar: false, horometro: "",
       entra: p.nombre?.toLowerCase().includes("zamorano") ? "8:30" : "8:00",
       sale: esSabado ? "12:00" : "17:00", observaciones: "",
     });
@@ -223,7 +223,7 @@ const DiaAsistencia = () => {
   const exportarExcel = () => {
     const titulo = `Asistencia - ${dia} de ${MESES[mes]} ${anio}`;
     const fecha = `Fecha: ${new Date().toLocaleDateString("es-AR")}`;
-    const headers = ["Personal", "Ausente", "Remito", "Entra", "Sale", "Máquina", "Horómetro", "Obra", "Observaciones"];
+    const headers = ["Personal", "Ausente", "Remito", "Entra", "Sale", "Compensar", "Máquina", "Horómetro", "Obra", "Observaciones"];
     const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
     const estHeader = { font: { bold: true }, alignment: { horizontal: "center", vertical: "center" } };
     const estTitulo = { font: { bold: true, sz: 14 }, alignment: { horizontal: "left", vertical: "center" } };
@@ -235,7 +235,7 @@ const DiaAsistencia = () => {
     ws["A1"] = { v: titulo, t: "s", s: estTitulo };
     ws["A2"] = { v: fecha, t: "s", s: estFecha };
 
-    const cols = "ABCDEFGHI";
+    const cols = "ABCDEFGHIJ";
     headers.forEach((h, i) => {
       ws[`${cols[i]}3`] = { v: h, t: "s", s: estHeader };
     });
@@ -248,6 +248,7 @@ const DiaAsistencia = () => {
         fila.remito ? "Sí" : "No",
         fila.entra,
         fila.sale,
+        fila.compensar ? "Sí" : "No",
         fila.maquina,
         fila.horometro,
         fila.obra,
@@ -259,8 +260,8 @@ const DiaAsistencia = () => {
     });
 
     const lastRow = borrador.length + 3;
-    ws["!ref"] = `A1:I${lastRow}`;
-    ws["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 18 }, { wch: 12 }, { wch: 22 }, { wch: 24 }];
+    ws["!ref"] = `A1:J${lastRow}`;
+    ws["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 11 }, { wch: 18 }, { wch: 12 }, { wch: 22 }, { wch: 24 }];
 
     XLSXStyle.utils.book_append_sheet(wb, ws, "Asistencia");
     XLSXStyle.writeFile(wb, `Asistencia_${dia}_${MESES[mes]}_${anio}.xlsx`);
@@ -305,6 +306,7 @@ const DiaAsistencia = () => {
               <th style={{ width: 100 }}>Entra</th>
               <th style={{ width: 100 }}>Sale</th>
               <th style={{ width: 80 }}>Dif.</th>
+              <th style={{ width: 80 }}>Compensar</th>
               <th>Máquina</th>
               <th style={{ width: 120 }}>Horómetro</th>
               <th>Obra</th>
@@ -431,6 +433,17 @@ const DiaAsistencia = () => {
                       </span>
                     );
                   })()}
+                </td>
+                <td>
+                  <div className="d-flex justify-content-center">
+                    <input
+                      type="radio"
+                      checked={!!fila.compensar}
+                      onChange={() => {}}
+                      onClick={() => actualizarCelda(fila.id, "compensar", !fila.compensar)}
+                      style={{ cursor: "pointer", accentColor: "#0d6efd", width: 16, height: 16 }}
+                    />
+                  </div>
                 </td>
                 <td>
                   <Form.Select

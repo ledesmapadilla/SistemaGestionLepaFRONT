@@ -24,6 +24,17 @@ export const listarHorometrosAsistencia = async () => {
   }
 };
 
+// Solo los registros con "Compensar" activado, de toda la historia (fecha +
+// personal + entra/sale + observaciones). Alimenta "Horas compensadas".
+export const listarCompensadasAsistencia = async () => {
+  try {
+    return await authFetch(`${URL}?soloCompensar=true`);
+  } catch (error) {
+    console.error("Error al listar horas compensadas:", error);
+    return null;
+  }
+};
+
 // Todo lo que necesita la pantalla de Asistencia (personal, máquinas, obras,
 // services y el mes) en un solo pedido, para no pagar varios arranques en frío.
 export const listarDatosAsistencia = async (anio, mes) => {
