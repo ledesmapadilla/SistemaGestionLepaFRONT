@@ -494,11 +494,6 @@ const Asistencia = () => {
           </Table>
             </Tab>
             <Tab eventKey="compensadas" title="Horas compensadas">
-              <div className="mb-2" style={{ fontSize: "0.82rem", color: "#adb5bd" }}>
-                Referencia: <span style={{ fontWeight: 600 }}>(+)</span> a favor maquinista
-                {"  ·  "}
-                <span style={{ fontWeight: 600 }}>(−)</span> a favor Lepa
-              </div>
               {compensadas === null ? (
                 <Spinner animation="border" className="d-block mx-auto my-4" />
               ) : filaHistorial ? (
@@ -516,7 +511,12 @@ const Asistencia = () => {
                           <th>Sale</th>
                           <th>A favor</th>
                           <th>En contra</th>
-                          <th>Saldo</th>
+                          <th>
+                            Saldo
+                            <div style={{ fontSize: "0.72rem", fontWeight: 400, color: "#adb5bd", whiteSpace: "nowrap" }}>
+                              (+) a favor maquinista<br />(−) a favor Lepa
+                            </div>
+                          </th>
                           <th>Observaciones</th>
                         </tr>
                       </thead>
@@ -545,7 +545,12 @@ const Asistencia = () => {
                       <th>Personal</th>
                       <th>Hs a favor</th>
                       <th>Hs en contra</th>
-                      <th>Saldo</th>
+                      <th>
+                        Saldo
+                        <div style={{ fontSize: "0.72rem", fontWeight: 400, color: "#adb5bd", whiteSpace: "nowrap" }}>
+                          (+) a favor maquinista<br />(−) a favor Lepa
+                        </div>
+                      </th>
                       <th>Observaciones</th>
                       <th></th>
                     </tr>
