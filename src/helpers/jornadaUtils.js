@@ -11,12 +11,24 @@ export const esZamorano = (nombre) =>
 // le descuenta la hora de almuerzo (que la jornada corta no incluye).
 export const SABADO_ALMUERZO_DESDE = 15 * 60;
 
-// Jornada esperada del día, en minutos.
-//   Resto:    8:00 a 17:00 (9 hs) de lun a vie, 8:00 a 12:00 (4 hs) el sábado.
-//   Zamorano: 8:30 a 17:00 (8:30 hs) de lun a vie, 8:30 a 12:00 (3:30) el sábado.
+// De lun a vie se almuerza de 13:00 a 14:00 y esa hora no cuenta como trabajada.
+export const ALMUERZO_DESDE = 13 * 60;
+export const ALMUERZO_HASTA = 14 * 60;
+
+// Jornada esperada del día, en minutos de trabajo efectivo (sin almuerzo).
+//   Resto:    8:00 a 17:00 = 8 hs de lun a vie, 8:00 a 12:00 (4 hs) el sábado.
+//   Zamorano: 8:30 a 17:00 = 7:30 hs de lun a vie, 8:30 a 12:00 (3:30) el sábado.
 export const jornadaEsperadaMin = (nombre, esSabado = false) => {
-  if (esZamorano(nombre)) return esSabado ? 210 : 510;
-  return esSabado ? 240 : 540;
+  if (esZamorano(nombre)) return esSabado ? 210 : 450;
+  return esSabado ? 240 : 480;
+};
+
+// Minutos de almuerzo que caen dentro del horario trabajado.
+//   Lun a vie: la parte de [entra, sale] que se pisa con 13:00 a 14:00.
+//   Sábado: 1 hora si sale después de las 15:00 (jornada larga); si no, nada.
+const almuerzoMin = (e, s, esSabado) => {
+  if (esSabado) return s > SABADO_ALMUERZO_DESDE ? 60 : 0;
+  return Math.max(0, Math.min(s, ALMUERZO_HASTA) - Math.max(e, ALMUERZO_DESDE));
 };
 
 // "hh:mm" -> minutos. null si no es válido.
@@ -27,16 +39,14 @@ export const parseHoraMin = (str) => {
   return h * 60 + (isNaN(m) ? 0 : m);
 };
 
-// Dif. del día en minutos: jornada esperada - (sale - entra). null si falta
-// dato. Positivo = trabajó de menos (descuenta); negativo = trabajó de más
-// (suma como extra). Si el sábado sale después de las 15:00 se descuenta la
-// hora de almuerzo.
+// Dif. del día en minutos: jornada esperada - (sale - entra - almuerzo). null
+// si falta dato. Positivo = trabajó de menos (descuenta); negativo = trabajó de
+// más (suma como extra).
 export const difMinDia = (entra, sale, esSabado = false, nombre = "") => {
   const e = parseHoraMin(entra);
   const s = parseHoraMin(sale);
   if (e == null || s == null) return null;
-  const almuerzo = esSabado && s > SABADO_ALMUERZO_DESDE ? 60 : 0;
-  return jornadaEsperadaMin(nombre, esSabado) - (s - e - almuerzo);
+  return jornadaEsperadaMin(nombre, esSabado) - (s - e - almuerzoMin(e, s, esSabado));
 };
 
 // minutos -> "hh:mm" (con signo)
