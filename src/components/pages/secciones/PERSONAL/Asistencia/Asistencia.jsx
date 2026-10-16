@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Modal, Form, Table, Spinner, Tabs, Tab, Badge } from "react-bootstrap";
 import { listarAsistencia, listarDatosAsistencia, listarCompensadasAsistencia } from "../../../../../helpers/queriesAsistencia.js";
@@ -35,23 +35,6 @@ const mapearRegistros = (docs) => {
 
 // Saldo de horas compensadas destacado como píldora (sin negrita): verde si
 // queda a favor, rojo si queda en contra, gris si está en cero.
-// Fila sin bordes ni fondo arriba del encabezado, para que la referencia de
-// signos quede fuera de la tabla pero alineada con la columna Saldo.
-const celdaLeyenda = { border: 0, boxShadow: "none", backgroundColor: "var(--bs-body-bg)", padding: "0 0 4px" };
-const FilaLeyendaSaldo = ({ columnas, saldo }) => (
-  <tr style={{ borderWidth: 0 }}>
-    {Array.from({ length: columnas }, (_, i) => (
-      <th key={i} style={celdaLeyenda}>
-        {i === saldo && (
-          <div style={{ fontSize: "0.72rem", fontWeight: 400, color: "#adb5bd", whiteSpace: "nowrap", lineHeight: 1.3 }}>
-            (+) a favor maquinista<br />(−) a favor Lepa
-          </div>
-        )}
-      </th>
-    ))}
-  </tr>
-);
-
 const SaldoBadge = ({ mins }) => (
   <Badge
     pill
@@ -89,6 +72,31 @@ const Asistencia = () => {
   const loading = loadingDatos || loadingMes;
   // El mes inicial ya viene en la carga de arriba; este ref evita pedirlo de nuevo.
   const primeraCarga = useRef(true);
+
+  // La referencia de signos de "Horas compensadas" va en la fila de las
+  // solapas, centrada sobre la columna Saldo de la tabla que se esté viendo.
+  const tabsRef = useRef(null);
+  const saldoThRef = useRef(null);
+  const leyendaRef = useRef(null);
+  useLayoutEffect(() => {
+    const leyenda = leyendaRef.current;
+    const th = saldoThRef.current;
+    const cont = tabsRef.current;
+    if (!leyenda || !th || !cont) return;
+    const ubicar = () => {
+      const a = th.getBoundingClientRect();
+      const b = cont.getBoundingClientRect();
+      if (!a.width) return; // solapa todavía oculta por la animación
+      leyenda.style.left = `${a.left - b.left + a.width / 2}px`;
+      leyenda.style.visibility = "visible";
+    };
+    ubicar();
+    // Se vuelve a ubicar cuando la tabla termina de aparecer o cambia de ancho.
+    const obs = new ResizeObserver(ubicar);
+    obs.observe(th);
+    obs.observe(cont);
+    return () => obs.disconnect();
+  }, [tabResumen, compensadas, historialDe, semanaResumen]);
 
   // Carga inicial: personal, máquinas, obras, services y el mes vienen en una
   // sola llamada. Los datos de referencia se conservan para pasárselos a la
@@ -483,6 +491,18 @@ const Asistencia = () => {
           <Modal.Title>Resumen {semanaResumen?.label}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          <div ref={tabsRef} style={{ position: "relative" }}>
+          {tabResumen === "compensadas" && compensadas !== null && (
+            <div
+              ref={leyendaRef}
+              style={{
+                position: "absolute", top: 4, visibility: "hidden", transform: "translateX(-50%)",
+                fontSize: "0.72rem", color: "#adb5bd", whiteSpace: "nowrap", lineHeight: 1.3, textAlign: "center",
+              }}
+            >
+              (+) a favor maquinista<br />(−) a favor Lepa
+            </div>
+          )}
           <Tabs activeKey={tabResumen} onSelect={(k) => setTabResumen(k)} className="mb-3">
             <Tab eventKey="resumen" title="Resumen">
           <Table striped bordered hover className="text-center align-middle mx-auto" style={{ width: "90%" }}>
@@ -521,15 +541,14 @@ const Asistencia = () => {
                   </div>
                   <div style={{ maxHeight: "55vh", overflowY: "auto" }}>
                     <Table striped bordered hover className="text-center align-middle">
-                      <thead style={{ position: "sticky", top: 0 }}>
-                        <FilaLeyendaSaldo columnas={7} saldo={5} />
-                        <tr className="table-dark">
+                      <thead className="table-dark" style={{ position: "sticky", top: 0 }}>
+                        <tr>
                           <th>Fecha</th>
                           <th>Entra</th>
                           <th>Sale</th>
                           <th>A favor</th>
                           <th>En contra</th>
-                          <th>Saldo</th>
+                          <th ref={saldoThRef}>Saldo</th>
                           <th>Observaciones</th>
                         </tr>
                       </thead>
@@ -553,13 +572,12 @@ const Asistencia = () => {
                 <p className="text-center text-muted my-4">No hay personal activo.</p>
               ) : (
                 <Table striped bordered hover className="text-center align-middle">
-                  <thead>
-                    <FilaLeyendaSaldo columnas={6} saldo={3} />
-                    <tr className="table-dark">
+                  <thead className="table-dark">
+                    <tr>
                       <th>Personal</th>
                       <th>Hs a favor</th>
                       <th>Hs en contra</th>
-                      <th>Saldo</th>
+                      <th ref={saldoThRef}>Saldo</th>
                       <th>Observaciones</th>
                       <th></th>
                     </tr>
@@ -588,6 +606,7 @@ const Asistencia = () => {
               )}
             </Tab>
           </Tabs>
+          </div>
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button variant="outline-secondary" onClick={cerrarResumen}>Cerrar</Button>
