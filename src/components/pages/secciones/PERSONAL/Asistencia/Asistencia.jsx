@@ -35,6 +35,23 @@ const mapearRegistros = (docs) => {
 
 // Saldo de horas compensadas destacado como píldora (sin negrita): verde si
 // queda a favor, rojo si queda en contra, gris si está en cero.
+// Fila sin bordes ni fondo arriba del encabezado, para que la referencia de
+// signos quede fuera de la tabla pero alineada con la columna Saldo.
+const celdaLeyenda = { border: 0, boxShadow: "none", backgroundColor: "var(--bs-body-bg)", padding: "0 0 4px" };
+const FilaLeyendaSaldo = ({ columnas, saldo }) => (
+  <tr style={{ borderWidth: 0 }}>
+    {Array.from({ length: columnas }, (_, i) => (
+      <th key={i} style={celdaLeyenda}>
+        {i === saldo && (
+          <div style={{ fontSize: "0.72rem", fontWeight: 400, color: "#adb5bd", whiteSpace: "nowrap", lineHeight: 1.3 }}>
+            (+) a favor maquinista<br />(−) a favor Lepa
+          </div>
+        )}
+      </th>
+    ))}
+  </tr>
+);
+
 const SaldoBadge = ({ mins }) => (
   <Badge
     pill
@@ -504,19 +521,15 @@ const Asistencia = () => {
                   </div>
                   <div style={{ maxHeight: "55vh", overflowY: "auto" }}>
                     <Table striped bordered hover className="text-center align-middle">
-                      <thead className="table-dark" style={{ position: "sticky", top: 0 }}>
-                        <tr>
+                      <thead style={{ position: "sticky", top: 0 }}>
+                        <FilaLeyendaSaldo columnas={7} saldo={5} />
+                        <tr className="table-dark">
                           <th>Fecha</th>
                           <th>Entra</th>
                           <th>Sale</th>
                           <th>A favor</th>
                           <th>En contra</th>
-                          <th>
-                            Saldo
-                            <div style={{ fontSize: "0.72rem", fontWeight: 400, color: "#adb5bd", whiteSpace: "nowrap" }}>
-                              (+) a favor maquinista<br />(−) a favor Lepa
-                            </div>
-                          </th>
+                          <th>Saldo</th>
                           <th>Observaciones</th>
                         </tr>
                       </thead>
@@ -540,17 +553,13 @@ const Asistencia = () => {
                 <p className="text-center text-muted my-4">No hay personal activo.</p>
               ) : (
                 <Table striped bordered hover className="text-center align-middle">
-                  <thead className="table-dark">
-                    <tr>
+                  <thead>
+                    <FilaLeyendaSaldo columnas={6} saldo={3} />
+                    <tr className="table-dark">
                       <th>Personal</th>
                       <th>Hs a favor</th>
                       <th>Hs en contra</th>
-                      <th>
-                        Saldo
-                        <div style={{ fontSize: "0.72rem", fontWeight: 400, color: "#adb5bd", whiteSpace: "nowrap" }}>
-                          (+) a favor maquinista<br />(−) a favor Lepa
-                        </div>
-                      </th>
+                      <th>Saldo</th>
                       <th>Observaciones</th>
                       <th></th>
                     </tr>
