@@ -285,6 +285,7 @@ const DiaAsistencia = () => {
               <option key={p._id} value={p.nombre}>{p.nombre}</option>
             ))}
           </Form.Select>
+          <AsyncButton variant="outline-success" onClick={guardar}>Guardar</AsyncButton>
           <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
           <Button variant="outline-success" onClick={volver}>Volver</Button>
         </div>
@@ -502,7 +503,6 @@ const DiaAsistencia = () => {
 
         <div className="d-flex justify-content-end gap-2 mb-2">
           <Button variant="outline-secondary" onClick={volver}>Cerrar</Button>
-          <AsyncButton variant="outline-success" onClick={guardar}>Guardar</AsyncButton>
         </div>
       </div>
     </div>
