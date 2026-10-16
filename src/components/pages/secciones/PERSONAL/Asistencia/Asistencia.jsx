@@ -468,6 +468,11 @@ const Asistencia = () => {
         <Modal.Body>
           <Tabs activeKey={tabResumen} onSelect={(k) => setTabResumen(k)} className="mb-3">
             <Tab eventKey="resumen" title="Resumen">
+          <div className="mb-2 mx-auto" style={{ width: "90%", fontSize: "0.82rem", color: "#adb5bd" }}>
+            Referencia: <span style={{ fontWeight: 600 }}>(+)</span> a favor maquinista
+            {"  ·  "}
+            <span style={{ fontWeight: 600 }}>(−)</span> a favor Lepa
+          </div>
           <Table striped bordered hover className="text-center align-middle mx-auto" style={{ width: "90%" }}>
             <thead className="table-dark">
               <tr>
