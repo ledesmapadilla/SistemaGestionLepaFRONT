@@ -13,6 +13,7 @@ import {
 import { API } from "../../../../../helpers/api";
 import authFetch from "../../../../../helpers/authFetch";
 import XLSXStyle from "xlsx-js-style";
+import { normTexto } from "../../../../../helpers/normTexto.js";
 
 const hoy = () => new Date().toLocaleDateString("en-CA");
 const VACIO_ALTA  = { nombreBateria: "", marca: "", fecha: hoy() };
@@ -21,15 +22,31 @@ const VACIO_NUEVA = { bateria: "", maquina: "", fecha: hoy(), observaciones: "" 
 // Máquinas que no llevan batería propia (mismo criterio que el select de "Nueva batería").
 const MAQUINAS_SIN_BATERIA = ["batea 1", "batea 2", "carreton grande", "carretón grande", "carreton chico", "carretón chico"];
 
-// Cantidad de baterías esperada por máquina (nombre en minúsculas) para el
-// resumen. Si una máquina no figura acá, no se calcula alerta de cantidad.
-const BATERIAS_ESPERADAS = {};
+// Cantidad de baterías esperada por máquina: todas llevan 2, salvo estas que
+// llevan 1. Nombres normalizados con normTexto.
+const BATERIAS_POR_DEFECTO = 2;
+const MAQUINAS_UNA_BATERIA = ["jd1", "jd2", "ranger", "nissan", "nisan", "fiat"];
+
+// Devuelve cuántas baterías debería tener la máquina, o undefined si no aplica
+// (máquinas sin batería o etiquetas especiales como "vendida" / "en galpon").
+const bateriasEsperadas = (nombre, maquinas) => {
+  const norm = normTexto(nombre);
+  if (!norm || MAQUINAS_SIN_BATERIA.includes(norm)) return undefined;
+  if (!maquinas.some((m) => normTexto(m.maquina) === norm)) return undefined;
+  return MAQUINAS_UNA_BATERIA.includes(norm) ? 1 : BATERIAS_POR_DEFECTO;
+};
 
 // Advertencias de cantidad: el texto va en rojo y solo la palabra "sobra/sobran"
 // se pinta de azul, para diferenciar a simple vista sobrantes de faltantes.
 const COLOR_FALTA = "#dc3545";
 const COLOR_SOBRA = "#6ea8fe";
 const RE_SOBRA = /(sobran?)/i;
+// Version HTML (SweetAlert).
+const alertaHtml = (txt) =>
+  `<span style="color:${COLOR_FALTA};font-weight:600;">⚠️ ${(txt || "").replace(
+    /(sobran?)/gi,
+    `<span style="color:${COLOR_SOBRA};">$1</span>`
+  )}</span>`;
 // split con grupo de captura: los índices impares son las coincidencias de "sobra/sobran".
 const alertaJsx = (txt) =>
   (txt || "").split(RE_SOBRA).map((parte, i) =>
@@ -183,9 +200,15 @@ export default function Baterias() {
       const res = await crearRegistroBateria(payload);
       if (res?.ok) {
         const data = await res.json();
-        setRegistros((prev) => [data.registro, ...prev]);
+        const nuevos = [data.registro, ...registros];
+        setRegistros(nuevos);
         cerrarNueva();
-        Swal.fire({ icon: "success", title: "Batería registrada", timer: 1500, showConfirmButton: false });
+        const advertencia = alertaCantidadMaquina(nuevos, data.registro?.maquina?.maquina);
+        if (advertencia) {
+          Swal.fire({ icon: "warning", title: "Batería registrada", html: `Registro guardado.<br>${alertaHtml(advertencia)}` });
+        } else {
+          Swal.fire({ icon: "success", title: "Batería registrada", timer: 1500, showConfirmButton: false });
+        }
       } else {
         const err = await res.json().catch(() => ({}));
         Swal.fire("Error", err.msg || "No se pudo guardar el registro.", "error");
@@ -223,9 +246,24 @@ export default function Baterias() {
       const res = await editarRegistroBateria(registroEditar._id, payloadEdit);
       if (res?.ok) {
         const data = await res.json();
-        setRegistros((prev) => prev.map((r) => r._id === registroEditar._id ? data.registro : r));
+        const nuevos = registros.map((r) => r._id === registroEditar._id ? data.registro : r);
+        setRegistros(nuevos);
         cerrarEditar();
-        Swal.fire({ icon: "success", title: "Registro actualizado", timer: 1500, showConfirmButton: false });
+        // Chequear la máquina destino y, si cambió, también la de origen (le sacamos una batería).
+        const advertencias = [];
+        const destino = data.registro?.maquina?.maquina;
+        const advDestino = alertaCantidadMaquina(nuevos, destino);
+        if (advDestino) advertencias.push(advDestino);
+        const origen = registroEditar.maquina?.maquina;
+        if (origen && normTexto(origen) !== normTexto(destino)) {
+          const advOrigen = alertaCantidadMaquina(nuevos, origen);
+          if (advOrigen) advertencias.push(advOrigen);
+        }
+        if (advertencias.length > 0) {
+          Swal.fire({ icon: "warning", title: "Registro actualizado", html: `Cambio guardado.<br>${advertencias.map(alertaHtml).join("<br>")}` });
+        } else {
+          Swal.fire({ icon: "success", title: "Registro actualizado", timer: 1500, showConfirmButton: false });
+        }
       } else {
         const err = await res.json().catch(() => ({}));
         Swal.fire("Error", err.msg || "No se pudo actualizar el registro.", "error");
@@ -269,6 +307,25 @@ export default function Baterias() {
     } finally {
       setLoadingHistorial(false);
     }
+  };
+
+  // Devuelve un texto de advertencia si `maquinaNombre` no tiene la cantidad de
+  // baterías esperada, calculado sobre `registrosArr`. "" si está OK o no aplica.
+  const alertaCantidadMaquina = (registrosArr, maquinaNombre) => {
+    const esperada = bateriasEsperadas(maquinaNombre, maquinas);
+    if (esperada === undefined) return "";
+    const norm = normTexto(maquinaNombre);
+    const cantidad = registrosArr.filter(
+      (r) => !r.maquinaLabel && normTexto(r.maquina?.maquina) === norm
+    ).length;
+    const diff = cantidad - esperada;
+    if (diff === 0) return "";
+    const detalle = `(tiene ${cantidad}, debería tener ${esperada})`;
+    if (diff < 0) {
+      const n = Math.abs(diff);
+      return `A ${maquinaNombre} le ${n === 1 ? "falta 1 batería" : `faltan ${n} baterías`} ${detalle}.`;
+    }
+    return `A ${maquinaNombre} le ${diff === 1 ? "sobra 1 batería" : `sobran ${diff} baterías`} ${detalle}.`;
   };
 
   const registrosFiltrados = useMemo(() =>
@@ -320,7 +377,7 @@ export default function Baterias() {
     return [...grupos.values()].map((g) => {
       g.items.sort(ordenarPorNombre);
       const numeros = g.items.map((it) => it.nombreBateria).join(", ");
-      const esperada = BATERIAS_ESPERADAS[g.maquina.toLowerCase().trim()];
+      const esperada = bateriasEsperadas(g.maquina, maquinas);
       let alerta = "";
       if (esperada !== undefined) {
         const diff = g.cantidad - esperada;
@@ -331,11 +388,11 @@ export default function Baterias() {
           alerta = diff === 1 ? "Sobra una batería" : `Sobran ${diff} baterías`;
         }
       }
-      return { ...g, numeros, alerta };
+      return { ...g, numeros, alerta, esperada };
     }).sort((a, b) => {
       // Máquinas con cantidad esperada primero
-      const pa = BATERIAS_ESPERADAS[a.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
-      const pb = BATERIAS_ESPERADAS[b.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
+      const pa = a.esperada !== undefined ? 0 : 1;
+      const pb = b.esperada !== undefined ? 0 : 1;
       return pa - pb || a.maquina.localeCompare(b.maquina);
     });
   }, [registros, maquinas]);
