@@ -39,14 +39,37 @@ export const parseHoraMin = (str) => {
   return h * 60 + (isNaN(m) ? 0 : m);
 };
 
+// Quien trabaja 5 días (cantJornales 1 a 5, no 5.5) no trabaja sábados ni
+// domingos: son su día libre. `fecha` es un Date.
+export const trabajaCincoDias = (cantJornales) => {
+  const c = Number(cantJornales) || 0;
+  return c > 0 && c <= 5;
+};
+export const esDiaLibre = (cantJornales, fecha) => {
+  const dia = fecha.getDay();
+  return (dia === 6 || dia === 0) && trabajaCincoDias(cantJornales);
+};
+
+// Desde esta fecha el día libre se habilita y lo trabajado se paga. Antes, esas
+// filas quedaban bloqueadas pero se guardaban con el horario por defecto aunque
+// la persona no fuera, así que las semanas viejas no las toman.
+export const DIA_LIBRE_PAGO_DESDE = "2026-10-17";
+export const pagaDiaLibre = (fecha) => {
+  const key = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${String(fecha.getDate()).padStart(2, "0")}`;
+  return key >= DIA_LIBRE_PAGO_DESDE;
+};
+
 // Dif. del día en minutos: jornada esperada - (sale - entra - almuerzo). null
 // si falta dato. Positivo = trabajó de menos (descuenta); negativo = trabajó de
 // más (suma como extra).
-export const difMinDia = (entra, sale, esSabado = false, nombre = "") => {
+// En un día libre (`libre`) no hay jornada esperada: todo lo trabajado es extra.
+// El almuerzo se descuenta con el criterio del sábado (si sale después de las 15).
+export const difMinDia = (entra, sale, esSabado = false, nombre = "", libre = false) => {
   const e = parseHoraMin(entra);
   const s = parseHoraMin(sale);
   if (e == null || s == null) return null;
-  return jornadaEsperadaMin(nombre, esSabado) - (s - e - almuerzoMin(e, s, esSabado));
+  const esperada = libre ? 0 : jornadaEsperadaMin(nombre, esSabado);
+  return esperada - (s - e - almuerzoMin(e, s, esSabado || libre));
 };
 
 // minutos -> "hh:mm" (con signo)

@@ -2,7 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Modal, Form, Table, Spinner, Tabs, Tab, Badge } from "react-bootstrap";
 import { listarAsistencia, listarDatosAsistencia, listarCompensadasAsistencia } from "../../../../../helpers/queriesAsistencia.js";
-import { difMinDia, minsAHHMM, colorDif } from "../../../../../helpers/jornadaUtils.js";
+import { difMinDia, minsAHHMM, colorDif, esDiaLibre, pagaDiaLibre } from "../../../../../helpers/jornadaUtils.js";
 import { ordenarPersonal } from "../../../../../helpers/ordenPersonal.js";
 import { semanalVigente } from "../../../../../helpers/semanalUtils.js";
 
@@ -199,7 +199,8 @@ const Asistencia = () => {
 
   const abrirResumen = (diasSemana) => {
     const nombresEnAlta = new Set(listaPersonal.map((p) => normNombre(p.nombre)));
-    // Quien tiene 5 jornales o menos no trabaja sábados: ese día no le suma.
+    // Quien tiene 5 jornales o menos tiene libres sábado y domingo: esos días
+    // no suman ni descuentan, salvo las horas que trabaje (todas extra).
     // El criterio es el mismo que aplica Gastos Semanales.
     const ultimoDia = diaKey(anio, mes, diasSemana[diasSemana.length - 1]);
     const cantJornalesMap = {};
@@ -207,10 +208,7 @@ const Asistencia = () => {
       const vigente = semanalVigente(p.semanal, ultimoDia);
       cantJornalesMap[normNombre(p.nombre)] = vigente ? Number(vigente.cantJornales || 0) : 0;
     });
-    const noTrabajaSabado = (nombre) => {
-      const c = cantJornalesMap[normNombre(nombre)] || 0;
-      return c > 0 && c <= 5;
-    };
+    const diaLibre = (nombre, d) => esDiaLibre(cantJornalesMap[normNombre(nombre)] || 0, new Date(anio, mes, d));
 
     const mapa = {};
     const nuevaFila = (nombre) => ({ nombre, ausentes: 0, sinRemito: 0, observaciones: [], difMins: 0, trabajados: 0 });
@@ -224,10 +222,17 @@ const Asistencia = () => {
         if (!r.personal) return;
         const keyNombre = normNombre(r.personal);
         if (!mapa[keyNombre]) mapa[keyNombre] = nuevaFila(r.personal);
-        if (r.ausente) mapa[keyNombre].ausentes += esSabado ? 0.5 : 1;
-        if (r.mediaFalta) mapa[keyNombre].ausentes += 0.5;
         if (!r.remito) mapa[keyNombre].sinRemito += 1;
         if (r.observaciones) mapa[keyNombre].observaciones.push(r.observaciones);
+        if (diaLibre(r.personal, d)) {
+          if (pagaDiaLibre(new Date(anio, mes, d)) && !r.ausente && !r.mediaFalta) {
+            const dm = difMinDia(r.entra, r.sale, esSabado, r.personal, true);
+            if (dm != null) mapa[keyNombre].difMins += dm;
+          }
+          return;
+        }
+        if (r.ausente) mapa[keyNombre].ausentes += esSabado ? 0.5 : 1;
+        if (r.mediaFalta) mapa[keyNombre].ausentes += 0.5;
         // La Dif. de los días ausente/media falta no cuenta: eso ya lo refleja
         // la columna Ausentes (y en Gastos Semanales, el ausentismo).
         if (!r.ausente && !r.mediaFalta) {
@@ -245,7 +250,7 @@ const Asistencia = () => {
         // planilla no suman) y sin domingos. El sábado vale medio día, igual que
         // en el ausentismo de Gastos Semanales.
         if (esDomingo || regs.length === 0) return;
-        if (esSabado && noTrabajaSabado(p.nombre)) return;
+        if (diaLibre(p.nombre, d)) return;
         const reg = registroPorNombre[keyNombre];
         if (reg?.ausente) return;
         const peso = esSabado ? 0.5 : 1;
@@ -288,19 +293,25 @@ const Asistencia = () => {
   const calcularCompensadas = () => {
     if (!compensadas) return [];
     const nombrePorKey = {};
+    const semanalPorKey = {};
     const mapa = {};
     listaPersonal.filter((p) => p.activo !== false).forEach((p) => {
       const k = normNombre(p.nombre);
       nombrePorKey[k] = p.nombre;
+      semanalPorKey[k] = p.semanal;
       mapa[k] = { nombre: p.nombre, aFavor: 0, enContra: 0, observaciones: [], historial: [] };
     });
     compensadas.forEach((doc) => {
       const [yy, mm, dd] = doc.fecha.split("-").map(Number);
-      const esSabado = new Date(yy, mm - 1, dd).getDay() === 6;
+      const fecha = new Date(yy, mm - 1, dd);
+      const esSabado = fecha.getDay() === 6;
       (doc.registros || []).forEach((r) => {
         const k = normNombre(r.personal);
         if (!nombrePorKey[k]) return;
-        const dif = difMinDia(r.entra, r.sale, esSabado, r.personal);
+        // En su día libre (trabaja 5 días) todo lo trabajado queda a favor.
+        const cant = Number(semanalVigente(semanalPorKey[k], doc.fecha)?.cantJornales || 0);
+        const libre = esDiaLibre(cant, fecha) && pagaDiaLibre(fecha);
+        const dif = difMinDia(r.entra, r.sale, esSabado, r.personal, libre);
         if (dif == null) return;
         const fila = mapa[k];
         if (dif < 0) fila.aFavor += -dif;

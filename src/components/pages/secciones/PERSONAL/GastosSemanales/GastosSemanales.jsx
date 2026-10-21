@@ -6,7 +6,7 @@ import { listarAsistenciaRango } from "../../../../../helpers/queriesAsistencia.
 import { obtenerGastoSemanalPorSemana, guardarGastoSemanal } from "../../../../../helpers/queriesGastoSemanal.js";
 import { obtenerCuentaCorrienteProveedor } from "../../../../../helpers/queriesCuentaCorrienteProveedor.js";
 import { crearPagoEfectivoProveedor, borrarPagoProveedor } from "../../../../../helpers/queriesPagosProveedores.js";
-import { difMinDia, minsAHHMM, colorDif } from "../../../../../helpers/jornadaUtils.js";
+import { difMinDia, minsAHHMM, colorDif, esDiaLibre, trabajaCincoDias, pagaDiaLibre } from "../../../../../helpers/jornadaUtils.js";
 import { semanalVigente, valorHoraDe } from "../../../../../helpers/semanalUtils.js";
 import { ordenarPersonal } from "../../../../../helpers/ordenPersonal.js";
 import AsyncButton from "../../../../shared/AsyncButton.jsx";
@@ -741,7 +741,9 @@ const GastosSemanales = () => {
     setLoading(true);
     const key = toKey(fechaLunes);
 
-    const diasSemana = Array.from({ length: 6 }, (_, i) => {
+    // Lunes a domingo. El domingo solo cuenta para quien trabaja 5 días (es su
+    // día libre: lo que trabaje se paga todo como extra).
+    const diasSemana = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(fechaLunes);
       d.setDate(d.getDate() + i);
       return d;
@@ -796,11 +798,13 @@ const GastosSemanales = () => {
       cantJornalesMap[normNombre(p.nombre)] = cant;
     });
 
-    // Quien trabaja 5 días o menos no trabaja sábados: ese día no se computa.
-    const noTrabajaSabado = (nombre) => {
-      const c = cantJornalesMap[normNombre(nombre)] || 0;
-      return c > 0 && c <= 5;
-    };
+    // Quien trabaja 5 días tiene libres sábado y domingo: esos días no hay
+    // ausentismo; las horas que trabaje se pagan todas como extra (o van a
+    // compensar). El valor hora sigue saliendo de su cantJornales del alta.
+    const diaLibre = (nombre, d) => esDiaLibre(cantJornalesMap[normNombre(nombre)] || 0, d);
+    // Día que no forma parte de la jornada de la persona: su día libre, o el
+    // domingo para cualquiera.
+    const fueraDeJornada = (nombre, d) => d.getDay() === 0 || diaLibre(nombre, d);
 
     // Alta a mitad de semana: los días anteriores a la fecha de alta no se pagan,
     // así el "A Pagar" sale proporcional a los días efectivamente trabajados.
@@ -832,9 +836,11 @@ const GastosSemanales = () => {
       const dKey = toKey(d);
       doc.registros.forEach((r) => {
         if (!r.personal) return;
+        // El domingo de quien no trabaja 5 días no se computa para nada.
+        if (d.getDay() === 0 && !diaLibre(r.personal, d)) return;
         const k = normNombre(r.personal);
         tieneRegistro.add(`${k}|${dKey}`);
-        if (esSabado && noTrabajaSabado(r.personal)) return; // no trabaja sábados
+        if (fueraDeJornada(r.personal, d)) return; // día libre: no hay ausentismo
         if (!ausenciasMap[k]) ausenciasMap[k] = 0;
         if (r.ausente) sumarAusencia(k, dKey, esSabado ? 0.5 : 1);
         if (r.mediaFalta) sumarAusencia(k, dKey, 0.5);
@@ -849,7 +855,7 @@ const GastosSemanales = () => {
       personalVisible.forEach((p) => {
         if (p.activo === false && p.fechaDesactivado && dKey >= p.fechaDesactivado) {
           const k = normNombre(p.nombre);
-          if (esSabado && noTrabajaSabado(p.nombre)) return; // no trabaja sábados
+          if (fueraDeJornada(p.nombre, d)) return; // día libre
           if (!tieneRegistro.has(`${k}|${dKey}`)) {
             sumarAusencia(k, dKey, esSabado ? 0.5 : 1);
           }
@@ -866,7 +872,7 @@ const GastosSemanales = () => {
       personalVisible.forEach((p) => {
         if (!esAnteriorAlAlta(p.nombre, dKey)) return;
         const k = normNombre(p.nombre);
-        if (esSabado && noTrabajaSabado(p.nombre)) return; // no trabaja sábados
+        if (fueraDeJornada(p.nombre, d)) return; // día libre
         const completo = esSabado ? 0.5 : 1;
         sumarAusencia(k, dKey, completo - (ausenciaDia[`${k}|${dKey}`] || 0));
       });
@@ -884,9 +890,11 @@ const GastosSemanales = () => {
       doc.registros.forEach((r) => {
         if (!r.personal || r.ausente || r.mediaFalta) return;
         if (r.compensar) return; // va a Horas compensadas: no se paga ni se descuenta
-        if (esSabado && noTrabajaSabado(r.personal)) return; // no trabaja sábados
+        // Día libre (desde DIA_LIBRE_PAGO_DESDE): todo lo trabajado es extra.
+        const libre = fueraDeJornada(r.personal, d);
+        if (libre && !(diaLibre(r.personal, d) && pagaDiaLibre(d))) return;
         if (esAnteriorAlAlta(r.personal, dKey)) return; // aún no estaba dado de alta
-        const dm = difMinDia(r.entra, r.sale, esSabado, r.personal);
+        const dm = difMinDia(r.entra, r.sale, esSabado, r.personal, libre);
         if (dm == null) return;
         const k = normNombre(r.personal);
         difMinsMap[k] = (difMinsMap[k] || 0) + dm;
@@ -1362,7 +1370,13 @@ const GastosSemanales = () => {
         <Modal.Body>
           {(() => {
             const DIAS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-            const diasModal = Array.from({ length: 6 }, (_, i) => {
+            const regGasto = registros.find((x) => normNombre(x.personal) === normNombre(verPersonal || ""));
+            // Trabaja 5 días => sábado y domingo son libres: lo trabajado es todo
+            // extra. Antes de DIA_LIBRE_PAGO_DESDE la fila queda gris, como antes.
+            const cantJornalesVer = Number(regGasto?.cantJornales) || 0;
+            const libreVer = (d) => esDiaLibre(cantJornalesVer, d);
+            // El domingo solo se muestra a quien trabaja 5 días (es su día libre).
+            const diasModal = Array.from({ length: trabajaCincoDias(cantJornalesVer) ? 7 : 6 }, (_, i) => {
               const d = new Date(lunes);
               d.setDate(d.getDate() + i);
               return d;
@@ -1372,20 +1386,19 @@ const GastosSemanales = () => {
                 (r) => r.personal?.trim().toLowerCase() === verPersonal?.trim().toLowerCase()
               )
             );
-            const regGasto = registros.find((x) => normNombre(x.personal) === normNombre(verPersonal || ""));
             // Días anteriores al alta: no computan (la persona todavía no estaba).
             const fechaAltaVer = regGasto?.fechaAlta || "";
             const previoAlAlta = (d) => !!fechaAltaVer && toKey(d) < fechaAltaVer;
             const totalDifMin = regsModal.reduce((s, reg, idx) => {
               if (!reg || reg.ausente || reg.mediaFalta || reg.compensar) return s;
-              if (previoAlAlta(diasModal[idx])) return s;
-              const dm = difMinDia(reg.entra, reg.sale, diasModal[idx].getDay() === 6, verPersonal);
+              const d = diasModal[idx];
+              if (previoAlAlta(d)) return s;
+              const libre = libreVer(d);
+              if (libre && !pagaDiaLibre(d)) return s;
+              const dm = difMinDia(reg.entra, reg.sale, d.getDay() === 6, verPersonal, libre);
               return dm == null ? s : s + dm;
             }, 0);
             const montoDif = regGasto ? difMonto({ ...regGasto, difMin: totalDifMin }) : 0;
-            // Trabaja 5 días o menos => no trabaja sábados (fila gris).
-            const cantJornalesVer = Number(regGasto?.cantJornales) || 0;
-            const noTrabajaSabadoVer = cantJornalesVer > 0 && cantJornalesVer <= 5;
             let totalHorometroStr = null;
             const regsConHorometro = regsModal.filter((r) => r && r.horometro !== "" && r.horometro != null);
             if (regsConHorometro.length > 0) {
@@ -1410,21 +1423,22 @@ const GastosSemanales = () => {
                 <tbody>
                   {diasModal.map((d, idx) => {
                     const label = `${DIAS[d.getDay()]} ${formatFecha(d)}`;
-                    const grisSabado = d.getDay() === 6 && noTrabajaSabadoVer;
-                    const antesDelAlta = previoAlAlta(d);
-                    const gris = grisSabado || antesDelAlta;
-                    const estiloFila = gris ? { opacity: 0.5, filter: "grayscale(1)" } : undefined;
-                    const tituloGris = antesDelAlta ? "Aún no estaba dado de alta" : grisSabado ? "No trabaja sábados" : undefined;
                     const reg = regsModal[idx];
-                    if (!reg || antesDelAlta) return (
+                    const libre = libreVer(d);
+                    const grisLibre = libre && !pagaDiaLibre(d);
+                    const antesDelAlta = previoAlAlta(d);
+                    const gris = grisLibre || antesDelAlta;
+                    const estiloFila = gris ? { opacity: 0.5, filter: "grayscale(1)" } : undefined;
+                    const tituloGris = antesDelAlta ? "Aún no estaba dado de alta" : grisLibre ? "Día libre (trabaja 5 días)" : undefined;
+                    if (!reg || antesDelAlta || grisLibre) return (
                       <tr key={idx} style={estiloFila} title={tituloGris}>
                         <td>{label}</td>
-                        <td colSpan={8} className="text-muted">{antesDelAlta ? "Sin alta" : grisSabado ? "No trabaja" : "Sin registro"}</td>
+                        <td colSpan={8} className="text-muted">{antesDelAlta ? "Sin alta" : grisLibre ? "Día libre" : "Sin registro"}</td>
                       </tr>
                     );
-                    const estado = reg.ausente ? "Ausente" : reg.mediaFalta ? "Media falta" : "Presente";
-                    const colorEstado = reg.ausente ? "#dc3545" : reg.mediaFalta ? "#ffc107" : "#198754";
-                    const difDia = reg.ausente || reg.mediaFalta ? null : difMinDia(reg.entra, reg.sale, d.getDay() === 6, reg.personal);
+                    const estado = libre ? (reg.entra && reg.sale && !reg.ausente ? "Día libre trabajado" : "Día libre") : reg.ausente ? "Ausente" : reg.mediaFalta ? "Media falta" : "Presente";
+                    const colorEstado = libre ? "#0dcaf0" : reg.ausente ? "#dc3545" : reg.mediaFalta ? "#ffc107" : "#198754";
+                    const difDia = reg.ausente || reg.mediaFalta ? null : difMinDia(reg.entra, reg.sale, d.getDay() === 6, reg.personal, libre);
                     return (
                       <tr key={idx} style={estiloFila} title={tituloGris}>
                         <td>{label}</td>

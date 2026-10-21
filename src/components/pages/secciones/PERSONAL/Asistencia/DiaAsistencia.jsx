@@ -4,7 +4,7 @@ import { Button, Form, Table } from "react-bootstrap";
 import Swal from "sweetalert2";
 import XLSXStyle from "xlsx-js-style";
 import { guardarAsistencia as guardarAsistenciaAPI } from "../../../../../helpers/queriesAsistencia.js";
-import { difMinDia, minsAHHMM, colorDif } from "../../../../../helpers/jornadaUtils.js";
+import { difMinDia, minsAHHMM, colorDif, trabajaCincoDias, DIA_LIBRE_PAGO_DESDE } from "../../../../../helpers/jornadaUtils.js";
 import { semanalVigente } from "../../../../../helpers/semanalUtils.js";
 import { confirmarSaltoHorometro, saltoDe } from "../../../../../helpers/horometroAvisos.js";
 import { ordenarPersonal } from "../../../../../helpers/ordenPersonal.js";
@@ -46,6 +46,7 @@ const DiaAsistencia = () => {
 
   const keyDia = diaKey(anio, mes, dia);
   const esSabado = new Date(anio, mes, dia).getDay() === 6;
+  const esFinde = esSabado || new Date(anio, mes, dia).getDay() === 0;
 
   const filtrarPersonalParaDia = (key, lista) =>
     lista.filter((p) => {
@@ -62,7 +63,7 @@ const DiaAsistencia = () => {
   );
 
   // Días semanales de cada persona (último valor de semanal.cantJornales).
-  // Los que trabajan 5 días o menos no trabajan sábados.
+  // Los que trabajan 5 días tienen libres sábado y domingo.
   const cantJornalesPorNombre = useMemo(() => {
     const m = {};
     listaPersonal.forEach((p) => {
@@ -73,19 +74,24 @@ const DiaAsistencia = () => {
     return m;
   }, [listaPersonal, keyDia]);
 
-  const noTrabajaSabado = (nombre) => {
-    const cant = cantJornalesPorNombre[(nombre || "").trim().toLowerCase()] || 0;
-    return esSabado && cant > 0 && cant <= 5;
-  };
+  // Sábado y domingo son el día libre de quien trabaja 5 días: la fila está
+  // habilitada y todo lo que trabaje se paga como extra (o va a compensar).
+  const diaLibre = (nombre) =>
+    esFinde && trabajaCincoDias(cantJornalesPorNombre[(nombre || "").trim().toLowerCase()]);
+  // Días libres anteriores a DIA_LIBRE_PAGO_DESDE: quedan bloqueados como antes.
+  const libreHabilitado = keyDia >= DIA_LIBRE_PAGO_DESDE;
 
   // Borrador inicial derivado de los datos cargados (sin efectos). Las ediciones
   // del usuario se guardan en `edits`; mientras no edite, se ve el inicial.
   const borradorInicial = useMemo(() => {
+    // En su día libre la fila arranca sin horario: solo se paga si se carga.
+    const libreDe = (p) =>
+      esFinde && trabajaCincoDias(cantJornalesPorNombre[(p.nombre || "").trim().toLowerCase()]);
     const filaDePersonal = (p) => ({
       id: p._id, personal: p.nombre, maquina: "", obra: "", mediaFalta: false,
       ausente: false, remito: true, compensar: false, horometro: "",
-      entra: p.nombre?.toLowerCase().includes("zamorano") ? "8:30" : "8:00",
-      sale: esSabado ? "12:00" : "17:00", observaciones: "",
+      entra: libreDe(p) ? "" : p.nombre?.toLowerCase().includes("zamorano") ? "8:30" : "8:00",
+      sale: libreDe(p) ? "" : esSabado ? "12:00" : "17:00", observaciones: "",
     });
 
     const cachedRows = registros[keyDia];
@@ -112,7 +118,7 @@ const DiaAsistencia = () => {
     // Agustín al final. Se ordena acá y no al guardar, así las filas quedan
     // igual aunque el día se haya cargado en otro orden.
     return ordenarPersonal([...filasDedup, ...faltantes]).map((f) => ({ ...f }));
-  }, [registros, personalDelDia, listaPersonal, keyDia, esSabado]);
+  }, [registros, personalDelDia, listaPersonal, keyDia, esSabado, esFinde, cantJornalesPorNombre]);
 
   const borrador = edits ?? borradorInicial;
 
@@ -318,12 +324,13 @@ const DiaAsistencia = () => {
             {borrador.filter((fila) =>
               !busquedaPersona || (fila.personal || "").toLowerCase().includes(busquedaPersona.toLowerCase())
             ).map((fila) => {
-              const sinSabado = noTrabajaSabado(fila.personal);
+              const libre = diaLibre(fila.personal);
+              const bloqueada = libre && !libreHabilitado;
               return (
               <tr
                 key={fila.id}
-                title={sinSabado ? "No trabaja sábados" : undefined}
-                style={sinSabado ? { opacity: 0.5, filter: "grayscale(1)", pointerEvents: "none" } : undefined}
+                title={bloqueada ? "No trabaja sábados ni domingos" : libre ? "Día libre: las horas trabajadas son extra" : undefined}
+                style={bloqueada ? { opacity: 0.5, filter: "grayscale(1)", pointerEvents: "none" } : undefined}
               >
                 <td>
                   {fila.personalLibre ? (
@@ -426,7 +433,7 @@ const DiaAsistencia = () => {
                 </td>
                 <td>
                   {(() => {
-                    const dif = difMinDia(fila.entra, fila.sale, esSabado, fila.personal);
+                    const dif = difMinDia(fila.entra, fila.sale, esSabado, fila.personal, libre);
                     if (dif == null) return "-";
                     return (
                       <span style={{ fontWeight: 600, color: colorDif(dif) }}>
