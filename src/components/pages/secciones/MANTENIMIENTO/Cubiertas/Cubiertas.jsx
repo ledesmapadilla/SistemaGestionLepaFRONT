@@ -192,7 +192,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
     setRegistroEditar(r);
     setFormEditar({
       maquina:       r.maquinaLabel || r.maquina?._id || r.maquina || "",
-      fecha:         r.fecha || "",
+      fecha:         hoy(),
       observaciones: r.observaciones || "",
     });
     setShowEditar(true);
