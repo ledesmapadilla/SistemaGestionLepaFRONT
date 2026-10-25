@@ -7,6 +7,8 @@ import {
   listarProveedores,
   borrarProveedor as borrarProveedorAPI,
 } from "../../../../../helpers/queriesProveedores.js";
+import { listarClientes } from "../../../../../helpers/queriesClientes.js";
+import { mismoTexto } from "../../../../../helpers/normTexto.js";
 import Swal from "sweetalert2";
 import "../../../../../styles/clientes.css";
 import ProveedoresCrud from "./ProveedoresCrud.jsx";
@@ -26,6 +28,7 @@ const Proveedores = () => {
     register,
     handleSubmit,
     reset,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: valoresIniciales,
@@ -39,6 +42,8 @@ const Proveedores = () => {
   const [editando, setEditando] = useState(false);
   const [proveedorId, setProveedorId] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  // Clientes para copiar sus datos al crear un proveedor (se piden recién al abrir "Crear").
+  const [clientes, setClientes] = useState([]);
 
   useEffect(() => {
     const cargarProveedores = async () => {
@@ -167,9 +172,35 @@ const Proveedores = () => {
     setProveedorId(null);
     reset(valoresIniciales);
     setShowModal(true);
+    if (clientes.length === 0) {
+      listarClientes().then(async (res) => {
+        if (res?.ok) setClientes(await res.json());
+      });
+    }
   };
 
-  
+  // Clientes que todavía no están cargados como proveedor.
+  const clientesCopiables = clientes
+    .filter((c) => !proveedores.some((p) => mismoTexto(p.razonsocial, c.razonsocial)))
+    .sort((a, b) => a.razonsocial.localeCompare(b.razonsocial));
+
+  // Completa el formulario con los datos del cliente elegido (el rubro queda como estaba).
+  const copiarCliente = (id) => {
+    const c = clientes.find((x) => x._id === id);
+    if (!c) return;
+    reset(
+      {
+        razonsocial: c.razonsocial || "",
+        contacto: c.contacto || "",
+        rubro: getValues("rubro"),
+        cuit: c.cuit || "",
+        email: c.email || "",
+        telefono: c.telefono || "",
+      },
+      { keepDefaultValues: true }
+    );
+  };
+
 
   if (loading) return <Spinner animation="border" className="d-block mx-auto my-5" />;
 
@@ -192,6 +223,8 @@ const Proveedores = () => {
         editando={editando}
         proveedorId={proveedorId}
         proveedores={proveedores}
+        clientesCopiables={clientesCopiables}
+        copiarCliente={copiarCliente}
         contactoOriginal={contactoOriginal}
         isSubmitting={isSubmitting}
         register={register}

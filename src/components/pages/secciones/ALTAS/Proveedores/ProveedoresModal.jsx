@@ -10,6 +10,8 @@ const ProveedoresModal = ({
   editando,
   proveedorId,
   proveedores,
+  clientesCopiables = [],
+  copiarCliente,
   contactoOriginal,
   register,
   errors,
@@ -24,6 +26,23 @@ const ProveedoresModal = ({
 
       <Form onSubmit={handleSubmit(onSubmit)}>
         <Modal.Body>
+          {!editando && (
+            <Form.Group className="mb-3">
+              <Form.Label>Copiar datos de un cliente (opcional)</Form.Label>
+              <Form.Select
+                defaultValue=""
+                onChange={(e) => copiarCliente(e.target.value)}
+              >
+                <option value="">— Elegir cliente —</option>
+                {clientesCopiables.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.razonsocial}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          )}
+
           <Form.Group className="mb-3">
             <Form.Label>Razón Social*</Form.Label>
             <Form.Control
@@ -86,12 +105,13 @@ const ProveedoresModal = ({
           </Form.Group>
 
           <Form.Group>
-            <Form.Label>Teléfono</Form.Label>
+            <Form.Label>Teléfono{editando ? "" : "*"}</Form.Label>
             <Form.Control
               {...register("telefono", {
                 setValueAs: (v) => v?.trim(),
-                // Opcional (el personal dado de alta como proveedor no lo
-                // tiene), pero si se carga no puede repetirse.
+                // Obligatorio en el alta; al editar es opcional (el personal
+                // dado de alta como proveedor no lo tiene). Nunca repetido.
+                required: editando ? false : "El teléfono es obligatorio",
                 validate: (value) =>
                   !value ||
                   !proveedores.some(
