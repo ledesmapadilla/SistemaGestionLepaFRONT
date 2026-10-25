@@ -225,7 +225,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
         const advDestino = alertaCantidadMaquina(nuevos, destino);
         if (advDestino) advertencias.push(advDestino);
         const origen = registroEditar.maquina?.maquina;
-        if (origen && origen.toLowerCase().trim() !== (destino || "").toLowerCase().trim()) {
+        if (origen && normTexto(origen) !== normTexto(destino)) {
           const advOrigen = alertaCantidadMaquina(nuevos, origen);
           if (advOrigen) advertencias.push(advOrigen);
         }
@@ -296,7 +296,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
   };
   const ESPECIALES_OPCIONES = ["Auxilio - Galpón", "Perdida", "Desechada"];
   // Cantidad de cubiertas esperada por máquina, según categoría (para el resumen).
-  // Los nombres se comparan en minúsculas; se incluyen variantes con/sin acento.
+  // Las claves van normalizadas con normTexto (minúsculas, sin acentos).
   const CUBIERTAS_ESPERADAS = {
     palas: { wa200: 4, xcmg: 4 },
     retropalas: { jd1: 4, jd2: 4 },
@@ -304,7 +304,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
     camiones: {
       "batea 1": 8, "batea 2": 8,
       "bateas 1": 8, "bateas 2": 8,
-      "carreton chico": 8, "carretón chico": 8,
+      "carreton chico": 8,
       eiq: 6, etx: 6,
     },
   };
@@ -319,7 +319,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
     const esperada = esperadasCat[norm];
     if (esperada === undefined) return "";
     const cantidad = registrosArr.filter((r) => {
-      const label = (r.maquinaLabel || r.maquina?.maquina || "").toLowerCase().trim();
+      const label = normTexto(r.maquinaLabel || r.maquina?.maquina);
       return label === norm;
     }).length;
     const diff = cantidad - esperada;
@@ -332,20 +332,20 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
     return `A ${maquinaNombre} le ${diff === 1 ? "sobra 1 cubierta" : `sobran ${diff} cubiertas`} ${detalle}.`;
   };
 
-  const EXCLUIR_MAQUINAS = ["pc1","pc2","pc3","pc4","pc5","wa200","xcmg","nisan","nissan","ranger","fiat","jd1","jd2","motoniveladora","carretón grande","carreton grande"];
+  const EXCLUIR_MAQUINAS = ["pc1","pc2","pc3","pc4","pc5","wa200","xcmg","nisan","nissan","ranger","fiat","jd1","jd2","motoniveladora","carreton grande"];
 
   const opcionesMaquina = useMemo(() => {
     const permitidas = MAQUINAS_CATEGORIA[categoria];
     if (permitidas) {
       const reales = permitidas
-        .map((nombre) => maquinas.find((m) => (m.maquina || "").toLowerCase().trim() === nombre))
+        .map((nombre) => maquinas.find((m) => normTexto(m.maquina) === nombre))
         .filter(Boolean)
         .map((m) => ({ value: m._id, label: m.maquina }));
       return [...reales, ...ESPECIALES_OPCIONES.map((e) => ({ value: e, label: e }))];
     }
     // camiones (por defecto): opciones especiales primero, luego el resto de máquinas
     const reales = maquinas
-      .filter((m) => !EXCLUIR_MAQUINAS.includes((m.maquina || "").toLowerCase().trim()))
+      .filter((m) => !EXCLUIR_MAQUINAS.includes(normTexto(m.maquina)))
       .map((m) => ({ value: m._id, label: m.maquina }));
     return [
       { value: "Desechada", label: "Desechada" },
@@ -379,7 +379,7 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
 
     // Asegurar filas para las máquinas esperadas aunque tengan 0 cubiertas.
     Object.keys(esperadasCat).forEach((nombre) => {
-      const m = maquinas.find((mq) => (mq.maquina || "").toLowerCase().trim() === nombre);
+      const m = maquinas.find((mq) => normTexto(mq.maquina) === nombre);
       if (m) agregar(m.maquina);
     });
 
@@ -399,8 +399,8 @@ export default function Cubiertas({ categoria = "camiones", titulo = "Cubiertas 
       return { ...g, alerta, esperada };
     }).sort((a, b) => {
       // Máquinas con cantidad esperada primero
-      const pa = esperadasCat[a.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
-      const pb = esperadasCat[b.maquina.toLowerCase().trim()] !== undefined ? 0 : 1;
+      const pa = esperadasCat[normTexto(a.maquina)] !== undefined ? 0 : 1;
+      const pb = esperadasCat[normTexto(b.maquina)] !== undefined ? 0 : 1;
       return pa - pb || a.maquina.localeCompare(b.maquina);
     });
   }, [registros, maquinas, categoria]);
