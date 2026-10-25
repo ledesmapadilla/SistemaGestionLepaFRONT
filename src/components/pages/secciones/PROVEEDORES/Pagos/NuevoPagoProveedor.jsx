@@ -9,7 +9,9 @@ import { crearPagoProveedor, listarPagosProveedores } from "../../../../../helpe
 import { listarFacturasProveedores } from "../../../../../helpers/queriesFacturasProveedores";
 import { listarChequesEnCartera, actualizarEstadoCheque } from "../../../../../helpers/queriesCobros";
 import { crearChequePropio, listarChequesPropio } from "../../../../../helpers/queriesChequesPropio";
-import { mismoTexto } from "../../../../../helpers/normTexto.js";
+import { mismoTexto, unicosTexto } from "../../../../../helpers/normTexto.js";
+import { obtenerCuentaCorrienteProveedor } from "../../../../../helpers/queriesCuentaCorrienteProveedor";
+import DevolucionProveedorModal from "./DevolucionProveedorModal.jsx";
 
 const hoy = new Date().toLocaleDateString("en-CA");
 
@@ -68,6 +70,9 @@ const NuevoPagoProveedor = () => {
   const [editandoMontoId, setEditandoMontoId] = useState(null);
   const [chequesEnCartera, setChequesEnCartera] = useState([]);
   const [chequesPropioCargados, setChequesPropioCargados] = useState([]);
+  // Saldo por proveedor (cuenta corriente). Negativo = le pagamos de más y nos debe.
+  const [saldosProveedor, setSaldosProveedor] = useState({});
+  const [showDevolucion, setShowDevolucion] = useState(false);
 
   const proveedorSeleccionado = watch("proveedor");
 
@@ -100,12 +105,21 @@ const NuevoPagoProveedor = () => {
   useEffect(() => {
     const cargar = async () => {
       try {
-        const [facturasResult, pagosResult, chequesCarteraResult, chequesProResult] = await Promise.allSettled([
+        const [facturasResult, pagosResult, chequesCarteraResult, chequesProResult, ctaCteResult] = await Promise.allSettled([
           listarFacturasProveedores("Pendiente"),
           listarPagosProveedores(),
           listarChequesEnCartera(),
           listarChequesPropio(),
+          obtenerCuentaCorrienteProveedor(),
         ]);
+
+        if (ctaCteResult.status === "fulfilled") {
+          const saldos = {};
+          ctaCteResult.value.forEach((r) => {
+            if (r.proveedor) saldos[r.proveedor] = (saldos[r.proveedor] || 0) + (r.debito || 0) - (r.credito || 0);
+          });
+          setSaldosProveedor(saldos);
+        }
 
         const mapa = {};
         if (pagosResult.status === "fulfilled") {
@@ -144,9 +158,24 @@ const NuevoPagoProveedor = () => {
     cargar();
   }, []);
 
-  const proveedoresConFacturas = [
-    ...new Set(todasFacturas.map((f) => f.proveedor).filter(Boolean)),
-  ].sort();
+  const saldoDe = (nombre) => {
+    const clave = Object.keys(saldosProveedor).find((p) => mismoTexto(p, nombre));
+    return clave ? saldosProveedor[clave] : 0;
+  };
+
+  // Proveedores con facturas pendientes + los que tienen saldo negativo (nos deben
+  // plata porque se les pagó de más), para poder registrar la devolución.
+  const proveedoresConFacturas = unicosTexto([
+    ...todasFacturas.map((f) => f.proveedor).filter(Boolean),
+    ...Object.keys(saldosProveedor).filter((p) => saldosProveedor[p] < -0.01),
+  ]).sort();
+
+  const etiquetaProveedor = (nombre) => {
+    const saldo = saldoDe(nombre);
+    return saldo < -0.01 ? `${nombre} (nos debe ${formatoMoneda(-saldo)})` : nombre;
+  };
+
+  const saldoSeleccionado = proveedorSeleccionado ? saldoDe(proveedorSeleccionado) : 0;
 
   useEffect(() => {
     if (!proveedorSeleccionado) {
@@ -508,7 +537,7 @@ const NuevoPagoProveedor = () => {
               <div style={{ width: "260px" }}>
                 <Select
                   menuPortalTarget={document.body}
-                  options={proveedoresConFacturas.map((nombre) => ({ value: nombre, label: nombre }))}
+                  options={proveedoresConFacturas.map((nombre) => ({ value: nombre, label: etiquetaProveedor(nombre) }))}
                   placeholder="Buscar proveedor..."
                   noOptionsMessage={() => "Sin coincidencias"}
                   isClearable
@@ -539,6 +568,16 @@ const NuevoPagoProveedor = () => {
               />
             </div>
           </div>
+          {saldoSeleccionado < -0.01 && (
+            <div className="d-flex align-items-center gap-3 border border-success rounded px-3 py-2">
+              <span className="small">
+                Le pagamos de más a {proveedorSeleccionado}: nos debe <strong className="text-success">{formatoMoneda(-saldoSeleccionado)}</strong>.
+              </span>
+              <Button type="button" size="sm" variant="outline-success" onClick={() => setShowDevolucion(true)}>
+                Registrar devolución
+              </Button>
+            </div>
+          )}
           <div className="d-flex align-items-center gap-3">
             <div className="d-flex align-items-center gap-2">
               <Form.Label className="mb-0 text-nowrap" style={{ width: "80px" }}>Factura</Form.Label>
@@ -747,6 +786,16 @@ const NuevoPagoProveedor = () => {
           <Button variant="outline-primary" onClick={cerrarModalPago}>OK</Button>
         </Modal.Footer>
       </Modal>
+
+      {showDevolucion && (
+        <DevolucionProveedorModal
+          show
+          onHide={() => setShowDevolucion(false)}
+          proveedor={proveedorSeleccionado}
+          saldoAFavor={-saldoSeleccionado}
+          onGuardado={() => navigate("/pago-proveedores")}
+        />
+      )}
     </Container>
   );
 };

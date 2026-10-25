@@ -3,7 +3,12 @@ import { Button, Table, Container, Spinner, Modal, Form } from "react-bootstrap"
 import XLSXStyle from "xlsx-js-style";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { listarPagosProveedores, borrarPagoProveedor } from "../../../../../helpers/queriesPagosProveedores";
+import {
+  listarPagosProveedores,
+  borrarPagoProveedor,
+  listarDevolucionesProveedores,
+  borrarDevolucionProveedor,
+} from "../../../../../helpers/queriesPagosProveedores";
 
 const formatoMoneda = (valor) => {
   if (valor === undefined || valor === null) return "-";
@@ -22,9 +27,19 @@ const totalFactura = (f) =>
 const totalPago = (pago) =>
   (pago?.pagos || []).reduce((sum, p) => sum + (p.montoPagado || 0), 0);
 
+// Devolución de un proveedor al que se le pagó de más: se muestra en negativo.
+const totalDevolucion = (d) =>
+  (d?.mediosPago || []).reduce((sum, m) => sum + (m.monto || 0), 0);
+
+const mediosTexto = (p) =>
+  (p.mediosPago?.length > 0)
+    ? p.mediosPago.map((m) => (p.esDevolucion && m.numeroCheque ? `${m.medioPago} N°${m.numeroCheque}` : m.medioPago)).join(", ")
+    : "-";
+
 const PagosProveedoresTabla = () => {
   const navigate = useNavigate();
   const [pagos, setPagos] = useState([]);
+  const [devoluciones, setDevoluciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagoVerId, setPagoVerId] = useState(null);
   const pagoVer = pagos.find((p) => p._id === pagoVerId) || null;
@@ -39,8 +54,12 @@ const PagosProveedoresTabla = () => {
 
   const cargarPagos = async () => {
     try {
-      const data = await listarPagosProveedores();
+      const [data, devs] = await Promise.all([
+        listarPagosProveedores(),
+        listarDevolucionesProveedores().catch(() => []),
+      ]);
       setPagos(data);
+      setDevoluciones(devs.map((d) => ({ ...d, esDevolucion: true })));
     } catch (error) {
       console.error(error);
     } finally {
@@ -67,6 +86,27 @@ const PagosProveedoresTabla = () => {
     }
   };
 
+  const eliminarDevolucion = async (id) => {
+    const result = await Swal.fire({
+      title: "¿Borrar devolución?",
+      text: "Si tiene cheques, también se sacan de Cheques",
+      icon: "warning",
+      showCancelButton: true,
+      customClass: { confirmButton: "swal-btn-danger" },
+      confirmButtonText: "Sí, borrar",
+      cancelButtonText: "Cancelar",
+    });
+    if (!result.isConfirmed) return;
+    const respuesta = await borrarDevolucionProveedor(id);
+    if (respuesta?.ok) {
+      setDevoluciones((prev) => prev.filter((d) => d._id !== id));
+      Swal.fire({ icon: "success", title: "Devolución eliminada", timer: 2000, showConfirmButton: false });
+    } else {
+      const err = await respuesta?.json().catch(() => ({}));
+      Swal.fire({ icon: "error", title: "No se pudo borrar", text: err?.msg || "Error al borrar la devolución" });
+    }
+  };
+
   const exportarExcel = () => {
     const headers = ["Fecha", "Proveedor", "Facturas", "Obra", "Total factura", "Total pagado", "Saldo", "Medio de pago", "Observaciones"];
     const cols = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
@@ -74,7 +114,17 @@ const PagosProveedoresTabla = () => {
     const centerAlign = { horizontal: "center", vertical: "center" };
     const leftAlign = { horizontal: "left", vertical: "center" };
 
-    const filas = pagosFiltrados.map((p) => [
+    const filas = pagosFiltrados.map((p) => p.esDevolucion ? [
+      formatearFecha(p.fecha),
+      p.proveedor,
+      "Devolución",
+      "-",
+      "-",
+      -totalDevolucion(p),
+      "-",
+      mediosTexto(p),
+      p.observaciones || "-",
+    ] : [
       formatearFecha(p.fecha),
       p.proveedor,
       (p.pagos || []).map((i) => `N°${i.factura?.numeroFactura}`).join(", "),
@@ -137,7 +187,7 @@ const PagosProveedoresTabla = () => {
   }, [pagos]);
 
   const pagosFiltrados = useMemo(
-    () => [...pagos]
+    () => [...pagos, ...devoluciones]
       .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
       .filter((p) => {
       const coincideProveedor = filtroProveedor === "" || p.proveedor?.toLowerCase().includes(filtroProveedor.toLowerCase());
@@ -149,7 +199,7 @@ const PagosProveedoresTabla = () => {
       const coincideHasta = filtroHasta === "" || fecha <= filtroHasta;
       return coincideProveedor && coincideMedio && coincideDesde && coincideHasta;
     }),
-    [pagos, filtroProveedor, filtroMedio, filtroDesde, filtroHasta]
+    [pagos, devoluciones, filtroProveedor, filtroMedio, filtroDesde, filtroHasta]
   );
 
   const estiloX = {
@@ -236,7 +286,22 @@ const PagosProveedoresTabla = () => {
                 <td colSpan={10} className="text-muted py-3">Sin pagos registrados</td>
               </tr>
             ) : (
-              pagosFiltrados.map((p) => (
+              pagosFiltrados.map((p) => p.esDevolucion ? (
+                <tr key={`dev-${p._id}`}>
+                  <td>{formatearFecha(p.fecha)}</td>
+                  <td>{p.proveedor}</td>
+                  <td className="text-success fw-semibold">Devolución</td>
+                  <td className="text-muted">-</td>
+                  <td>-</td>
+                  <td className="text-success fw-semibold">{formatoMoneda(-totalDevolucion(p))}</td>
+                  <td>-</td>
+                  <td>{mediosTexto(p)}</td>
+                  <td className="text-muted" title={p.observaciones || ""}>{p.observaciones || "-"}</td>
+                  <td className="d-flex gap-1 justify-content-center align-items-center">
+                    <Button size="sm" variant="outline-danger" onClick={() => eliminarDevolucion(p._id)}>Borrar</Button>
+                  </td>
+                </tr>
+              ) : (
                 <tr key={p._id}>
                   <td>{formatearFecha(p.fecha)}</td>
                   <td>{p.proveedor}</td>

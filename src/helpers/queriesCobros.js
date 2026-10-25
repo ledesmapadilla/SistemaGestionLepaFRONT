@@ -3,8 +3,8 @@ import { API } from "./api";
 
 const cobrosBackend = API.cobros;
 
-export const listarCobros = async () => {
-  const res = await authFetch(cobrosBackend);
+export const listarCobros = async (query = "") => {
+  const res = await authFetch(`${cobrosBackend}${query}`);
   if (!res?.ok) throw new Error("Error al listar cobros");
   return res.json();
 };

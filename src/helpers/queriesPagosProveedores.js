@@ -57,3 +57,28 @@ export const borrarPagoProveedor = async (id) => {
     return null;
   }
 };
+
+// Devoluciones: un proveedor al que se le pagó de más nos devuelve la plata.
+export const listarDevolucionesProveedores = async () => {
+  const res = await authFetch(`${base}/devoluciones`);
+  if (!res?.ok) throw new Error("Error al listar devoluciones de proveedores");
+  return res.json();
+};
+
+export const crearDevolucionProveedor = async (devolucion) => {
+  try {
+    return await authFetch(`${base}/devoluciones`, { method: "POST", body: JSON.stringify(devolucion) });
+  } catch (error) {
+    console.error("Error al registrar devolución:", error);
+    return null;
+  }
+};
+
+export const borrarDevolucionProveedor = async (id) => {
+  try {
+    return await authFetch(`${base}/devoluciones/${id}`, { method: "DELETE" });
+  } catch (error) {
+    console.error("Error al borrar devolución:", error);
+    return null;
+  }
+};

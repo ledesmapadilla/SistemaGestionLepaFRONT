@@ -41,7 +41,7 @@ const Cheques = () => {
   useEffect(() => {
     const cargar = async () => {
       try {
-        const [cobros, resProveedores] = await Promise.all([listarCobros(), listarProveedores()]);
+        const [cobros, resProveedores] = await Promise.all([listarCobros("?incluirProveedores=true"), listarProveedores()]);
         const listaProveedores = await resProveedores.json();
         setProveedores(listaProveedores.map((p) => p.razonsocial).sort());
         const filas = [];
@@ -53,7 +53,7 @@ const Cheques = () => {
                 _id: `${cobro._id}-${medioIndex}`,
                 cobroId: cobro._id,
                 medioIndex,
-                cliente: cobro.cliente,
+                cliente: cobro.origen === "proveedor" ? `${cobro.cliente} (proveedor)` : cobro.cliente,
                 numeroCheque: m.numeroCheque || "-",
                 valor: m.monto,
                 fechaVencimiento: m.fechaCobro || "",
