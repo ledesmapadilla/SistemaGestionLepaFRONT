@@ -40,14 +40,41 @@ const obtenerFechaHoy = () => {
   return `${y}-${m}-${d}`;
 };
 
-const buscarPrecioVigente = (precios, clasificacion, trabajo, fechaRef) => {
-  const candidatos = precios.filter(
+// "Días", "dias" y "DIAS " son la misma unidad.
+const normUnidad = (s) =>
+  (s ?? "")
+    .toString()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim()
+    .toLowerCase();
+
+const filtrarPrecios = (precios, clasificacion, trabajo) =>
+  precios.filter(
     (p) =>
       (clasificacion === "Alquiler"
         ? p.clasificacion?.startsWith("Alquiler")
         : p.clasificacion === clasificacion) &&
       (!trabajo || p.trabajo === trabajo)
   );
+
+// Unidades distintas con precio cargado para esa máquina/servicio (Días, Horas…).
+const unidadesDisponibles = (precios, clasificacion, trabajo) => {
+  const vistas = new Map();
+  for (const p of filtrarPrecios(precios || [], clasificacion, trabajo)) {
+    const n = normUnidad(p.unidad);
+    if (n && !vistas.has(n)) vistas.set(n, p.unidad);
+  }
+  return [...vistas.values()];
+};
+
+// Con `unidad`, solo compiten los precios de esa unidad: un precio por hora y
+// uno por día son dos listas separadas, cada una con su propio historial.
+const buscarPrecioVigente = (precios, clasificacion, trabajo, fechaRef, unidad) => {
+  let candidatos = filtrarPrecios(precios, clasificacion, trabajo);
+  if (unidad) {
+    candidatos = candidatos.filter((p) => normUnidad(p.unidad) === normUnidad(unidad));
+  }
   if (candidatos.length === 0) return null;
   if (candidatos.length === 1) return candidatos[0];
 
@@ -261,7 +288,21 @@ const RemitosModal = ({
   const seleccionarPrecio = (index, tipo, trabajo) => {
     const fechaRef = filas[index]?.fecha;
     const preciosObra = obra?.precio || [];
-    const item = buscarPrecioVigente(preciosObra, tipo, trabajo, fechaRef);
+    // Si la fila ya tenía una unidad y la nueva máquina/servicio tiene precio en
+    // esa unidad, se respeta; si no, se toma la del precio vigente.
+    const unidadActual = filas[index]?.unidad;
+    const mantieneUnidad =
+      unidadActual &&
+      unidadesDisponibles(preciosObra, tipo, trabajo).some(
+        (u) => normUnidad(u) === normUnidad(unidadActual)
+      );
+    const item = buscarPrecioVigente(
+      preciosObra,
+      tipo,
+      trabajo,
+      fechaRef,
+      mantieneUnidad ? unidadActual : undefined
+    );
 
     const nuevasFilas = [...filas];
     nuevasFilas[index] = {
@@ -533,13 +574,13 @@ const RemitosModal = ({
                       // Recalcular precio si ya hay alquiler o servicio seleccionado
                       const preciosObra = obra?.precio || [];
                       if (fila.maquina) {
-                        const item = buscarPrecioVigente(preciosObra, "Alquiler", fila.maquina, nuevaFecha);
+                        const item = buscarPrecioVigente(preciosObra, "Alquiler", fila.maquina, nuevaFecha, fila.unidad);
                         if (item) {
                           actualizarFila(index, "precioUnitario", item.precio);
                           actualizarFila(index, "unidad", item.unidad);
                         }
                       } else if (fila.servicio) {
-                        const item = buscarPrecioVigente(preciosObra, "Servicio", fila.servicio, nuevaFecha);
+                        const item = buscarPrecioVigente(preciosObra, "Servicio", fila.servicio, nuevaFecha, fila.unidad);
                         if (item) {
                           actualizarFila(index, "precioUnitario", item.precio);
                           actualizarFila(index, "unidad", item.unidad);
@@ -691,7 +732,42 @@ const RemitosModal = ({
                   </Form.Control.Feedback>
                 </td>
 
-                <td>{fila.unidad}</td>
+                <td>
+                  {(() => {
+                    const tipo = fila.maquina ? "Alquiler" : fila.servicio ? "Servicio" : null;
+                    const trabajo = fila.maquina || fila.servicio;
+                    const unidades = tipo
+                      ? unidadesDisponibles(obra?.precio, tipo, trabajo)
+                      : [];
+                    if (unidades.length < 2) return fila.unidad;
+                    const actual =
+                      unidades.find((u) => normUnidad(u) === normUnidad(fila.unidad)) || "";
+                    return (
+                      <Form.Select
+                        value={actual}
+                        onChange={(e) => {
+                          const nuevaUnidad = e.target.value;
+                          const item = buscarPrecioVigente(
+                            obra?.precio || [],
+                            tipo,
+                            trabajo,
+                            fila.fecha,
+                            nuevaUnidad
+                          );
+                          actualizarFila(index, "unidad", nuevaUnidad);
+                          actualizarFila(index, "precioUnitario", item ? item.precio : "");
+                        }}
+                      >
+                        {!actual && <option value="">—</option>}
+                        {unidades.map((u) => (
+                          <option key={u} value={u}>
+                            {u}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    );
+                  })()}
+                </td>
 
                 <td>
                   <Form.Control
