@@ -32,6 +32,11 @@ const formatoMoneda = (valor) =>
 const totalConIva = (f) =>
   f.tipoFactura === "Factura X" ? f.total : f.total * 1.21;
 
+// Más vieja primero: por fecha y, a igual fecha, por número de factura.
+const numeroFactura = (f) => Number(String(f.numeroFactura).replace(/\D/g, "")) || 0;
+const porAntiguedad = (a, b) =>
+  (a.fecha || "").localeCompare(b.fecha || "") || numeroFactura(a) - numeroFactura(b);
+
 const NuevoCobro = () => {
   const navigate = useNavigate();
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm();
@@ -125,9 +130,9 @@ const NuevoCobro = () => {
       return;
     }
     const idsSeleccionados = facturasSeleccionadas.map((f) => f._id);
-    const filtradas = todasFacturas.filter(
-      (f) => mismoTexto(f.cliente, clienteSeleccionado) && !idsSeleccionados.includes(f._id)
-    );
+    const filtradas = todasFacturas
+      .filter((f) => mismoTexto(f.cliente, clienteSeleccionado) && !idsSeleccionados.includes(f._id))
+      .sort(porAntiguedad);
     setFacturasDisponibles(filtradas);
     setFacturaElegida("");
   }, [clienteSeleccionado, todasFacturas, facturasSeleccionadas]);
@@ -181,6 +186,30 @@ const NuevoCobro = () => {
   const agregarMedioPago = () => {
     const restante = totalCobrado - totalMediosPago;
     setMediosPago((prev) => [...prev, nuevaFila("", restante > 0.01 ? restante.toFixed(2) : "")]);
+  };
+
+  // Facturas pendientes del cliente, de la más vieja a la más nueva.
+  const pendientesCliente = clienteSeleccionado
+    ? todasFacturas.filter((f) => mismoTexto(f.cliente, clienteSeleccionado)).sort(porAntiguedad)
+    : [];
+
+  // Propone imputar el saldo a favor (anticipos) a las facturas más viejas,
+  // hasta donde alcance. Es solo una propuesta: el usuario puede quitar,
+  // agregar o cambiar montos antes de guardar.
+  const proponerMasViejas = () => {
+    let resto = saldoDisponible;
+    const propuestas = [];
+    for (const f of pendientesCliente) {
+      if (resto <= 0.01) break;
+      const monto = Math.min(resto, saldoFactura(f));
+      if (monto <= 0.01) continue;
+      propuestas.push({ ...f, montoCobrado: monto.toFixed(2) });
+      resto -= monto;
+    }
+    if (!propuestas.length) return;
+    const total = propuestas.reduce((s, f) => s + parseFloat(f.montoCobrado), 0);
+    setFacturasSeleccionadas(propuestas);
+    setMediosPago([nuevaFila(SALDO_A_FAVOR, total.toFixed(2))]);
   };
 
   // Al abrir por primera vez: si el cliente tiene saldo a favor se precarga
@@ -360,6 +389,17 @@ const NuevoCobro = () => {
               <span className="border border-success rounded px-2 py-1 text-success fw-semibold" style={{ fontSize: "0.85rem" }}>
                 Saldo a favor disponible: {formatoMoneda(saldoDisponible)}
               </span>
+            )}
+            {saldoDisponible > 0.01 && pendientesCliente.length > 0 && (
+              <Button
+                type="button"
+                variant="outline-success"
+                size="sm"
+                onClick={proponerMasViejas}
+                title="Precarga las facturas impagas más viejas hasta cubrir el saldo a favor. Después podés quitar, agregar o cambiar montos."
+              >
+                Imputar saldo a las más viejas
+              </Button>
             )}
           </div>
           <div className="d-flex align-items-center gap-3">

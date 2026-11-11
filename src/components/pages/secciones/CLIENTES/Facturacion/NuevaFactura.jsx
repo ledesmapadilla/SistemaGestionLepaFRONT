@@ -185,7 +185,17 @@ const NuevaFactura = () => {
     try {
       const respuesta = await crearFactura(payload);
       if (respuesta?.ok) {
-        Swal.fire({ icon: "success", title: "Factura creada", timer: 2000, showConfirmButton: false });
+        const { imputacion } = await respuesta.json().catch(() => ({}));
+        if (imputacion) {
+          // El cliente tenía saldo a favor: el backend lo imputó a las impagas más viejas.
+          await Swal.fire({
+            icon: "success",
+            title: "Factura creada",
+            html: `El cliente tenía saldo a favor: se imputaron <b>${formatoMoneda(imputacion.monto)}</b> a la(s) factura(s) N° ${imputacion.facturas.join(", ")}.<br/><small>Quedó registrado en Cobros como forma de pago "Saldo a favor".</small>`,
+          });
+        } else {
+          Swal.fire({ icon: "success", title: "Factura creada", timer: 2000, showConfirmButton: false });
+        }
         navigate("/facturacion");
       } else {
         const err = await respuesta.json();
