@@ -98,8 +98,43 @@ const conExtraDif = (r, fecha) => {
   return auto ? [...base, auto] : base;
 };
 
+// El ausentismo se descuenta desde Extras: una fila automática "Descuenta" por
+// día de falta (auto="aus"), con su fecha. Se recalcula en cada carga desde la
+// asistencia, igual que la fila de diferencia horaria. `r.ausentismo` queda
+// como total de referencia, pero ya no se resta aparte en calcularPagar.
+// Si el detalle por día no coincide con el total, va una sola fila.
+const AUTO_AUS = "aus";
+const filasAusentismo = (r, fechaDefault) => {
+  const total = Math.round(Number(r?.ausentismo) || 0);
+  if (!total) return [];
+  const dias = Array.isArray(r.ausDias) ? r.ausDias : [];
+  const jornal = (Number(r.cantJornales) || 0) > 0 ? (Number(r.semanal) || 0) / Number(r.cantJornales) : 0;
+  const filas = dias.map((d) => ({
+    fecha: d.fecha,
+    descuentaAumenta: "descuenta",
+    monto: Math.round(d.cantidad * jornal),
+    detalle: d.cantidad < 1 ? "Ausentismo (½ jornada)" : "Ausentismo",
+    auto: AUTO_AUS,
+  }));
+  const suma = filas.reduce((s, f) => s + f.monto, 0);
+  if (filas.length && Math.abs(suma - total) <= filas.length) {
+    // Ajuste de redondeo: la última fila absorbe la diferencia de centavos.
+    filas[filas.length - 1].monto += total - suma;
+    return filas;
+  }
+  return [{ fecha: fechaDefault || "", descuentaAumenta: "descuenta", monto: total, detalle: "Ausentismo", auto: AUTO_AUS }];
+};
+// Reemplaza las filas automáticas de ausentismo por las recalculadas (van primero).
+const conExtraAus = (r, fecha) => [
+  ...filasAusentismo(r, fecha),
+  ...normalizarExtras(r.extras).filter((e) => e.auto !== AUTO_AUS),
+];
+
 const calcularPagar = (r) =>
-  (Number(r.semanal) || 0) - (Number(r.ausentismo) || 0) + netoExtras(r.extras);
+  (Number(r.semanal) || 0) + netoExtras(r.extras);
+
+// Lo que falta pagarle: A Pagar menos lo ya pagado.
+const calcularDeuda = (r) => calcularPagar(r) - (Number(r.pagado) || 0);
 
 const pesos = (n) => {
   const v = Math.round(Number(n)) || 0;
@@ -334,7 +369,9 @@ const ExtrasModal = ({ show, onHide, personalNombre, extras: extrasInicial, tari
                         ) : (
                           <Button size="sm" variant="outline-warning" onClick={() => iniciarEditar(idx)} disabled={editandoIdx !== null}>Editar</Button>
                         )}
-                        <Button size="sm" variant="outline-danger" onClick={() => borrar(idx)} disabled={editandoIdx !== null}>Borrar</Button>
+                        {e.auto !== AUTO_AUS && (
+                          <Button size="sm" variant="outline-danger" onClick={() => borrar(idx)} disabled={editandoIdx !== null}>Borrar</Button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -929,18 +966,25 @@ const GastosSemanales = () => {
       const ausencias = ausenciasMap[key] || 0;
       return Math.round(ausencias * jornal);
     };
+    // Detalle por día del ausentismo ([{fecha, cantidad}]), para listarlo en Extras.
+    const calcAusDias = (nombre) => {
+      const k = normNombre(nombre);
+      return diasSemana
+        .map((d) => ({ fecha: toKey(d), cantidad: ausenciaDia[`${k}|${toKey(d)}`] || 0 }))
+        .filter((x) => x.cantidad > 0);
+    };
 
     const filaDePersonal = (p) => {
       const semanal = semanalVigente(p.semanal, sabadoKey)?.valor || 0;
       const k = normNombre(p.nombre);
-      const base = { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[k] || 0, cantJornales: cantJornalesMap[k] || 0, fechaAlta: fechaAltaMap[k] || "" };
-      base.extras = conExtraDif(base, sabadoKey);
+      const base = { personal: p.nombre, semanal, ausentismo: calcAusentismo(p.nombre), ausDias: calcAusDias(p.nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[k] || 0, cantJornales: cantJornalesMap[k] || 0, fechaAlta: fechaAltaMap[k] || "" };
+      base.extras = conExtraDif({ ...base, extras: conExtraAus(base, sabadoKey) }, sabadoKey);
       return base;
     };
     const filaSoloAsistencia = (nombre) => {
       const k = normNombre(nombre);
-      const base = { personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[k] || 0, cantJornales: cantJornalesMap[k] || 0, fechaAlta: fechaAltaMap[k] || "" };
-      base.extras = conExtraDif(base, sabadoKey);
+      const base = { personal: nombre, semanal: 0, ausentismo: calcAusentismo(nombre), ausDias: calcAusDias(nombre), extras: [], observaciones: "", pagado: 0, marcado: 0, seleccionado: false, difMin: difMinsMap[k] || 0, cantJornales: cantJornalesMap[k] || 0, fechaAlta: fechaAltaMap[k] || "" };
+      base.extras = conExtraDif({ ...base, extras: conExtraAus(base, sabadoKey) }, sabadoKey);
       return base;
     };
 
@@ -975,7 +1019,7 @@ const GastosSemanales = () => {
     // sacan aunque falte la asistencia, porque el autoguardado escribe esta
     // misma lista y se perderían los datos.
     const tieneDatosCargados = (r) => {
-      const extrasManuales = (r.extras || []).filter((e) => e.auto !== AUTO_DIF);
+      const extrasManuales = (r.extras || []).filter((e) => e.auto !== AUTO_DIF && e.auto !== AUTO_AUS);
       return extrasManuales.length > 0 || r.pagado > 0 || !!r.observaciones;
     };
 
@@ -995,15 +1039,25 @@ const GastosSemanales = () => {
         // el legajo: no hay jornal para calcular el ausentismo, se respeta el
         // que se cargó a mano.
         const manualSinLegajo = r.nuevo && !nombresTodoPersonal.has(k);
+        let extras = normalizarExtras(r.extras);
+        // Fila manual sin legajo con ausentismo cargado a mano en la vieja
+        // columna: pasa a ser un extra "Descuenta" común (editable) y el campo
+        // queda en 0, así no se pierde el descuento.
+        if (manualSinLegajo && Number(r.ausentismo) > 0) {
+          extras = [{ fecha: sabadoKey, descuentaAumenta: "descuenta", monto: Number(r.ausentismo), detalle: "Ausentismo" }, ...extras];
+        }
         const fila = {
           ...r,
-          extras: normalizarExtras(r.extras),
+          extras,
           semanal: semanalActual !== null && semanalActual !== undefined ? semanalActual : r.semanal,
-          ausentismo: manualSinLegajo ? Number(r.ausentismo) || 0 : calcAusentismo(r.personal),
+          ausentismo: manualSinLegajo ? 0 : calcAusentismo(r.personal),
+          ausDias: manualSinLegajo ? [] : calcAusDias(r.personal),
           difMin: difMinsMap[k] || 0,
           cantJornales: cantJornalesMap[k] || 0,
           fechaAlta: fechaAltaMap[k] || "",
         };
+        // Las filas manuales sin legajo no tienen ausentismo automático.
+        if (!manualSinLegajo) fila.extras = conExtraAus(fila, sabadoKey);
         fila.extras = conExtraDif(fila, sabadoKey);
         return fila;
       });
@@ -1085,10 +1139,26 @@ const GastosSemanales = () => {
   };
 
   const totalSemanal = registros.reduce((s, r) => s + (Number(r.semanal) || 0), 0);
-  const totalAusentismo = registros.reduce((s, r) => s + (Number(r.ausentismo) || 0), 0);
   const totalExtrasNeto = registros.reduce((s, r) => s + netoExtras(r.extras), 0);
   const totalPagar = registros.reduce((s, r) => s + calcularPagar(r), 0);
   const totalPagado = registros.reduce((s, r) => s + (Number(r.pagado) || 0), 0);
+  const totalDeuda = totalPagar - totalPagado;
+
+  // Click en el nombre: normal → amarillo → tachado (pagado) → normal. Al
+  // tacharlo, Pagado pasa a ser el total a pagar (aunque ya tuviera un monto
+  // parcial cargado, que se guarda en pagadoPrevio). Al destacharlo se le saca
+  // ese total y Pagado vuelve a lo que tenía antes (0 si no había nada).
+  const ciclarMarcado = (idx) => {
+    const nuevos = registros.map((r, i) => {
+      if (i !== idx) return r;
+      const marcado = ((r.marcado || 0) + 1) % 3;
+      if (marcado === 2) return { ...r, marcado, pagadoPrevio: Number(r.pagado) || 0, pagado: calcularPagar(r) };
+      if (r.marcado === 2) return { ...r, marcado, pagado: Number(r.pagadoPrevio) || 0, pagadoPrevio: 0 };
+      return { ...r, marcado };
+    });
+    setRegistros(nuevos);
+    guardarGastoSemanal(semanaKey, nuevos);
+  };
   const totalProveedores = proveedoresGuardados.reduce((s, p) => s + (Number(p.pago) || 0), 0);
   const totalGeneral = totalPagar + totalProveedores;
   // Suma de las filas marcadas con el punto rojo de la primera columna.
@@ -1098,7 +1168,7 @@ const GastosSemanales = () => {
 
   const exportarExcel = () => {
     const titulo = `Gastos Semanales - ${labelSemana}`;
-    const headers = ["Personal", "Semanal Teórico", "Ausentismo", "Extras", "A Pagar", "Pagado", "Observaciones"];
+    const headers = ["Personal", "Semanal Teórico", "Extras", "A Pagar", "Pagado", "Deuda", "Observaciones"];
     const cols = "ABCDEFG";
     const moneda = { numFmt: "#,##0" };
     const bordeFino = { style: "thin", color: { rgb: "BFBFBF" } };
@@ -1128,20 +1198,20 @@ const GastosSemanales = () => {
       const cebra = fillFila(rowIdx);
       ws[`A${row}`] = { v: r.personal || "", t: "s", s: { ...estIzq, ...cebra } };
       ws[`B${row}`] = { v: Number(r.semanal) || 0, t: "n", s: { ...estCentro, ...moneda, ...cebra } };
-      ws[`C${row}`] = { v: Number(r.ausentismo) || 0, t: "n", s: { ...estCentro, ...moneda, ...cebra } };
-      ws[`D${row}`] = { v: netoExtras(r.extras), t: "n", s: { ...estCentro, ...moneda, ...cebra } };
-      ws[`E${row}`] = { v: calcularPagar(r), t: "n", s: { ...estCentro, ...moneda, ...cebra } };
-      ws[`F${row}`] = { v: Number(r.pagado) || 0, t: "n", s: { ...estCentro, ...moneda, ...cebra } };
+      ws[`C${row}`] = { v: netoExtras(r.extras), t: "n", s: { ...estCentro, ...moneda, ...cebra } };
+      ws[`D${row}`] = { v: calcularPagar(r), t: "n", s: { ...estCentro, ...moneda, ...cebra } };
+      ws[`E${row}`] = { v: Number(r.pagado) || 0, t: "n", s: { ...estCentro, ...moneda, ...cebra } };
+      ws[`F${row}`] = { v: calcularDeuda(r), t: "n", s: { ...estCentro, ...moneda, ...cebra } };
       ws[`G${row}`] = { v: r.observaciones || "", t: "s", s: { ...estCentro, ...cebra } };
     });
 
     const totalRow = registros.length + 5;
     ws[`A${totalRow}`] = { v: "Total", t: "s", s: estTotal };
     ws[`B${totalRow}`] = { v: totalSemanal, t: "n", s: { ...estTotal, ...moneda } };
-    ws[`C${totalRow}`] = { v: totalAusentismo, t: "n", s: { ...estTotal, ...moneda } };
-    ws[`D${totalRow}`] = { v: totalExtrasNeto, t: "n", s: { ...estTotal, ...moneda } };
-    ws[`E${totalRow}`] = { v: totalPagar, t: "n", s: { ...estTotal, ...moneda } };
-    ws[`F${totalRow}`] = { v: totalPagado, t: "n", s: { ...estTotal, ...moneda } };
+    ws[`C${totalRow}`] = { v: totalExtrasNeto, t: "n", s: { ...estTotal, ...moneda } };
+    ws[`D${totalRow}`] = { v: totalPagar, t: "n", s: { ...estTotal, ...moneda } };
+    ws[`E${totalRow}`] = { v: totalPagado, t: "n", s: { ...estTotal, ...moneda } };
+    ws[`F${totalRow}`] = { v: totalDeuda, t: "n", s: { ...estTotal, ...moneda } };
     ws[`G${totalRow}`] = { v: "", t: "s", s: estTotal };
 
     ws["!ref"] = `A1:G${Math.max(totalRow, 4)}`;
@@ -1226,10 +1296,10 @@ const GastosSemanales = () => {
                   <th style={{ minWidth: 110 }}>Semanal Teórico</th>
                   <th style={{ width: 32 }}></th>
                   <th style={{ minWidth: 160 }}>Personal</th>
-                  <th style={{ minWidth: 110 }}>Ausentismo</th>
                   <th style={{ minWidth: 140 }}>Extras</th>
                   <th style={{ minWidth: 110 }}>Pagar</th>
                   <th style={{ minWidth: 110 }}>Pagado</th>
+                  <th style={{ minWidth: 110 }}>Deuda</th>
                   <th style={{ minWidth: 180 }}>Observaciones</th>
                   <th style={{ width: 90 }}></th>
                 </tr>
@@ -1249,7 +1319,7 @@ const GastosSemanales = () => {
                         <Form.Control size="sm" type="text" value={r.personal} placeholder="Nombre..." onChange={(e) => actualizar(idx, "personal", e.target.value)} />
                       ) : (
                         <span
-                          onClick={() => actualizarYGuardar(idx, "marcado", ((r.marcado || 0) + 1) % 3)}
+                          onClick={() => ciclarMarcado(idx)}
                           style={{ cursor: "pointer", userSelect: "none", color: r.marcado === 1 ? "#ffc107" : "#dee2e6", position: "relative", display: "inline-block" }}
                         >
                           {r.personal}
@@ -1259,7 +1329,6 @@ const GastosSemanales = () => {
                         </span>
                       )}
                     </td>
-                    <td><CeldaMoneda value={r.ausentismo} onChange={(v) => actualizar(idx, "ausentismo", v)} textStyle={{ fontSize: "0.62rem", color: "#9ca3af" }} /></td>
                     <td>
                       {r.extras?.length > 0 ? (
                         <span
@@ -1282,6 +1351,9 @@ const GastosSemanales = () => {
                       {pesos(calcularPagar(r))}
                     </td>
                     <td><CeldaMoneda value={r.pagado || 0} onChange={(v) => actualizar(idx, "pagado", v)} defaultValue={calcularPagar(r)} textStyle={{ fontSize: "0.82rem" }} /></td>
+                    <td style={{ color: calcularDeuda(r) > 0 ? "#dc3545" : calcularDeuda(r) < 0 ? "#198754" : "#adb5bd", fontSize: "0.9rem" }}>
+                      {pesos(calcularDeuda(r))}
+                    </td>
                     <td>
                       <Form.Control
                         size="sm"
@@ -1325,10 +1397,10 @@ const GastosSemanales = () => {
                   <td className="text-center">{pesos(totalSemanal)}</td>
                   <td />
                   <td className="text-start">Total</td>
-                  <td className="text-center">{pesos(totalAusentismo)}</td>
                   <td className="text-center" style={{ color: totalExtrasNeto >= 0 ? "#198754" : "#dc3545" }}>{pesos(totalExtrasNeto)}</td>
                   <td style={{ color: totalPagar < 0 ? "#dc3545" : "#ffc107" }}>{pesos(totalPagar)}</td>
                   <td className="text-center">{pesos(totalPagado)}</td>
+                  <td className="text-center" style={{ color: totalDeuda > 0 ? "#dc3545" : undefined }}>{pesos(totalDeuda)}</td>
                   <td />
                   <td />
                 </tr>
