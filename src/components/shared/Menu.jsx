@@ -65,6 +65,9 @@ function Menu() {
                 <NavDropdown.Item as={Link} to="/remitos-todos">
                   Listado de remitos
                 </NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/remitos-facturados">
+                  Remitos facturados
+                </NavDropdown.Item>
               </NavDropdown>
 
               <NavDropdown title="Informes" id="nav-dropdown" className="mx-3">

@@ -44,6 +44,7 @@ const RemitosXClientesFinal = lazy(() => import("./components/pages/secciones/OP
 const MaquinaTabla = lazy(() => import("./components/pages/secciones/ALTAS/Maquinas/MaquinaTabla.jsx"));
 const GastoTabla = lazy(() => import("./components/pages/secciones/OPERACIONES/Gastos/GastoTabla.jsx"));
 const TodosLosRemitos = lazy(() => import("./components/pages/secciones/OPERACIONES/Remitos/TodosLosRemitos.jsx"));
+const RemitosFacturados = lazy(() => import("./components/pages/secciones/OPERACIONES/Remitos/RemitosFacturados.jsx"));
 const CostosObra = lazy(() => import("./components/pages/secciones/OPERACIONES/Informes/CostosObra.jsx"));
 const Gasoil = lazy(() => import("./components/pages/secciones/OPERACIONES/Gasoil/Gasoil.jsx"));
 const CargaGasoil = lazy(() => import("./components/pages/secciones/OPERACIONES/Gasoil/CargaGasoil.jsx"));
@@ -176,6 +177,7 @@ function App() {
                       <Route path="/remitos-sinfacturar" element={<RemitosXClientes />} />
                       <Route path="/remitos-sinfacturar-informe" element={<RemitosSinFacturarInforme />} />
                       <Route path="/remitos-todos" element={<TodosLosRemitos />} />
+                      <Route path="/remitos-facturados" element={<RemitosFacturados />} />
                       <Route
                         path="/remitos-cliente-obras"
                         element={<RemitosXClientesObras />}

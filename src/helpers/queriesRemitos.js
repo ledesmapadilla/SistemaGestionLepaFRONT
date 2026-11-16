@@ -51,6 +51,14 @@ export const listarRemitosConFacturado = async () => {
   return res.json();
 };
 
+// Remitos con algo facturado (total o parcial), cada uno con sus facturas/NC
+// (`facturas: [{ tipoFactura, numeroFactura, fecha, monto, anulada, ... }]`).
+export const listarRemitosFacturados = async () => {
+  const res = await authFetch(`${remitosBackend}/facturados`);
+  if (!res?.ok) throw new Error("Error al listar remitos facturados");
+  return res.json();
+};
+
 export const listarRemitosPorObra =async (idObra) => {
   try {
     const res = await authFetch(`${remitosBackend}?obra=${idObra}`);
