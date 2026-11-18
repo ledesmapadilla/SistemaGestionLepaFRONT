@@ -69,17 +69,18 @@ const NuevaFacturaProveedor = () => {
     handleSubmit,
     watch,
     setValue,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm();
 
   const [proveedores, setProveedores] = useState([]);
   const [obras, setObras] = useState([]);
   const [todasFacturas, setTodasFacturas] = useState([]);
-  const [numerosExistentes, setNumerosExistentes] = useState([]);
   const [loadingDatos, setLoadingDatos] = useState(true);
 
   const proveedorSeleccionado = watch("proveedor");
   const tipoFactura = watch("tipoFactura");
+  const numeroFactura = watch("numeroFactura");
   const totalRaw = watch("total");
   const razonSeleccionada = watch("razonsocial");
   const obraSeleccionada = watch("obra");
@@ -102,7 +103,6 @@ const NuevaFacturaProveedor = () => {
         setProveedores(dataProveedores);
         setObras(dataObras.filter((o) => o.estado === "En curso"));
         setTodasFacturas(facturas);
-        setNumerosExistentes(facturas.map((f) => f.numeroFactura?.toString().trim()));
       } catch (error) {
         console.error(error);
       } finally {
@@ -123,7 +123,13 @@ const NuevaFacturaProveedor = () => {
     } else {
       setValue("numeroFactura", "", { shouldValidate: false });
     }
-  }, [tipoFactura, todasFacturas]);
+  }, [tipoFactura, todasFacturas, setValue]);
+
+  useEffect(() => {
+    if (numeroFactura && tipoFactura !== "Factura X") {
+      trigger("numeroFactura");
+    }
+  }, [proveedorSeleccionado, tipoFactura, trigger, numeroFactura]);
 
   // Las razones sociales salen de las obras en curso: no tiene sentido ofrecer
   // una razon social sin obras abiertas para imputar.
@@ -147,7 +153,7 @@ const NuevaFacturaProveedor = () => {
     if (obraSeleccionada && !obrasDeRazonSocial.some((o) => mismoTexto(o.nombreobra, obraSeleccionada))) {
       setValue("obra", "");
     }
-  }, [obrasDeRazonSocial, obraSeleccionada]);
+  }, [obrasDeRazonSocial, obraSeleccionada, setValue]);
 
   const onSubmit = async (data) => {
     const payload = {
@@ -172,6 +178,7 @@ const NuevaFacturaProveedor = () => {
         Swal.fire({ icon: "error", title: "Error", text: err.msg || "No se pudo crear la factura" });
       }
     } catch (error) {
+      console.error(error);
       Swal.fire({ icon: "error", title: "Error inesperado", text: "No se pudo procesar la solicitud" });
     }
   };
@@ -254,11 +261,36 @@ const NuevaFacturaProveedor = () => {
                 type="text"
                 readOnly={tipoFactura === "Factura X"}
                 className={tipoFactura === "Factura X" ? "text-muted" : ""}
+                placeholder={tipoFactura === "Factura X" ? "" : "Ej: 0001-00001234"}
                 {...register("numeroFactura", {
                   required: "El número es obligatorio",
-                  validate: (v) =>
-                    !numerosExistentes.includes(v?.toString().trim()) ||
-                    "Este número ya existe",
+                  validate: (v) => {
+                    const num = v?.toString().trim();
+                    if (!num) return true;
+
+                    // Para Factura X se verifica solo contra otras Facturas X de todos los proveedores
+                    if (tipoFactura === "Factura X") {
+                      const yaExisteX = todasFacturas.some(
+                        (f) =>
+                          f.tipoFactura === "Factura X" &&
+                          f.numeroFactura?.toString().trim() === num
+                      );
+                      return !yaExisteX || "Este número de Factura X ya existe";
+                    }
+
+                    // Para otros comprobantes se valida por proveedor y tipo
+                    if (!proveedorSeleccionado) return true;
+                    const yaExiste = todasFacturas.some(
+                      (f) =>
+                        mismoTexto(f.proveedor, proveedorSeleccionado) &&
+                        f.tipoFactura === tipoFactura &&
+                        f.numeroFactura?.toString().trim().toLowerCase() === num.toLowerCase()
+                    );
+                    return (
+                      !yaExiste ||
+                      "Este comprobante ya fue cargado para este proveedor"
+                    );
+                  },
                 })}
                 isInvalid={!!errors.numeroFactura}
               />
