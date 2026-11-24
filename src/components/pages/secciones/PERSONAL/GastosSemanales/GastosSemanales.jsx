@@ -744,8 +744,8 @@ const ProveedoresModal = ({ show, onHide, proveedoresGuardados, onGuardar }) => 
 
 const GastosSemanales = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [lunes] = useState(() => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [lunes, setLunes] = useState(() => {
     const semana = searchParams.get("semana");
     if (semana) {
       const [y, m, d] = semana.split("-").map(Number);
@@ -1125,6 +1125,20 @@ const GastosSemanales = () => {
     return () => clearTimeout(autoSaveTimer.current);
   }, [registros, loading, semanaKey]);
 
+  // Flechas ◀ ▶: antes de cambiar de semana se guarda lo pendiente de la actual
+  // (si no, el autoguardado se cancela y se pierde). La semana queda en la URL.
+  const cambiarSemana = async (delta) => {
+    clearTimeout(autoSaveTimer.current);
+    if (modificado.current) {
+      await guardarGastoSemanal(semanaKey, registros);
+      modificado.current = false;
+    }
+    const nuevo = new Date(lunes);
+    nuevo.setDate(nuevo.getDate() + delta * 7);
+    setLunes(nuevo);
+    setSearchParams({ semana: toKey(nuevo) }, { replace: true });
+  };
+
   // Guardado manual: no espera los 2 s del autoguardado (que se cancela para no
   // escribir dos veces).
   const guardarAhora = async () => {
@@ -1224,7 +1238,12 @@ const GastosSemanales = () => {
   return (
     <div className="container mt-4 w-75">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2>Gastos Semanales <small className="text-muted" style={{ fontSize: "1rem", fontWeight: 400 }}>{labelSemana}</small></h2>
+        <h2 className="d-flex align-items-center gap-2 mb-0">
+          Gastos Semanales
+          <AsyncButton variant="outline-light" size="sm" onClick={() => cambiarSemana(-1)} disabled={loading} title="Semana anterior">◀</AsyncButton>
+          <small className="text-muted" style={{ fontSize: "1rem", fontWeight: 400 }}>{labelSemana}</small>
+          <AsyncButton variant="outline-light" size="sm" onClick={() => cambiarSemana(1)} disabled={loading} title="Semana siguiente">▶</AsyncButton>
+        </h2>
         <div className="d-flex gap-2">
           <AsyncButton variant="outline-success" onClick={guardarAhora} disabled={loading}>Guardar</AsyncButton>
           <Button variant="outline-light" onClick={exportarExcel}>Excel</Button>
