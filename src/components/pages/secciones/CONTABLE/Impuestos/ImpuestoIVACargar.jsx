@@ -204,7 +204,7 @@ export default function ImpuestoIVACargar() {
     const estIzq    = { alignment: { horizontal: "left",   vertical: "center" } };
     const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
     const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
-    const moneda    = { numFmt: "#,##0" };
+    const moneda    = { numFmt: '"$ "#,##0;-"$ "#,##0' };
     const hoy = new Date();
     const fechaSerial = Math.round((Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
 

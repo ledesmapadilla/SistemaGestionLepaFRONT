@@ -1170,7 +1170,7 @@ const GastosSemanales = () => {
     const titulo = `Gastos Semanales - ${labelSemana}`;
     const headers = ["Personal", "Semanal Teórico", "Extras", "A Pagar", "Pagado", "Deuda", "Observaciones"];
     const cols = "ABCDEFG";
-    const moneda = { numFmt: "#,##0" };
+    const moneda = { numFmt: '"$ "#,##0;-"$ "#,##0' };
     const bordeFino = { style: "thin", color: { rgb: "BFBFBF" } };
     const borde = { top: bordeFino, bottom: bordeFino, left: bordeFino, right: bordeFino };
     const cebraA = "FFFFFF";
@@ -1179,7 +1179,7 @@ const GastosSemanales = () => {
     const estIzq = { alignment: { horizontal: "left", vertical: "center" }, border: borde };
     const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" }, border: borde };
     const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
-    const estTotal = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" }, numFmt: "#,##0", border: borde };
+    const estTotal = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" }, numFmt: '"$ "#,##0;-"$ "#,##0', border: borde };
     const fillFila = (rowIdx) => ({ fill: { fgColor: { rgb: rowIdx % 2 === 0 ? cebraA : cebraB } } });
 
     const wb = XLSXStyle.utils.book_new();

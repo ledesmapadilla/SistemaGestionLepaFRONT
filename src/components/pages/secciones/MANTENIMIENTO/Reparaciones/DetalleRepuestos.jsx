@@ -132,12 +132,12 @@ function DetalleRepuestos({ maquina, reparacion, onVolver, onGuardar }) {
     const titulo = `Repuestos - ${reparacion?.reparacion || "reparación"} (${maquina?.maquina || ""})`;
     const headers = ["#", "Repuesto", "Cantidad", "Precio", "Proveedor", "Responsable", "Estado", "Observaciones"];
     const cols = "ABCDEFGH";
-    const moneda = { numFmt: "#,##0" };
+    const moneda = { numFmt: '"$ "#,##0;-"$ "#,##0' };
     const estCentro = { alignment: { horizontal: "center", vertical: "center" } };
     const estIzq = { alignment: { horizontal: "left", vertical: "center" } };
     const estHeader = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" } };
     const estTitulo = { font: { bold: true, sz: 13 }, alignment: { horizontal: "left", vertical: "center" } };
-    const estTotal = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" }, numFmt: "#,##0" };
+    const estTotal = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "222222" } }, alignment: { horizontal: "center", vertical: "center" }, numFmt: '"$ "#,##0;-"$ "#,##0' };
 
     const wb = XLSXStyle.utils.book_new();
     const ws = {};
