@@ -1240,9 +1240,9 @@ const GastosSemanales = () => {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2 className="d-flex align-items-center gap-2 mb-0">
           Gastos Semanales
-          <AsyncButton variant="link" className="p-0 border-0 text-decoration-none text-muted" style={{ fontSize: "1.25rem", lineHeight: 1 }} onClick={() => cambiarSemana(-1)} disabled={loading} title="Semana anterior">‹</AsyncButton>
+          <AsyncButton variant="link" className="p-0 border-0 text-decoration-none text-muted" style={{ fontSize: "1.75rem", lineHeight: 1 }} onClick={() => cambiarSemana(-1)} disabled={loading} title="Semana anterior">‹</AsyncButton>
           <small className="text-muted" style={{ fontSize: "1rem", fontWeight: 400 }}>{labelSemana}</small>
-          <AsyncButton variant="link" className="p-0 border-0 text-decoration-none text-muted" style={{ fontSize: "1.25rem", lineHeight: 1 }} onClick={() => cambiarSemana(1)} disabled={loading} title="Semana siguiente">›</AsyncButton>
+          <AsyncButton variant="link" className="p-0 border-0 text-decoration-none text-muted" style={{ fontSize: "1.75rem", lineHeight: 1 }} onClick={() => cambiarSemana(1)} disabled={loading} title="Semana siguiente">›</AsyncButton>
         </h2>
         <div className="d-flex gap-2">
           <AsyncButton variant="outline-success" onClick={guardarAhora} disabled={loading}>Guardar</AsyncButton>
