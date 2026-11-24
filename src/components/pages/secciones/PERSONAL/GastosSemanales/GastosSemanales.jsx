@@ -1125,7 +1125,9 @@ const GastosSemanales = () => {
     return () => clearTimeout(autoSaveTimer.current);
   }, [registros, loading, semanaKey]);
 
-  // Flechas ◀ ▶: antes de cambiar de semana se guarda lo pendiente de la actual
+  const estiloFlecha = { width: 34, height: 34 };
+
+  // Flechas ‹ ›: antes de cambiar de semana se guarda lo pendiente de la actual
   // (si no, el autoguardado se cancela y se pierde). La semana queda en la URL.
   const cambiarSemana = async (delta) => {
     clearTimeout(autoSaveTimer.current);
@@ -1240,9 +1242,13 @@ const GastosSemanales = () => {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2 className="d-flex align-items-center gap-2 mb-0">
           Gastos Semanales
-          <AsyncButton variant="link" className="px-2 py-0 border border-secondary rounded text-decoration-none text-warning" style={{ fontSize: "2.25rem", lineHeight: 1 }} onClick={() => cambiarSemana(-1)} disabled={loading} title="Semana anterior">‹</AsyncButton>
+          <AsyncButton variant="link" className="p-0 border border-secondary rounded text-warning d-inline-flex align-items-center justify-content-center" style={estiloFlecha} onClick={() => cambiarSemana(-1)} disabled={loading} title="Semana anterior">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.5 4 6.5 10l6 6" /></svg>
+          </AsyncButton>
           <small className="text-muted" style={{ fontSize: "1rem", fontWeight: 400 }}>{labelSemana}</small>
-          <AsyncButton variant="link" className="px-2 py-0 border border-secondary rounded text-decoration-none text-warning" style={{ fontSize: "2.25rem", lineHeight: 1 }} onClick={() => cambiarSemana(1)} disabled={loading} title="Semana siguiente">›</AsyncButton>
+          <AsyncButton variant="link" className="p-0 border border-secondary rounded text-warning d-inline-flex align-items-center justify-content-center" style={estiloFlecha} onClick={() => cambiarSemana(1)} disabled={loading} title="Semana siguiente">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 4l6 6-6 6" /></svg>
+          </AsyncButton>
         </h2>
         <div className="d-flex gap-2">
           <AsyncButton variant="outline-success" onClick={guardarAhora} disabled={loading}>Guardar</AsyncButton>
