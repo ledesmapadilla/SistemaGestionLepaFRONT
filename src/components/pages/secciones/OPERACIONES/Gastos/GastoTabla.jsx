@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import XLSXStyle from "xlsx-js-style";
 import {
   listarGastosPorObra,
@@ -7,7 +7,7 @@ import {
 import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos.js";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { valorHoraVigente, valorJornalVigente } from "../../../../../helpers/semanalUtils.js";
-import { Table, Button, Modal, Spinner } from "react-bootstrap";
+import { Table, Button, Modal, Spinner, Form } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
@@ -18,7 +18,7 @@ import {
   obtenerHistorialGasoil,
   cargasDeObraValorizadas,
 } from "../../../../../helpers/precioGasoil.js";
-import { mismoTexto } from "../../../../../helpers/normTexto.js";
+import { mismoTexto, unicosTexto } from "../../../../../helpers/normTexto.js";
 
 const buscarPrecioVigente = (precios, clasificacion, trabajo, fechaRef) => {
   const candidatos = precios.filter(
@@ -40,6 +40,8 @@ const buscarPrecioVigente = (precios, clasificacion, trabajo, fechaRef) => {
 const fechaGasto = (gasto) =>
   gasto?.fecha || (gasto?.createdAt ? gasto.createdAt.toString().slice(0, 10) : "");
 
+const itemPago = (p) => `Pago a ${p.proveedor}`;
+
 const formatoFecha = (fecha) =>
   fecha ? fecha.toString().slice(0, 10).split("-").reverse().join("-") : "-";
 
@@ -54,7 +56,7 @@ const GastoTabla = () => {
 
   const [loading, setLoading] = useState(true);
   const [gastos, setGastos] = useState([]);
-  const [busqueda, setBusqueda] = useState("");
+  const [itemFiltro, setItemFiltro] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [gastoEditar, setGastoEditar] = useState(null);
 
@@ -271,13 +273,27 @@ const GastoTabla = () => {
     }
   };
 
+  // --- FILTRO POR ITEM ---
+  // El item de cada fila es lo que se ve en la columna "Item": Gasoil, el nombre
+  // del maquinista, "Pago a <proveedor>" o el item del gasto manual.
+  const opcionesItem = useMemo(
+    () =>
+      unicosTexto([
+        ...(infoGasoil.cantidad > 0 || infoGasoil.total > 0 ? ["Gasoil"] : []),
+        ...listaMaquinistas.map((m) => m.nombre),
+        ...pagosProveedoresObra.map(itemPago),
+        ...gastos.map((g) => g.item),
+      ]).sort((a, b) => a.localeCompare(b, "es")),
+    [infoGasoil, listaMaquinistas, pagosProveedoresObra, gastos]
+  );
+
+  const coincideItem = (item) => !itemFiltro || mismoTexto(item, itemFiltro);
+
+  const mostrarGasoil = coincideItem("Gasoil");
+  const maquinistasFiltrados = listaMaquinistas.filter((m) => coincideItem(m.nombre));
+  const pagosFiltrados = pagosProveedoresObra.filter((p) => coincideItem(itemPago(p)));
   const gastosFiltrados = gastos
-    .filter((gasto) => {
-      const texto = busqueda.trim().toLowerCase();
-      const item = gasto.item?.toLowerCase() || "";
-      const remito = gasto.remito?.toLowerCase() || "";
-      return item.includes(texto) || remito.includes(texto);
-    })
+    .filter((g) => coincideItem(g.item))
     .sort((a, b) => fechaGasto(b).localeCompare(fechaGasto(a)));
 
   const eliminarGasto = async (id) => {
@@ -337,9 +353,9 @@ const GastoTabla = () => {
 
     const filas = [
       // Gasoil automático
-      ["Varias", "Gasoil", infoGasoil.cantidad, "lts", infoGasoil.precio, infoGasoil.total, "Cargas de gasoil y remitos (precio prom.)"],
+      ...(!mostrarGasoil ? [] : [["Varias", "Gasoil", infoGasoil.cantidad, "lts", infoGasoil.precio, infoGasoil.total, "Cargas de gasoil y remitos (precio prom.)"]]),
       // Maquinistas
-      ...listaMaquinistas.map((maq) => [
+      ...maquinistasFiltrados.map((maq) => [
         "Varias",
         maq.nombre,
         maq.cantidad,
@@ -349,7 +365,7 @@ const GastoTabla = () => {
         maq.tipo === "servicio" ? "Servicios acumulados" : "Horas acumuladas",
       ]),
       // Pagos a proveedores
-      ...pagosProveedoresObra.map((p) => [
+      ...pagosFiltrados.map((p) => [
         formatoFecha(p.fecha),
         `Pago a ${p.proveedor}`,
         1,
@@ -359,9 +375,7 @@ const GastoTabla = () => {
         `Fact. ${p.factura?.tipoFactura} N°${p.factura?.numeroFactura}${p.factura?.concepto ? ` — ${p.factura.concepto}` : ""}`,
       ]),
       // Gastos manuales
-      ...[...gastos]
-        .sort((a, b) => fechaGasto(b).localeCompare(fechaGasto(a)))
-        .map((g) => [
+      ...gastosFiltrados.map((g) => [
           formatoFecha(fechaGasto(g)),
           g.item,
           Number(g.cantidad) || 0,
@@ -377,7 +391,7 @@ const GastoTabla = () => {
     ws["A1"] = { v: "LISTADO DE GASTOS", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
     ws["A2"] = { v: `Fecha: ${new Date().toLocaleDateString("es-AR")}`, t: "s", s: { alignment: leftAlign } };
     ws["A3"] = { v: `Razón Social: ${razonsocial}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
-    ws["A4"] = { v: `Obra: ${obraNombre}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+    ws["A4"] = { v: `Obra: ${obraNombre}${itemFiltro ? ` — Item: ${itemFiltro}` : ""}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
 
     headers.forEach((h, i) => {
       ws[`${cols[i]}6`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
@@ -401,27 +415,27 @@ const GastoTabla = () => {
 
     const libro = XLSXStyle.utils.book_new();
     XLSXStyle.utils.book_append_sheet(libro, ws, "Gastos");
-    XLSXStyle.writeFile(libro, `Gastos_${obraNombre}.xlsx`);
+    XLSXStyle.writeFile(libro, `Gastos_${obraNombre}${itemFiltro ? `_${itemFiltro}` : ""}.xlsx`);
   };
 
   const calcularTotal = () => {
-    const totalGastosManuales = gastos.reduce((sum, gasto) => {
+    const totalGastosManuales = gastosFiltrados.reduce((sum, gasto) => {
       const cantidad = Number(gasto.cantidad) || 0;
       const precio = Number(gasto.costoUnitario) || 0;
       return sum + cantidad * precio;
     }, 0);
 
-    const totalMaquinistas = listaMaquinistas.reduce(
+    const totalMaquinistas = maquinistasFiltrados.reduce(
       (acc, maq) => acc + maq.total,
       0
     );
 
-    const totalPagosProveedores = pagosProveedoresObra.reduce(
+    const totalPagosProveedores = pagosFiltrados.reduce(
       (sum, p) => sum + (p.montoPagado || 0),
       0
     );
 
-    return totalGastosManuales + infoGasoil.total + totalMaquinistas + totalPagosProveedores;
+    return totalGastosManuales + (mostrarGasoil ? infoGasoil.total : 0) + totalMaquinistas + totalPagosProveedores;
   };
 
   const formatoMiles = (valor) => {
@@ -447,10 +461,22 @@ const GastoTabla = () => {
         </div>
 
         <div className="col-4 text-center">
-          <h6 className="mb-0">Total gastos: <span className="text-gray">{formatoMiles(calcularTotal())} + iva</span></h6>
+          <h6 className="mb-0">{itemFiltro ? `Total ${itemFiltro}` : "Total gastos"}: <span className="text-gray">{formatoMiles(calcularTotal())} + iva</span></h6>
         </div>
 
         <div className="col-4 d-flex flex-column gap-2 align-items-end">
+          <Form.Select
+            size="sm"
+            style={{ maxWidth: 260 }}
+            value={itemFiltro}
+            onChange={(e) => setItemFiltro(e.target.value)}
+            title="Filtrar por item"
+          >
+            <option value="">Todos los items</option>
+            {opcionesItem.map((it) => (
+              <option key={it} value={it}>{it}</option>
+            ))}
+          </Form.Select>
           <div className="d-flex gap-2">
             <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
             <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
@@ -475,6 +501,7 @@ const GastoTabla = () => {
           </thead>
           <tbody>
             {/* 1. FILA AUTOMÁTICA DE GASOIL */}
+            {mostrarGasoil && (
             <tr>
               <td className="text-muted">Varias</td>
               <td className="text-primary">Gasoil</td>
@@ -494,9 +521,10 @@ const GastoTabla = () => {
                 </Button>
               </td>
             </tr>
+            )}
 
             {/* 2. MAQUINISTAS DESGLOSADOS */}
-            {listaMaquinistas.map((maq, index) => (
+            {maquinistasFiltrados.map((maq, index) => (
               <tr key={`maq-${index}`}>
                 <td className="text-muted">Varias</td>
                 <td className="text-success">{maq.nombre}</td>
@@ -525,7 +553,7 @@ const GastoTabla = () => {
             ))}
 
             {/* 3. PAGOS A PROVEEDORES */}
-            {pagosProveedoresObra.map((p) => (
+            {pagosFiltrados.map((p) => (
               <tr key={p._id}>
                 <td>{formatoFecha(p.fecha)}</td>
                 <td style={{ color: "#f0a500" }}>Pago a {p.proveedor}</td>
@@ -545,11 +573,13 @@ const GastoTabla = () => {
 
             {/* 4. GASTOS MANUALES */}
             {gastosFiltrados.length === 0 ? (
+              itemFiltro ? null : (
               <tr>
                 <td colSpan={8} className="py-4">
                   No hay gastos manuales registrados.
                 </td>
               </tr>
+              )
             ) : (
               gastosFiltrados.map((g, i) => {
                 const cantidad = Number(g.cantidad) || 0;
