@@ -7,7 +7,7 @@ import {
 import { listarRemitosPorObra } from "../../../../../helpers/queriesRemitos.js";
 import { listarPersonal } from "../../../../../helpers/queriesPersonal.js";
 import { valorHoraVigente, valorJornalVigente } from "../../../../../helpers/semanalUtils.js";
-import { Table, Button, Modal, Spinner, Form } from "react-bootstrap";
+import { Table, Button, Modal, Spinner, Form, Dropdown } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
@@ -56,7 +56,8 @@ const GastoTabla = () => {
 
   const [loading, setLoading] = useState(true);
   const [gastos, setGastos] = useState([]);
-  const [itemFiltro, setItemFiltro] = useState("");
+  // Items elegidos en el filtro; vacío = todos.
+  const [itemsFiltro, setItemsFiltro] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [gastoEditar, setGastoEditar] = useState(null);
 
@@ -287,7 +288,20 @@ const GastoTabla = () => {
     [infoGasoil, listaMaquinistas, pagosProveedoresObra, gastos]
   );
 
-  const coincideItem = (item) => !itemFiltro || mismoTexto(item, itemFiltro);
+  const coincideItem = (item) =>
+    itemsFiltro.length === 0 || itemsFiltro.some((f) => mismoTexto(item, f));
+
+  const toggleItemFiltro = (item) =>
+    setItemsFiltro((prev) =>
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+    );
+
+  const textoFiltro =
+    itemsFiltro.length === 0
+      ? "Todos los items"
+      : itemsFiltro.length <= 2
+        ? itemsFiltro.join(", ")
+        : `${itemsFiltro.length} items`;
 
   const mostrarGasoil = coincideItem("Gasoil");
   const maquinistasFiltrados = listaMaquinistas.filter((m) => coincideItem(m.nombre));
@@ -391,7 +405,7 @@ const GastoTabla = () => {
     ws["A1"] = { v: "LISTADO DE GASTOS", t: "s", s: { font: { bold: true, sz: 14 }, alignment: leftAlign } };
     ws["A2"] = { v: `Fecha: ${new Date().toLocaleDateString("es-AR")}`, t: "s", s: { alignment: leftAlign } };
     ws["A3"] = { v: `Razón Social: ${razonsocial}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
-    ws["A4"] = { v: `Obra: ${obraNombre}${itemFiltro ? ` — Item: ${itemFiltro}` : ""}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
+    ws["A4"] = { v: `Obra: ${obraNombre}${itemsFiltro.length ? ` — Items: ${itemsFiltro.join(", ")}` : ""}`, t: "s", s: { font: { bold: true }, alignment: leftAlign } };
 
     headers.forEach((h, i) => {
       ws[`${cols[i]}6`] = { v: h, t: "s", s: { font: { bold: true }, alignment: centerAlign } };
@@ -415,7 +429,7 @@ const GastoTabla = () => {
 
     const libro = XLSXStyle.utils.book_new();
     XLSXStyle.utils.book_append_sheet(libro, ws, "Gastos");
-    XLSXStyle.writeFile(libro, `Gastos_${obraNombre}${itemFiltro ? `_${itemFiltro}` : ""}.xlsx`);
+    XLSXStyle.writeFile(libro, `Gastos_${obraNombre}${itemsFiltro.length === 1 ? `_${itemsFiltro[0]}` : itemsFiltro.length > 1 ? "_filtrado" : ""}.xlsx`);
   };
 
   const calcularTotal = () => {
@@ -461,28 +475,47 @@ const GastoTabla = () => {
         </div>
 
         <div className="col-4 text-center">
-          <h6 className="mb-0">{itemFiltro ? `Total ${itemFiltro}` : "Total gastos"}: <span className="text-gray">{formatoMiles(calcularTotal())} + iva</span></h6>
+          <h6 className="mb-0">{itemsFiltro.length === 0 ? "Total gastos" : itemsFiltro.length === 1 ? `Total ${itemsFiltro[0]}` : "Total filtrado"}: <span className="text-gray">{formatoMiles(calcularTotal())} + iva</span></h6>
         </div>
 
         <div className="col-4 d-flex flex-column gap-2 align-items-end">
-          <Form.Select
-            size="sm"
-            style={{ maxWidth: 260 }}
-            value={itemFiltro}
-            onChange={(e) => setItemFiltro(e.target.value)}
-            title="Filtrar por item"
-          >
-            <option value="">Todos los items</option>
-            {opcionesItem.map((it) => (
-              <option key={it} value={it}>{it}</option>
-            ))}
-          </Form.Select>
           <div className="d-flex gap-2">
             <Button size="sm" variant="outline-light" onClick={exportarExcel}>Excel</Button>
             <Button size="sm" variant="outline-success" onClick={() => navigate(-1)}>Volver</Button>
             <Button size="sm" variant="outline-primary" onClick={handleNuevoGasto}>Cargar gasto</Button>
           </div>
         </div>
+      </div>
+
+      {/* FILTRO POR ITEM (selección múltiple) */}
+      <div className="d-flex align-items-center gap-2 mb-2">
+        <Dropdown autoClose="outside">
+          <Dropdown.Toggle size="sm" variant="outline-light" title="Filtrar por item">
+            Item: {textoFiltro}
+          </Dropdown.Toggle>
+          <Dropdown.Menu style={{ maxHeight: 320, overflowY: "auto", minWidth: 260 }}>
+            {opcionesItem.length === 0 ? (
+              <Dropdown.ItemText className="text-muted">Sin items</Dropdown.ItemText>
+            ) : (
+              opcionesItem.map((it) => (
+                <div key={it} className="px-3 py-1">
+                  <Form.Check
+                    type="checkbox"
+                    id={`filtro-item-${it}`}
+                    label={it}
+                    checked={itemsFiltro.includes(it)}
+                    onChange={() => toggleItemFiltro(it)}
+                  />
+                </div>
+              ))
+            )}
+          </Dropdown.Menu>
+        </Dropdown>
+        {itemsFiltro.length > 0 && (
+          <Button size="sm" variant="outline-secondary" onClick={() => setItemsFiltro([])}>
+            Limpiar
+          </Button>
+        )}
       </div>
 
       <div>
@@ -573,7 +606,7 @@ const GastoTabla = () => {
 
             {/* 4. GASTOS MANUALES */}
             {gastosFiltrados.length === 0 ? (
-              itemFiltro ? null : (
+              itemsFiltro.length > 0 ? null : (
               <tr>
                 <td colSpan={8} className="py-4">
                   No hay gastos manuales registrados.
